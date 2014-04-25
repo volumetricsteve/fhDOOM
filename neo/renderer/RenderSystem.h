@@ -205,6 +205,8 @@ public:
 	virtual void			GetGLSettings( int& width, int& height ) = 0;
 	virtual void			PrintMemInfo( MemInfo_t *mi ) = 0;
 
+  virtual void      DrawScaledChar( int x, int y, int ch, const idMaterial *material, float scale ) = 0;
+  virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) = 0;  
 	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material ) = 0;
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) = 0;
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material ) = 0;

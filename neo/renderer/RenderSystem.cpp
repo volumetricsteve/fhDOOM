@@ -383,6 +383,71 @@ idRenderSystemLocal::DrawSmallChar
 small chars are drawn at native screen resolution
 =====================
 */
+void idRenderSystemLocal::DrawScaledChar( int x, int y, int ch, const idMaterial *material, float scale ) {
+  int row, col;
+  float frow, fcol;
+  float size;
+
+  ch &= 255;
+
+  if ( ch == ' ' ) {
+    return;
+  }
+
+  if ( y < -SMALLCHAR_HEIGHT ) {
+    return;
+  }
+
+  row = ch >> 4;
+  col = ch & 15;
+
+  frow = row * 0.0625f;
+  fcol = col * 0.0625f;
+  size = 0.0625f;
+
+  DrawStretchPic( x, y, SMALLCHAR_WIDTH * scale, SMALLCHAR_HEIGHT * scale,
+    fcol, frow, 
+    fcol + size, frow + size, 
+    material );
+}
+
+void idRenderSystemLocal::DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) {
+  idVec4		color;
+  const unsigned char	*s;
+  int			xx;
+
+  // draw the colored text
+  s = (const unsigned char*)string;
+  xx = x;
+  SetColor( setColor );
+  while ( *s ) {
+    if ( idStr::IsColor( (const char*)s ) ) {
+      if ( !forceColor ) {
+        if ( *(s+1) == C_COLOR_DEFAULT ) {
+          SetColor( setColor );
+        } else {
+          color = idStr::ColorForIndex( *(s+1) );
+          color[3] = setColor[3];
+          SetColor( color );
+        }
+      }
+      s += 2;
+      continue;
+    }
+    DrawScaledChar( xx, y, *s, material, scale );
+    xx += SMALLCHAR_WIDTH * scale;
+    s++;
+  }
+  SetColor( colorWhite );
+}
+
+/*
+=====================
+idRenderSystemLocal::DrawSmallChar
+
+small chars are drawn at native screen resolution
+=====================
+*/
 void idRenderSystemLocal::DrawSmallChar( int x, int y, int ch, const idMaterial *material ) {
 	int row, col;
 	float frow, fcol;

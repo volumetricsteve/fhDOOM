@@ -73,7 +73,7 @@ private:
 	void				Top();
 	void				Bottom();
 
-	void				DrawInput();
+	void				DrawInput(float fontScale);
 	void				DrawNotify();
 	void				DrawSolidConsole( float frac );
 
@@ -113,6 +113,7 @@ private:
 	static idCVar		con_speed;
 	static idCVar		con_notifyTime;
 	static idCVar		con_noPrint;
+  static idCVar		con_fontScale;
 
 	const idMaterial *	whiteShader;
 	const idMaterial *	consoleShader;
@@ -128,6 +129,7 @@ idCVar idConsoleLocal::con_noPrint( "con_noPrint", "0", CVAR_BOOL|CVAR_SYSTEM|CV
 #else
 idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "print on the console but not onscreen when console is pulled up" );
 #endif
+idCVar idConsoleLocal::con_fontScale( "con_fontScale", "1", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT, "scale of console font" );
 
 
 
@@ -944,10 +946,10 @@ DrawInput
 Draw the editline after a ] prompt
 ================
 */
-void idConsoleLocal::DrawInput() {
+void idConsoleLocal::DrawInput(float fontScale) {
 	int y, autoCompleteLength;
 
-	y = vislines - ( SMALLCHAR_HEIGHT * 2 );
+	y = vislines - ( SMALLCHAR_HEIGHT * 2 * fontScale );
 
 	if ( consoleField.GetAutoCompleteLength() != 0 ) {
 		autoCompleteLength = strlen( consoleField.GetBuffer() ) - consoleField.GetAutoCompleteLength();
@@ -955,17 +957,17 @@ void idConsoleLocal::DrawInput() {
 		if ( autoCompleteLength > 0 ) {
 			renderSystem->SetColor4( .8f, .2f, .2f, .45f );
 
-			renderSystem->DrawStretchPic( 2 * SMALLCHAR_WIDTH + consoleField.GetAutoCompleteLength() * SMALLCHAR_WIDTH,
-							y + 2, autoCompleteLength * SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT - 2, 0, 0, 0, 0, whiteShader );
+			renderSystem->DrawStretchPic( (2 * SMALLCHAR_WIDTH + consoleField.GetAutoCompleteLength() * SMALLCHAR_WIDTH) * fontScale,
+							y + 2 * fontScale, autoCompleteLength * SMALLCHAR_WIDTH * fontScale, (SMALLCHAR_HEIGHT - 2) * fontScale, 0, 0, 0, 0, whiteShader );
 
 		}
 	}
 
 	renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
 
-	renderSystem->DrawSmallChar( 1 * SMALLCHAR_WIDTH, y, ']', localConsole.charSetShader );
+	renderSystem->DrawScaledChar( SMALLCHAR_WIDTH * fontScale, y, ']', localConsole.charSetShader, fontScale );
 
-	consoleField.Draw(2 * SMALLCHAR_WIDTH, y, SCREEN_WIDTH - 3 * SMALLCHAR_WIDTH, true, charSetShader );
+	consoleField.Draw(2 * SMALLCHAR_WIDTH * fontScale, y, SCREEN_WIDTH - 3 * SMALLCHAR_WIDTH * fontScale, true, charSetShader, fontScale );
 }
 
 
@@ -1066,27 +1068,31 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 	idStr version = va("%s.%i", ENGINE_VERSION, BUILD_NUMBER);
 	i = version.Length();
 
+  float fontScale = con_fontScale.GetFloat();
+  if(fontScale < 0.2f)
+    fontScale = 0.2f;
+  if(fontScale > 2.0f)
+    fontScale = 2.0f;
+
 	for ( x = 0; x < i; x++ ) {
-		renderSystem->DrawSmallChar( SCREEN_WIDTH - ( i - x ) * SMALLCHAR_WIDTH, 
-			(lines-(SMALLCHAR_HEIGHT+SMALLCHAR_HEIGHT/2)), version[x], localConsole.charSetShader );
-
+		renderSystem->DrawScaledChar( SCREEN_WIDTH - ( i - x ) * SMALLCHAR_WIDTH * fontScale, 
+			(lines-(SMALLCHAR_HEIGHT+SMALLCHAR_HEIGHT/2)*fontScale), version[x], localConsole.charSetShader, fontScale );
 	}
-
 
 	// draw the text
 	vislines = lines;
-	rows = (lines-SMALLCHAR_WIDTH)/SMALLCHAR_WIDTH;		// rows of text to draw
+	rows = static_cast<int>((lines-SMALLCHAR_WIDTH)/SMALLCHAR_WIDTH);		// rows of text to draw
 
-	y = lines - (SMALLCHAR_HEIGHT*3);
+	y = lines - (SMALLCHAR_HEIGHT*3) * fontScale;
 
 	// draw from the bottom up
 	if ( display != current ) {
 		// draw arrows to show the buffer is backscrolled
 		renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
-		for ( x = 0; x < LINE_WIDTH; x += 4 ) {
-			renderSystem->DrawSmallChar( (x+1)*SMALLCHAR_WIDTH, idMath::FtoiFast( y ), '^', localConsole.charSetShader );
+		for ( x = 0; x < LINE_WIDTH/fontScale; x += 4 ) {
+			renderSystem->DrawScaledChar( (x+1)*SMALLCHAR_WIDTH * fontScale, idMath::FtoiFast( y ), '^', localConsole.charSetShader, fontScale );
 		}
-		y -= SMALLCHAR_HEIGHT;
+		y -= SMALLCHAR_HEIGHT * fontScale;
 		rows--;
 	}
 	
@@ -1099,7 +1105,7 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 	currentColor = idStr::ColorIndex( C_COLOR_WHITE );
 	renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
 
-	for ( i = 0; i < rows; i++, y -= SMALLCHAR_HEIGHT, row-- ) {
+	for ( i = 0; i < rows; i++, y -= (SMALLCHAR_HEIGHT * fontScale), row-- ) {
 		if ( row < 0 ) {
 			break;
 		}
@@ -1108,7 +1114,7 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 			continue;	
 		}
 
-		text_p = text + (row % TOTAL_LINES)*LINE_WIDTH;
+		text_p = text + (row % TOTAL_LINES) * LINE_WIDTH;
 
 		for ( x = 0; x < LINE_WIDTH; x++ ) {
 			if ( ( text_p[x] & 0xff ) == ' ' ) {
@@ -1119,12 +1125,12 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 				currentColor = idStr::ColorIndex(text_p[x]>>8);
 				renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
 			}
-			renderSystem->DrawSmallChar( (x+1)*SMALLCHAR_WIDTH, idMath::FtoiFast( y ), text_p[x] & 0xff, localConsole.charSetShader );
+			renderSystem->DrawScaledChar( (x+1)*SMALLCHAR_WIDTH * fontScale, idMath::FtoiFast( y ), text_p[x] & 0xff, localConsole.charSetShader, fontScale );
 		}
 	}
 
 	// draw the input prompt, user text, and cursor if desired
-	DrawInput();
+	DrawInput(fontScale);
 
 	renderSystem->SetColor( colorCyan );
 }

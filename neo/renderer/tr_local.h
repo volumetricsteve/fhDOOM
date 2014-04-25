@@ -669,15 +669,6 @@ typedef struct {
 const int MAX_GUI_SURFACES	= 1024;		// default size of the drawSurfs list for guis, will
 										// be automatically expanded as needed
 
-typedef enum {
-	BE_ARB,
-	BE_NV10,
-	BE_NV20,
-	BE_R200,
-	BE_ARB2,
-	BE_BAD
-} backEndName_t;
-
 typedef struct {
 	int		x, y, width, height;	// these are in physical, OpenGL Y-at-bottom pixels
 } renderCrop_t;
@@ -716,6 +707,8 @@ public:
 	virtual void			GetGLSettings( int& width, int& height );
 	virtual void			PrintMemInfo( MemInfo_t *mi );
 
+  virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *materia, float scale );
+  virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale );  
 	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material );
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material );
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material );
