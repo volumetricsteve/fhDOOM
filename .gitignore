@@ -1,1 +1,6 @@
 build
+/neo/*.user
+/neo/*.opensdf
+/neo/*.sdf
+/neo/game/gamesys/GameTypeInfo.h
+/neo/ipch/doomdll-ac2305e6/*.ipch

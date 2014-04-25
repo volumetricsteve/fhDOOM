@@ -1685,6 +1685,9 @@ void	RB_STD_DrawView( void ) {
 	RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
 
 	// main light renderer
+  assert(tr.backEndRenderer == BE_ARB2 && "tr.backEndRendere must be ARB2");
+  RB_ARB2_DrawInteractions();
+#if 0
 	switch( tr.backEndRenderer ) {
 	case BE_ARB:
 		RB_ARB_DrawInteractions();
@@ -1702,6 +1705,7 @@ void	RB_STD_DrawView( void ) {
 		RB_R200_DrawInteractions();
 		break;
 	}
+#endif
 
 	// disable stencil shadow test
 	qglStencilFunc( GL_ALWAYS, 128, 255 );
