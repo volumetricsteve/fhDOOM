@@ -696,9 +696,6 @@ void R_InitOpenGL( void ) {
 	// allocate the vertex array range or vertex objects
 	vertexCache.Init();
 
-	// select which renderSystem we are going to use
-	tr.SetBackEndRenderer();
-
 	// allocate the frame data, which may be more if smp is enabled
 	R_InitFrameData();
 
@@ -2131,10 +2128,6 @@ void idRenderSystemLocal::Init( void ) {
 	identitySpace.modelMatrix[0*4+0] = 1.0f;
 	identitySpace.modelMatrix[1*4+1] = 1.0f;
 	identitySpace.modelMatrix[2*4+2] = 1.0f;
-
-	// determine which back end we will use
-	// ??? this is invalid here as there is not enough information to set it up correctly
-	SetBackEndRenderer();
 
 	common->Printf( "renderSystem initialized.\n" );
 	common->Printf( "--------------------------------------\n" );

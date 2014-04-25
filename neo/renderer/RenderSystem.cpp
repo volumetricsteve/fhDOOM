@@ -527,18 +527,6 @@ void idRenderSystemLocal::DrawBigStringExt( int x, int y, const char *string, co
 //======================================================================================
 
 /*
-==================
-SetBackEndRenderer
-
-Check for changes in the back end renderSystem, possibly invalidating cached data
-==================
-*/
-void idRenderSystemLocal::SetBackEndRenderer() {
-  //backEndRendererHasVertexPrograms = true;
-  //backEndRendererMaxLight = 999;
-}
-
-/*
 ====================
 BeginFrame
 ====================
@@ -549,9 +537,6 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
 	if ( !glConfig.isInitialized ) {
 		return;
 	}
-
-	// determine which back end we will use
-	SetBackEndRenderer();
 
 	guiModel->Clear();
 

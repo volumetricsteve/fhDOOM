@@ -737,7 +737,6 @@ public:
 							~idRenderSystemLocal( void );
 
 	void					Clear( void );
-	void					SetBackEndRenderer();			// sets tr.backEndRenderer based on cvars
 	void					RenderViewToViewport( const renderView_t *renderView, idScreenRect *viewport );
 
 public:
