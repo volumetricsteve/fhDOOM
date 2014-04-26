@@ -272,78 +272,6 @@ LONG WINAPI FakeWndProc (
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-
-/*
-==================
-GLW_GetWGLExtensionsWithFakeWindow
-==================
-*/
-void GLW_CheckWGLExtensions( HDC hDC ) {
-	wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-							  GLimp_ExtensionPointer("wglGetExtensionsStringARB");
-	if ( wglGetExtensionsStringARB ) {
-		glConfig.wgl_extensions_string = (const char *) wglGetExtensionsStringARB(hDC);
-	} else {
-		glConfig.wgl_extensions_string = "";
-	}
-
-	// WGL_EXT_swap_control
-	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC) GLimp_ExtensionPointer( "wglSwapIntervalEXT" );
-	r_swapInterval.SetModified();	// force a set next frame
-
-	// WGL_ARB_pixel_format
-	wglGetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)GLimp_ExtensionPointer("wglGetPixelFormatAttribivARB");
-	wglGetPixelFormatAttribfvARB = (PFNWGLGETPIXELFORMATATTRIBFVARBPROC)GLimp_ExtensionPointer("wglGetPixelFormatAttribfvARB");
-	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)GLimp_ExtensionPointer("wglChoosePixelFormatARB");
-
-	// WGL_ARB_pbuffer
-	wglCreatePbufferARB = (PFNWGLCREATEPBUFFERARBPROC)GLimp_ExtensionPointer("wglCreatePbufferARB");
-	wglGetPbufferDCARB = (PFNWGLGETPBUFFERDCARBPROC)GLimp_ExtensionPointer("wglGetPbufferDCARB");
-	wglReleasePbufferDCARB = (PFNWGLRELEASEPBUFFERDCARBPROC)GLimp_ExtensionPointer("wglReleasePbufferDCARB");
-	wglDestroyPbufferARB = (PFNWGLDESTROYPBUFFERARBPROC)GLimp_ExtensionPointer("wglDestroyPbufferARB");
-	wglQueryPbufferARB = (PFNWGLQUERYPBUFFERARBPROC)GLimp_ExtensionPointer("wglQueryPbufferARB");
-
-	// WGL_ARB_render_texture 
-	wglBindTexImageARB = (PFNWGLBINDTEXIMAGEARBPROC)GLimp_ExtensionPointer("wglBindTexImageARB");
-	wglReleaseTexImageARB = (PFNWGLRELEASETEXIMAGEARBPROC)GLimp_ExtensionPointer("wglReleaseTexImageARB");
-	wglSetPbufferAttribARB = (PFNWGLSETPBUFFERATTRIBARBPROC)GLimp_ExtensionPointer("wglSetPbufferAttribARB");
-}
-
-/*
-==================
-GLW_GetWGLExtensionsWithFakeWindow
-==================
-*/
-static void GLW_GetWGLExtensionsWithFakeWindow( void ) {
-	HWND	hWnd;
-    MSG		msg;
-
-    // Create a window for the sole purpose of getting
-	// a valid context to get the wglextensions
-    hWnd = CreateWindow(WIN32_FAKE_WINDOW_CLASS_NAME, GAME_NAME,
-        WS_OVERLAPPEDWINDOW,
-        40, 40,
-        640,
-        480,
-        NULL, NULL, win32.hInstance, NULL );
-    if ( !hWnd ) {
-        common->FatalError( "GLW_GetWGLExtensionsWithFakeWindow: Couldn't create fake window" );
-    }
-
-    HDC hDC = GetDC( hWnd );
-	HGLRC gRC = wglCreateContext( hDC );
-	wglMakeCurrent( hDC, gRC );
-	GLW_CheckWGLExtensions( hDC );
-	wglDeleteContext( gRC );
-	ReleaseDC( hWnd, hDC );
-
-    DestroyWindow( hWnd );
-    while ( GetMessage( &msg, NULL, 0, 0 ) ) {
-        TranslateMessage( &msg );
-        DispatchMessage( &msg );
-    }
-}
-
 //=============================================================================
 
 /*
@@ -848,7 +776,7 @@ bool GLimp_Init( glimpParms_t parms ) {
 	}
 
 	// wglSwapinterval, etc
-	GLW_CheckWGLExtensions( win32.hDC );
+	//GLW_CheckWGLExtensions( win32.hDC );
 
 	// check logging
 	//GLimp_EnableLogging( ( r_logFile.GetInteger() != 0 ) );
