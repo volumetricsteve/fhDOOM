@@ -123,7 +123,6 @@ idCVar r_useInteractionCulling( "r_useInteractionCulling", "1", CVAR_RENDERER | 
 idCVar r_useInteractionScissors( "r_useInteractionScissors", "2", CVAR_RENDERER | CVAR_INTEGER, "1 = use a custom scissor rectangle for each shadow interaction, 2 = also crop using portal scissors", -2, 2, idCmdSystem::ArgCompletion_Integer<-2,2> );
 idCVar r_useShadowCulling( "r_useShadowCulling", "1", CVAR_RENDERER | CVAR_BOOL, "try to cull shadows from partially visible lights" );
 idCVar r_useFrustumFarDistance( "r_useFrustumFarDistance", "0", CVAR_RENDERER | CVAR_FLOAT, "if != 0 force the view frustum far distance to this distance" );
-idCVar r_logFile( "r_logFile", "0", CVAR_RENDERER | CVAR_INTEGER, "number of frames to emit GL logs" );
 idCVar r_clear( "r_clear", "2", CVAR_RENDERER, "force screen clear every frame, 1 = purple, 2 = black, 'r g b' = custom" );
 idCVar r_offsetFactor( "r_offsetfactor", "0", CVAR_RENDERER | CVAR_FLOAT, "polygon offset parameter" );
 idCVar r_offsetUnits( "r_offsetunits", "-600", CVAR_RENDERER | CVAR_FLOAT, "polygon offset parameter" );
@@ -291,12 +290,10 @@ R_CheckExtension
 =================
 */
 bool R_CheckExtension( char *name ) {
-	if ( !strstr( glConfig.extensions_string, name ) ) {
-		common->Printf( "X..%s not found\n", name );
+	if ( !strstr( glConfig.extensions_string, name ) ) {		
 		return false;
 	}
 
-	common->Printf( "...using %s\n", name );
 	return true;
 }
 
@@ -306,11 +303,30 @@ R_CheckPortableExtensions
 
 ==================
 */
+static bool R_DoubleCheckExtension(char* name)
+{
+  bool customCheck = R_CheckExtension(name);
+  bool glewCheck = static_cast<bool>(glewIsSupported(name));
+
+  static const char* status[] = { 
+    "[ FAILED ]",
+    "[   OK   ]" 
+  };
+
+  common->Printf("%s %s\n", status[glewCheck ? 1 : 0], name);
+
+  if(glewCheck != customCheck)
+    common->Warning("availibilty mismatch for extension %s\n", name);
+
+  return glewCheck;
+}
+
 static void R_CheckPortableExtensions( void ) {
+  bool tmp = false;
 	glConfig.glVersion = atof( glConfig.version_string );
 
 	// GL_ARB_multitexture
-	glConfig.multitextureAvailable = R_CheckExtension( "GL_ARB_multitexture" );
+	glConfig.multitextureAvailable = R_DoubleCheckExtension( "GL_ARB_multitexture" );  
 	if ( glConfig.multitextureAvailable ) {
 		qglMultiTexCoord2fARB = (void(APIENTRY *)(GLenum, GLfloat, GLfloat))GLimp_ExtensionPointer( "glMultiTexCoord2fARB" );
 		qglMultiTexCoord2fvARB = (void(APIENTRY *)(GLenum, GLfloat *))GLimp_ExtensionPointer( "glMultiTexCoord2fvARB" );
@@ -328,23 +344,23 @@ static void R_CheckPortableExtensions( void ) {
 	}
 
 	// GL_ARB_texture_env_combine
-	glConfig.textureEnvCombineAvailable = R_CheckExtension( "GL_ARB_texture_env_combine" );
+	glConfig.textureEnvCombineAvailable = R_DoubleCheckExtension( "GL_ARB_texture_env_combine" );
 
 	// GL_ARB_texture_cube_map
-	glConfig.cubeMapAvailable = R_CheckExtension( "GL_ARB_texture_cube_map" );
+	glConfig.cubeMapAvailable = R_DoubleCheckExtension( "GL_ARB_texture_cube_map" );
 
 	// GL_ARB_texture_env_dot3
-	glConfig.envDot3Available = R_CheckExtension( "GL_ARB_texture_env_dot3" );
+	glConfig.envDot3Available = R_DoubleCheckExtension( "GL_ARB_texture_env_dot3" );
 
 	// GL_ARB_texture_env_add
-	glConfig.textureEnvAddAvailable = R_CheckExtension( "GL_ARB_texture_env_add" );
+	glConfig.textureEnvAddAvailable = R_DoubleCheckExtension( "GL_ARB_texture_env_add" );
 
 	// GL_ARB_texture_non_power_of_two
-	glConfig.textureNonPowerOfTwoAvailable = R_CheckExtension( "GL_ARB_texture_non_power_of_two" );
+	glConfig.textureNonPowerOfTwoAvailable = R_DoubleCheckExtension( "GL_ARB_texture_non_power_of_two" );
 
 	// GL_ARB_texture_compression + GL_S3_s3tc
 	// DRI drivers may have GL_ARB_texture_compression but no GL_EXT_texture_compression_s3tc
-	if ( R_CheckExtension( "GL_ARB_texture_compression" ) && R_CheckExtension( "GL_EXT_texture_compression_s3tc" ) ) {
+	if ( R_DoubleCheckExtension( "GL_ARB_texture_compression" ) && R_DoubleCheckExtension( "GL_EXT_texture_compression_s3tc" ) ) {
 		glConfig.textureCompressionAvailable = true;
 		qglCompressedTexImage2DARB = (PFNGLCOMPRESSEDTEXIMAGE2DARBPROC)GLimp_ExtensionPointer( "glCompressedTexImage2DARB" );
 		qglGetCompressedTexImageARB = (PFNGLGETCOMPRESSEDTEXIMAGEARBPROC)GLimp_ExtensionPointer( "glGetCompressedTexImageARB" );
@@ -353,7 +369,7 @@ static void R_CheckPortableExtensions( void ) {
 	}
 
 	// GL_EXT_texture_filter_anisotropic
-	glConfig.anisotropicAvailable = R_CheckExtension( "GL_EXT_texture_filter_anisotropic" );
+	glConfig.anisotropicAvailable = R_DoubleCheckExtension( "GL_EXT_texture_filter_anisotropic" );
 	if ( glConfig.anisotropicAvailable ) {
 		qglGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureAnisotropy );
 		common->Printf( "   maxTextureAnisotropy: %f\n", glConfig.maxTextureAnisotropy );
@@ -364,7 +380,7 @@ static void R_CheckPortableExtensions( void ) {
 	// GL_EXT_texture_lod_bias
 	// The actual extension is broken as specificed, storing the state in the texture unit instead
 	// of the texture object.  The behavior in GL 1.4 is the behavior we use.
-	if ( glConfig.glVersion >= 1.4 || R_CheckExtension( "GL_EXT_texture_lod" ) ) {
+	if ( glConfig.glVersion >= 1.4 || R_DoubleCheckExtension( "GL_EXT_texture_lod" ) ) {
 		common->Printf( "...using %s\n", "GL_1.4_texture_lod_bias" );
 		glConfig.textureLODBiasAvailable = true;
 	} else {
@@ -373,13 +389,13 @@ static void R_CheckPortableExtensions( void ) {
 	}
 
 	// GL_EXT_shared_texture_palette
-	glConfig.sharedTexturePaletteAvailable = R_CheckExtension( "GL_EXT_shared_texture_palette" );
+	glConfig.sharedTexturePaletteAvailable = R_DoubleCheckExtension( "GL_EXT_shared_texture_palette" );
 	if ( glConfig.sharedTexturePaletteAvailable ) {
 		qglColorTableEXT = ( void ( APIENTRY * ) ( int, int, int, int, int, const void * ) ) GLimp_ExtensionPointer( "glColorTableEXT" );
 	}
 
 	// GL_EXT_texture3D (not currently used for anything)
-	glConfig.texture3DAvailable = R_CheckExtension( "GL_EXT_texture3D" );
+	glConfig.texture3DAvailable = R_DoubleCheckExtension( "GL_EXT_texture3D" );
 	if ( glConfig.texture3DAvailable ) {
 		qglTexImage3D = 
 			(void (APIENTRY *)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *) )
@@ -390,7 +406,7 @@ static void R_CheckPortableExtensions( void ) {
 	// This isn't very important, but some pathological case might cause a clamp error and give a shadow bug.
 	// Nvidia also believes that future hardware may be able to run faster with this enabled to avoid the
 	// serialization of clamping.
-	if ( R_CheckExtension( "GL_EXT_stencil_wrap" ) ) {
+	if ( R_DoubleCheckExtension( "GL_EXT_stencil_wrap" ) ) {
 		tr.stencilIncr = GL_INCR_WRAP_EXT;
 		tr.stencilDecr = GL_DECR_WRAP_EXT;
 	} else {
@@ -399,7 +415,7 @@ static void R_CheckPortableExtensions( void ) {
 	}
 
 	// ARB_vertex_buffer_object
-	glConfig.ARBVertexBufferObjectAvailable = R_CheckExtension( "GL_ARB_vertex_buffer_object" );
+	glConfig.ARBVertexBufferObjectAvailable = R_DoubleCheckExtension( "GL_ARB_vertex_buffer_object" );
 	if(glConfig.ARBVertexBufferObjectAvailable) {
 		qglBindBufferARB = (PFNGLBINDBUFFERARBPROC)GLimp_ExtensionPointer( "glBindBufferARB");
 		qglDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)GLimp_ExtensionPointer( "glDeleteBuffersARB");
@@ -415,7 +431,7 @@ static void R_CheckPortableExtensions( void ) {
 	}
 
 	// ARB_vertex_program
-	glConfig.ARBVertexProgramAvailable = R_CheckExtension( "GL_ARB_vertex_program" );
+	glConfig.ARBVertexProgramAvailable = R_DoubleCheckExtension( "GL_ARB_vertex_program" );
 	if (glConfig.ARBVertexProgramAvailable) {
 		qglVertexAttribPointerARB = (PFNGLVERTEXATTRIBPOINTERARBPROC)GLimp_ExtensionPointer( "glVertexAttribPointerARB" );
 		qglEnableVertexAttribArrayARB = (PFNGLENABLEVERTEXATTRIBARRAYARBPROC)GLimp_ExtensionPointer( "glEnableVertexAttribArrayARB" );
@@ -431,7 +447,7 @@ static void R_CheckPortableExtensions( void ) {
 	if ( r_inhibitFragmentProgram.GetBool() ) {
 		glConfig.ARBFragmentProgramAvailable = false;
 	} else {
-		glConfig.ARBFragmentProgramAvailable = R_CheckExtension( "GL_ARB_fragment_program" );
+		glConfig.ARBFragmentProgramAvailable = R_DoubleCheckExtension( "GL_ARB_fragment_program" );
 		if (glConfig.ARBFragmentProgramAvailable) {
 			// these are the same as ARB_vertex_program
 			qglProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC)GLimp_ExtensionPointer( "glProgramStringARB" );
@@ -448,7 +464,7 @@ static void R_CheckPortableExtensions( void ) {
 	}
 
  	// GL_EXT_depth_bounds_test
- 	glConfig.depthBoundsTestAvailable = R_CheckExtension( "EXT_depth_bounds_test" );
+ 	glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );
  	if ( glConfig.depthBoundsTestAvailable ) {
  		qglDepthBoundsEXT = (PFNGLDEPTHBOUNDSEXTPROC)GLimp_ExtensionPointer( "glDepthBoundsEXT" );
  	}
@@ -579,6 +595,7 @@ void R_InitOpenGL( void ) {
 		r_multiSamples.SetInteger( 0 );
 	}
 
+  glewExperimental = GL_TRUE;
   GLenum err = glewInit();
   if (GLEW_OK != err)
   {

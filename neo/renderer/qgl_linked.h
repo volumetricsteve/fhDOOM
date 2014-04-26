@@ -363,6 +363,29 @@ If you have questions concerning this license or the applicable additional terms
 #define qglVertexPointer glVertexPointer
 #define qglViewport glViewport
 
+
+#define qwglChoosePixelFormat wglChoosePixelFormat
+#define qwglDescribePixelFormat wglDescribePixelFormat
+#define qwglGetPixelFormat wglGetPixelFormat
+#define qwglSetPixelFormat wglSetPixelFormat
+#define qwglSwapBuffers SwapBuffers
+#define qwglCopyContext wglCopyContext
+#define qwglCreateContext wglCreateContext
+#define qwglCreateLayerContext wglCreateLayerContext
+#define qwglDeleteContext wglDeleteContext
+#define qwglGetCurrentContext wglGetCurrentContext
+#define qwglGetCurrentDC wglGetCurrentDC
+#define qwglGetProcAddress wglGetProcAddress
+#define qwglMakeCurrent wglMakeCurrent
+#define qwglShareLists wglShareLists
+#define qwglUseFontBitmaps wglUseFontBitmaps
+#define qwglUseFontOutlines wglUseFontOutlines
+#define qwglDescribeLayerPlane wglDescribeLayerPlane
+#define qwglSetLayerPaletteEntries wglSetLayerPaletteEntries
+#define qwglGetLayerPaletteEntries wglGetLayerPaletteEntries
+#define qwglRealizeLayerPalette wglRealizeLayerPalette
+#define qwglSwapLayerBuffers wglSwapLayerBuffers
+
 #ifdef GLX_VERSION_1_1 // catch all for any GLX-aware situation
 #define qglXChooseVisual glXChooseVisual
 #define qglXCreateContext glXCreateContext
