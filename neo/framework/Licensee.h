@@ -34,9 +34,9 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-#define GAME_NAME						"DOOM 3"		// appears on window titles and errors
+#define GAME_NAME						"DOOM 3 - Facing Hell"		// appears on window titles and errors
 
-#define ENGINE_VERSION					"DOOM 1.3.1"	// printed in console
+#define ENGINE_VERSION					"DOOM 1.3.1 - Facing Hell 0.1.0"	// printed in console
 
 // paths
 #define	CD_BASEDIR						"Doom"

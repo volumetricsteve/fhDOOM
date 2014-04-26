@@ -534,9 +534,6 @@ void idEditField::Draw( int x, int y, int width, bool showCursor, const idMateri
 	int		prestep;
 	int		cursorChar;
 	char	str[MAX_EDIT_LINE];
-	int		size;
-
-	size = SMALLCHAR_WIDTH;
 
 	drawLen = widthInChars;
 	len = strlen( buffer ) + 1;
@@ -600,5 +597,5 @@ void idEditField::Draw( int x, int y, int width, bool showCursor, const idMateri
 		}
 	}
 
-	renderSystem->DrawScaledChar( x + ( cursor - prestep ) * size * fontScale, y, cursorChar, shader, fontScale );
+	renderSystem->DrawScaledChar( x + ( cursor - prestep ) * SMALLCHAR_WIDTH * fontScale, y, cursorChar, shader, fontScale );  
 }

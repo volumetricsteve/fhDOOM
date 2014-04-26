@@ -414,7 +414,7 @@ void idRenderSystemLocal::DrawScaledChar( int x, int y, int ch, const idMaterial
 void idRenderSystemLocal::DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) {
   idVec4		color;
   const unsigned char	*s;
-  int			xx;
+  float			xx;
 
   // draw the colored text
   s = (const unsigned char*)string;
@@ -434,7 +434,7 @@ void idRenderSystemLocal::DrawScaledStringExt( int x, int y, const char *string,
       s += 2;
       continue;
     }
-    DrawScaledChar( xx, y, *s, material, scale );
+    DrawScaledChar( idMath::FtoiFast(xx), y, *s, material, scale );
     xx += SMALLCHAR_WIDTH * scale;
     s++;
   }
