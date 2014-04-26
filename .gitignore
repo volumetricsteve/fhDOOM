@@ -5,3 +5,4 @@ build
 /neo/game/gamesys/GameTypeInfo.h
 /neo/ipch/doomdll-ac2305e6/*.ipch
 /neo/*.suo
+*.ipch
