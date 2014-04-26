@@ -32,9 +32,15 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __QGL_H__
 #define __QGL_H__
 
+#ifndef GLEW_STATIC
+#define GLEW_STATIC
+#endif
+
 #if defined( _WIN32 )
 
-#include <gl/gl.h>
+//#include <gl/gl.h>
+#include "GL/glew.h"
+#include "GL/wglew.h"
 
 #elif defined( MACOS_X )
 
@@ -103,48 +109,11 @@ extern PFNGLUNMAPBUFFERARBPROC qglUnmapBufferARB;
 extern PFNGLGETBUFFERPARAMETERIVARBPROC qglGetBufferParameterivARB;
 extern PFNGLGETBUFFERPOINTERVARBPROC qglGetBufferPointervARB;
 
-
-// NV_register_combiners
-extern	void ( APIENTRY *qglCombinerParameterfvNV )( GLenum pname, const GLfloat *params );
-extern	void ( APIENTRY *qglCombinerParameterivNV )( GLenum pname, const GLint *params );
-extern	void ( APIENTRY *qglCombinerParameterfNV )( GLenum pname, const GLfloat param );
-extern	void ( APIENTRY *qglCombinerParameteriNV )( GLenum pname, const GLint param );
-extern	void ( APIENTRY *qglCombinerInputNV )( GLenum stage, GLenum portion, GLenum variable, GLenum input,
-											  GLenum mapping, GLenum componentUsage );
-extern	void ( APIENTRY *qglCombinerOutputNV )( GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, 
-											   GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct,
-											   GLboolean cdDotProduct, GLboolean muxSum );
-extern	void ( APIENTRY *qglFinalCombinerInputNV )( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage );
-
 // 3D textures
 extern void ( APIENTRY *qglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
 
 // shared texture palette
 extern	void ( APIENTRY *qglColorTableEXT)( int, int, int, int, int, const void * );
-
-// ATI_fragment_shader
-extern	PFNGLGENFRAGMENTSHADERSATIPROC	qglGenFragmentShadersATI;
-extern	PFNGLBINDFRAGMENTSHADERATIPROC	qglBindFragmentShaderATI;
-extern	PFNGLDELETEFRAGMENTSHADERATIPROC qglDeleteFragmentShaderATI;
-extern	PFNGLBEGINFRAGMENTSHADERATIPROC qglBeginFragmentShaderATI;
-extern	PFNGLENDFRAGMENTSHADERATIPROC	qglEndFragmentShaderATI;
-extern	PFNGLPASSTEXCOORDATIPROC		qglPassTexCoordATI;
-extern	PFNGLSAMPLEMAPATIPROC			qglSampleMapATI;
-extern	PFNGLCOLORFRAGMENTOP1ATIPROC	qglColorFragmentOp1ATI;
-extern	PFNGLCOLORFRAGMENTOP2ATIPROC	qglColorFragmentOp2ATI;
-extern	PFNGLCOLORFRAGMENTOP3ATIPROC	qglColorFragmentOp3ATI;
-extern	PFNGLALPHAFRAGMENTOP1ATIPROC	qglAlphaFragmentOp1ATI;
-extern	PFNGLALPHAFRAGMENTOP2ATIPROC	qglAlphaFragmentOp2ATI;
-extern	PFNGLALPHAFRAGMENTOP3ATIPROC	qglAlphaFragmentOp3ATI;
-extern	PFNGLSETFRAGMENTSHADERCONSTANTATIPROC	qglSetFragmentShaderConstantATI;
-
-// EXT_stencil_two_side
-extern	PFNGLACTIVESTENCILFACEEXTPROC	qglActiveStencilFaceEXT;
-
-
-// ATI_separate_stencil
-extern	PFNGLSTENCILOPSEPARATEATIPROC		qglStencilOpSeparateATI;
-extern	PFNGLSTENCILFUNCSEPARATEATIPROC		qglStencilFuncSeparateATI;
 
 // ARB_texture_compression
 extern	PFNGLCOMPRESSEDTEXIMAGE2DARBPROC	qglCompressedTexImage2DARB;

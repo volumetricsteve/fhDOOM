@@ -106,9 +106,6 @@
     <Filter Include="Ui">
       <UniqueIdentifier>{b3166d25-0562-49da-bc8d-961006fe1785}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\glew">
-      <UniqueIdentifier>{bd55017a-de73-4456-8e4c-daef3dea03b9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cm\CollisionModel.h">
@@ -217,9 +214,6 @@
       <Filter>Framework\Async</Filter>
     </ClInclude>
     <ClInclude Include="renderer\Cinematic.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="renderer\glext.h">
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="renderer\GuiModel.h">
@@ -624,14 +618,8 @@
     <ClInclude Include="ui\Winvar.h">
       <Filter>Ui</Filter>
     </ClInclude>
-    <ClInclude Include="renderer\glew\GL\glew.h">
-      <Filter>Renderer\glew</Filter>
-    </ClInclude>
-    <ClInclude Include="renderer\glew\GL\glxew.h">
-      <Filter>Renderer\glew</Filter>
-    </ClInclude>
     <ClInclude Include="renderer\glew\GL\wglew.h">
-      <Filter>Renderer\glew</Filter>
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1823,8 +1811,8 @@
     <ClCompile Include="ui\Winvar.cpp">
       <Filter>Ui</Filter>
     </ClCompile>
-    <ClCompile Include="renderer\glew\glew.c">
-      <Filter>Renderer\glew</Filter>
+    <ClCompile Include="renderer\glew.c">
+      <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -224,6 +224,7 @@ void ( APIENTRY * qglMultiTexCoord2fvARB )( GLenum texture, GLfloat *st );
 void ( APIENTRY * qglActiveTextureARB )( GLenum texture );
 void ( APIENTRY * qglClientActiveTextureARB )( GLenum texture );
 
+#if 0
 void ( APIENTRY *qglCombinerParameterfvNV )( GLenum pname, const GLfloat *params );
 void ( APIENTRY *qglCombinerParameterivNV )( GLenum pname, const GLint *params );
 void ( APIENTRY *qglCombinerParameterfNV )( GLenum pname, const GLfloat param );
@@ -234,7 +235,7 @@ void ( APIENTRY *qglCombinerOutputNV )( GLenum stage, GLenum portion, GLenum abO
 											   GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct,
 											   GLboolean cdDotProduct, GLboolean muxSum );
 void ( APIENTRY *qglFinalCombinerInputNV )( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage );
-
+#endif
 
 void (APIENTRY *qglVertexArrayRangeNV)( GLsizei length, void *pointer );
 // TTimo: wgl vs glX
@@ -253,30 +254,6 @@ void (APIENTRY *qFreeMemoryNV)( void *pointer );
 void (APIENTRY *qglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
 
 void (APIENTRY * qglColorTableEXT)( int, int, int, int, int, const void * );
-
-
-// ATI_fragment_shader
-PFNGLGENFRAGMENTSHADERSATIPROC			qglGenFragmentShadersATI;
-PFNGLBINDFRAGMENTSHADERATIPROC			qglBindFragmentShaderATI;
-PFNGLDELETEFRAGMENTSHADERATIPROC		qglDeleteFragmentShaderATI;
-PFNGLBEGINFRAGMENTSHADERATIPROC			qglBeginFragmentShaderATI;
-PFNGLENDFRAGMENTSHADERATIPROC			qglEndFragmentShaderATI;
-PFNGLPASSTEXCOORDATIPROC				qglPassTexCoordATI;
-PFNGLSAMPLEMAPATIPROC					qglSampleMapATI;
-PFNGLCOLORFRAGMENTOP1ATIPROC			qglColorFragmentOp1ATI;
-PFNGLCOLORFRAGMENTOP2ATIPROC			qglColorFragmentOp2ATI;
-PFNGLCOLORFRAGMENTOP3ATIPROC			qglColorFragmentOp3ATI;
-PFNGLALPHAFRAGMENTOP1ATIPROC			qglAlphaFragmentOp1ATI;
-PFNGLALPHAFRAGMENTOP2ATIPROC			qglAlphaFragmentOp2ATI;
-PFNGLALPHAFRAGMENTOP3ATIPROC			qglAlphaFragmentOp3ATI;
-PFNGLSETFRAGMENTSHADERCONSTANTATIPROC	qglSetFragmentShaderConstantATI;
-
-// EXT_stencil_two_side
-PFNGLACTIVESTENCILFACEEXTPROC			qglActiveStencilFaceEXT;
-
-// ATI_separate_stencil
-PFNGLSTENCILOPSEPARATEATIPROC			qglStencilOpSeparateATI;
-PFNGLSTENCILFUNCSEPARATEATIPROC			qglStencilFuncSeparateATI;
 
 // ARB_texture_compression
 PFNGLCOMPRESSEDTEXIMAGE2DARBPROC		qglCompressedTexImage2DARB;
@@ -419,63 +396,6 @@ static void R_CheckPortableExtensions( void ) {
 	} else {
 		tr.stencilIncr = GL_INCR;
 		tr.stencilDecr = GL_DECR;
-	}
-
-	// GL_NV_register_combiners
-	glConfig.registerCombinersAvailable = R_CheckExtension( "GL_NV_register_combiners" );
-	if ( glConfig.registerCombinersAvailable ) {
-		qglCombinerParameterfvNV = (void (APIENTRY *)( GLenum pname, const GLfloat *params ))
-			GLimp_ExtensionPointer( "glCombinerParameterfvNV" );
-		qglCombinerParameterivNV = (void (APIENTRY *)( GLenum pname, const GLint *params ))
-			GLimp_ExtensionPointer( "glCombinerParameterivNV" );
-		qglCombinerParameterfNV = (void (APIENTRY *)( GLenum pname, const GLfloat param ))
-			GLimp_ExtensionPointer( "glCombinerParameterfNV" );
-		qglCombinerParameteriNV = (void (APIENTRY *)( GLenum pname, const GLint param ))
-			GLimp_ExtensionPointer( "glCombinerParameteriNV" );
-		qglCombinerInputNV = (void (APIENTRY *)( GLenum stage, GLenum portion, GLenum variable, GLenum input,
-											  GLenum mapping, GLenum componentUsage ))
-			GLimp_ExtensionPointer( "glCombinerInputNV" );
-		qglCombinerOutputNV = (void (APIENTRY *)( GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, 
-											   GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct,
-											   GLboolean cdDotProduct, GLboolean muxSum ))
-			GLimp_ExtensionPointer( "glCombinerOutputNV" );
-		qglFinalCombinerInputNV = (void (APIENTRY *)( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage ))
-			GLimp_ExtensionPointer( "glFinalCombinerInputNV" );
-	}
-
-	// GL_EXT_stencil_two_side
-	glConfig.twoSidedStencilAvailable = R_CheckExtension( "GL_EXT_stencil_two_side" );
-	if ( glConfig.twoSidedStencilAvailable ) {
-		qglActiveStencilFaceEXT = (PFNGLACTIVESTENCILFACEEXTPROC)GLimp_ExtensionPointer( "glActiveStencilFaceEXT" );
-	} else {
-		glConfig.atiTwoSidedStencilAvailable = R_CheckExtension( "GL_ATI_separate_stencil" );
-		if ( glConfig.atiTwoSidedStencilAvailable ) {
-			qglStencilFuncSeparateATI  = (PFNGLSTENCILFUNCSEPARATEATIPROC)GLimp_ExtensionPointer( "glStencilFuncSeparateATI" );
-			qglStencilOpSeparateATI = (PFNGLSTENCILOPSEPARATEATIPROC)GLimp_ExtensionPointer( "glStencilOpSeparateATI" );
-		}
-	}
-
-	// GL_ATI_fragment_shader
-	glConfig.atiFragmentShaderAvailable = R_CheckExtension( "GL_ATI_fragment_shader" );
-	if (! glConfig.atiFragmentShaderAvailable ) {
-		// only on OSX: ATI_fragment_shader is faked through ATI_text_fragment_shader (macosx_glimp.cpp)
-		glConfig.atiFragmentShaderAvailable = R_CheckExtension( "GL_ATI_text_fragment_shader" );
-	}
-	if ( glConfig.atiFragmentShaderAvailable ) {
-		qglGenFragmentShadersATI = (PFNGLGENFRAGMENTSHADERSATIPROC)GLimp_ExtensionPointer( "glGenFragmentShadersATI" );
-		qglBindFragmentShaderATI = (PFNGLBINDFRAGMENTSHADERATIPROC)GLimp_ExtensionPointer( "glBindFragmentShaderATI" );
-		qglDeleteFragmentShaderATI = (PFNGLDELETEFRAGMENTSHADERATIPROC)GLimp_ExtensionPointer( "glDeleteFragmentShaderATI" );
-		qglBeginFragmentShaderATI = (PFNGLBEGINFRAGMENTSHADERATIPROC)GLimp_ExtensionPointer( "glBeginFragmentShaderATI" );
-		qglEndFragmentShaderATI = (PFNGLENDFRAGMENTSHADERATIPROC)GLimp_ExtensionPointer( "glEndFragmentShaderATI" );
-		qglPassTexCoordATI = (PFNGLPASSTEXCOORDATIPROC)GLimp_ExtensionPointer( "glPassTexCoordATI" );
-		qglSampleMapATI = (PFNGLSAMPLEMAPATIPROC)GLimp_ExtensionPointer( "glSampleMapATI" );
-		qglColorFragmentOp1ATI = (PFNGLCOLORFRAGMENTOP1ATIPROC)GLimp_ExtensionPointer( "glColorFragmentOp1ATI" );
-		qglColorFragmentOp2ATI = (PFNGLCOLORFRAGMENTOP2ATIPROC)GLimp_ExtensionPointer( "glColorFragmentOp2ATI" );
-		qglColorFragmentOp3ATI = (PFNGLCOLORFRAGMENTOP3ATIPROC)GLimp_ExtensionPointer( "glColorFragmentOp3ATI" );
-		qglAlphaFragmentOp1ATI = (PFNGLALPHAFRAGMENTOP1ATIPROC)GLimp_ExtensionPointer( "glAlphaFragmentOp1ATI" );
-		qglAlphaFragmentOp2ATI = (PFNGLALPHAFRAGMENTOP2ATIPROC)GLimp_ExtensionPointer( "glAlphaFragmentOp2ATI" );
-		qglAlphaFragmentOp3ATI = (PFNGLALPHAFRAGMENTOP3ATIPROC)GLimp_ExtensionPointer( "glAlphaFragmentOp3ATI" );
-		qglSetFragmentShaderConstantATI = (PFNGLSETFRAGMENTSHADERCONSTANTATIPROC)GLimp_ExtensionPointer( "glSetFragmentShaderConstantATI" );
 	}
 
 	// ARB_vertex_buffer_object
@@ -658,6 +578,12 @@ void R_InitOpenGL( void ) {
 		r_displayRefresh.SetInteger( 0 );
 		r_multiSamples.SetInteger( 0 );
 	}
+
+  GLenum err = glewInit();
+  if (GLEW_OK != err)
+  {
+    common->Error("Failed to initialize GLEW: %s", glewGetErrorString(err));
+  }
 
 	// input and sound systems need to be tied to the new window
 	Sys_InitInput();
@@ -1817,16 +1743,6 @@ extern	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 	}
 #endif
 	
-	bool tss = glConfig.twoSidedStencilAvailable || glConfig.atiTwoSidedStencilAvailable;
-
-	if ( !r_useTwoSidedStencil.GetBool() && tss ) {
-		common->Printf( "Two sided stencil available but disabled\n" );
-	} else if ( !tss ) {
-		common->Printf( "Two sided stencil not available\n" );
-	} else if ( tss ) {
-		common->Printf( "Using two sided stencil\n" );
-	}
-
 	if ( vertexCache.IsFast() ) {
 		common->Printf( "Vertex cache is fast\n" );
 	} else {

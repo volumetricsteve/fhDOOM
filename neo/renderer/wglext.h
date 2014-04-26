@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef __wglext_h_
 #define __wglext_h_
 
@@ -610,3 +612,4 @@ typedef BOOL (WINAPI * PFNWGLQUERYFRAMETRACKINGI3DPROC) (DWORD *pFrameCount, DWO
 
 #endif
 
+#endif

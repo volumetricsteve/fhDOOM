@@ -47,7 +47,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "rc/AFEditor_resource.h"
 #include "rc/doom_resource.h"
 #include "../../renderer/tr_local.h"
-
+/*
 static void		GLW_InitExtensions( void );
 
 
@@ -73,7 +73,7 @@ PFNWGLQUERYPBUFFERARBPROC	wglQueryPbufferARB;
 PFNWGLBINDTEXIMAGEARBPROC		wglBindTexImageARB;
 PFNWGLRELEASETEXIMAGEARBPROC	wglReleaseTexImageARB;
 PFNWGLSETPBUFFERATTRIBARBPROC	wglSetPbufferAttribARB;
-
+*/
 
 
 /* ARB_pixel_format */
@@ -830,7 +830,7 @@ bool GLimp_Init( glimpParms_t parms ) {
 
 	// getting the wgl extensions involves creating a fake window to get a context,
 	// which is pretty disgusting, and seems to mess with the AGP VAR allocation
-	GLW_GetWGLExtensionsWithFakeWindow();
+	//GLW_GetWGLExtensionsWithFakeWindow();
 
 	// try to change to fullscreen
 	if ( parms.fullScreen ) {

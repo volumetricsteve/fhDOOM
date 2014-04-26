@@ -50,7 +50,6 @@ typedef struct glconfig_s {
 
 	float				glVersion;				// atof( version_string )
 
-
 	int					maxTextureSize;			// queried from GL
 	int					maxTextureUnits;
 	int					maxTextureCoords;
@@ -65,7 +64,6 @@ typedef struct glconfig_s {
 	bool				textureLODBiasAvailable;
 	bool				textureEnvAddAvailable;
 	bool				textureEnvCombineAvailable;
-	bool				registerCombinersAvailable;
 	bool				cubeMapAvailable;
 	bool				envDot3Available;
 	bool				texture3DAvailable;
@@ -73,27 +71,14 @@ typedef struct glconfig_s {
 	bool				ARBVertexBufferObjectAvailable;
 	bool				ARBVertexProgramAvailable;
 	bool				ARBFragmentProgramAvailable;
-	bool				twoSidedStencilAvailable;
 	bool				textureNonPowerOfTwoAvailable;
 	bool				depthBoundsTestAvailable;
-
-	// ati r200 extensions
-	bool				atiFragmentShaderAvailable;
-
-	// ati r300
-	bool				atiTwoSidedStencilAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
 
 	int					displayFrequency;
 
 	bool				isFullscreen;
-
-	bool				allowNV30Path;
-	bool				allowNV20Path;
-	bool				allowNV10Path;
-	bool				allowR200Path;
-	bool				allowARB2Path;
 
 	bool				isInitialized;
 } glconfig_t;
