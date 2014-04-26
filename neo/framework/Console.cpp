@@ -114,6 +114,7 @@ private:
 	static idCVar		con_notifyTime;
 	static idCVar		con_noPrint;
   static idCVar		con_fontScale;
+  static idCVar		con_size;
 
 	const idMaterial *	whiteShader;
 	const idMaterial *	consoleShader;
@@ -130,6 +131,7 @@ idCVar idConsoleLocal::con_noPrint( "con_noPrint", "0", CVAR_BOOL|CVAR_SYSTEM|CV
 idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "print on the console but not onscreen when console is pulled up" );
 #endif
 idCVar idConsoleLocal::con_fontScale( "con_fontScale", "1", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT, "scale of console font" );
+idCVar idConsoleLocal::con_size( "con_size", "0.5", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT, "screen size of console" );
 
 
 
@@ -774,7 +776,13 @@ bool	idConsoleLocal::ProcessEvent( const sysEvent_t *event, bool forceAccept ) {
 				// if the shift key is down, don't open the console as much
 				SetDisplayFraction( 0.2f );
 			} else {
-				SetDisplayFraction( 0.5f );
+        float consoleSize = con_size.GetFloat();
+        if(consoleSize < 0.1f)
+          consoleSize = 0.1f;
+        if(consoleSize > 1.0f)
+          consoleSize = 1.0f;
+
+				SetDisplayFraction( consoleSize );
 			}
 			cvarSystem->SetCVarBool( "ui_chat", true );
 		}
