@@ -4480,7 +4480,7 @@ idAFTree::Factor
 void idAFTree::Factor( void ) const {
 	int i, j;
 	idAFBody *body;
-	idAFConstraint *child;
+	idAFConstraint *child = NULL;
 	idMatX childI;
 
 	childI.SetData( 6, 6, MATX_ALLOCA( 6 * 6 ) );
@@ -4511,7 +4511,7 @@ void idAFTree::Factor( void ) const {
 			}
 
 			body->invI = body->I;
-			if ( !body->invI.InverseFastSelf() ) {
+			if ( child && !body->invI.InverseFastSelf() ) {
 				gameLocal.Warning( "idAFTree::Factor: couldn't invert %dx%d matrix for body %s",
 								child->invI.GetNumRows(), child->invI.GetNumColumns(), body->GetName().c_str() );
 			}

@@ -1482,7 +1482,7 @@ idVarDef *idCompiler::GetExpression( int priority ) {
 		return e;
 	}
 
-	while( 1 ) {
+	for(;;) {
 		if ( ( priority == FUNCTION_PRIORITY ) && CheckToken( "(" ) ) {
 			return ParseFunctionCall( e );
 		}

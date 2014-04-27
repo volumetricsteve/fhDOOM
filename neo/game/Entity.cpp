@@ -860,7 +860,6 @@ bool idEntity::DoDormantTests( void ) {
 		// wake up
 		dormantStart = 0;
 		fl.hasAwakened = true;		// only go dormant when area closed off now, not just out of PVS
-		return false;
 	}
 
 	return false;
@@ -2523,7 +2522,7 @@ idEntity::RunPhysics
 */
 bool idEntity::RunPhysics( void ) {
 	int			i, reachedTime, startTime, endTime;
-	idEntity *	part, *blockedPart, *blockingEntity;
+	idEntity *	part, *blockedPart, *blockingEntity = NULL;
 	trace_t		results;
 	bool		moved;
 
@@ -2624,6 +2623,7 @@ bool idEntity::RunPhysics( void ) {
 
 		// if the master pusher has a "blocked" function, call it
 		Signal( SIG_BLOCKED );
+    assert(blockingEntity && "must not be NULL");
 		ProcessEvent( &EV_TeamBlocked, blockedPart, blockingEntity );
 		// call the blocked function on the blocked part
 		blockedPart->ProcessEvent( &EV_PartBlocked, blockingEntity );
@@ -3336,7 +3336,7 @@ bool idEntity::HandleGuiCommands( idEntity *entityGui, const char *cmds ) {
 		idLexer src;
 		idToken token, token2, token3, token4;
 		src.LoadMemory( cmds, strlen( cmds ), "guiCommands" );
-		while( 1 ) {
+		for(;;) {
 
 			if ( !src.ReadToken( &token ) ) {
 				return ret;
@@ -4840,10 +4840,11 @@ bool idEntity::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
 			StopSound( channel, false );
 			return true;
 		}
-		default: {
-			return false;
-		}
+    default: {
+      break;
+    }
 	}
+
 	return false;
 }
 
@@ -5283,11 +5284,12 @@ bool idAnimatedEntity::ClientReceiveEvent( int event, int time, const idBitMsg &
 			AddLocalDamageEffect( jointNum, localOrigin, localNormal, localDir, damageDef, collisionMaterial );
 			return true;
 		}
-		default: {
-			return idEntity::ClientReceiveEvent( event, time, msg );
-		}
+    default: {
+      break;
+    }
 	}
-	return false;
+
+  return idEntity::ClientReceiveEvent( event, time, msg );
 }
 
 /*

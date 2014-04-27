@@ -140,7 +140,6 @@ bool	Swap_IsBigEndian( void );
 void	SixtetsForInt( byte *out, int src);
 int		IntForSixtets( byte *in );
 
-
 #ifdef _DEBUG
 void AssertFailed( const char *file, int line, const char *expression );
 #undef assert

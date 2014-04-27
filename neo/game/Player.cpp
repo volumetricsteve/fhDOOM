@@ -3534,7 +3534,7 @@ void idPlayer::NextWeapon( void ) {
 	}
 	
 	w = idealWeapon;
-	while( 1 ) {
+	for(;;) {
 		w++;
 		if ( w >= MAX_WEAPONS ) {
 			w = 0;
@@ -3584,7 +3584,7 @@ void idPlayer::PrevWeapon( void ) {
 	}
 
 	w = idealWeapon;
-	while( 1 ) {
+	for(;;) {
 		w--;
 		if ( w < 0 ) {
 			w = MAX_WEAPONS - 1;
@@ -6816,7 +6816,6 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 			damage = 1;
 		}
 
-		int oldHealth = health;
 		health -= damage;
 
 		if ( health <= 0 ) {
@@ -8258,11 +8257,12 @@ bool idPlayer::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
 			}
 			return idActor::ClientReceiveEvent( event, time, msg );
 		}
-		default: {
-			return idActor::ClientReceiveEvent( event, time, msg );
-		}
+    default: {
+      break;
+    }
 	}
-	return false;
+
+  return idActor::ClientReceiveEvent( event, time, msg );
 }
 
 /*
