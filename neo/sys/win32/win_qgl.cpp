@@ -586,7 +586,7 @@ void QGL_Shutdown( void )
 /*
 ** QGL_Init
 **
-** This is responsible for binding our qgl function pointers to 
+** This is responsible for binding our gl function pointers to 
 ** the appropriate GL stuff.  In Windows this means doing a 
 ** LoadLibrary and a bunch of calls to GetProcAddress.  On other
 ** operating systems we need to do the right thing, whatever that
@@ -607,9 +607,9 @@ bool QGL_Init( const char *dllname )
 	}
 	common->Printf( "succeeded\n" );
 
-	qglActiveTextureARB = 0;
-	qglClientActiveTextureARB = 0;
-	qglMultiTexCoord2fARB = 0;
+	glActiveTextureARB = 0;
+	glClientActiveTextureARB = 0;
+	glMultiTexCoord2fARB = 0;
 
 	return true;
 }

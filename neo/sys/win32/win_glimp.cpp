@@ -261,8 +261,8 @@ LONG WINAPI FakeWndProc (
     // Set up OpenGL
     pixelFormat = ChoosePixelFormat(hDC, &pfd);
     SetPixelFormat(hDC, pixelFormat, &pfd);
-    hGLRC = qwglCreateContext(hDC);
-    qwglMakeCurrent(hDC, hGLRC);
+    hGLRC = wglCreateContext(hDC);
+    wglMakeCurrent(hDC, hGLRC);
 
 	// free things
     wglMakeCurrent(NULL, NULL);
@@ -402,15 +402,15 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 	// startup the OpenGL subsystem by creating a context and making it current
 	//
 	common->Printf( "...creating GL context: " );
-	if ( ( win32.hGLRC = qwglCreateContext( win32.hDC ) ) == 0 ) {
+	if ( ( win32.hGLRC = wglCreateContext( win32.hDC ) ) == 0 ) {
 		common->Printf( "^3failed^0\n" );
 		return false;
 	}
 	common->Printf( "succeeded\n" );
 
 	common->Printf( "...making context current: " );
-	if ( !qwglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
-		qwglDeleteContext( win32.hGLRC );
+	if ( !wglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
+		wglDeleteContext( win32.hGLRC );
 		win32.hGLRC = NULL;
 		common->Printf( "^3failed^0\n" );
 		return false;
@@ -744,7 +744,7 @@ bool GLimp_Init( glimpParms_t parms ) {
 	// create our window classes if we haven't already
 	GLW_CreateWindowClasses();
 
-	// this will load the dll and set all our qgl* function pointers,
+	// this will load the dll and set all our gl* function pointers,
 	// but doesn't create a window
 
 	// r_glDriver is only intended for using instrumented OpenGL
@@ -877,12 +877,12 @@ void GLimp_Shutdown( void ) {
 	common->Printf( "Shutting down OpenGL subsystem\n" );
 
 	// set current context to NULL
-	retVal = qwglMakeCurrent( NULL, NULL ) != 0;
+	retVal = wglMakeCurrent( NULL, NULL ) != 0;
 	common->Printf( "...wglMakeCurrent( NULL, NULL ): %s\n", success[retVal] );
 
 	// delete HGLRC
 	if ( win32.hGLRC ) {
-		retVal = qwglDeleteContext( win32.hGLRC ) != 0;
+		retVal = wglDeleteContext( win32.hGLRC ) != 0;
 		common->Printf( "...deleting GL context: %s\n", success[retVal] );
 		win32.hGLRC = NULL;
 	}
@@ -942,7 +942,7 @@ void GLimp_SwapBuffers( void ) {
 		}
 	}
 
-	qwglSwapBuffers( win32.hDC );
+	wglSwapBuffers( win32.hDC );
 
 //Sys_DebugPrintf( "*** SwapBuffers() ***\n" );
 }
@@ -964,7 +964,7 @@ GLimp_ActivateContext
 ===================
 */
 void GLimp_ActivateContext( void ) {
-	if ( !qwglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
+	if ( !wglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
 		win32.wglErrors++;
 	}
 }
@@ -976,8 +976,8 @@ GLimp_DeactivateContext
 ===================
 */
 void GLimp_DeactivateContext( void ) {
-	qglFinish();
-	if ( !qwglMakeCurrent( win32.hDC, NULL ) ) {
+	glFinish();
+	if ( !wglMakeCurrent( win32.hDC, NULL ) ) {
 		win32.wglErrors++;
 	}
 #ifdef REALLOC_DC
@@ -999,7 +999,7 @@ static void GLimp_RenderThreadWrapper( void ) {
 	win32.glimpRenderThread();
 
 	// unbind the context before we die
-	qwglMakeCurrent( win32.hDC, NULL );
+	wglMakeCurrent( win32.hDC, NULL );
 }
 
 /*
