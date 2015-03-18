@@ -40,6 +40,7 @@ If you have questions concerning this license or the applicable additional terms
 
 // paths
 #define	CD_BASEDIR						"Doom"
+#define	CD_CODEDIR    				"neo"
 #ifdef ID_DEMO_BUILD
 	#define BASE_GAMEDIR					"demo"
 #else
