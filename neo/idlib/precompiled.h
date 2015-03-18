@@ -58,6 +58,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #else
 
+#define NO_WARN_MBCS_MFC_DEPRECATION
 #include "../tools/comafx/StdAfx.h"
 
 #endif
