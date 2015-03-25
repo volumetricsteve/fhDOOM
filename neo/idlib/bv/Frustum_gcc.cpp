@@ -27,6 +27,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 #include "../precompiled.h"
 
+#ifndef _WIN32
 void BoxToPoints( const idVec3 &center, const idVec3 &extents, const idMat3 &axis, idVec3 points[8] );
 
 /*
@@ -141,3 +142,4 @@ bool idFrustum::ProjectionBounds( const idBox &box, idBounds &projectionBounds )
 
 	return true;
 }
+#endif

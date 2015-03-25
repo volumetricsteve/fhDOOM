@@ -50,7 +50,7 @@ SET(SOURCES
   gamesys/SysCmds.h
   gamesys/SysCvar.cpp
   gamesys/SysCvar.h
-  gamesys/TypeInfo.cpp
+  #gamesys/TypeInfo.cpp    <= will be added later to the source list, because it can't be compiled with pch (because it redefines some keywords)
   gamesys/TypeInfo.h
   Game_local.cpp
   Game_local.h
@@ -139,7 +139,14 @@ SET(SOURCES
   Weapon.h
   WorldSpawn.cpp
   WorldSpawn.h
+  precompiled.h
 )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_force_include(precompiled.h SOURCES)
+add_msvc_precompiled_header(precompiled.h SOURCES)
+
+SET(SOURCES ${SOURCES} gamesys/TypeInfo.cpp) #TypeInfo must be compiled without pch, so it can redefine some keywords
 
 source_group(game .*)  
 source_group(game\\AI ai/.*)  

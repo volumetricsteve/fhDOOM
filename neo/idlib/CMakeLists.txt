@@ -112,7 +112,7 @@ SET(SOURCES
   math/Vector.h
   Parser.cpp
   Parser.h
-  precompiled.cpp
+  #precompiled.cpp
   precompiled.h
   Str.cpp
   Str.h
@@ -128,6 +128,12 @@ source_group(idlib\\Containers containers/.*)
 source_group(idlib\\Geometry geometry/.*)  
 source_group(idlib\\Hashing hashing/.*)  
 source_group(idlib\\Math math/.*) 
+
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+add_force_include(precompiled.h SOURCES)
+add_msvc_precompiled_header(precompiled.h SOURCES)
 
 add_library(idlib ${SOURCES})
 SET_PROPERTY(TARGET idlib                PROPERTY FOLDER libs)
