@@ -26,13 +26,42 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-#include "../idlib/precompiled.h"
-#pragma hdrstop
+#ifdef MAYA_2011
+//include Maya 2011 headers
+#include "maya/MLibrary.h"
+#include "maya/MFnDagNode.h"
+#include "maya/MFloatPoint.h"
+#include "maya/MFloatPointArray.h"
+#include "maya/MMatrix.h"
+#include "maya/MFileIO.h"
+#include "maya/MTime.h"
+#include "maya/MFnSkinCluster.h"
+#include "maya/MGlobal.h"
+#include "maya/MPlug.h"
+#include "maya/MFnAttribute.h"
+#include "maya/MFnMatrixData.h"
+#include "maya/MDagPath.h"
+#include "maya/MDagPathArray.h"
+#include "maya/MFnMesh.h"
+#include "maya/MFnCamera.h"
+#include "maya/MFnEnumAttribute.h"
+#include "maya/MFnSet.h"
+#include "maya/MItDag.h"
+#include "maya/MItMeshPolygon.h"
+#include "maya/MItGeometry.h"
+#include "maya/MAnimControl.h"
+#include "maya/MItDependencyGraph.h"
+#include "maya/MItDependencyNodes.h"
+#endif
 
-#include "Maya5.0/maya.h"
+#include "../idlib/precompiled.h"
+
+
 //#include "Maya6.0/maya.h"			// must also change include directory in project from "MayaImport\Maya4.5\include" to "MayaImport\Maya6.0\include" (requires MSDev 7.1)
 #include "exporter.h"
+#ifndef MAYA_2011
 #include "maya_main.h"
+#endif
 
 idStr	errorMessage;
 bool	initialized = false;
