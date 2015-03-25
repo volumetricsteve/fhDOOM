@@ -26,6 +26,7 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
+#if defined(MACOS_X) && defined(__ppc__)
 
 #include "../precompiled.h"
 #pragma hdrstop
@@ -11237,3 +11238,5 @@ void VPCALL idSIMD_AltiVec::MixedSoundToSamples( short *samples, const float *mi
 #endif /* ENABLE_SOUND_ROUTINES */
 
 #endif /* MACOS_X */
+
+#endif
