@@ -927,9 +927,9 @@ source_group(Ui ui/.*)
 
 include_directories("C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include")
 
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-#add_force_include(precompiled.h SOURCES)
-#add_msvc_precompiled_header(precompiled.h SOURCES)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_force_include(precompiled.h SOURCES)
+add_msvc_precompiled_header(precompiled.h SOURCES)
 
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
 add_executable(doom3 ${SOURCES})
