@@ -69,106 +69,17 @@ add_subdirectory (d3xp)
 
 
 
-SET(SOURCES
-  cm/CollisionModel.h
-  cm/CollisionModel_contacts.cpp
-  cm/CollisionModel_contents.cpp
-  cm/CollisionModel_debug.cpp
-  cm/CollisionModel_files.cpp
-  cm/CollisionModel_load.cpp
-  cm/CollisionModel_local.h
-  cm/CollisionModel_rotate.cpp
-  cm/CollisionModel_trace.cpp
-  cm/CollisionModel_translate.cpp
-
-
-  framework/async/AsyncClient.cpp
-  framework/async/AsyncClient.h
-  framework/async/AsyncNetwork.cpp
-  framework/async/AsyncNetwork.h
-  framework/async/AsyncServer.cpp
-  framework/async/AsyncServer.h
-  framework/async/MsgChannel.cpp
-  framework/async/MsgChannel.h
-  framework/async/NetworkSystem.cpp
-  framework/async/NetworkSystem.h
-  framework/async/ServerScan.cpp
-  framework/async/ServerScan.h
-  framework/BuildDefines.h
-  framework/BuildVersion.h
-  framework/CmdSystem.cpp
-  framework/CmdSystem.h
-  framework/Common.cpp
-  framework/Common.h
-  framework/Compressor.cpp
-  framework/Compressor.h
-  framework/Console.cpp
-  framework/Console.h
-  framework/CVarSystem.cpp
-  framework/CVarSystem.h
-  framework/DeclAF.cpp
-  framework/DeclAF.h
-  framework/DeclEntityDef.cpp
-  framework/DeclEntityDef.h
-  framework/DeclFX.cpp
-  framework/DeclFX.h
-  framework/DeclManager.cpp
-  framework/DeclManager.h
-  framework/DeclParticle.cpp
-  framework/DeclParticle.h
-  framework/DeclPDA.cpp
-  framework/DeclPDA.h
-  framework/DeclSkin.cpp
-  framework/DeclSkin.h
-  framework/DeclTable.cpp
-  framework/DeclTable.h
-  framework/DemoChecksum.h
-  framework/DemoFile.cpp
-  framework/DemoFile.h
-  framework/EditField.cpp
-  framework/EditField.h
-  framework/EventLoop.cpp
-  framework/EventLoop.h
-  framework/File.cpp
-  framework/File.h
-  framework/FileSystem.cpp
-  framework/FileSystem.h
-  framework/KeyInput.cpp
-  framework/KeyInput.h
-  framework/Licensee.h
-  framework/Session.cpp
-  framework/Session.h
-  framework/Session_local.h
-  framework/Session_menu.cpp
-  framework/Unzip.cpp
-  framework/Unzip.h
-  framework/UsercmdGen.cpp
-  framework/UsercmdGen.h
-
-  renderer/cg_explicit.cpp
-  renderer/cg_explicit.h
-  renderer/Cinematic.cpp
-  renderer/Cinematic.h
-  renderer/draw_arb2.cpp
-  renderer/draw_common.cpp
-  #renderer/draw_exp.cpp
-  #renderer/draw_exp_stub.cpp
-
+SET(SOURCES 
   renderer/GL/glew.h
   renderer/GL/glxew.h
   renderer/GL/wglew.h
   renderer/glew.c
-  renderer/GuiModel.cpp
-  renderer/GuiModel.h
-  renderer/Image.h
-  renderer/Image_files.cpp
-  renderer/Image_init.cpp
-  renderer/Image_load.cpp
-  renderer/Image_process.cpp
-  renderer/Image_program.cpp
-  renderer/Interaction.cpp
-  renderer/Interaction.h
+)
+add_library(glew STATIC ${SOURCES})
+SET_PROPERTY(TARGET glew PROPERTY FOLDER 3rdParty)
 
+
+SET(SOURCES
   renderer/jpeg-6/jcapimin.c
   renderer/jpeg-6/jcapistd.c
   renderer/jpeg-6/jccoefct.c
@@ -231,67 +142,12 @@ SET(SOURCES
   renderer/jpeg-6/jquant2.c
   renderer/jpeg-6/jutils.c
   renderer/jpeg-6/jversion.h
-  renderer/Material.cpp
-  renderer/Material.h
-  renderer/MegaTexture.cpp
-  renderer/MegaTexture.h
-  renderer/Model.cpp
-  renderer/Model.h
-  renderer/ModelDecal.cpp
-  renderer/ModelDecal.h
-  renderer/ModelManager.cpp
-  renderer/ModelManager.h
-  renderer/ModelOverlay.cpp
-  renderer/ModelOverlay.h
-  renderer/Model_ase.cpp
-  renderer/Model_ase.h
-  renderer/Model_beam.cpp
-  renderer/Model_liquid.cpp
-  renderer/Model_local.h
-  renderer/Model_lwo.cpp
-  renderer/Model_lwo.h
-  renderer/Model_ma.cpp
-  renderer/Model_ma.h
-  renderer/Model_md3.cpp
-  renderer/Model_md3.h
-  renderer/Model_md5.cpp
-  renderer/Model_prt.cpp
-  renderer/Model_sprite.cpp
-  renderer/qgl.h
-  renderer/RenderEntity.cpp
-  renderer/RenderSystem.cpp
-  renderer/RenderSystem.h
-  renderer/RenderSystem_init.cpp
-  renderer/RenderWorld.cpp
-  renderer/RenderWorld.h
-  renderer/RenderWorld_demo.cpp
-  renderer/RenderWorld_load.cpp
-  renderer/RenderWorld_local.h
-  renderer/RenderWorld_portals.cpp
-  renderer/simplex.h
-  renderer/tr_backend.cpp
-  renderer/tr_deform.cpp
-  renderer/tr_font.cpp
-  renderer/tr_guisurf.cpp
-  renderer/tr_light.cpp
-  renderer/tr_lightrun.cpp
-  renderer/tr_local.h
-  renderer/tr_main.cpp
-  renderer/tr_orderIndexes.cpp
-  renderer/tr_polytope.cpp
-  renderer/tr_render.cpp
-  renderer/tr_rendertools.cpp
-  renderer/tr_shadowbounds.cpp
-  renderer/tr_stencilshadow.cpp
-  renderer/tr_subview.cpp
-  renderer/tr_trace.cpp
-  renderer/tr_trisurf.cpp
-  renderer/tr_turboshadow.cpp
-  renderer/VertexCache.cpp
-  renderer/VertexCache.h
-  renderer/wglext.h
+)
+add_library(jpeg-6 STATIC ${SOURCES})
+SET_PROPERTY(TARGET jpeg-6 PROPERTY FOLDER 3rdParty)
 
 
+SET(SOURCES
   sound/OggVorbis/ogg/ogg.h
   sound/OggVorbis/ogg/os_types.h  
   sound/OggVorbis/oggsrc/bitwise.c
@@ -370,6 +226,166 @@ SET(SOURCES
   sound/OggVorbis/vorbissrc/vorbisfile.c
   sound/OggVorbis/vorbissrc/window.h
   sound/OggVorbis/vorbissrc/windowvb.c
+)
+add_library(oggvorbis STATIC ${SOURCES})
+SET_PROPERTY(TARGET oggvorbis PROPERTY FOLDER 3rdParty)
+
+SET(SOURCES
+  cm/CollisionModel.h
+  cm/CollisionModel_contacts.cpp
+  cm/CollisionModel_contents.cpp
+  cm/CollisionModel_debug.cpp
+  cm/CollisionModel_files.cpp
+  cm/CollisionModel_load.cpp
+  cm/CollisionModel_local.h
+  cm/CollisionModel_rotate.cpp
+  cm/CollisionModel_trace.cpp
+  cm/CollisionModel_translate.cpp
+  framework/async/AsyncClient.cpp
+  framework/async/AsyncClient.h
+  framework/async/AsyncNetwork.cpp
+  framework/async/AsyncNetwork.h
+  framework/async/AsyncServer.cpp
+  framework/async/AsyncServer.h
+  framework/async/MsgChannel.cpp
+  framework/async/MsgChannel.h
+  framework/async/NetworkSystem.cpp
+  framework/async/NetworkSystem.h
+  framework/async/ServerScan.cpp
+  framework/async/ServerScan.h
+  framework/BuildDefines.h
+  framework/BuildVersion.h
+  framework/CmdSystem.cpp
+  framework/CmdSystem.h
+  framework/Common.cpp
+  framework/Common.h
+  framework/Compressor.cpp
+  framework/Compressor.h
+  framework/Console.cpp
+  framework/Console.h
+  framework/CVarSystem.cpp
+  framework/CVarSystem.h
+  framework/DeclAF.cpp
+  framework/DeclAF.h
+  framework/DeclEntityDef.cpp
+  framework/DeclEntityDef.h
+  framework/DeclFX.cpp
+  framework/DeclFX.h
+  framework/DeclManager.cpp
+  framework/DeclManager.h
+  framework/DeclParticle.cpp
+  framework/DeclParticle.h
+  framework/DeclPDA.cpp
+  framework/DeclPDA.h
+  framework/DeclSkin.cpp
+  framework/DeclSkin.h
+  framework/DeclTable.cpp
+  framework/DeclTable.h
+  framework/DemoChecksum.h
+  framework/DemoFile.cpp
+  framework/DemoFile.h
+  framework/EditField.cpp
+  framework/EditField.h
+  framework/EventLoop.cpp
+  framework/EventLoop.h
+  framework/File.cpp
+  framework/File.h
+  framework/FileSystem.cpp
+  framework/FileSystem.h
+  framework/KeyInput.cpp
+  framework/KeyInput.h
+  framework/Licensee.h
+  framework/Session.cpp
+  framework/Session.h
+  framework/Session_local.h
+  framework/Session_menu.cpp
+  framework/Unzip.cpp
+  framework/Unzip.h
+  framework/UsercmdGen.cpp
+  framework/UsercmdGen.h
+
+  renderer/cg_explicit.cpp
+  renderer/cg_explicit.h
+  renderer/Cinematic.cpp
+  renderer/Cinematic.h
+  renderer/draw_arb2.cpp
+  renderer/draw_common.cpp
+  #renderer/draw_exp.cpp
+  #renderer/draw_exp_stub.cpp
+
+  renderer/GuiModel.cpp
+  renderer/GuiModel.h
+  renderer/Image.h
+  renderer/Image_files.cpp
+  renderer/Image_init.cpp
+  renderer/Image_load.cpp
+  renderer/Image_process.cpp
+  renderer/Image_program.cpp
+  renderer/Interaction.cpp
+  renderer/Interaction.h
+
+  renderer/Material.cpp
+  renderer/Material.h
+  renderer/MegaTexture.cpp
+  renderer/MegaTexture.h
+  renderer/Model.cpp
+  renderer/Model.h
+  renderer/ModelDecal.cpp
+  renderer/ModelDecal.h
+  renderer/ModelManager.cpp
+  renderer/ModelManager.h
+  renderer/ModelOverlay.cpp
+  renderer/ModelOverlay.h
+  renderer/Model_ase.cpp
+  renderer/Model_ase.h
+  renderer/Model_beam.cpp
+  renderer/Model_liquid.cpp
+  renderer/Model_local.h
+  renderer/Model_lwo.cpp
+  renderer/Model_lwo.h
+  renderer/Model_ma.cpp
+  renderer/Model_ma.h
+  renderer/Model_md3.cpp
+  renderer/Model_md3.h
+  renderer/Model_md5.cpp
+  renderer/Model_prt.cpp
+  renderer/Model_sprite.cpp
+  renderer/qgl.h
+  renderer/RenderEntity.cpp
+  renderer/RenderSystem.cpp
+  renderer/RenderSystem.h
+  renderer/RenderSystem_init.cpp
+  renderer/RenderWorld.cpp
+  renderer/RenderWorld.h
+  renderer/RenderWorld_demo.cpp
+  renderer/RenderWorld_load.cpp
+  renderer/RenderWorld_local.h
+  renderer/RenderWorld_portals.cpp
+  renderer/simplex.h
+  renderer/tr_backend.cpp
+  renderer/tr_deform.cpp
+  renderer/tr_font.cpp
+  renderer/tr_guisurf.cpp
+  renderer/tr_light.cpp
+  renderer/tr_lightrun.cpp
+  renderer/tr_local.h
+  renderer/tr_main.cpp
+  renderer/tr_orderIndexes.cpp
+  renderer/tr_polytope.cpp
+  renderer/tr_render.cpp
+  renderer/tr_rendertools.cpp
+  renderer/tr_shadowbounds.cpp
+  renderer/tr_stencilshadow.cpp
+  renderer/tr_subview.cpp
+  renderer/tr_trace.cpp
+  renderer/tr_trisurf.cpp
+  renderer/tr_turboshadow.cpp
+  renderer/VertexCache.cpp
+  renderer/VertexCache.h
+  renderer/wglext.h
+
+
+
   sound/snd_cache.cpp
   sound/snd_decoder.cpp
   sound/snd_efxfile.cpp
@@ -922,13 +938,14 @@ target_link_libraries(doom3
   libcmtd.lib
   idlib 
   curl
+  glew
+  jpeg-6
+  oggvorbis
   opengl32.lib 
   Glu32.lib
   Dbghelp.lib
   wsock32.lib
   iphlpapi.lib
-
-  #"${PROJECT_SOURCE_DIR}/sys/win32/eaxguid.lib"
   "${PROJECT_SOURCE_DIR}/openal/lib/eaxguid.lib"
   "${PROJECT_SOURCE_DIR}/openal/lib/openal32.lib"
   "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Lib/x86/dinput8.lib"
