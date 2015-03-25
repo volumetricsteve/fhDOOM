@@ -5,7 +5,6 @@ SET(SOURCES
   AF.h
   AFEntity.cpp
   AFEntity.h
-  ai
   ai/AAS.cpp
   ai/AAS.h
   ai/AAS_debug.cpp
@@ -17,7 +16,6 @@ SET(SOURCES
   ai/AI_events.cpp
   ai/AI_pathing.cpp
   ai/AI_Vagary.cpp
-  anim
   anim/Anim.cpp
   anim/Anim.h
   anim/Anim_Blend.cpp
@@ -38,7 +36,6 @@ SET(SOURCES
   Game.h
   GameEdit.cpp
   GameEdit.h
-  gamesys
   #gamesys/Callbacks.cpp
   gamesys/Class.cpp
   gamesys/Class.h
@@ -74,7 +71,6 @@ SET(SOURCES
   Mover.h
   MultiplayerGame.cpp
   MultiplayerGame.h
-  physics
   physics/Clip.cpp
   physics/Clip.h
   physics/Force.cpp
@@ -121,7 +117,6 @@ SET(SOURCES
   Projectile.h
   Pvs.cpp
   Pvs.h
-  script
   script/Script_Compiler.cpp
   script/Script_Compiler.h
   script/Script_Interpreter.cpp
@@ -146,6 +141,15 @@ SET(SOURCES
   WorldSpawn.h
 )
 
+source_group(game .*)  
+source_group(game\\AI ai/.*)  
+source_group(game\\Animation animation/.*)  
+source_group(game\\GameSys gamesys/.*)  
+source_group(game\\Physics physics/.*)  
+source_group(game\\Script script/.*) 
+
+
 add_definitions(-D__DOOM__ -DGAME_DLL -D_D3XP)
-add_library(Game-d3xp SHARED ${SOURCES})
-target_link_libraries(Game-d3xp idlib)
+add_library(gamex86-roe SHARED ${SOURCES})
+target_link_libraries(gamex86-roe idlib)
+SET_PROPERTY(TARGET gamex86-roe                PROPERTY FOLDER dlls)

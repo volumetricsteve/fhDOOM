@@ -122,4 +122,12 @@ SET(SOURCES
   Token.h
 )
 
+source_group(idlib .*)  
+source_group(idlib\\BV bv/.*)  
+source_group(idlib\\Containers containers/.*)  
+source_group(idlib\\Geometry geometry/.*)  
+source_group(idlib\\Hashing hashing/.*)  
+source_group(idlib\\Math math/.*) 
+
 add_library(idlib ${SOURCES})
+SET_PROPERTY(TARGET idlib                PROPERTY FOLDER libs)

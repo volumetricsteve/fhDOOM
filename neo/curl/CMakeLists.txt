@@ -48,3 +48,4 @@ SET(SOURCES
 
 include_directories("include")
 add_library(curl ${SOURCES})
+SET_PROPERTY(TARGET curl                PROPERTY FOLDER libs)

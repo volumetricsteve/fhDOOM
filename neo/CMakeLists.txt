@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (fhDoom3)
+project (doom)
 
 
 MACRO(add_msvc_precompiled_header PrecompiledHeader SourcesVar)
@@ -58,6 +58,8 @@ SET(CMAKE_C_FLAGS         ${CMAKE_CXX_FLAGS})
 SET(CMAKE_C_FLAGS_DEBUG   ${CMAKE_CXX_FLAGS_DEBUG})
 SET(CMAKE_C_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})    
 
+SET_PROPERTY(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER  "")
+SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory (idlib)
 add_subdirectory (curl)
@@ -878,12 +880,40 @@ SET(SOURCES
   ui/Winvar.h
 )
 
+source_group(CM cm/.*)  
+source_group(Framework framework/.*)  
+source_group(Framework\\async framework/async/.*)  
+source_group(Renderer renderer/.*)  
+source_group(Renderer\\jpeg6 renderer/jpeg-6/.*)  
+source_group(Renderer\\GL renderer/GL/.*)  
+source_group(Sound sound/.*)  
+source_group(Sound\\ogg sound/OggVorbis/ogg/.*)  
+source_group(Sound\\oggsrc sound/OggVorbis/oggsrc/.*)  
+source_group(Sound\\vorbis sound/OggVorbis/vorbis/.*)  
+source_group(Sound\\vorbissrc sound/OggVorbis/vorbissrc/.*)  
+source_group(Sys sys/.*)  
+source_group(Sys\\win32 sys/win32/.*)  
+source_group(Tools tools/.*)  
+source_group(Tools\\AF tools/af/.*)  
+source_group(Tools\\ComAfx tools/comafx/.*)  
+source_group(Tools\\Common tools/common/.*)  
+source_group(Tools\\Compilers tools/compilers/.*)  
+source_group(Tools\\Debugger tools/debugger/.*)  
+source_group(Tools\\Decl tools/decl/.*)  
+source_group(Tools\\Guied tools/guied/.*)  
+source_group(Tools\\MaterialEditor tools/materialeditor/.*)  
+source_group(Tools\\Particle tools/particle/.*)  
+source_group(Tools\\PDA tools/pda/.*)  
+source_group(Tools\\Radiant tools/radiant/.*)  
+source_group(Tools\\Script tools/script/.*)  
+source_group(Tools\\Sound tools/sound/.*)  
+source_group(Ui ui/.*)  
 
 include_directories("C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)/Include")
 
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
-add_executable(fhDoom3 ${SOURCES})
-target_link_libraries(fhDoom3 
+add_executable(doom3 ${SOURCES})
+target_link_libraries(doom3 
   nafxcwd.lib
   libcmtd.lib
   idlib 
@@ -904,6 +934,8 @@ target_link_libraries(fhDoom3
 )
 
 if(MSVC) # Check if we are using the Visual Studio compiler
-  set_target_properties(fhDoom3 PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
-  set_target_properties(fhDoom3 PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
+  set_target_properties(doom3 PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+  set_target_properties(doom3 PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
 endif()
+
+SET_PROPERTY(TARGET doom3                PROPERTY FOLDER exes)

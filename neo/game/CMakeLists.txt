@@ -138,7 +138,14 @@ SET(SOURCES
   WorldSpawn.h
 )
 
+source_group(game .*)  
+source_group(game\\AI ai/.*)  
+source_group(game\\Animation animation/.*)  
+source_group(game\\GameSys gamesys/.*)  
+source_group(game\\Physics physics/.*)  
+source_group(game\\Script script/.*)  
+
 add_definitions(-D__DOOM__ -DGAME_DLL)
 add_library(gamex86 SHARED ${SOURCES})
 target_link_libraries(gamex86 idlib)
-  
+SET_PROPERTY(TARGET gamex86                PROPERTY FOLDER dlls)  
