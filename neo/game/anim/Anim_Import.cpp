@@ -105,19 +105,33 @@ bool idModelExport::CheckMayaInstall( void ) {
 	}
 	return true;
 #else
-	HKEY	hKey;
-	long	lres;
+	HKEY	hKey;	
 
 	// only check the non-version specific key so that we only have to update the maya dll when new versions are released
-	lres = RegOpenKey( HKEY_LOCAL_MACHINE, "SOFTWARE\\Alias|Wavefront\\Maya", &hKey );
+	const long aliasMaya = RegOpenKey( HKEY_LOCAL_MACHINE, "SOFTWARE\\Alias|Wavefront\\Maya", &hKey );
 	RegCloseKey( hKey );
 
-	if ( lres != ERROR_SUCCESS ) {
+  const long autodeskMaya = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Autodesk\\Maya", &hKey);
+  RegCloseKey(hKey);
+
+	if ( aliasMaya != ERROR_SUCCESS && autodeskMaya != ERROR_SUCCESS) {
 		return false;
 	}
 	return true;
 #endif
 }
+
+static bool dllEntryStub(int version, idCommon* common, idSys* sys) {
+  return true;
+}
+
+static const char* Maya_ConvertModelStub(const char* ospath, const char* commandline) {
+  return "ok";
+}
+
+static void Maya_ShutdownStub() {
+}
+
 
 /*
 =====================
@@ -128,6 +142,8 @@ Checks to see if we can load the Maya export dll
 */
 void idModelExport::LoadMayaDll( void ) {
 	exporterDLLEntry_t	dllEntry;
+
+#if 0
 	char				dllPath[ MAX_OSPATH ];
 
 	fileSystem->FindDLL( "MayaImport", dllPath, false );
@@ -151,6 +167,11 @@ void idModelExport::LoadMayaDll( void ) {
 		gameLocal.Error( "Invalid interface on export DLL." );
 		return;
 	}
+#else
+  dllEntry = dllEntryStub;
+  Maya_ConvertModel = Maya_ConvertModelStub;
+  Maya_Shutdown = Maya_ShutdownStub;
+#endif
 
 	// initialize the DLL
 	if ( !dllEntry( MD5_VERSION, common, sys ) ) {

@@ -66,6 +66,7 @@ add_subdirectory (curl)
 add_subdirectory (TypeInfo)
 add_subdirectory (game)
 add_subdirectory (d3xp)
+add_subdirectory (maya2md5)
 
 
 
