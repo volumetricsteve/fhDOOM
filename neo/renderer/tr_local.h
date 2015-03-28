@@ -830,14 +830,9 @@ extern idCVar r_flareSize;				// scale the flare deforms from the material def
 extern idCVar r_gamma;					// changes gamma tables
 extern idCVar r_brightness;				// changes gamma tables
 
-extern idCVar r_cgVertexProfile;		// arbvp1, vp20, vp30
-extern idCVar r_cgFragmentProfile;		// arbfp1, fp30
-
 extern idCVar r_checkBounds;			// compare all surface bounds with precalculated ones
 
-extern idCVar r_useNV20MonoLights;		// 1 = allow an interaction pass optimization
 extern idCVar r_useLightPortalFlow;		// 1 = do a more precise area reference determination
-extern idCVar r_useTripleTextureARB;	// 1 = cards with 3+ texture units do a two pass instead of three pass
 extern idCVar r_useShadowSurfaceScissor;// 1 = scissor shadows by the scissor rect of the interaction surfaces
 extern idCVar r_useConstantMaterials;	// 1 = use pre-calculated material registers if possible
 extern idCVar r_useInteractionTable;	// create a full entityDefs * lightDefs table to make finding interactions faster
@@ -902,7 +897,6 @@ extern idCVar r_skipROQ;
 extern idCVar r_ignoreGLErrors;
 
 extern idCVar r_forceLoadImages;		// draw all images to screen after registration
-extern idCVar r_demonstrateBug;			// used during development to show IHV's their problems
 extern idCVar r_screenFraction;			// for testing fill rate, the resolution of the entire screen can be changed
 
 extern idCVar r_showUnsmoothedTangents;	// highlight geometry rendered with unsmoothed tangents
