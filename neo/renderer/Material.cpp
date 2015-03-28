@@ -164,6 +164,10 @@ void idMaterial::FreeData() {
 				Mem_Free( stages[i].newStage );
 				stages[i].newStage = NULL;
 			}
+      if ( stages[i].glslStage != NULL ) {
+        Mem_Free(stages[i].glslStage);
+        stages[i].glslStage = NULL;
+      }
 		}
 		R_StaticFree( stages );
 		stages = NULL;

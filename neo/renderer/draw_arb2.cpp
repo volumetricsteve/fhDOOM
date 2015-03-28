@@ -341,6 +341,21 @@ static progDef_t	progs[MAX_GLPROGS] = {
 	// additional programs can be dynamically specified in materials
 };
 
+typedef struct {
+  GLenum			target;
+  GLuint			ident;
+  char			  name[64];
+} glslShaderDef_t;
+
+typedef struct {
+  GLuint ident;
+  int    vertexShaderIndex;
+  int    fragmentShaderIndex;
+} glslProgramDef_t;
+
+static glslShaderDef_t glslShaders[MAX_GLPROGS] = { 0 };
+static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
+
 /*
 =================
 R_LoadARBProgram
@@ -444,9 +459,9 @@ void R_LoadARBProgram( int progIndex ) {
 R_LoadGlslShader
 =================
 */
-void R_LoadGlslShader(int progIndex) {
+void R_LoadGlslShader(int shaderIndex) {
   idStr	fullPath = "glsl/";
-  fullPath += progs[progIndex].name;  
+  fullPath += glslShaders[shaderIndex].name;  
   
   common->Printf("%s", fullPath.c_str());
 
@@ -472,17 +487,17 @@ void R_LoadGlslShader(int progIndex) {
   //
   // submit the program string at start to GL
   //
-  if (progs[progIndex].ident == 0) {
+  if (glslShaders[shaderIndex].ident == 0) {
     // allocate a new identifier for this program
-    progs[progIndex].ident = PROG_USER + progIndex;
+    glslShaders[shaderIndex].ident = glCreateShader(glslShaders[shaderIndex].target);
   }
 
-  assert(progs[progIndex].target == GL_VERTEX_SHADER || progs[progIndex].target == GL_FRAGMENT_SHADER);
+  assert(glslShaders[shaderIndex].target == GL_VERTEX_SHADER || glslShaders[shaderIndex].target == GL_FRAGMENT_SHADER);
 
   int len = strlen(buffer);
 
-  glShaderSource(progs[progIndex].ident, 1, (const GLchar**)&buffer, &len);
-  glCompileShader(progs[progIndex].ident);
+  glShaderSource(glslShaders[shaderIndex].ident, 1, (const GLchar**)&buffer, &len);
+  glCompileShader(glslShaders[shaderIndex].ident);
 }
 
 /*
@@ -562,23 +577,23 @@ void R_ARB2_Init( void ) {
 	common->Printf( "---------------------------------\n" );
 }
 
-int R_FindGlslShader(GLenum target, const char* shader) {
+unsigned R_FindGlslShader(GLenum target, const char* shader) {
   int		i;
   idStr	stripped = shader;
 
   stripped.StripFileExtension();
 
   // see if it is already loaded
-  for (i = 0; progs[i].name[0]; i++) {
-    if (progs[i].target != target) {
+  for (i = 1; glslShaders[i].name[0]; i++) {
+    if (glslShaders[i].target != target) {
       continue;
     }
 
-    idStr	compare = progs[i].name;
+    idStr	compare = glslShaders[i].name;
     compare.StripFileExtension();
 
     if (!idStr::Icmp(stripped.c_str(), compare.c_str())) {
-      return progs[i].ident;
+      return glslShaders[i].ident;
     }
   }
 
@@ -587,18 +602,37 @@ int R_FindGlslShader(GLenum target, const char* shader) {
   }
 
   // add it to the list and load it
-  progs[i].ident = (program_t)0;	// will be gen'd by R_LoadARBProgram
-  progs[i].target = target;
-  strncpy(progs[i].name, shader, sizeof(progs[i].name) - 1);
+  glslShaders[i].ident = 0;	// will be gen'd by R_LoadGlslShader
+  glslShaders[i].target = target;
+  strncpy(glslShaders[i].name, shader, sizeof(glslShaders[i].name) - 1);
 
   R_LoadGlslShader(i);
 
-  return progs[i].ident;
+  return glslShaders[i].ident;
 }
 
-int R_LinkGlslProgram(int vertexShader, int fragmentShader) {
-  GLuint program = glCreateProgram();
-  glAttachShader(program, vertexShader);
-  glAttachShader(program, fragmentShader);
-  return program;
+unsigned R_LinkGlslProgram(unsigned vertexShader, unsigned fragmentShader) {
+  
+  int i;
+  for( i=0; i<MAX_GLPROGS; ++i) {
+    const GLuint currentVertexShader = glslShaders[ glslPrograms[i].vertexShaderIndex ].ident;
+    const GLuint currentFragShader = glslShaders[ glslPrograms[i].fragmentShaderIndex ].ident;
+  
+    if(currentVertexShader == vertexShader && currentFragShader == fragmentShader)
+      return glslPrograms[i].ident;
+
+    if(!currentVertexShader || !currentFragShader)
+      break;
+  }
+
+  if (i == MAX_GLPROGS) {
+    common->Error("R_FindARBProgram: MAX_GLPROGS");
+    return 0;
+  }
+
+  glslPrograms[i].ident = glCreateProgram();
+  glAttachShader(glslPrograms[i].ident, vertexShader);
+  glAttachShader(glslPrograms[i].ident, fragmentShader);
+  
+  return glslPrograms[i].ident;
 }
