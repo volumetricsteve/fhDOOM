@@ -6,8 +6,6 @@ idSession *			session = NULL;
 idDeclManager *		declManager = NULL;
 idEventLoop *		eventLoop = NULL;
 
-const char* basepath = nullptr;
-
 int idEventLoop::JournalLevel(void) const { return 0; }
 idCVar com_developer( "developer", "0", CVAR_BOOL|CVAR_SYSTEM, "developer mode" );
 
@@ -101,16 +99,8 @@ idSysLocal		sysLocal;
 idSys *			sys = &sysLocal;
 
 
-//idCVarSystem *	cvarSystem = NULL;
-//idCVar *		idCVar::staticVars = NULL;
-
-
-
-
-
 void			Sys_Mkdir( const char *path ) {}
 ID_TIME_T			Sys_FileTimeStamp( FILE *fp ) { return 0; }
-
 
 #include <io.h>
 #include <direct.h>
@@ -147,9 +137,6 @@ const char *Sys_DefaultCDPath( void ) {
 }
 
 const char *Sys_DefaultBasePath( void ) {
-  if(basepath)
-    return basepath;
-
 	return Sys_Cwd();
 }
 
@@ -213,30 +200,44 @@ void			Sys_WaitForEvent(int index) {}
 void			Sys_TriggerEvent(int index) {}
 
 
+int main(int argc, char** argv) { 
 
+  if(argc < 2) {
+    printf("usage: maya2md5.exe def [gamedir]\n");
+    return 1;
+  }
 
-int main(int argc, char** argv) {
-  const char* filename = nullptr;
+  const char* deffile = argv[1];
 
   idLib::common = common;
   idLib::sys = sys;
   idLib::cvarSystem = cvarSystem;
   idLib::fileSystem = fileSystem;
-
-  if(argc > 2) {
-    basepath = argv[1];
-    filename = argv[2];
-  } 
-
+  
   idLib::Init();
   cmdSystem->Init();
   cvarSystem->Init();
   idCVar::RegisterStaticVars();  
+
+  if(argc > 2) {
+    const idStr gamepath = argv[2];
+    idStr basepath; 
+    gamepath.ExtractFilePath(basepath);
+    idStr gamedir; 
+    gamepath.ExtractFileName(gamedir);
+
+    if(!basepath.IsEmpty())
+      cvarSystem->SetCVarString("fs_basepath", basepath);
+
+    if (!gamedir.IsEmpty())
+      cvarSystem->SetCVarString("fs_game", gamedir);
+  }
+
   fileSystem->Init();
 
   {
     idModelExport modelExport;
-    modelExport.ExportDefFile(filename);
+    modelExport.ExportDefFile(deffile);
   }
 
   fileSystem->Shutdown(false);
