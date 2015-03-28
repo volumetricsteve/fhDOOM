@@ -1090,6 +1090,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	int					a, b;
 	int					matrix[2][3];
 	newShaderStage_t	newStage;
+  glslShaderStage_t	glslStage;
 
 	if ( numStages >= MAX_SHADER_STAGES ) {
 		SetMaterialFlag( MF_DEFAULTED );
@@ -1105,6 +1106,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	imageName[0] = 0;
 
 	memset( &newStage, 0, sizeof( newStage ) );
+  memset( &glslStage, 0, sizeof( glslStage ) );
 
 	ss = &pd->parseStages[numStages];
 	ts = &ss->texture;
@@ -1506,6 +1508,18 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			}
 			continue;
 		}
+    if (!token.Icmp("fragmentShader")) {
+      if (src.ReadTokenOnLine(&token)) {
+        glslStage.fragmentShader = R_FindGlslShader(GL_FRAGMENT_SHADER, token.c_str());
+      }
+      continue;
+    }
+    if (!token.Icmp("vertexShader")) {
+      if (src.ReadTokenOnLine(&token)) {
+        glslStage.vertexShader = R_FindGlslShader(GL_VERTEX_SHADER, token.c_str());
+      }
+      continue;
+    }
 		if ( !token.Icmp( "megaTexture" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.megaTexture = new idMegaTexture;
@@ -1537,6 +1551,22 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		return;
 	}
 
+  if( glslStage.fragmentShader && glslStage.vertexShader ) {
+    glslStage.program = R_LinkGlslProgram(glslStage.vertexShader, glslStage.fragmentShader);
+    if(glslStage.program) {
+      glslStage.numVertexParms = newStage.numVertexParms;
+      glslStage.numFragmentShaderImages = newStage.numFragmentProgramImages;
+
+      static_assert(sizeof(glslStage.fragmentShaderImages) == sizeof(newStage.fragmentProgramImages), "sizes must match for memcpy");
+      memcpy(&glslStage.fragmentShaderImages, &newStage.numFragmentProgramImages, sizeof(glslStage.fragmentShaderImages));
+
+      static_assert(sizeof(glslStage.vertexParms) == sizeof(newStage.vertexParms), "sizes must match for memcpy");      
+      memcpy(&glslStage.vertexParms, &newStage.vertexParms, sizeof(glslStage.vertexParms));
+
+      ss->glslStage = (glslShaderStage_t *)Mem_Alloc( sizeof( glslStage ) );
+      *(ss->glslStage) = glslStage;
+    }
+  }
 
 	// if we are using newStage, allocate a copy of it
 	if ( newStage.fragmentProgram || newStage.vertexProgram ) {

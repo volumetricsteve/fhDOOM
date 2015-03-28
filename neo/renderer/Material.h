@@ -201,6 +201,17 @@ typedef struct {
 } newShaderStage_t;
 
 typedef struct {
+  int         program;
+  int					vertexShader;
+  int					numVertexParms;
+  int					vertexParms[MAX_VERTEX_PARMS][4];	// evaluated register indexes
+
+  int					fragmentShader;
+  int					numFragmentShaderImages;
+  idImage *			fragmentShaderImages[MAX_FRAGMENT_IMAGES];
+} glslShaderStage_t;
+
+typedef struct {
 	int					conditionRegister;	// if registers[conditionRegister] == 0, skip stage
 	stageLighting_t		lighting;			// determines which passes interact with lights
 	int					drawStateBits;
@@ -214,6 +225,7 @@ typedef struct {
 	float				privatePolygonOffset;	// a per-stage polygon offset
 
 	newShaderStage_t	*newStage;			// vertex / fragment program based stage
+  glslShaderStage_t *glslStage;
 } shaderStage_t;
 
 typedef enum {

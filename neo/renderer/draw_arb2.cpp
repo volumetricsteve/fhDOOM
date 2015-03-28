@@ -440,6 +440,52 @@ void R_LoadARBProgram( int progIndex ) {
 }
 
 /*
+=================
+R_LoadGlslShader
+=================
+*/
+void R_LoadGlslShader(int progIndex) {
+  idStr	fullPath = "glsl/";
+  fullPath += progs[progIndex].name;  
+  
+  common->Printf("%s", fullPath.c_str());
+
+  // load the program even if we don't support it, so
+  // fs_copyfiles can generate cross-platform data dumps
+  // 
+  char	*fileBuffer = nullptr;
+  fileSystem->ReadFile(fullPath.c_str(), (void **)&fileBuffer, NULL);
+  if (!fileBuffer) {
+    common->Printf(": File not found\n");
+    return;
+  }
+
+  // copy to stack memory and free
+  char* buffer = (char *)_alloca(strlen(fileBuffer) + 1);
+  strcpy(buffer, fileBuffer);
+  fileSystem->FreeFile(fileBuffer);
+
+  if (!glConfig.isInitialized) {
+    return;
+  }
+
+  //
+  // submit the program string at start to GL
+  //
+  if (progs[progIndex].ident == 0) {
+    // allocate a new identifier for this program
+    progs[progIndex].ident = PROG_USER + progIndex;
+  }
+
+  assert(progs[progIndex].target == GL_VERTEX_SHADER || progs[progIndex].target == GL_FRAGMENT_SHADER);
+
+  int len = strlen(buffer);
+
+  glShaderSource(progs[progIndex].ident, 1, (const GLchar**)&buffer, &len);
+  glCompileShader(progs[progIndex].ident);
+}
+
+/*
 ==================
 R_FindARBProgram
 
@@ -516,3 +562,43 @@ void R_ARB2_Init( void ) {
 	common->Printf( "---------------------------------\n" );
 }
 
+int R_FindGlslShader(GLenum target, const char* shader) {
+  int		i;
+  idStr	stripped = shader;
+
+  stripped.StripFileExtension();
+
+  // see if it is already loaded
+  for (i = 0; progs[i].name[0]; i++) {
+    if (progs[i].target != target) {
+      continue;
+    }
+
+    idStr	compare = progs[i].name;
+    compare.StripFileExtension();
+
+    if (!idStr::Icmp(stripped.c_str(), compare.c_str())) {
+      return progs[i].ident;
+    }
+  }
+
+  if (i == MAX_GLPROGS) {
+    common->Error("R_FindARBProgram: MAX_GLPROGS");
+  }
+
+  // add it to the list and load it
+  progs[i].ident = (program_t)0;	// will be gen'd by R_LoadARBProgram
+  progs[i].target = target;
+  strncpy(progs[i].name, shader, sizeof(progs[i].name) - 1);
+
+  R_LoadGlslShader(i);
+
+  return progs[i].ident;
+}
+
+int R_LinkGlslProgram(int vertexShader, int fragmentShader) {
+  GLuint program = glCreateProgram();
+  glAttachShader(program, vertexShader);
+  glAttachShader(program, fragmentShader);
+  return program;
+}
