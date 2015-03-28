@@ -305,8 +305,6 @@ SET(SOURCES
   framework/UsercmdGen.cpp
   framework/UsercmdGen.h
 
-  renderer/cg_explicit.cpp
-  renderer/cg_explicit.h
   renderer/Cinematic.cpp
   renderer/Cinematic.h
   renderer/draw_arb2.cpp

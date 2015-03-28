@@ -1276,17 +1276,6 @@ DRAW_*
 ============================================================
 */
 
-void	RB_ARB_DrawInteractions( void );
-
-void	R_R200_Init( void );
-void	RB_R200_DrawInteractions( void );
-
-void	R_NV10_Init( void );
-void	RB_NV10_DrawInteractions( void );
-
-void	R_NV20_Init( void );
-void	RB_NV20_DrawInteractions( void );
-
 void	R_ARB2_Init( void );
 void	RB_ARB2_DrawInteractions( void );
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
