@@ -153,9 +153,6 @@ public:
 	// May start a background image read.
 	void		Bind();
 
-	// for use with fragment programs, doesn't change any enable2D/3D/cube states
-	void		BindFragment();
-
 	// deletes the texture object, but leaves the structure so it can be reloaded
 	void		PurgeImage();
 

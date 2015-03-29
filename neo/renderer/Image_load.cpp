@@ -1779,68 +1779,6 @@ void idImage::Bind() {
 	}
 }
 
-/*
-==============
-BindFragment
-
-Fragment programs explicitly say which type of map they want, so we don't need to
-do any enable / disable changes
-==============
-*/
-void idImage::BindFragment() {
-	if ( tr.logFile ) {
-		RB_LogComment( "idImage::BindFragment %s )\n", imgName.c_str() );
-	}
-
-	// if this is an image that we are caching, move it to the front of the LRU chain
-	if ( partialImage ) {
-		if ( cacheUsageNext ) {
-			// unlink from old position
-			cacheUsageNext->cacheUsagePrev = cacheUsagePrev;
-			cacheUsagePrev->cacheUsageNext = cacheUsageNext;
-		}
-		// link in at the head of the list
-		cacheUsageNext = globalImages->cacheLRU.cacheUsageNext;
-		cacheUsagePrev = &globalImages->cacheLRU;
-
-		cacheUsageNext->cacheUsagePrev = this;
-		cacheUsagePrev->cacheUsageNext = this;
-	}
-
-	// load the image if necessary (FIXME: not SMP safe!)
-	if ( texnum == TEXTURE_NOT_LOADED ) {
-		if ( partialImage ) {
-			// if we have a partial image, go ahead and use that
-			this->partialImage->BindFragment();
-
-			// start a background load of the full thing if it isn't already in the queue
-			if ( !backgroundLoadInProgress ) {
-				StartBackgroundImageLoad();
-			}
-			return;
-		}
-
-		// load the image on demand here, which isn't our normal game operating mode
-		ActuallyLoadImage( true, true );	// check for precompressed, load is from back end
-	}
-
-
-	// bump our statistic counters
-	frameUsed = backEnd.frameCount;
-	bindCount++;
-
-	// bind the texture
-	if ( type == TT_2D ) {
-		glBindTexture( GL_TEXTURE_2D, texnum );
-	} else if ( type == TT_RECT ) {
-		glBindTexture( GL_TEXTURE_RECTANGLE_NV, texnum );
-	} else if ( type == TT_CUBIC ) {
-		glBindTexture( GL_TEXTURE_CUBE_MAP_EXT, texnum );
-	} else if ( type == TT_3D ) {
-		glBindTexture( GL_TEXTURE_3D, texnum );
-	}
-}
-
 
 /*
 ====================
