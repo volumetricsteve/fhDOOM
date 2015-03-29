@@ -739,6 +739,68 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			continue;
 		}
 
+#if 0    
+    if (glslShaderStage_t *glslStage = pStage->glslStage) {
+      //--------------------------
+      //
+      // glsl style stages
+      //
+      //--------------------------
+
+      if (r_skipNewAmbient.GetBool()) {
+        continue;
+      }
+
+      glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(idDrawVert), (void *)&ac->color);
+      glVertexAttribPointerARB(9, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+      glVertexAttribPointerARB(10, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
+      glNormalPointer(GL_FLOAT, sizeof(idDrawVert), ac->normal.ToFloatPtr());
+
+      glEnableClientState(GL_COLOR_ARRAY);
+      glEnableVertexAttribArrayARB(9);
+      glEnableVertexAttribArrayARB(10);
+      glEnableClientState(GL_NORMAL_ARRAY);
+
+      GL_State(pStage->drawStateBits);
+      glUseProgram(glslStage->program);
+      
+      for (int i = 0; i < glslStage->numVertexParms; i++) {
+        float	parm[4];
+        parm[0] = regs[glslStage->vertexParms[i][0]];
+        parm[1] = regs[glslStage->vertexParms[i][1]];
+        parm[2] = regs[glslStage->vertexParms[i][2]];
+        parm[3] = regs[glslStage->vertexParms[i][3]];
+        glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, parm);
+      }
+/*
+      for (int i = 0; i < glslStage->numFragmentShaderImages; i++) {
+        if (glslStage->fragmentShaderImages[i]) {
+          GL_SelectTexture(i);
+          glslStage->fragmentShaderImages[i]->Bind();
+        }
+      }
+*/
+      // draw it
+      RB_DrawElementsWithCounters(tri);
+/*
+      for (int i = 1; i < glslStage->numFragmentShaderImages; i++) {
+        if (glslStage->fragmentShaderImages[i]) {
+          GL_SelectTexture(i);
+          globalImages->BindNull();
+        }
+      }
+*/
+      GL_SelectTexture(0);
+
+      glDisableClientState(GL_COLOR_ARRAY);
+      glDisableVertexAttribArrayARB(9);
+      glDisableVertexAttribArrayARB(10);
+      glDisableClientState(GL_NORMAL_ARRAY);
+      continue;
+    }
+#endif
+
+
 		// see if we are a new-style stage
 		newShaderStage_t *newStage = pStage->newStage;
 		if ( newStage ) {
@@ -1010,12 +1072,13 @@ RB_T_Shadow
 the shadow volumes face INSIDE
 =====================
 */
+
+
 static void RB_T_Shadow( const drawSurf_t *surf ) {
 	const srfTriangles_t	*tri;
 
 	// set the light position if we are using a vertex program to project the rear surfaces
-	if ( r_useShadowVertexProgram.GetBool()
-		&& surf->space != backEnd.currentSpace ) {
+	if ( surf->space != backEnd.currentSpace ) {
 		idVec4 localLight;
 
 		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.vLight->globalLightOrigin, localLight.ToVec3() );
@@ -1124,6 +1187,7 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 	GL_Cull( CT_BACK_SIDED );
 	RB_DrawShadowElementsWithCounters( tri, numIndexes );
 }
+
 
 /*
 =====================

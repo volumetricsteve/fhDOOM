@@ -1033,38 +1033,6 @@ void R_MakeShadowFrustums( idRenderLightLocal *light ) {
 	int		i, j;
 
 	if ( light->parms.pointLight ) {
-#if 0
-		idVec3	adjustedRadius;
-
-		// increase the light radius to cover any origin offsets.
-		// this will cause some shadows to extend out of the exact light
-		// volume, but is simpler than adjusting all the frustums
-		adjustedRadius[0] = light->parms.lightRadius[0] + idMath::Fabs( light->parms.lightCenter[0] );
-		adjustedRadius[1] = light->parms.lightRadius[1] + idMath::Fabs( light->parms.lightCenter[1] );
-		adjustedRadius[2] = light->parms.lightRadius[2] + idMath::Fabs( light->parms.lightCenter[2] );
-
-		light->numShadowFrustums = 0;
-		// a point light has to project against six planes
-		for ( i = 0 ; i < 6 ; i++ ) {
-			shadowFrustum_t	*frust = &light->shadowFrustums[ light->numShadowFrustums ];
-
-			frust->numPlanes = 6;
-			frust->makeClippedPlanes = false;
-			for ( j = 0 ; j < 6 ; j++ ) {
-				idPlane &plane = frust->planes[j];
-				plane[0] = pointLightFrustums[i][j][0] / adjustedRadius[0];
-				plane[1] = pointLightFrustums[i][j][1] / adjustedRadius[1];
-				plane[2] = pointLightFrustums[i][j][2] / adjustedRadius[2];
-				plane.Normalize();
-				plane[3] = -( plane.Normal() * light->globalLightOrigin );
-				if ( j == 5 ) {
-					plane[3] += adjustedRadius[i>>1];
-				}
-			}
-
-			light->numShadowFrustums++;
-		}
-#else
 		// exact projection,taking into account asymetric frustums when 
 		// globalLightOrigin isn't centered
 
@@ -1159,7 +1127,6 @@ void R_MakeShadowFrustums( idRenderLightLocal *light ) {
 			light->numShadowFrustums++;
 		}
 
-#endif
 		return;
 	}
 	
@@ -1244,11 +1211,7 @@ srfTriangles_t *R_CreateShadowVolume( const idRenderEntityLocal *ent,
 	// trades somewhat more overdraw and no cap optimizations for
 	// a very simple generation process
 	if ( optimize == SG_DYNAMIC && r_useTurboShadow.GetBool() ) {
-		if ( r_useShadowVertexProgram.GetBool() ) {
-			return R_CreateVertexProgramTurboShadowVolume( ent, tri, light, cullInfo );
-		} else {
-			return R_CreateTurboShadowVolume( ent, tri, light, cullInfo );
-		}
+		return R_CreateVertexProgramTurboShadowVolume( ent, tri, light, cullInfo );
 	}
 
 	R_CalcInteractionFacing( ent, tri, light, cullInfo );
