@@ -739,7 +739,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			continue;
 		}
     
-    if (glslShaderStage_t *glslStage = pStage->glslStage) {
+    if ( glslShaderStage_t *glslStage = pStage->glslStage ) {
       //--------------------------
       //
       // glsl style stages
@@ -749,6 +749,9 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       if (r_skipGlsl.GetBool()) {
         continue;
       }
+
+      if(!glslStage->program)
+        continue;
 
       glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(idDrawVert), (void *)&ac->color);
       glVertexAttribPointerARB(9, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
@@ -761,10 +764,11 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       glEnableClientState(GL_NORMAL_ARRAY);
 
       GL_State(pStage->drawStateBits);
-      glUseProgram(glslStage->program);
+      glUseProgram(glslStage->program->ident);
+
 
       for (int i = 0; i < glslStage->numShaderParms; i++) {
-        if(glslStage->shaderParmLocations[i] == -1)
+        if(glslStage->program->shaderParmLocations[i] == -1)
           continue;
 
         float	parm[4];
@@ -772,12 +776,12 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
         parm[1] = regs[glslStage->shaderParms[i][1]];
         parm[2] = regs[glslStage->shaderParms[i][2]];
         parm[3] = regs[glslStage->shaderParms[i][3]];
-        glUniform4fv(glslStage->shaderParmLocations[i], 1, parm);
+        glUniform4fv(glslStage->program->shaderParmLocations[i], 1, parm);
       }
 
 
       for (int i = 0; i < glslStage->numShaderMaps; i++) {
-        if (glslStage->shaderMap[i] && glslStage->samplerLocations[i] != -1) {
+        if (glslStage->shaderMap[i] && glslStage->program->samplerLocations[i] != -1) {
           GL_SelectTexture(i);
           glslStage->shaderMap[i]->Bind();
         }
@@ -787,7 +791,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       RB_DrawElementsWithCounters(tri);
 
       for (int i = 0; i < glslStage->numShaderMaps; i++) {
-        if (glslStage->shaderMap[i] && glslStage->samplerLocations[i] != -1) {
+        if (glslStage->shaderMap[i] && glslStage->program->samplerLocations[i] != -1) {
           GL_SelectTexture(i);
           globalImages->BindNull();
         }
@@ -803,9 +807,8 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       continue;
     }
 
-		// see if we are a new-style stage
-		newShaderStage_t *newStage = pStage->newStage;
-		if ( newStage ) {
+		// see if we are a new-style stage		
+		if ( newShaderStage_t *newStage = pStage->newStage ) {
 			//--------------------------
 			//
 			// new style stages

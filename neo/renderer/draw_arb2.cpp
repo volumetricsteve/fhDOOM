@@ -334,11 +334,6 @@ static progDef_t	progs[MAX_GLPROGS] = {
 	// additional programs can be dynamically specified in materials
 };
 
-typedef struct {
-  char   vertexShaderName[64];
-  char   fragmentShaderName[64];
-  GLuint ident;
-} glslProgramDef_t;
 
 static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
 
@@ -530,7 +525,10 @@ static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
   idStr	fullPath = "glsl/";
   fullPath += filename;
 
-  common->Printf("%s", fullPath.c_str());
+  if(shaderType == GL_VERTEX_SHADER)
+    common->Printf("load vertex shader %s\n", fullPath.c_str());
+  else
+    common->Printf("load fragment shader %s\n", fullPath.c_str());
 
   // load the program even if we don't support it, so
   // fs_copyfiles can generate cross-platform data dumps
@@ -564,14 +562,114 @@ static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
   return shaderObject;
 }
 
-unsigned R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName) {
+namespace {
+  // Little RAII helper to deal with detaching and deleting of shader objects
+  struct GlslShader {
+    GlslShader(GLuint ident)
+      : ident(ident)
+      , program(0)
+    {}
+
+    ~GlslShader() {      
+      release();        
+    }
+
+    void release() {
+      if (ident) {
+        if (program) {
+          glDetachShader(program, ident);
+        }
+        glDeleteShader(ident);
+      }
+
+      ident = 0;
+      program = 0;
+    }
+
+    void attachToProgram(GLuint program) {
+      this->program = program;
+      glAttachShader(program, ident);
+    }
+
+    GLuint ident;
+    GLuint program;
+  };
+}
+
+/*
+=================
+R_LoadGlslProgram
+=================
+*/
+static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
+  if(!programDef.vertexShaderName[0] || !programDef.fragmentShaderName[0])
+    return;
+
+  GlslShader vertexShader = R_LoadGlslShader(GL_VERTEX_SHADER, programDef.vertexShaderName);
+  if (!vertexShader.ident) {
+    common->Error("failed to load GLSL vertex shader: %s", programDef.vertexShaderName);
+    return;
+  }
+
+  GlslShader fragmentShader = R_LoadGlslShader(GL_FRAGMENT_SHADER, programDef.fragmentShaderName);
+  if (!fragmentShader.ident) {
+    common->Error("failed to load GLSL fragment shader: %s", programDef.fragmentShaderName);
+    return;
+  }
+
+  const GLuint program = glCreateProgram();
+  if (!program) {
+    common->Error("failed to create GLSL program object");
+    return;
+  }
+
+  vertexShader.attachToProgram(program);
+  fragmentShader.attachToProgram(program);
+  glLinkProgram(program);
+
+  GLint isLinked = 0;
+  glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
+  if (isLinked == GL_FALSE) {
+    vertexShader.release();
+    fragmentShader.release();
+    glDeleteProgram(program);
+
+    common->Error("failed to link GLSL shaders to program");
+    return;
+  }
+
+  if (programDef.ident)
+    glDeleteProgram(programDef.ident);
+
+  programDef.ident = program;
+
+  programDef.shaderParmLocations[0] = glGetUniformLocation(program, "shaderParm0");
+  programDef.shaderParmLocations[1] = glGetUniformLocation(program, "shaderParm1");
+  programDef.shaderParmLocations[2] = glGetUniformLocation(program, "shaderParm2");
+  programDef.shaderParmLocations[3] = glGetUniformLocation(program, "shaderParm3");
+  programDef.samplerLocations[0] = glGetUniformLocation(program, "texture0");
+  programDef.samplerLocations[1] = glGetUniformLocation(program, "texture1");
+  programDef.samplerLocations[2] = glGetUniformLocation(program, "texture2");
+  programDef.samplerLocations[3] = glGetUniformLocation(program, "texture3");
+  programDef.samplerLocations[4] = glGetUniformLocation(program, "texture4");
+  programDef.samplerLocations[5] = glGetUniformLocation(program, "texture5");
+  programDef.samplerLocations[6] = glGetUniformLocation(program, "texture6");
+  programDef.samplerLocations[7] = glGetUniformLocation(program, "texture7");
+}
+
+/*
+=================
+R_FindGlslProgram
+=================
+*/
+const glslProgramDef_t* R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName) {
   assert(vertexShaderName && vertexShaderName[0]);
   assert(fragmentShaderName && fragmentShaderName[0]);
 
   const int vertexShaderNameLen = strlen(vertexShaderName);
   const int fragmentShaderNameLen = strlen(fragmentShaderName);
 
-  int i = 0;
+  int i;
   for (i = 0; i < MAX_GLPROGS; ++i) {
     const int vsLen = strlen(glslPrograms[i].vertexShaderName);
     const int fsLen = strlen(glslPrograms[i].fragmentShaderName);
@@ -588,50 +686,34 @@ unsigned R_FindGlslProgram(const char* vertexShaderName, const char* fragmentSha
     if (idStr::Icmpn(fragmentShaderName, glslPrograms[i].fragmentShaderName, fsLen) != 0)
       continue;
 
-    return glslPrograms[i].ident;
+    return &glslPrograms[i];
   }
 
   if(i >= MAX_GLPROGS) {
     common->Error("cannot create GLSL program, maximum number of programs reached");
-    return 0;
+    return nullptr;
   }
 
-  const GLuint vertexShader = R_LoadGlslShader(GL_VERTEX_SHADER, vertexShaderName);
-  if(!vertexShader) {
-    common->Error("failed to load GLSL vertex shader: %s", vertexShaderName);
-    return 0;
-  }
-
-  const GLuint fragmentShader = R_LoadGlslShader(GL_FRAGMENT_SHADER, fragmentShaderName);
-  if (!fragmentShader) {
-    common->Error("failed to load GLSL fragment shader: %s", fragmentShaderName);
-    return 0;
-  }
-  
-  const GLuint program = glCreateProgram();
-  if(!program) {
-    common->Error("failed to create GLSL program object");
-    return 0;
-  }
-
-  glAttachShader(program, vertexShader);
-  glAttachShader(program, fragmentShader);
-  glLinkProgram(program);
-
-  GLint isLinked = 0;
-  glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-  if(isLinked == GL_FALSE) {
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    glDeleteProgram(program);
-
-    common->Error("failed to link GLSL shaders to program");
-    return 0;
-  }
-
-  glslPrograms[i].ident = program;
   strncpy(glslPrograms[i].vertexShaderName, vertexShaderName, vertexShaderNameLen);
   strncpy(glslPrograms[i].fragmentShaderName, fragmentShaderName, fragmentShaderNameLen);
 
-  return program;
+  R_LoadGlslProgram(glslPrograms[i]);
+
+  return &glslPrograms[i];
+}
+
+
+/*
+=================
+R_ReloadGlslPrograms_f
+=================
+*/
+void R_ReloadGlslPrograms_f( const idCmdArgs &args ) {
+  common->Printf( "----- R_ReloadGlslPrograms -----\n" );
+
+  for(int i=0; i<MAX_GLPROGS; ++i) {
+    R_LoadGlslProgram(glslPrograms[i]);
+  }
+
+  common->Printf( "----- R_ReloadGlslPrograms -----\n" );
 }

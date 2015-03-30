@@ -1721,20 +1721,6 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
     glslStage.program = R_FindGlslProgram( glslStage.vertexShaderName, glslStage.fragmentShaderName );
 
     if(glslStage.program) {
-      glslStage.shaderParmLocations[0] = glGetUniformLocation(glslStage.program, "shaderParm0");
-      glslStage.shaderParmLocations[1] = glGetUniformLocation(glslStage.program, "shaderParm1");
-      glslStage.shaderParmLocations[2] = glGetUniformLocation(glslStage.program, "shaderParm2");
-      glslStage.shaderParmLocations[3] = glGetUniformLocation(glslStage.program, "shaderParm3");
-
-      glslStage.samplerLocations[0] = glGetUniformLocation(glslStage.program, "texture0");
-      glslStage.samplerLocations[1] = glGetUniformLocation(glslStage.program, "texture1");
-      glslStage.samplerLocations[2] = glGetUniformLocation(glslStage.program, "texture2");
-      glslStage.samplerLocations[3] = glGetUniformLocation(glslStage.program, "texture3");
-      glslStage.samplerLocations[4] = glGetUniformLocation(glslStage.program, "texture4");
-      glslStage.samplerLocations[5] = glGetUniformLocation(glslStage.program, "texture5");
-      glslStage.samplerLocations[6] = glGetUniformLocation(glslStage.program, "texture6");
-      glslStage.samplerLocations[7] = glGetUniformLocation(glslStage.program, "texture7");
-
       ss->glslStage = (glslShaderStage_t *)Mem_Alloc(sizeof(glslStage));
       *(ss->glslStage) = glslStage;
     }
@@ -1772,7 +1758,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}
-	} else if ( !ts->cinematic && !ts->dynamic && !ss->newStage ) {
+	} else if ( !ts->cinematic && !ts->dynamic && !ss->newStage && !ss->glslStage ) {
 		common->Warning( "material '%s' had stage with no image", GetName() );
 		ts->image = globalImages->defaultImage;
 	}

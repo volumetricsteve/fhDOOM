@@ -508,6 +508,9 @@ void R_InitOpenGL( void ) {
 	cmdSystem->AddCommand( "reloadARBprograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB programs" );
 	R_ReloadARBPrograms_f( idCmdArgs() );
 
+  cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
+  R_ReloadGlslPrograms_f( idCmdArgs() );
+
 	// allocate the vertex array range or vertex objects
 	vertexCache.Init();
 

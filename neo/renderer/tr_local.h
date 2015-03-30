@@ -1278,7 +1278,8 @@ void	RB_ARB2_DrawInteractions( void );
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
 int		R_FindARBProgram( GLenum target, const char *program );
 
-unsigned R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
+const glslProgramDef_t*  R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
+void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
 
 typedef enum {
 	PROG_INVALID,
