@@ -1514,13 +1514,13 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
     if (!token.Icmp("fragmentShader")) {
       if (src.ReadTokenOnLine(&token)) {
-        glslStage.fragmentShader = R_FindGlslShader(GL_FRAGMENT_SHADER, token.c_str());
+        strncpy(glslStage.fragmentShaderName, token.c_str(), min(token.Length(), sizeof(glslStage.fragmentShaderName)-1));        
       }
       continue;
     }
     if (!token.Icmp("vertexShader")) {
       if (src.ReadTokenOnLine(&token)) {
-        glslStage.vertexShader = R_FindGlslShader(GL_VERTEX_SHADER, token.c_str());
+        strncpy(glslStage.vertexShaderName, token.c_str(), min(token.Length(), sizeof(glslStage.vertexShaderName)-1));
       }
       continue;
     }
@@ -1555,19 +1555,11 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		return;
 	}
 
-  if( glslStage.fragmentShader && glslStage.vertexShader ) {
-    glslStage.program = R_LinkGlslProgram(glslStage.vertexShader, glslStage.fragmentShader);
+  if( glslStage.fragmentShaderName[0] && glslStage.vertexShaderName[0] ) {
+    glslStage.program = R_FindGlslProgram( glslStage.vertexShaderName, glslStage.fragmentShaderName );
+
     if(glslStage.program) {
-      glslStage.numVertexParms = newStage.numVertexParms;
-      glslStage.numFragmentShaderImages = newStage.numFragmentProgramImages;
-
-      static_assert(sizeof(glslStage.fragmentShaderImages) == sizeof(newStage.fragmentProgramImages), "sizes must match for memcpy");
-      memcpy(&glslStage.fragmentShaderImages, &newStage.numFragmentProgramImages, sizeof(glslStage.fragmentShaderImages));
-
-      static_assert(sizeof(glslStage.vertexParms) == sizeof(newStage.vertexParms), "sizes must match for memcpy");      
-      memcpy(&glslStage.vertexParms, &newStage.vertexParms, sizeof(glslStage.vertexParms));
-
-      ss->glslStage = (glslShaderStage_t *)Mem_Alloc( sizeof( glslStage ) );
+      ss->glslStage = (glslShaderStage_t *)Mem_Alloc(sizeof(glslStage));
       *(ss->glslStage) = glslStage;
     }
   }

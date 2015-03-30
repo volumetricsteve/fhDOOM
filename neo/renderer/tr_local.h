@@ -1026,7 +1026,6 @@ const int GLS_ATEST_BITS						= 0x70000000;
 
 const int GLS_DEFAULT							= GLS_DEPTHFUNC_ALWAYS;
 
-void R_Init( void );
 void R_InitOpenGL( void );
 
 void R_DoneFreeType( void );
@@ -1278,8 +1277,7 @@ void	RB_ARB2_DrawInteractions( void );
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
 int		R_FindARBProgram( GLenum target, const char *program );
 
-unsigned R_FindGlslShader(GLenum target, const char* shader);
-unsigned R_LinkGlslProgram(unsigned vertexShader, unsigned fragmentShader);
+unsigned R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
 
 typedef enum {
 	PROG_INVALID,

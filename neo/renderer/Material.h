@@ -201,14 +201,9 @@ typedef struct {
 } newShaderStage_t;
 
 typedef struct {
-  unsigned    program;
-  unsigned		vertexShader;
-  int					numVertexParms;
-  int					vertexParms[MAX_VERTEX_PARMS][4];	// evaluated register indexes
-
-  unsigned		fragmentShader;
-  int					numFragmentShaderImages;
-  idImage *			fragmentShaderImages[MAX_FRAGMENT_IMAGES];
+  unsigned program;
+  char     vertexShaderName[64];
+  char     fragmentShaderName[64];
 } glslShaderStage_t;
 
 typedef struct {
