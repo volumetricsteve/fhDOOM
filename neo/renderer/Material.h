@@ -202,8 +202,9 @@ typedef struct {
 
 typedef struct {
   unsigned program;
+  int      uniformLocations[4];
   char     vertexShaderName[64];
-  char     fragmentShaderName[64];
+  char     fragmentShaderName[64];  
 } glslShaderStage_t;
 
 typedef struct {

@@ -1559,6 +1559,11 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
     glslStage.program = R_FindGlslProgram( glslStage.vertexShaderName, glslStage.fragmentShaderName );
 
     if(glslStage.program) {
+      glslStage.uniformLocations[0] = glGetUniformLocation(glslStage.program, "shaderParm0");
+      glslStage.uniformLocations[1] = glGetUniformLocation(glslStage.program, "shaderParm1");
+      glslStage.uniformLocations[2] = glGetUniformLocation(glslStage.program, "shaderParm2");
+      glslStage.uniformLocations[3] = glGetUniformLocation(glslStage.program, "shaderParm3");
+
       ss->glslStage = (glslShaderStage_t *)Mem_Alloc(sizeof(glslStage));
       *(ss->glslStage) = glslStage;
     }

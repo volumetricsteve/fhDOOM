@@ -1,5 +1,11 @@
 
+uniform vec4 shaderParm0;
+uniform vec4 shaderParm1;
+uniform vec4 shaderParm2;
+uniform vec4 shaderParm3;
+
 void main(void)
 {
-  gl_FragColor = vec4(0.4,0.4,0.8,1.0);
+  //gl_FragColor = vec4(0.4,0.4,0.8,1.0);
+  gl_FragColor = shaderParm0;
 }
