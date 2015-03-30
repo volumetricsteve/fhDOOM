@@ -202,10 +202,14 @@ typedef struct {
 
 typedef struct {
   unsigned program;
-  int      uniformLocations[4];
+  int      shaderParmLocations[MAX_VERTEX_PARMS];
+  int      samplerLocations[MAX_FRAGMENT_IMAGES];
 
-  int					numVertexParms;
-  int					vertexParms[MAX_VERTEX_PARMS][4];	// evaluated register indexes
+  int					numShaderParms;
+  int					shaderParms[MAX_VERTEX_PARMS][4];	// evaluated register indexes
+
+  int					numShaderMaps;
+  idImage *			shaderMap[MAX_FRAGMENT_IMAGES];
 
   char     vertexShaderName[64];
   char     fragmentShaderName[64];  
@@ -609,6 +613,7 @@ private:
 	void				ParseVertexParm( idLexer &src, newShaderStage_t *newStage );
   void				ParseShaderParm( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseFragmentMap( idLexer &src, newShaderStage_t *newStage );
+  void				ParseShaderMap( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseStage( idLexer &src, const textureRepeat_t trpDefault = TR_REPEAT );
 	void				ParseDeform( idLexer &src );
 	void				ParseDecalInfo( idLexer &src );

@@ -763,48 +763,38 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       GL_State(pStage->drawStateBits);
       glUseProgram(glslStage->program);
 
-      for (int i = 0; i < glslStage->numVertexParms; i++) {
-        if(glslStage->uniformLocations[i] == -1)
+      for (int i = 0; i < glslStage->numShaderParms; i++) {
+        if(glslStage->shaderParmLocations[i] == -1)
           continue;
 
         float	parm[4];
-        parm[0] = regs[glslStage->vertexParms[i][0]];
-        parm[1] = regs[glslStage->vertexParms[i][1]];
-        parm[2] = regs[glslStage->vertexParms[i][2]];
-        parm[3] = regs[glslStage->vertexParms[i][3]];
-        glUniform4fv(glslStage->uniformLocations[i], 1, parm);
+        parm[0] = regs[glslStage->shaderParms[i][0]];
+        parm[1] = regs[glslStage->shaderParms[i][1]];
+        parm[2] = regs[glslStage->shaderParms[i][2]];
+        parm[3] = regs[glslStage->shaderParms[i][3]];
+        glUniform4fv(glslStage->shaderParmLocations[i], 1, parm);
       }
 
-/*      
-      for (int i = 0; i < glslStage->numVertexParms; i++) {
-        float	parm[4];
-        parm[0] = regs[glslStage->vertexParms[i][0]];
-        parm[1] = regs[glslStage->vertexParms[i][1]];
-        parm[2] = regs[glslStage->vertexParms[i][2]];
-        parm[3] = regs[glslStage->vertexParms[i][3]];
-        glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, parm);
-      }
 
-      for (int i = 0; i < glslStage->numFragmentShaderImages; i++) {
-        if (glslStage->fragmentShaderImages[i]) {
+      for (int i = 0; i < glslStage->numShaderMaps; i++) {
+        if (glslStage->shaderMap[i] && glslStage->samplerLocations[i] != -1) {
           GL_SelectTexture(i);
-          glslStage->fragmentShaderImages[i]->Bind();
+          glslStage->shaderMap[i]->Bind();
         }
       }
-*/
+
       // draw it
       RB_DrawElementsWithCounters(tri);
-/*
-      for (int i = 1; i < glslStage->numFragmentShaderImages; i++) {
-        if (glslStage->fragmentShaderImages[i]) {
+
+      for (int i = 0; i < glslStage->numShaderMaps; i++) {
+        if (glslStage->shaderMap[i] && glslStage->samplerLocations[i] != -1) {
           GL_SelectTexture(i);
           globalImages->BindNull();
         }
       }
-*/
+
       glUseProgram(0);
-      GL_SelectTexture(0);
-      
+      GL_SelectTexture(0);      
 
       glDisableClientState(GL_COLOR_ARRAY);
       glDisableVertexAttribArrayARB(9);

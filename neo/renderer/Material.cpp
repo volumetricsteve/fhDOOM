@@ -939,38 +939,38 @@ void idMaterial::ParseShaderParm(idLexer &src, glslShaderStage_t *glslStage) {
     SetMaterialFlag(MF_DEFAULTED);
     return;
   }
-  if (parm >= glslStage->numVertexParms) {
-    glslStage->numVertexParms = parm + 1;
+  if (parm >= glslStage->numShaderParms) {
+    glslStage->numShaderParms = parm + 1;
   }
 
-  glslStage->vertexParms[parm][0] = ParseExpression(src);
+  glslStage->shaderParms[parm][0] = ParseExpression(src);
 
   src.ReadTokenOnLine(&token);
   if (!token[0] || token.Icmp(",")) {
-    glslStage->vertexParms[parm][1] =
-      glslStage->vertexParms[parm][2] =
-      glslStage->vertexParms[parm][3] = glslStage->vertexParms[parm][0];
+    glslStage->shaderParms[parm][1] =
+      glslStage->shaderParms[parm][2] =
+      glslStage->shaderParms[parm][3] = glslStage->shaderParms[parm][0];
     return;
   }
 
-  glslStage->vertexParms[parm][1] = ParseExpression(src);
+  glslStage->shaderParms[parm][1] = ParseExpression(src);
 
   src.ReadTokenOnLine(&token);
   if (!token[0] || token.Icmp(",")) {
-    glslStage->vertexParms[parm][2] = GetExpressionConstant(0);
-    glslStage->vertexParms[parm][3] = GetExpressionConstant(1);
+    glslStage->shaderParms[parm][2] = GetExpressionConstant(0);
+    glslStage->shaderParms[parm][3] = GetExpressionConstant(1);
     return;
   }
 
-  glslStage->vertexParms[parm][2] = ParseExpression(src);
+  glslStage->shaderParms[parm][2] = ParseExpression(src);
 
   src.ReadTokenOnLine(&token);
   if (!token[0] || token.Icmp(",")) {
-    glslStage->vertexParms[parm][3] = GetExpressionConstant(1);
+    glslStage->shaderParms[parm][3] = GetExpressionConstant(1);
     return;
   }
 
-  glslStage->vertexParms[parm][3] = ParseExpression(src);
+  glslStage->shaderParms[parm][3] = ParseExpression(src);
 }
 
 
@@ -1073,6 +1073,107 @@ void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage ) {
 	if ( !newStage->fragmentProgramImages[unit] ) {
 		newStage->fragmentProgramImages[unit] = globalImages->defaultImage;
 	}
+}
+
+/*
+================
+idMaterial::ParseShaderMap
+================
+*/
+void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
+  const char			*str;
+  textureFilter_t		tf;
+  textureRepeat_t		trp;
+  textureDepth_t		td;
+  cubeFiles_t			cubeMap;
+  bool				allowPicmip;
+  idToken				token;
+
+  tf = TF_DEFAULT;
+  trp = TR_REPEAT;
+  td = TD_DEFAULT;
+  allowPicmip = true;
+  cubeMap = CF_2D;
+
+  src.ReadTokenOnLine(&token);
+  int	unit = token.GetIntValue();
+  if (!token.IsNumeric() || unit < 0 || unit >= MAX_FRAGMENT_IMAGES) {
+    common->Warning("bad fragmentMap number\n");
+    SetMaterialFlag(MF_DEFAULTED);
+    return;
+  }
+
+  // unit 1 is the normal map.. make sure it gets flagged as the proper depth
+  if (unit == 1) {
+    td = TD_BUMP;
+  }
+
+  if (unit >= newStage->numShaderMaps) {
+    newStage->numShaderMaps = unit + 1;
+  }
+
+  while (1) {
+    src.ReadTokenOnLine(&token);
+
+    if (!token.Icmp("cubeMap")) {
+      cubeMap = CF_NATIVE;
+      continue;
+    }
+    if (!token.Icmp("cameraCubeMap")) {
+      cubeMap = CF_CAMERA;
+      continue;
+    }
+    if (!token.Icmp("nearest")) {
+      tf = TF_NEAREST;
+      continue;
+    }
+    if (!token.Icmp("linear")) {
+      tf = TF_LINEAR;
+      continue;
+    }
+    if (!token.Icmp("clamp")) {
+      trp = TR_CLAMP;
+      continue;
+    }
+    if (!token.Icmp("noclamp")) {
+      trp = TR_REPEAT;
+      continue;
+    }
+    if (!token.Icmp("zeroclamp")) {
+      trp = TR_CLAMP_TO_ZERO;
+      continue;
+    }
+    if (!token.Icmp("alphazeroclamp")) {
+      trp = TR_CLAMP_TO_ZERO_ALPHA;
+      continue;
+    }
+    if (!token.Icmp("forceHighQuality")) {
+      td = TD_HIGH_QUALITY;
+      continue;
+    }
+
+    if (!token.Icmp("uncompressed") || !token.Icmp("highquality")) {
+      if (!globalImages->image_ignoreHighQuality.GetInteger()) {
+        td = TD_HIGH_QUALITY;
+      }
+      continue;
+    }
+    if (!token.Icmp("nopicmip")) {
+      allowPicmip = false;
+      continue;
+    }
+
+    // assume anything else is the image name
+    src.UnreadToken(&token);
+    break;
+  }
+  str = R_ParsePastImageProgram(src);
+
+  newStage->shaderMap[unit] =
+    globalImages->ImageFromFile(str, tf, allowPicmip, trp, td, cubeMap);
+  if (!newStage->shaderMap[unit]) {
+    newStage->shaderMap[unit] = globalImages->defaultImage;
+  }
 }
 
 /*
@@ -1595,6 +1696,10 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
       ParseShaderParm( src, &glslStage );
       continue;
     }
+    if (!token.Icmp("shaderMap")) {
+      ParseShaderMap(src, &glslStage);
+      continue;
+    }
 
 		if ( !token.Icmp( "vertexParm" ) ) {
 			ParseVertexParm( src, &newStage );
@@ -1616,10 +1721,19 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
     glslStage.program = R_FindGlslProgram( glslStage.vertexShaderName, glslStage.fragmentShaderName );
 
     if(glslStage.program) {
-      glslStage.uniformLocations[0] = glGetUniformLocation(glslStage.program, "shaderParm0");
-      glslStage.uniformLocations[1] = glGetUniformLocation(glslStage.program, "shaderParm1");
-      glslStage.uniformLocations[2] = glGetUniformLocation(glslStage.program, "shaderParm2");
-      glslStage.uniformLocations[3] = glGetUniformLocation(glslStage.program, "shaderParm3");
+      glslStage.shaderParmLocations[0] = glGetUniformLocation(glslStage.program, "shaderParm0");
+      glslStage.shaderParmLocations[1] = glGetUniformLocation(glslStage.program, "shaderParm1");
+      glslStage.shaderParmLocations[2] = glGetUniformLocation(glslStage.program, "shaderParm2");
+      glslStage.shaderParmLocations[3] = glGetUniformLocation(glslStage.program, "shaderParm3");
+
+      glslStage.samplerLocations[0] = glGetUniformLocation(glslStage.program, "texture0");
+      glslStage.samplerLocations[1] = glGetUniformLocation(glslStage.program, "texture1");
+      glslStage.samplerLocations[2] = glGetUniformLocation(glslStage.program, "texture2");
+      glslStage.samplerLocations[3] = glGetUniformLocation(glslStage.program, "texture3");
+      glslStage.samplerLocations[4] = glGetUniformLocation(glslStage.program, "texture4");
+      glslStage.samplerLocations[5] = glGetUniformLocation(glslStage.program, "texture5");
+      glslStage.samplerLocations[6] = glGetUniformLocation(glslStage.program, "texture6");
+      glslStage.samplerLocations[7] = glGetUniformLocation(glslStage.program, "texture7");
 
       ss->glslStage = (glslShaderStage_t *)Mem_Alloc(sizeof(glslStage));
       *(ss->glslStage) = glslStage;

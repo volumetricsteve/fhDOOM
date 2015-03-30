@@ -3,12 +3,14 @@ textures/glsltest/flatcolored
     translucent
     noshadows
     twosided
-    forceOverlays    
+    forceOverlays      
     
     {
         vertexShader default.vsh
         fragmentShader  default.psh  
 
-        shaderParm 0     time * 0.05, time * 0.2, 1.0, 1.0   
+        shaderParm 0     time * 0.05, time * 0.2, 1.0, 1.0
+        shaderMap  1     _currentRender 
+        shaderMap  0    textures/rock/zbtest.tga 
     }
 }
