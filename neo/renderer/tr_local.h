@@ -878,6 +878,7 @@ extern idCVar r_skipRenderContext;		// NULL the rendering context during backend
 extern idCVar r_skipTranslucent;		// skip the translucent interaction rendering
 extern idCVar r_skipAmbient;			// bypasses all non-interaction drawing
 extern idCVar r_skipNewAmbient;			// bypasses all vertex/fragment program ambients
+extern idCVar r_skipGlsl;			// bypasses all glsl stages in materials
 extern idCVar r_skipBlendLights;		// skip all blend lights
 extern idCVar r_skipFogLights;			// skip all fog lights
 extern idCVar r_skipSubviews;			// 1 = don't render any mirrors / cameras / etc

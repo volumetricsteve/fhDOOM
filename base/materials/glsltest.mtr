@@ -1,0 +1,12 @@
+textures/glsltest/flatcolored
+{        
+    translucent
+    noshadows
+    twosided
+    forceOverlays    
+    
+    {
+        vertexShader default.vsh
+        fragmentShader  default.psh     
+    }
+}

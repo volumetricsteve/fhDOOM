@@ -738,8 +738,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 		if ( ( pStage->drawStateBits & (GLS_SRCBLEND_BITS|GLS_DSTBLEND_BITS) ) == ( GLS_SRCBLEND_ZERO | GLS_DSTBLEND_ONE ) ) {
 			continue;
 		}
-
-#if 0    
+    
     if (glslShaderStage_t *glslStage = pStage->glslStage) {
       //--------------------------
       //
@@ -747,7 +746,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       //
       //--------------------------
 
-      if (r_skipNewAmbient.GetBool()) {
+      if (r_skipGlsl.GetBool()) {
         continue;
       }
 
@@ -763,7 +762,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 
       GL_State(pStage->drawStateBits);
       glUseProgram(glslStage->program);
-      
+/*      
       for (int i = 0; i < glslStage->numVertexParms; i++) {
         float	parm[4];
         parm[0] = regs[glslStage->vertexParms[i][0]];
@@ -772,7 +771,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
         parm[3] = regs[glslStage->vertexParms[i][3]];
         glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, parm);
       }
-/*
+
       for (int i = 0; i < glslStage->numFragmentShaderImages; i++) {
         if (glslStage->fragmentShaderImages[i]) {
           GL_SelectTexture(i);
@@ -790,7 +789,9 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
         }
       }
 */
+      glUseProgram(0);
       GL_SelectTexture(0);
+      
 
       glDisableClientState(GL_COLOR_ARRAY);
       glDisableVertexAttribArrayARB(9);
@@ -798,8 +799,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       glDisableClientState(GL_NORMAL_ARRAY);
       continue;
     }
-#endif
-
 
 		// see if we are a new-style stage
 		newShaderStage_t *newStage = pStage->newStage;
