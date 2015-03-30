@@ -7,6 +7,8 @@ textures/glsltest/flatcolored
     
     {
         vertexShader default.vsh
-        fragmentShader  default.psh     
+        fragmentShader  default.psh  
+
+        shaderParm 0     time * 0.05, time * 0.2, 1.0, 1.0   
     }
 }

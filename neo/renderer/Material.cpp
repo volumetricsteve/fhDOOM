@@ -922,6 +922,60 @@ void idMaterial::ParseVertexParm( idLexer &src, newShaderStage_t *newStage ) {
 
 /*
 ================
+idMaterial::ParseVertexParm
+
+If there is a single value, it will be repeated across all elements
+If there are two values, 3 = 0.0, 4 = 1.0
+if there are three values, 4 = 1.0
+================
+*/
+void idMaterial::ParseShaderParm(idLexer &src, glslShaderStage_t *glslStage) {
+  idToken				token;
+
+  src.ReadTokenOnLine(&token);
+  int	parm = token.GetIntValue();
+  if (!token.IsNumeric() || parm < 0 || parm >= MAX_VERTEX_PARMS) {
+    common->Warning("bad vertexParm number\n");
+    SetMaterialFlag(MF_DEFAULTED);
+    return;
+  }
+  if (parm >= glslStage->numVertexParms) {
+    glslStage->numVertexParms = parm + 1;
+  }
+
+  glslStage->vertexParms[parm][0] = ParseExpression(src);
+
+  src.ReadTokenOnLine(&token);
+  if (!token[0] || token.Icmp(",")) {
+    glslStage->vertexParms[parm][1] =
+      glslStage->vertexParms[parm][2] =
+      glslStage->vertexParms[parm][3] = glslStage->vertexParms[parm][0];
+    return;
+  }
+
+  glslStage->vertexParms[parm][1] = ParseExpression(src);
+
+  src.ReadTokenOnLine(&token);
+  if (!token[0] || token.Icmp(",")) {
+    glslStage->vertexParms[parm][2] = GetExpressionConstant(0);
+    glslStage->vertexParms[parm][3] = GetExpressionConstant(1);
+    return;
+  }
+
+  glslStage->vertexParms[parm][2] = ParseExpression(src);
+
+  src.ReadTokenOnLine(&token);
+  if (!token[0] || token.Icmp(",")) {
+    glslStage->vertexParms[parm][3] = GetExpressionConstant(1);
+    return;
+  }
+
+  glslStage->vertexParms[parm][3] = ParseExpression(src);
+}
+
+
+/*
+================
 idMaterial::ParseFragmentMap
 ================
 */
@@ -1537,7 +1591,10 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 				continue;
 			}
 		}
-
+    if( !token.Icmp( "shaderParm" ) ) {
+      ParseShaderParm( src, &glslStage );
+      continue;
+    }
 
 		if ( !token.Icmp( "vertexParm" ) ) {
 			ParseVertexParm( src, &newStage );

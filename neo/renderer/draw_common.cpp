@@ -763,14 +763,18 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       GL_State(pStage->drawStateBits);
       glUseProgram(glslStage->program);
 
-      if(glslStage->uniformLocations[0] != -1) {
-        float color[4];
-        color[0] = 1.0f;
-        color[1] = 0.0f;
-        color[2] = 0.0f;
-        color[3] = 1.0f;
-        glUniform4fv(glslStage->uniformLocations[0], 1, color);
+      for (int i = 0; i < glslStage->numVertexParms; i++) {
+        if(glslStage->uniformLocations[i] == -1)
+          continue;
+
+        float	parm[4];
+        parm[0] = regs[glslStage->vertexParms[i][0]];
+        parm[1] = regs[glslStage->vertexParms[i][1]];
+        parm[2] = regs[glslStage->vertexParms[i][2]];
+        parm[3] = regs[glslStage->vertexParms[i][3]];
+        glUniform4fv(glslStage->uniformLocations[i], 1, parm);
       }
+
 /*      
       for (int i = 0; i < glslStage->numVertexParms; i++) {
         float	parm[4];
