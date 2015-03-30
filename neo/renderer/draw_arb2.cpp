@@ -555,7 +555,13 @@ static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
   GLint success = 0;
   glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &success);
   if(success = GL_FALSE) {
-    common->Printf("failed to compile shader '%s'", filename);
+    char buffer[1024];
+    GLsizei length;
+    glGetShaderInfoLog(shaderObject, sizeof(buffer)-1, &length, &buffer[0]);
+    buffer[length] = '\0';
+
+
+    common->Printf("failed to compile shader '%s': %s", filename, &buffer[0]);
     return 0;
   }
 
@@ -607,19 +613,19 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
 
   GlslShader vertexShader = R_LoadGlslShader(GL_VERTEX_SHADER, programDef.vertexShaderName);
   if (!vertexShader.ident) {
-    common->Error("failed to load GLSL vertex shader: %s", programDef.vertexShaderName);
+    common->Warning("failed to load GLSL vertex shader: %s", programDef.vertexShaderName);
     return;
   }
 
   GlslShader fragmentShader = R_LoadGlslShader(GL_FRAGMENT_SHADER, programDef.fragmentShaderName);
   if (!fragmentShader.ident) {
-    common->Error("failed to load GLSL fragment shader: %s", programDef.fragmentShaderName);
+    common->Warning("failed to load GLSL fragment shader: %s", programDef.fragmentShaderName);
     return;
   }
 
   const GLuint program = glCreateProgram();
   if (!program) {
-    common->Error("failed to create GLSL program object");
+    common->Warning("failed to create GLSL program object");
     return;
   }
 
@@ -630,11 +636,17 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
   GLint isLinked = 0;
   glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
   if (isLinked == GL_FALSE) {
+
+    char buffer[1024];
+    GLsizei length;
+    glGetProgramInfoLog(program, sizeof(buffer)-1, &length, &buffer[0]);
+    buffer[length] = '\0';
+
     vertexShader.release();
     fragmentShader.release();
     glDeleteProgram(program);
 
-    common->Error("failed to link GLSL shaders to program");
+    common->Warning("failed to link GLSL shaders to program: %s", &buffer[0]);
     return;
   }
 
