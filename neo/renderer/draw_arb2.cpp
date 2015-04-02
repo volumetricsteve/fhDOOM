@@ -70,12 +70,6 @@ void	RB_ARB2_DrawInteraction( const drawInteraction_t *din ) {
 	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, PP_SPECULAR_MATRIX_S, din->specularMatrix[0].ToFloatPtr() );
 	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, PP_SPECULAR_MATRIX_T, din->specularMatrix[1].ToFloatPtr() );
 
-	// testing fragment based normal mapping
-	if ( r_testARBProgram.GetBool() ) {
-		glProgramEnvParameter4fvARB( GL_FRAGMENT_PROGRAM_ARB, 2, din->localLightOrigin.ToFloatPtr() );
-		glProgramEnvParameter4fvARB( GL_FRAGMENT_PROGRAM_ARB, 3, din->localViewOrigin.ToFloatPtr() );
-	}
-
 	static const float zero[4] = { 0, 0, 0, 0 };
 	static const float one[4] = { 1, 1, 1, 1 };
 	static const float negOne[4] = { -1, -1, -1, -1 };
@@ -141,13 +135,8 @@ void RB_ARB2_CreateDrawInteractions( const drawSurf_t *surf ) {
 	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc );
 
 	// bind the vertex program
-	if ( r_testARBProgram.GetBool() ) {
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, VPROG_TEST );
-		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, FPROG_TEST );
-	} else {
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, VPROG_INTERACTION );
-		glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, FPROG_INTERACTION );
-	}
+	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, VPROG_INTERACTION );
+	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, FPROG_INTERACTION );
 
 	glEnable(GL_VERTEX_PROGRAM_ARB);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -169,12 +158,7 @@ void RB_ARB2_CreateDrawInteractions( const drawSurf_t *surf ) {
 
 	// texture 6 is the specular lookup table
 	GL_SelectTextureNoClient( 6 );
-	if ( r_testARBProgram.GetBool() ) {
-		globalImages->specular2DTableImage->Bind();	// variable specularity in alpha channel
-	} else {
-		globalImages->specularTableImage->Bind();
-	}
-
+  globalImages->specularTableImage->Bind();
 
 	for ( ; surf ; surf=surf->nextOnLight ) {
 		// perform setup here that will not change over multiple interaction passes
@@ -319,8 +303,6 @@ static	const int	MAX_GLPROGS = 200;
 
 // a single file can have both a vertex program and a fragment program
 static progDef_t	progs[MAX_GLPROGS] = {
-	{ GL_VERTEX_PROGRAM_ARB, VPROG_TEST, "test.vfp" },
-	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_TEST, "test.vfp" },
 	{ GL_VERTEX_PROGRAM_ARB, VPROG_INTERACTION, "interaction.vfp" },
 	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_INTERACTION, "interaction.vfp" },
 	{ GL_VERTEX_PROGRAM_ARB, VPROG_BUMPY_ENVIRONMENT, "bumpyEnvironment.vfp" },
