@@ -30,6 +30,9 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 
+static const char* const shadowVertexShaderName = "shadow.vp";
+static const char* const shadowFragmentShaderName = "shadow.fp";
+
 /*
 =====================
 RB_BakeTextureMatrixIntoTexgen
@@ -1070,6 +1073,9 @@ BACK END RENDERING OF STENCIL SHADOWS
 ==============================================================================
 */
 
+
+static const glslProgramDef_t*  shadowProgram = nullptr;
+
 /*
 =====================
 RB_T_Shadow
@@ -1077,7 +1083,6 @@ RB_T_Shadow
 the shadow volumes face INSIDE
 =====================
 */
-
 
 static void RB_T_Shadow( const drawSurf_t *surf ) {
 	const srfTriangles_t	*tri;
@@ -1088,7 +1093,10 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 
 		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.vLight->globalLightOrigin, localLight.ToVec3() );
 		localLight.w = 0.0f;
-		glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, PP_LIGHT_ORIGIN, localLight.ToFloatPtr() );
+
+    assert(shadowProgram);
+    assert(shadowProgram->localLightOriginLocation != -1);
+    glUniform4fv(shadowProgram->localLightOriginLocation, 1, localLight.ToFloatPtr());
 	}
 
 	tri = surf->geo;
@@ -1202,6 +1210,9 @@ Stencil test should already be enabled, and the stencil buffer should have
 been set to 128 on any surfaces that might receive shadows
 =====================
 */
+
+
+
 void RB_StencilShadowPass( const drawSurf_t *drawSurfs ) {
 	if ( !r_shadows.GetBool() ) {
 		return;
@@ -1210,6 +1221,18 @@ void RB_StencilShadowPass( const drawSurf_t *drawSurfs ) {
 	if ( !drawSurfs ) {
 		return;
 	}
+
+  if( !shadowProgram ) {
+    shadowProgram = R_FindGlslProgram(shadowVertexShaderName, shadowFragmentShaderName);
+
+    if (!shadowProgram || !shadowProgram->ident) {
+      return;
+    }
+  }
+
+  glDisable(GL_VERTEX_PROGRAM_ARB);
+  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  glUseProgram(shadowProgram->ident);
 
 	RB_LogComment( "---------- RB_StencilShadowPass ----------\n" );
 
@@ -1257,6 +1280,9 @@ void RB_StencilShadowPass( const drawSurf_t *drawSurfs ) {
 
 	glStencilFunc( GL_GEQUAL, 128, 255 );
 	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
+
+  glUseProgram(0);
+  glEnable(GL_VERTEX_PROGRAM_ARB);
 }
 
 

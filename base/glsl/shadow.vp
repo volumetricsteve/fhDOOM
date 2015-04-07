@@ -1,0 +1,10 @@
+
+uniform vec4 rpLocalLightOrigin;
+
+void main(void)
+{
+  vec4 pos = gl_Vertex - rpLocalLightOrigin;
+  pos = ( pos.wwww * rpLocalLightOrigin ) + pos;
+
+	gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * pos;
+}

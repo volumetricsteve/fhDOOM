@@ -260,12 +260,8 @@ void RB_ARB2_DrawInteractions( void ) {
 			glStencilFunc( GL_ALWAYS, 128, 255 );
 		}
 
-		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, VPROG_STENCIL_SHADOW );
 		RB_StencilShadowPass( vLight->globalShadows );
 		RB_ARB2_CreateDrawInteractions( vLight->localInteractions );
-		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, VPROG_STENCIL_SHADOW );
 		RB_StencilShadowPass( vLight->localShadows );
 		RB_ARB2_CreateDrawInteractions( vLight->globalInteractions );
 		glDisable( GL_VERTEX_PROGRAM_ARB );	// if there weren't any globalInteractions, it would have stayed on
@@ -307,7 +303,6 @@ static progDef_t	progs[MAX_GLPROGS] = {
 	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_INTERACTION, "interaction.vfp" },
 	{ GL_VERTEX_PROGRAM_ARB, VPROG_BUMPY_ENVIRONMENT, "bumpyEnvironment.vfp" },
 	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_BUMPY_ENVIRONMENT, "bumpyEnvironment.vfp" },
-	{ GL_VERTEX_PROGRAM_ARB, VPROG_STENCIL_SHADOW, "shadow.vp" },
 	{ GL_VERTEX_PROGRAM_ARB, VPROG_ENVIRONMENT, "environment.vfp" },
 	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_ENVIRONMENT, "environment.vfp" },
 	{ GL_VERTEX_PROGRAM_ARB, VPROG_GLASSWARP, "arbVP_glasswarp.txt" },
@@ -637,6 +632,7 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
 
   programDef.ident = program;
 
+  programDef.localLightOriginLocation = glGetUniformLocation(program, "rpLocalLightOrigin");
   programDef.shaderParmLocations[0] = glGetUniformLocation(program, "shaderParm0");
   programDef.shaderParmLocations[1] = glGetUniformLocation(program, "shaderParm1");
   programDef.shaderParmLocations[2] = glGetUniformLocation(program, "shaderParm2");

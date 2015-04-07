@@ -203,6 +203,7 @@ typedef struct {
 typedef struct {
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
+  int    localLightOriginLocation;
   int    shaderParmLocations[MAX_VERTEX_PARMS];
   int    samplerLocations[MAX_FRAGMENT_IMAGES];
   GLuint ident;
