@@ -6,6 +6,19 @@ Version 2
 {
  patchDef2
  {
+  "textures/hell/lavascroll_ns"
+  ( 3 3 0 0 0 )
+  (
+   (  ( -311.7207946777 -128 32.0048828125 0 0 ) ( -311.7207946777 -220 32.0048828125 0 0.5 ) ( -311.7207946777 -312 32.0048828125 0 1 ) )
+   (  ( -312 -128 120 0.5 0 ) ( -312 -220 120 0.5 0.5 ) ( -312 -312 120 0.5 1 ) )
+   (  ( -312.2792053223 -128 207.9951171875 1 0 ) ( -312.2792053223 -220 207.9951171875 1 0.5 ) ( -312.2792053223 -312 207.9951171875 1 1 ) )
+  )
+ }
+}
+// primitive 1
+{
+ patchDef2
+ {
   "textures/glsltest/flatcolored"
   ( 3 3 0 0 0 )
   (
@@ -15,7 +28,7 @@ Version 2
   )
  }
 }
-// primitive 1
+// primitive 2
 {
  brushDef3
  {
@@ -27,7 +40,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 2
+// primitive 3
 {
  brushDef3
  {
@@ -39,7 +52,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 3
+// primitive 4
 {
  brushDef3
  {
@@ -51,7 +64,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 4
+// primitive 5
 {
  brushDef3
  {
@@ -63,7 +76,7 @@ Version 2
   ( -1 0 0 320 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel33" 0 0 0
  }
 }
-// primitive 5
+// primitive 6
 {
  brushDef3
  {
@@ -75,7 +88,7 @@ Version 2
   ( -0.9999999404 0 0 -455.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 6
+// primitive 7
 {
  brushDef3
  {

@@ -632,11 +632,14 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
 
   programDef.ident = program;
 
+
   programDef.localLightOriginLocation = glGetUniformLocation(program, "rpLocalLightOrigin");
+
   programDef.shaderParmLocations[0] = glGetUniformLocation(program, "shaderParm0");
   programDef.shaderParmLocations[1] = glGetUniformLocation(program, "shaderParm1");
   programDef.shaderParmLocations[2] = glGetUniformLocation(program, "shaderParm2");
   programDef.shaderParmLocations[3] = glGetUniformLocation(program, "shaderParm3");
+
   programDef.samplerLocations[0] = glGetUniformLocation(program, "texture0");
   programDef.samplerLocations[1] = glGetUniformLocation(program, "texture1");
   programDef.samplerLocations[2] = glGetUniformLocation(program, "texture2");

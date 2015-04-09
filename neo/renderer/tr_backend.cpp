@@ -402,6 +402,108 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
+template<unsigned glmatrix>
+static void GL_LoadMatrix(const float* m) {
+  glMatrixMode(glmatrix);
+  glLoadMatrixf(m);
+}
+
+template<unsigned glmatrix>
+static void GL_LoadIdentityMatrix() {
+  glMatrixMode(glmatrix);
+  glLoadIdentity();
+}
+
+template<unsigned glmatrix>
+static void GL_PushMatrix() {
+  glMatrixMode(glmatrix);
+  glPushMatrix();
+}
+
+template<unsigned glmatrix>
+static void GL_PopMatrix() {
+  glMatrixMode(glmatrix);
+  glPopMatrix();
+}
+
+
+/*
+=================
+GL_LoadModelViewMatrix
+=================
+*/
+void GL_LoadModelViewMatrix(const float* m4) {
+  GL_LoadMatrix<GL_MODELVIEW>(m4);
+}
+
+/*
+=================
+GL_LoadIdentityModelViewMatrix
+=================
+*/
+void GL_LoadIdentityModelViewMatrix(const float* m4) {
+  GL_LoadIdentityMatrix<GL_MODELVIEW>();
+}
+
+/*
+=================
+GL_PushModelViewMatrix
+=================
+*/
+void GL_PushModelViewMatrix() {
+  GL_PushMatrix<GL_MODELVIEW>();
+}
+
+/*
+=================
+GL_PopModelViewMatrix
+=================
+*/
+void GL_PopModelViewMatrix() {
+  GL_PopMatrix<GL_MODELVIEW>();
+}
+
+
+
+/*
+=================
+GL_LoadProjectionMatrix
+=================
+*/
+void GL_LoadProjectionMatrix(const float* m4) {
+  GL_LoadMatrix<GL_PROJECTION>(m4);
+}
+
+/*
+=================
+GL_LoadIdentityProjectionMatrix
+=================
+*/
+void GL_LoadIdentityProjectionMatrix(const float* m4) {
+  GL_LoadIdentityMatrix<GL_PROJECTION>();
+}
+
+/*
+=================
+GL_PushProjectionMatrix
+=================
+*/
+void GL_PushProjectionMatrix() {
+  GL_PushMatrix<GL_PROJECTION>();
+}
+
+/*
+=================
+GL_PopProjectionMatrix
+=================
+*/
+void GL_PopProjectionMatrix() {
+  GL_PopMatrix<GL_PROJECTION>();
+}
+
+
+
+
 
 
 

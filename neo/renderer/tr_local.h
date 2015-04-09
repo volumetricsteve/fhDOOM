@@ -983,6 +983,17 @@ void	GL_State( int stateVector );
 void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
 
+void  GL_LoadModelViewMatrix(const float* m4);
+void  GL_LoadIdentityModelViewMatrix();
+void  GL_PushModelViewMatrix();
+void  GL_PopModelViewMatrix();
+
+void  GL_LoadProjectionMatrix(const float* m4);
+void  GL_LoadIdentityProjectionMatrix();
+void  GL_PushProjectionMatrix();
+void  GL_PopProjectionMatrix();
+
+
 const int GLS_SRCBLEND_ZERO						= 0x00000001;
 const int GLS_SRCBLEND_ONE						= 0x0;
 const int GLS_SRCBLEND_DST_COLOR				= 0x00000003;
