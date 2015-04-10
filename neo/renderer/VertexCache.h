@@ -57,9 +57,6 @@ public:
 	void			Init();
 	void			Shutdown();
 
-	// just for gfxinfo printing
-	bool			IsFast();
-
 	// called when vertex programs are enabled or disabled, because
 	// the cached data is no longer valid
 	void			PurgeAll();
@@ -108,7 +105,6 @@ private:
 	void			ActuallyFree( vertCache_t *block );
 
 	static idCVar	r_showVertexCache;
-	static idCVar	r_vertexBufferMegs;
 
 	int				staticCountTotal;
 	int				staticAllocTotal;		// for end of frame purging
@@ -120,8 +116,6 @@ private:
 
 	int				currentFrame;			// for purgable block tracking
 	int				listNum;				// currentFrame % NUM_VERTEX_FRAMES, determines which tempBuffers to use
-
-	bool			virtualMemory;			// not fast stuff
 
 	bool			allocatingTempBuffer;	// force GL_STREAM_DRAW_ARB
 
