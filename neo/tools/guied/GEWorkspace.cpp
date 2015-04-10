@@ -289,9 +289,8 @@ void rvGEWorkspace::Render ( HDC hdc )
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Render the workspace below
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0,mWindowWidth, mWindowHeight, 0, -1, 1);
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(0,mWindowWidth, mWindowHeight, 0, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -337,9 +336,8 @@ void rvGEWorkspace::Render ( HDC hdc )
 	
 	glViewport(0, 0, mWindowWidth, mWindowHeight );
 	glScissor(0, 0, mWindowWidth, mWindowHeight );
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0,mWindowWidth, mWindowHeight, 0, -1, 1);
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(0, mWindowWidth, mWindowHeight, 0, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 

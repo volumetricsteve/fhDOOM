@@ -402,110 +402,116 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
-template<unsigned glmatrix>
-static void GL_LoadMatrix(const float* m) {
-  glMatrixMode(glmatrix);
+
+joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
+  LoadIdentity();
+}
+
+void joGLMatrixStack::Load(const float* m) {  
+  glMatrixMode(matrixmode);
   glLoadMatrixf(m);
+  glMatrixMode(GL_MODELVIEW);
+/*
+  memcpy(Data(size), m, sizeof(joGLMatrixStack::Matrix));
+  Upload();
+*/
 }
 
-template<unsigned glmatrix>
-static void GL_LoadIdentityMatrix() {
-  glMatrixMode(glmatrix);
+void joGLMatrixStack::LoadIdentity() {
+  glMatrixMode(matrixmode);
   glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+/*
+  static const float identity [16] = 
+  { 1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1 };
+
+  static_assert(sizeof(Matrix) == sizeof(identity), "");
+
+  memcpy(Data(size), identity, sizeof(Matrix));
+  Upload();
+*/
 }
 
-template<unsigned glmatrix>
-static void GL_PushMatrix() {
-  glMatrixMode(glmatrix);
+void joGLMatrixStack::Push() {
+  glMatrixMode(matrixmode);
   glPushMatrix();
+  glMatrixMode(GL_MODELVIEW);
+/*
+  assert(size+1 < max_stack_size);
+
+  memcpy(Data(size + 1), Data(size), sizeof(Matrix));
+  size++;
+
+  Upload();
+*/
 }
 
-template<unsigned glmatrix>
-static void GL_PopMatrix() {
-  glMatrixMode(glmatrix);
+void joGLMatrixStack::Pop() {
+  glMatrixMode(matrixmode);
   glPopMatrix();
-}
-
-
+  glMatrixMode(GL_MODELVIEW);
 /*
-=================
-GL_LoadModelViewMatrix
-=================
+  if(size > 0)
+    size--;
+
+  Upload();
 */
-void GL_LoadModelViewMatrix(const float* m4) {
-  GL_LoadMatrix<GL_MODELVIEW>(m4);
 }
 
-/*
-=================
-GL_LoadIdentityModelViewMatrix
-=================
-*/
-void GL_LoadIdentityModelViewMatrix(const float* m4) {
-  GL_LoadIdentityMatrix<GL_MODELVIEW>();
+void joGLMatrixStack::Ortho(float left, float right, float bottom, float top, float nearClip, float farClip) {
+  glMatrixMode(matrixmode);
+  glOrthof(left, right, bottom, top, nearClip, farClip);
+  glMatrixMode(GL_MODELVIEW);
 }
 
-/*
-=================
-GL_PushModelViewMatrix
-=================
-*/
-void GL_PushModelViewMatrix() {
-  GL_PushMatrix<GL_MODELVIEW>();
+void joGLMatrixStack::Rotate(float angle, float x, float y, float z) {
+  glMatrixMode(matrixmode);
+  glRotatef(angle, x, y, z);
+  glMatrixMode(GL_MODELVIEW);
 }
 
-/*
-=================
-GL_PopModelViewMatrix
-=================
-*/
-void GL_PopModelViewMatrix() {
-  GL_PopMatrix<GL_MODELVIEW>();
+void joGLMatrixStack::Translate(float x, float y, float z) {
+  glMatrixMode(matrixmode);
+  glTranslatef(x, y, z);
+  glMatrixMode(GL_MODELVIEW);
 }
 
-
-
-/*
-=================
-GL_LoadProjectionMatrix
-=================
-*/
-void GL_LoadProjectionMatrix(const float* m4) {
-  GL_LoadMatrix<GL_PROJECTION>(m4);
+void joGLMatrixStack::Get(float* dst) const {
+  switch(matrixmode) {
+  case GL_PROJECTION:
+    glGetFloatv(GL_PROJECTION_MATRIX, dst);
+    return;
+  case GL_MODELVIEW:
+    glGetFloatv(GL_MODELVIEW_MATRIX, dst);
+    return;
+  case GL_TEXTURE:
+    glGetFloatv(GL_TEXTURE_MATRIX, dst);
+    return;
+  default:
+    assert(0 && "unsupported matrix mode");
+  }  
 }
 
-/*
-=================
-GL_LoadIdentityProjectionMatrix
-=================
-*/
-void GL_LoadIdentityProjectionMatrix(const float* m4) {
-  GL_LoadIdentityMatrix<GL_PROJECTION>();
+void joGLMatrixStack::Upload() const {
+  glMatrixMode(matrixmode);
+  glLoadMatrixf(Data(size));
+  glMatrixMode(GL_MODELVIEW);
 }
 
-/*
-=================
-GL_PushProjectionMatrix
-=================
-*/
-void GL_PushProjectionMatrix() {
-  GL_PushMatrix<GL_PROJECTION>();
+float* joGLMatrixStack::Data(int StackIndex) {
+  return &stack[StackIndex].m[0];
 }
 
-/*
-=================
-GL_PopProjectionMatrix
-=================
-*/
-void GL_PopProjectionMatrix() {
-  GL_PopMatrix<GL_PROJECTION>();
+const float* joGLMatrixStack::Data(int StackIndex) const {
+  return &stack[StackIndex].m[0];
 }
 
-
-
-
-
-
+joGLMatrixStack GL_ProjectionMatrix(GL_PROJECTION);
+joGLMatrixStack GL_ModelViewMatrix(GL_MODELVIEW);
+joGLMatrixStack GL_TextureMatrix(GL_TEXTURE);
 
 /*
 ============================================================================
@@ -528,11 +534,12 @@ void RB_SetGL2D( void ) {
 	if ( r_useScissor.GetBool() ) {
 		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	}
-	glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-	glOrtho( 0, 640, 480, 0, 0, 1 );		// always assume 640x480 virtual coordinates
-	glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
+
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho( 0, 640, 480, 0, 0, 1 ); // always assume 640x480 virtual coordinates
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 
 	GL_State( GLS_DEPTHFUNC_ALWAYS |
 			  GLS_SRCBLEND_SRC_ALPHA |

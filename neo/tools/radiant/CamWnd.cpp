@@ -450,7 +450,8 @@ void CCamWnd::Cam_BuildMatrix() {
 	m_Camera.right[0] = m_Camera.forward[1];
 	m_Camera.right[1] = -m_Camera.forward[0];
 
-	glGetFloatv(GL_PROJECTION_MATRIX, &matrix[0][0]);
+  GL_ProjectionMatrix.Get(&matrix[0][0]);
+//	glGetFloatv(GL_PROJECTION_MATRIX, &matrix[0][0]);
 
 	for (i = 0; i < 3; i++) {
 		m_Camera.vright[i] = matrix[i][0];
@@ -939,7 +940,7 @@ void CCamWnd::SetProjectionMatrix() {
 	projectionMatrix[11] = -1;
 	projectionMatrix[15] = 0;
 
-	glLoadMatrixf( projectionMatrix );
+  GL_ProjectionMatrix.Load(projectionMatrix);	
 #endif
 }
 
@@ -971,16 +972,15 @@ void CCamWnd::Cam_Draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
-	glDisable(GL_LIGHTING);
-	glMatrixMode(GL_PROJECTION);
+	glDisable(GL_LIGHTING);	
 
 	SetProjectionMatrix();
 
-	glRotatef(-90, 1, 0, 0);	// put Z going up
-	glRotatef(90, 0, 0, 1);	// put Z going up
-	glRotatef(m_Camera.angles[0], 0, 1, 0);
-	glRotatef(-m_Camera.angles[1], 0, 0, 1);
-	glTranslatef(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
+  GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
+  GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
+  GL_ProjectionMatrix.Rotate(m_Camera.angles[0], 0, 1, 0);
+  GL_ProjectionMatrix.Rotate(-m_Camera.angles[1], 0, 0, 1);
+  GL_ProjectionMatrix.Translate(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
 
 	Cam_BuildMatrix();
    
@@ -1004,11 +1004,7 @@ void CCamWnd::Cam_Draw() {
 		Brush_Draw(brush);
 	}
 
-
-	//glDepthMask ( 1 ); // Ok, write now
-	glMatrixMode(GL_PROJECTION);
-
-	glTranslatef(g_qeglobals.d_select_translate[0],g_qeglobals.d_select_translate[1],g_qeglobals.d_select_translate[2]);
+  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0],g_qeglobals.d_select_translate[1],g_qeglobals.d_select_translate[2]);
 
 	brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
 
@@ -1981,71 +1977,6 @@ void CCamWnd::MarkWorldDirty() {
 
 
 /*
-=========================
-CCamWnd::DrawEntityData
-
-  Draws entity data ( experimental )
-=========================
-*/
-extern void glBox(idVec4 &color, idVec3 &point, float size);
-
-void CCamWnd::DrawEntityData() {
-
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-
-	SetProjectionMatrix();
-
-	glRotatef(-90, 1, 0, 0);	// put Z going up
-	glRotatef(90, 0, 0, 1);	// put Z going up
-	glRotatef(m_Camera.angles[0], 0, 1, 0);
-	glRotatef(-m_Camera.angles[1], 0, 0, 1);
-	glTranslatef(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
-
-	Cam_BuildMatrix();
-
-	if (!(entityMode || selectMode)) {
-		return;
-	}
-
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	globalImages->BindNull();
-	idVec3 color(0, 1, 0);
-	glColor3fv( color.ToFloatPtr() );
-
-	brush_t *brushList = &active_brushes;
-	int pass = 0;
-	while (brushList) {
-		for (brush_t *brush = brushList->next; brush != brushList; brush = brush->next) {
-
-			if (CullBrush(brush, true)) {
-				continue;
-			}
-
-			if (FilterBrush(brush)) {
-				continue;
-			}
-
-			if ((pass == 1 && selectMode) || (entityMode && pass == 0 && brush->owner->lightDef >= 0)) {
-				Brush_DrawXY(brush, 0, true, true);
-			}
-
-		}
-		brushList = (brushList == &active_brushes) ? &selected_brushes : NULL;
-		color.x = 1;
-		color.y = 0;
-		pass++;
-		glColor3fv( color.ToFloatPtr() );
-	}
-
-}
-
-
-/*
  =======================================================================================================================
     Cam_Render
 
@@ -2106,9 +2037,6 @@ void CCamWnd::Cam_Render() {
 
 	renderSystem->EndFrame( &frontEnd, &backEnd );
 //common->Printf( "front:%i back:%i\n", frontEnd, backEnd );
-
-	//glPopAttrib();
-	//DrawEntityData();
 
 	//wglSwapBuffers(dc.m_hDC);
 	// get back to the editor state

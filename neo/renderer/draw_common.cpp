@@ -293,9 +293,7 @@ void RB_FinishStageTexturing( const shaderStage_t *pStage, const drawSurf_t *sur
 	}
 
 	if ( pStage->texture.hasMatrix ) {
-		glMatrixMode( GL_TEXTURE );
-		glLoadIdentity();
-		glMatrixMode( GL_MODELVIEW );
+    GL_TextureMatrix.LoadIdentity();
 	}
 }
 
@@ -1403,9 +1401,7 @@ static void RB_BlendLight( const drawSurf_t *drawSurfs,  const drawSurf_t *drawS
 
 		if ( stage->texture.hasMatrix ) {
 			GL_SelectTexture( 0 );
-			glMatrixMode( GL_TEXTURE );
-			glLoadIdentity();
-			glMatrixMode( GL_MODELVIEW );
+      GL_TextureMatrix.LoadIdentity();
 		}
 	}
 
@@ -1674,10 +1670,9 @@ void RB_STD_LightScale( void ) {
 
 	// full screen blends
 	glLoadIdentity();
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glLoadIdentity(); 
-    glOrtho( 0, 1, 0, 1, -1, 1 );
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 
 	GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_COLOR );
 	GL_Cull( CT_TWO_SIDED );	// so mirror views also get it

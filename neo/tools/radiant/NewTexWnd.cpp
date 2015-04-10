@@ -267,12 +267,11 @@ void CNewTexWnd::OnPaint() {
 		);
 		glViewport(0, 0, rectClient.Width(), rectClient.Height());
 		glScissor(0, 0, rectClient.Width(), rectClient.Height());
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+    GL_ProjectionMatrix.LoadIdentity();
+    GL_ProjectionMatrix.Ortho(0, rectClient.Width(), origin.y - rectClient.Height(), origin.y, -100, 100);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_BLEND);
-		glOrtho(0, rectClient.Width(), origin.y - rectClient.Height(), origin.y, -100, 100);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		// init stuff

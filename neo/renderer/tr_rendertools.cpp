@@ -410,13 +410,14 @@ void RB_ShowIntensity( void ) {
 
 	// draw it back to the screen
 	glLoadIdentity();
-	glMatrixMode( GL_PROJECTION );
-	GL_State( GLS_DEPTHFUNC_ALWAYS );
-	glPushMatrix();
-	glLoadIdentity(); 
-    glOrtho( 0, 1, 0, 1, -1, 1 );
+  GL_State( GLS_DEPTHFUNC_ALWAYS );
+
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
+  
 	glRasterPos2f( 0, 0 );
-	glPopMatrix();
+  GL_ProjectionMatrix.Pop();
 	glColor3f( 1, 1, 1 );
 	globalImages->BindNull();
 	glMatrixMode( GL_MODELVIEW );
@@ -443,12 +444,14 @@ void RB_ShowDepthBuffer( void ) {
 
 	glPushMatrix();
 	glLoadIdentity();
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glLoadIdentity(); 
-    glOrtho( 0, 1, 0, 1, -1, 1 );
+
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );	
+
 	glRasterPos2f( 0, 0 );
-	glPopMatrix();
+	GL_ProjectionMatrix.Pop();
+
 	glMatrixMode( GL_MODELVIEW );
 	glPopMatrix();
 
@@ -462,12 +465,12 @@ void RB_ShowDepthBuffer( void ) {
 	glReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_DEPTH_COMPONENT , GL_FLOAT, depthReadback );
 
 #if 0
-	for ( i = 0 ; i < glConfig.vidWidth * glConfig.vidHeight ; i++ ) {
-		((byte *)depthReadback)[i*4] = 
-		((byte *)depthReadback)[i*4+1] = 
-		((byte *)depthReadback)[i*4+2] = 255 * ((float *)depthReadback)[i];
-		((byte *)depthReadback)[i*4+3] = 1;
-	}
+  for ( i = 0 ; i < glConfig.vidWidth * glConfig.vidHeight ; i++ ) {
+    ((byte *)depthReadback)[i*4] = 
+      ((byte *)depthReadback)[i*4+1] = 
+      ((byte *)depthReadback)[i*4+2] = 255 * ((float *)depthReadback)[i];
+    ((byte *)depthReadback)[i*4+3] = 1;
+  }
 #endif
 
 	glDrawPixels( glConfig.vidWidth, glConfig.vidHeight, GL_RGBA , GL_UNSIGNED_BYTE, depthReadback );
@@ -2188,17 +2191,17 @@ void RB_TestGamma( void ) {
 
 
 	glLoadIdentity();
-
-	glMatrixMode( GL_PROJECTION );
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.LoadIdentity();
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	glColor3f( 1, 1, 1 );
-	glPushMatrix();
-	glLoadIdentity(); 
 	glDisable( GL_TEXTURE_2D );
-    glOrtho( 0, 1, 0, 1, -1, 1 );
+  GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
-	glPopMatrix();
+
+  GL_ProjectionMatrix.Pop();
+	
 	glEnable( GL_TEXTURE_2D );
 	glMatrixMode( GL_MODELVIEW );
 }
@@ -2239,16 +2242,16 @@ static void RB_TestGammaBias( void ) {
 
 
 	glLoadIdentity();
-	glMatrixMode( GL_PROJECTION );
+
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.LoadIdentity();
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	glColor3f( 1, 1, 1 );
-	glPushMatrix();
-	glLoadIdentity(); 
 	glDisable( GL_TEXTURE_2D );
-    glOrtho( 0, 1, 0, 1, -1, 1 );
+  GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
-	glPopMatrix();
+	GL_ProjectionMatrix.Pop();
 	glEnable( GL_TEXTURE_2D );
 	glMatrixMode( GL_MODELVIEW );
 }
@@ -2291,14 +2294,13 @@ void RB_TestImage( void ) {
 		w *= (float)glConfig.vidHeight / glConfig.vidWidth;
 	}
 
-	glLoadIdentity();
-
-	glMatrixMode( GL_PROJECTION );
+	glLoadIdentity();	
 	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.LoadIdentity();
+  
 	glColor3f( 1, 1, 1 );
-	glPushMatrix();
-	glLoadIdentity(); 
-    glOrtho( 0, 1, 0, 1, -1, 1 );
+	GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
 
 	tr.testImage->Bind();
 	glBegin( GL_QUADS );
@@ -2317,7 +2319,7 @@ void RB_TestImage( void ) {
 
 	glEnd();
 
-	glPopMatrix();
+	GL_ProjectionMatrix.Pop();
 	glMatrixMode( GL_MODELVIEW );
 }
 

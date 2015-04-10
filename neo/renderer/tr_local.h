@@ -983,15 +983,44 @@ void	GL_State( int stateVector );
 void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
 
-void  GL_LoadModelViewMatrix(const float* m4);
-void  GL_LoadIdentityModelViewMatrix();
-void  GL_PushModelViewMatrix();
-void  GL_PopModelViewMatrix();
+class joGLMatrixStack {
+public:
+  explicit joGLMatrixStack(int mode);
 
-void  GL_LoadProjectionMatrix(const float* m4);
-void  GL_LoadIdentityProjectionMatrix();
-void  GL_PushProjectionMatrix();
-void  GL_PopProjectionMatrix();
+  void Load(const float* m);
+  void LoadIdentity();
+  void Push();
+  void Pop();
+
+  void Ortho(float left, float right, float bottom, float top, float nearClip, float farClip);
+  
+  void Rotate(float angle, float x, float y, float z);
+  
+  void Translate(float x, float y, float z);
+
+  void Get(float* dst) const;
+
+  void Upload() const;
+
+private:
+  float* Data(int StackIndex);
+  const float* Data(int StackIndex) const;
+
+  static const int max_stack_size = 16;
+
+  struct Matrix {
+    float m[16];
+  };
+
+  Matrix stack[max_stack_size];
+  int    size;
+  int    matrixmode;
+};
+
+extern joGLMatrixStack GL_ProjectionMatrix;
+extern joGLMatrixStack GL_ModelViewMatrix;
+extern joGLMatrixStack GL_TextureMatrix;
+
 
 
 const int GLS_SRCBLEND_ZERO						= 0x00000001;

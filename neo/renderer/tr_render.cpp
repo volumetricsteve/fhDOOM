@@ -182,9 +182,7 @@ void RB_EnterWeaponDepthHack() {
 
 	matrix[14] *= 0.25;
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf( matrix );
-	glMatrixMode(GL_MODELVIEW);
+  GL_ProjectionMatrix.Load( matrix );
 }
 
 /*
@@ -201,9 +199,7 @@ void RB_EnterModelDepthHack( float depth ) {
 
 	matrix[14] -= depth;
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf( matrix );
-	glMatrixMode(GL_MODELVIEW);
+	GL_ProjectionMatrix.Load( matrix );
 }
 
 /*
@@ -214,9 +210,7 @@ RB_LeaveDepthHack
 void RB_LeaveDepthHack() {
 	glDepthRange( 0, 1 );
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf( backEnd.viewDef->projectionMatrix );
-	glMatrixMode(GL_MODELVIEW);
+  GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
 }
 
 /*
@@ -363,9 +357,7 @@ void RB_LoadShaderTextureMatrix( const float *shaderRegisters, const textureStag
 	float	matrix[16];
 
 	RB_GetShaderTextureMatrix( shaderRegisters, texture, matrix );
-	glMatrixMode( GL_TEXTURE );
-	glLoadMatrixf( matrix );
-	glMatrixMode( GL_MODELVIEW );
+  GL_TextureMatrix.Load(matrix);
 }
 
 /*
@@ -479,9 +471,7 @@ to actually render the visible surfaces for this view
 */
 void RB_BeginDrawingView (void) {
 	// set the modelview matrix for the viewer
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf( backEnd.viewDef->projectionMatrix );
-	glMatrixMode(GL_MODELVIEW);
+  GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
 
 	// set the window clipping
 	glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1, 

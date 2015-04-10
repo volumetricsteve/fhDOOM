@@ -68,9 +68,8 @@ void Draw_ClearWindow( void ) {
     gluPerspective (90,  1,  2,  16384);
 	gluLookAt (mx, my, draw_maxs[2] + g/2, mx , my, draw_maxs[2], 0, 1, 0);
 #else
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity ();
-	glOrtho( dmapGlobals.drawBounds[0][0], dmapGlobals.drawBounds[1][0], 
+  GL_ProjectionMatrix.LoadIdentity();
+	GL_ProjectionMatrix.Ortho( dmapGlobals.drawBounds[0][0], dmapGlobals.drawBounds[1][0], 
 		dmapGlobals.drawBounds[0][1], dmapGlobals.drawBounds[1][1],
 		-1, 1 );
 	glMatrixMode( GL_MODELVIEW );

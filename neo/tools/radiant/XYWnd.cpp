@@ -1483,8 +1483,10 @@ void CXYWnd::OnPaint() {
 		QE_CheckOpenGLForErrors();
 
 		if (m_nViewType != XY) {
+//      GL_ModelViewMatrix.Push();
 			glPushMatrix();
 			if (m_nViewType == YZ) {
+//        GL_ModelViewMatrix.Rotate(-90, 0, 1, 0);
 				glRotatef(-90, 0, 1, 0);	// put Z going up
 			}
 
@@ -1615,6 +1617,7 @@ void CXYWnd::OnPaint() {
 		}
 
 		if (m_nViewType != XY) {
+//      GL_ModelViewMatrix.Pop();
 			glPopMatrix();
 		}
 
@@ -3567,8 +3570,6 @@ void CXYWnd::XY_Draw() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// set up viewpoint
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
 
 	w = m_nWidth / 2 / m_fScale;
 	h = m_nHeight / 2 / m_fScale;
@@ -3584,7 +3585,8 @@ void CXYWnd::XY_Draw() {
 	viewBounds[0].z = -99999;
 	viewBounds[1].z = 99999;
 
-	glOrtho(mins[0], maxs[0], mins[1], maxs[1], MIN_WORLD_COORD, MAX_WORLD_COORD);
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(mins[0], maxs[0], mins[1], maxs[1], MIN_WORLD_COORD, MAX_WORLD_COORD);
 
 	// draw stuff
 	globalImages->BindNull();
@@ -3596,13 +3598,16 @@ void CXYWnd::XY_Draw() {
 	drawn = culled = 0;
 
 	if (m_nViewType != XY) {
-		glPushMatrix();
+    GL_ProjectionMatrix.Push();
+//		glPushMatrix();
 		if (m_nViewType == YZ) {
-			glRotatef(-90, 0, 1, 0);	// put Z going up
+      GL_ProjectionMatrix.Rotate(-90.0f, 0.0f, 1.0f, 0.0f);
+//			glRotatef(-90, 0, 1, 0);	// put Z going up
 		}
 
 		// else
-		glRotatef(-90, 1, 0, 0);		// put Z going up
+    GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
+//		glRotatef(-90, 1, 0, 0);		// put Z going up
 	}
 
 	e = world_entity;
@@ -3638,7 +3643,8 @@ void CXYWnd::XY_Draw() {
 	}
 
 	if (!(m_nViewType == XY)) {
-		glPopMatrix();
+    GL_ProjectionMatrix.Pop();
+//		glPopMatrix();
 	}
 
 	// draw block grid
@@ -3648,15 +3654,21 @@ void CXYWnd::XY_Draw() {
 
 	// now draw selected brushes
 	if (m_nViewType != XY) {
-		glPushMatrix();
+    GL_ProjectionMatrix.Push();
+//		glPushMatrix();
 		if (m_nViewType == YZ) {
-			glRotatef(-90, 0, 1, 0);	// put Z going up
+      GL_ProjectionMatrix.Rotate(-90.0f, 0.0f, 1.0f, 0.0f);
+//			glRotatef(-90, 0, 1, 0);	// put Z going up
 		}
 
 		// else
-		glRotatef(-90, 1, 0, 0);		// put Z going up
+//		glRotatef(-90, 1, 0, 0);		// put Z going up
+    GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
 	}
 
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0], g_qeglobals.d_select_translate[1], g_qeglobals.d_select_translate[2]);
+/*
 	glPushMatrix();
 	glTranslatef
 	(
@@ -3664,7 +3676,7 @@ void CXYWnd::XY_Draw() {
 		g_qeglobals.d_select_translate[1],
 		g_qeglobals.d_select_translate[2]
 	);
-
+*/
 	if (RotateMode()) {
 		glColor3f( 0.8f, 0.1f, 0.9f );
 	}
@@ -3776,17 +3788,20 @@ void CXYWnd::XY_Draw() {
 		glPointSize(1);
 	}
 
+  GL_ProjectionMatrix.Pop();
+  GL_ProjectionMatrix.Translate(-g_qeglobals.d_select_translate[0], -g_qeglobals.d_select_translate[1], -g_qeglobals.d_select_translate[2]);
+/*
 	glPopMatrix();
-
 	glTranslatef
 	(
 		-g_qeglobals.d_select_translate[0],
 		-g_qeglobals.d_select_translate[1],
 		-g_qeglobals.d_select_translate[2]
 	);
-
+*/
 	if (!(m_nViewType == XY)) {
-		glPopMatrix();
+    GL_ProjectionMatrix.Pop();
+//		glPopMatrix();
 	}
 
 	// area selection hack

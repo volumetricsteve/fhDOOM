@@ -170,23 +170,23 @@ void idGLWidget::OnPaint()
 
 	glViewport(0, 0, rect.Width(), rect.Height());
 	glScissor(0, 0, rect.Width(), rect.Height());
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glClearColor (0.4f, 0.4f, 0.4f, 0.7f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(0, rect.Width(), 0, rect.Height(), -256, 256);
 
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glOrtho(0, rect.Width(), 0, rect.Height(), -256, 256);
+  glClearColor(0.4f, 0.4f, 0.4f, 0.7f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
 
 	if (drawable) {
 		drawable->draw(1, 1, rect.Width()-1, rect.Height()-1);
 	} else {
 		glViewport(0, 0, rect.Width(), rect.Height());
 		glScissor(0, 0, rect.Width(), rect.Height());
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+  
+    GL_ProjectionMatrix.LoadIdentity();
 		glClearColor (0.4f, 0.4f, 0.4f, 0.7f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
@@ -264,7 +264,6 @@ void idGLDrawable::draw(int x, int y, int w, int h) {
 	GL_State( GLS_DEFAULT );
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
-	glMatrixMode(GL_PROJECTION);
 	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -356,7 +355,6 @@ void idGLDrawableMaterial::draw(int x, int y, int w, int h) {
 	if (mat) {
 		glViewport(x, y, w, h);
 		glScissor(x, y, w, h);
-		glMatrixMode(GL_PROJECTION);
 		glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -631,7 +629,6 @@ void idGLDrawableModel::draw(int x, int y, int w, int h) {
 
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
-	glMatrixMode(GL_PROJECTION);
 	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
 	glClear(GL_COLOR_BUFFER_BIT);
 

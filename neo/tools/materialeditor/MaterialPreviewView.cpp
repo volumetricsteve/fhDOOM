@@ -505,7 +505,7 @@ void idGLDrawableView::draw(int x, int y, int w, int h) {
 	if (mat) {
 		glViewport(x, y, w, h);
 		glScissor(x, y, w, h);
-		glMatrixMode(GL_PROJECTION);
+
 		glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
 		glClear(GL_COLOR_BUFFER_BIT);
 

@@ -339,8 +339,7 @@ GLbitfield	glbitClear = GL_COLOR_BUFFER_BIT;	// HACK
  =======================================================================================================================
  */
 void Z_Draw(void) {
-	brush_t		*brush;
-	float		w, h;
+	brush_t		*brush;	
 	float		top, bottom;
 	idVec3		org_top, org_bottom, dir_up, dir_down;
 	int			xCam = z.width / 3;
@@ -374,12 +373,11 @@ void Z_Draw(void) {
 	// glbitClear |= GL_DEPTH_BUFFER_BIT;
 	// glClear(GL_DEPTH_BUFFER_BIT);
 	//
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	const float w = z.width / 2 / z.scale;
+	const float h = z.height / 2 / z.scale;
 
-	w = z.width / 2 / z.scale;
-	h = z.height / 2 / z.scale;
-	glOrtho(-w, w, z.origin[2] - h, z.origin[2] + h, -8, 8);
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(-w, w, z.origin[2] - h, z.origin[2] + h, -8, 8);
 
 	globalImages->BindNull();
 	glDisable(GL_DEPTH_TEST);

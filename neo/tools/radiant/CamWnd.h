@@ -155,8 +155,6 @@ protected:
 	void	FreeRendererState();
 	void	UpdateCaption();
 	bool	BuildBrushRenderData(brush_t *brush);
-	void	DrawEntityData();
-
 
 	camera_t m_Camera;
 	int	m_nCambuttonstate;
