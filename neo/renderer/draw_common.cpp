@@ -780,6 +780,13 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
         glUniform4fv(glslStage->program->shaderParmLocations[i], 1, parm);
       }
 
+      if(glslStage->program->modelViewMatrixLocation != -1) {
+        glUniformMatrix4fv(glslStage->program->modelViewMatrixLocation, 1, GL_FALSE, GL_ModelViewMatrix.Top());
+      }
+
+      if (glslStage->program->projectionMatrixLocation != -1) {
+        glUniformMatrix4fv(glslStage->program->projectionMatrixLocation, 1, GL_FALSE, GL_ProjectionMatrix.Top());
+      }
 
       for (int i = 0; i < glslStage->numShaderMaps; i++) {
         if (glslStage->shaderMap[i] && glslStage->program->samplerLocations[i] != -1) {

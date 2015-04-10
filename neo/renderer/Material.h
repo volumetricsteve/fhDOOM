@@ -203,6 +203,8 @@ typedef struct {
 typedef struct {
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
+  int    modelViewMatrixLocation;
+  int    projectionMatrixLocation;
   int    localLightOriginLocation;  
   int    localLightProjectionLocation;
   int    diffuseTextureMatrixLocation;

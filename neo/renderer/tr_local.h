@@ -1000,6 +1000,8 @@ public:
 
   void Get(float* dst) const;
 
+  const float* Top() const { return Data(size); }
+
   void Upload() const;
 
 private:

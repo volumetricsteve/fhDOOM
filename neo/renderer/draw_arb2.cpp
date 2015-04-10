@@ -632,7 +632,8 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
 
   programDef.ident = program;
 
-
+  programDef.modelViewMatrixLocation = glGetUniformLocation(program, "rpModelView");
+  programDef.projectionMatrixLocation = glGetUniformLocation(program, "rpProjection");
   programDef.localLightOriginLocation = glGetUniformLocation(program, "rpLocalLightOrigin");
 
   programDef.shaderParmLocations[0] = glGetUniformLocation(program, "shaderParm0");
