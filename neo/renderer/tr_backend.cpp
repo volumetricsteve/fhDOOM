@@ -402,27 +402,16 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
-#define USE_GL_MATRICES
-
 joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
   LoadIdentity();
 }
 
-void joGLMatrixStack::Load(const float* m) {  
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glLoadMatrixf(m);
-#else
-  memcpy(Data(size), m, sizeof(joGLMatrixStack::Matrix));
+void joGLMatrixStack::Load(const float* m) { 
+  memcpy(Data(size), m, sizeof(Matrix));
   Upload();
-#endif
 }
 
 void joGLMatrixStack::LoadIdentity() {
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glLoadIdentity();
-#else
   static const float identity [16] = 
   { 1, 0, 0, 0,
     0, 1, 0, 0,
@@ -430,76 +419,114 @@ void joGLMatrixStack::LoadIdentity() {
     0, 0, 0, 1 };
   
   Load(&identity[0]);  
-#endif
 }
 
 void joGLMatrixStack::Push() {
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glPushMatrix();
-#else
-  assert(size+1 < max_stack_size);
+  assert(size + 1 < max_stack_size);
 
-  memcpy(Data(size + 1), Data(size), sizeof(Matrix));
+  memcpy(&stack[size+1], &stack[size], sizeof(stack[0]));
   size++;
-
-  Upload();
-#endif
 }
 
 void joGLMatrixStack::Pop() {
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glPopMatrix();
-#else
-  if(size > 0)
+  if(size > 0) {
     size--;
-
-  Upload();
-#endif
+    Upload();
+  }
 }
 
 void joGLMatrixStack::Ortho(float left, float right, float bottom, float top, float nearClip, float farClip) {
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glOrthof(left, right, bottom, top, nearClip, farClip);
-#else
-#endif
+  const float a = 2.0f/(right - left);
+  const float b = 2.0f/(top - bottom);
+  const float c = -2.0f/(farClip - nearClip);
+  const float d = -((right + left)/(right - left));
+  const float e = -((top + bottom)/(top - bottom));
+  const float f = -((farClip + nearClip)/(farClip - nearClip));
+
+  const float m[] = {
+    a, 0, 0, 0,
+    0, b, 0, 0,
+    0, 0, c, 0,
+    d, e, f, 1
+  };
+
+  Load(&m[0]);
 }
 
 void joGLMatrixStack::Rotate(float angle, float x, float y, float z) {
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glRotatef(angle, x, y, z);
-#else
-#endif
+  const float mag = sqrtf(x * x + y * y + z * z);
+
+  if (mag > 0.0f)
+  {
+    const float sinAngle = sinf(DEG2RAD(angle));
+    const float cosAngle = cosf(DEG2RAD(angle));    
+
+    x /= mag;
+    y /= mag;
+    z /= mag;
+
+    const float xx = x * x;
+    const float yy = y * y;
+    const float zz = z * z;
+    const float xy = x * y;
+    const float yz = y * z;
+    const float zx = z * x;
+    const float xs = x * sinAngle;
+    const float ys = y * sinAngle;
+    const float zs = z * sinAngle;
+    const float oneMinusCos = 1.0f - cosAngle;
+
+    float rotMat[4][4];
+
+    rotMat[0][0] = (oneMinusCos * xx) + cosAngle;
+    rotMat[1][0] = (oneMinusCos * xy) - zs;
+    rotMat[2][0] = (oneMinusCos * zx) + ys;
+    rotMat[3][0] = 0.0F;
+
+    rotMat[0][1] = (oneMinusCos * xy) + zs;
+    rotMat[1][1] = (oneMinusCos * yy) + cosAngle;
+    rotMat[2][1] = (oneMinusCos * yz) - xs;
+    rotMat[3][1] = 0.0F;
+
+    rotMat[0][2] = (oneMinusCos * zx) - ys;
+    rotMat[1][2] = (oneMinusCos * yz) + xs;
+    rotMat[2][2] = (oneMinusCos * zz) + cosAngle;
+    rotMat[3][2] = 0.0F;
+
+    rotMat[0][3] = 0.0F;
+    rotMat[1][3] = 0.0F;
+    rotMat[2][3] = 0.0F;
+    rotMat[3][3] = 1.0F;
+
+    float current[16];
+    Get(&current[0]);    
+
+    float result[16]; 
+    myGlMultMatrix(&rotMat[0][0], &current[0], &result[0]);    
+
+    Load(&result[0]);
+  }
 }
 
 void joGLMatrixStack::Translate(float x, float y, float z) {
-#ifdef USE_GL_MATRICES
-  glMatrixMode(matrixmode);
-  glTranslatef(x, y, z);
-#else
-#endif
+  const float translate[16] = { 
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    x, y, z, 1
+  };
+
+  float current[16];
+  Get(&current[0]);
+
+  float result[16];
+  myGlMultMatrix(&translate[0], &current[0], &result[0]);
+
+  Load(&result[0]);
 }
 
 void joGLMatrixStack::Get(float* dst) const {
-#ifdef USE_GL_MATRICES
-  switch(matrixmode) {
-  case GL_PROJECTION:
-    glGetFloatv(GL_PROJECTION_MATRIX, dst);
-    return;
-  case GL_MODELVIEW:
-    glGetFloatv(GL_MODELVIEW_MATRIX, dst);
-    return;
-  case GL_TEXTURE:
-    glGetFloatv(GL_TEXTURE_MATRIX, dst);
-    return;
-  default:
-    assert(0 && "unsupported matrix mode");
-  }  
-#else
-#endif
+  memcpy(dst, Data(size), sizeof(Matrix));   
 }
 
 void joGLMatrixStack::Upload() const {

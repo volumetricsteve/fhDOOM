@@ -1006,7 +1006,7 @@ private:
   float* Data(int StackIndex);
   const float* Data(int StackIndex) const;
 
-  static const int max_stack_size = 16;
+  static const int max_stack_size = 32;
 
   struct Matrix {
     float m[16];
