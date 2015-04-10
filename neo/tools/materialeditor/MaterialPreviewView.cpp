@@ -540,8 +540,7 @@ void idGLDrawableView::draw(int x, int y, int w, int h) {
 
 		world->DebugClearLines( refdef.time );
 
-		glMatrixMode( GL_MODELVIEW );
-		glLoadIdentity();
+    GL_ModelViewMatrix.LoadIdentity();
 	}
 }
 

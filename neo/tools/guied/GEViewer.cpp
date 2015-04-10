@@ -507,8 +507,7 @@ void rvGEViewer::Render	( HDC dc )
 	// Render the workspace below
   GL_ProjectionMatrix.LoadIdentity();
   GL_ProjectionMatrix.Ortho(0,mWindowWidth, mWindowHeight, 0, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
 
 	if ( mInterface )
 	{

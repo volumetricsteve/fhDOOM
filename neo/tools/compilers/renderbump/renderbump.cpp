@@ -933,8 +933,8 @@ static void RenderBumpTriangles( srfTriangles_t *lowMesh, renderBump_t *rb ) {
   GL_ProjectionMatrix.Ortho(0, 1, 1, 0, -1, 1);
 	
 	glDisable( GL_BLEND );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+
+  GL_ModelViewMatrix.LoadIdentity();
 
 	glDisable( GL_DEPTH_TEST );
 
@@ -1436,8 +1436,7 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
   GL_ProjectionMatrix.Ortho(bounds[0][0], bounds[1][0], bounds[0][2],
   bounds[1][2], -(bounds[0][1] - 1), -(bounds[1][1] + 1));
 
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
 
 	// flat maps are automatically anti-aliased
 

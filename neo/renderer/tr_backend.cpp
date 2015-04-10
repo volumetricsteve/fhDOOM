@@ -538,8 +538,7 @@ void RB_SetGL2D( void ) {
   GL_ProjectionMatrix.LoadIdentity();
   GL_ProjectionMatrix.Ortho( 0, 640, 480, 0, 0, 1 ); // always assume 640x480 virtual coordinates
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
 
 	GL_State( GLS_DEPTHFUNC_ALWAYS |
 			  GLS_SRCBLEND_SRC_ALPHA |

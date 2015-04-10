@@ -166,7 +166,8 @@ stenciling will matter.
 =================
 */
 void RB_PolygonClear( void ) {
-	glPushMatrix();
+  GL_ModelViewMatrix.Push();
+	
 	glPushAttrib( GL_ALL_ATTRIB_BITS  );
 	glLoadIdentity();
 	glDisable( GL_TEXTURE_2D );
@@ -180,7 +181,8 @@ void RB_PolygonClear( void ) {
 	glVertex3f( -20, 20, -10 );
 	glEnd();
 	glPopAttrib();
-	glPopMatrix();
+
+	GL_ModelViewMatrix.Pop();
 }
 
 /*
@@ -409,7 +411,7 @@ void RB_ShowIntensity( void ) {
 	}
 
 	// draw it back to the screen
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();	
   GL_State( GLS_DEPTHFUNC_ALWAYS );
 
   GL_ProjectionMatrix.Push();
@@ -419,8 +421,7 @@ void RB_ShowIntensity( void ) {
 	glRasterPos2f( 0, 0 );
   GL_ProjectionMatrix.Pop();
 	glColor3f( 1, 1, 1 );
-	globalImages->BindNull();
-	glMatrixMode( GL_MODELVIEW );
+	globalImages->BindNull();	
 
 	glDrawPixels( glConfig.vidWidth, glConfig.vidHeight, GL_RGBA , GL_UNSIGNED_BYTE, colorReadback );
 
@@ -442,8 +443,8 @@ void RB_ShowDepthBuffer( void ) {
 		return;
 	}
 
-	glPushMatrix();
-	glLoadIdentity();
+  GL_ModelViewMatrix.Push();
+  GL_ModelViewMatrix.LoadIdentity();
 
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.LoadIdentity();
@@ -452,8 +453,7 @@ void RB_ShowDepthBuffer( void ) {
 	glRasterPos2f( 0, 0 );
 	GL_ProjectionMatrix.Pop();
 
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
+  GL_ModelViewMatrix.Pop();
 
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	glColor3f( 1, 1, 1 );
@@ -2188,9 +2188,8 @@ void RB_TestGamma( void ) {
 			}
 		}
 	}
-
-
-	glLoadIdentity();
+	
+  GL_ModelViewMatrix.LoadIdentity();
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.LoadIdentity();
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
@@ -2202,8 +2201,7 @@ void RB_TestGamma( void ) {
 
   GL_ProjectionMatrix.Pop();
 	
-	glEnable( GL_TEXTURE_2D );
-	glMatrixMode( GL_MODELVIEW );
+	glEnable( GL_TEXTURE_2D );	
 }
 
 
@@ -2240,8 +2238,7 @@ static void RB_TestGammaBias( void ) {
 		}
 	}
 
-
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
 
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.LoadIdentity();
@@ -2252,8 +2249,7 @@ static void RB_TestGammaBias( void ) {
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
 	GL_ProjectionMatrix.Pop();
-	glEnable( GL_TEXTURE_2D );
-	glMatrixMode( GL_MODELVIEW );
+	glEnable( GL_TEXTURE_2D );	
 }
 
 /*
@@ -2319,8 +2315,7 @@ void RB_TestImage( void ) {
 
 	glEnd();
 
-	GL_ProjectionMatrix.Pop();
-	glMatrixMode( GL_MODELVIEW );
+	GL_ProjectionMatrix.Pop();	
 }
 
 /*

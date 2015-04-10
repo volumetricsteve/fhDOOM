@@ -86,20 +86,6 @@ static idMiniDrawVert cubeData[] = {
 static int cubeSides = sizeof(cubeData) / sizeof(idMiniDrawVert);
 static int numQuads = cubeSides / 4;
 
-void glTexturedBox(idVec3 &point, float size, const idMaterial *mat) {
-	glTranslatef(point.x, point.y, point.z);
-	for (int i = 0; i < numQuads; i++) {
-		glBegin(GL_QUADS);
-		for (int j = 0; j < 4; j++) {
-			idVec3 v = cubeData[i * 4 + j].xyz;
-			v *= size;
-			glTexCoord2fv(cubeData[i * 4 + j].st.ToFloatPtr());
-			glVertex3fv(v.ToFloatPtr());
-		}
-		glEnd();
-	}
-}
-
 idGLWidget::idGLWidget()
 {
 	initialized = false;
@@ -109,7 +95,6 @@ idGLWidget::idGLWidget()
 idGLWidget::~idGLWidget()
 {
 }
-
 
 BEGIN_MESSAGE_MAP(idGLWidget, CWnd)
 	//{{AFX_MSG_MAP(idGLWidget)
@@ -465,8 +450,7 @@ void idGLDrawableMaterial::draw(int x, int y, int w, int h) {
 		int frontEnd, backEnd;
 		renderSystem->EndFrame( &frontEnd, &backEnd );
 
-		glMatrixMode( GL_MODELVIEW );
-		glLoadIdentity();
+    GL_ModelViewMatrix.LoadIdentity();
 	}
 
 }
@@ -692,8 +676,7 @@ void idGLDrawableModel::draw(int x, int y, int w, int h) {
 	int frontEnd, backEnd;
 	renderSystem->EndFrame( &frontEnd, &backEnd );
 
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
 }
 
 

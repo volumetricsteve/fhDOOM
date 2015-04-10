@@ -1483,14 +1483,12 @@ void CXYWnd::OnPaint() {
 		QE_CheckOpenGLForErrors();
 
 		if (m_nViewType != XY) {
-//      GL_ModelViewMatrix.Push();
-			glPushMatrix();
+      GL_ModelViewMatrix.Push();
 			if (m_nViewType == YZ) {
-//        GL_ModelViewMatrix.Rotate(-90, 0, 1, 0);
-				glRotatef(-90, 0, 1, 0);	// put Z going up
+        GL_ModelViewMatrix.Rotate(-90, 0, 1, 0);
 			}
 
-			glRotatef(-90, 1, 0, 0);		// put Z going up
+			GL_ModelViewMatrix.Rotate(-90, 1, 0, 0);		// put Z going up
 		}
 
 		if ( g_bCrossHairs ) {
@@ -1617,8 +1615,7 @@ void CXYWnd::OnPaint() {
 		}
 
 		if (m_nViewType != XY) {
-//      GL_ModelViewMatrix.Pop();
-			glPopMatrix();
+      GL_ModelViewMatrix.Pop();
 		}
 
 		wglSwapBuffers(dc.m_hDC);
@@ -3599,15 +3596,12 @@ void CXYWnd::XY_Draw() {
 
 	if (m_nViewType != XY) {
     GL_ProjectionMatrix.Push();
-//		glPushMatrix();
 		if (m_nViewType == YZ) {
       GL_ProjectionMatrix.Rotate(-90.0f, 0.0f, 1.0f, 0.0f);
-//			glRotatef(-90, 0, 1, 0);	// put Z going up
 		}
 
 		// else
     GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
-//		glRotatef(-90, 1, 0, 0);		// put Z going up
 	}
 
 	e = world_entity;
@@ -3644,7 +3638,6 @@ void CXYWnd::XY_Draw() {
 
 	if (!(m_nViewType == XY)) {
     GL_ProjectionMatrix.Pop();
-//		glPopMatrix();
 	}
 
 	// draw block grid
@@ -3655,28 +3648,17 @@ void CXYWnd::XY_Draw() {
 	// now draw selected brushes
 	if (m_nViewType != XY) {
     GL_ProjectionMatrix.Push();
-//		glPushMatrix();
 		if (m_nViewType == YZ) {
       GL_ProjectionMatrix.Rotate(-90.0f, 0.0f, 1.0f, 0.0f);
-//			glRotatef(-90, 0, 1, 0);	// put Z going up
 		}
 
 		// else
-//		glRotatef(-90, 1, 0, 0);		// put Z going up
     GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
 	}
 
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0], g_qeglobals.d_select_translate[1], g_qeglobals.d_select_translate[2]);
-/*
-	glPushMatrix();
-	glTranslatef
-	(
-		g_qeglobals.d_select_translate[0],
-		g_qeglobals.d_select_translate[1],
-		g_qeglobals.d_select_translate[2]
-	);
-*/
+
 	if (RotateMode()) {
 		glColor3f( 0.8f, 0.1f, 0.9f );
 	}
@@ -3790,18 +3772,9 @@ void CXYWnd::XY_Draw() {
 
   GL_ProjectionMatrix.Pop();
   GL_ProjectionMatrix.Translate(-g_qeglobals.d_select_translate[0], -g_qeglobals.d_select_translate[1], -g_qeglobals.d_select_translate[2]);
-/*
-	glPopMatrix();
-	glTranslatef
-	(
-		-g_qeglobals.d_select_translate[0],
-		-g_qeglobals.d_select_translate[1],
-		-g_qeglobals.d_select_translate[2]
-	);
-*/
+
 	if (!(m_nViewType == XY)) {
     GL_ProjectionMatrix.Pop();
-//		glPopMatrix();
 	}
 
 	// area selection hack

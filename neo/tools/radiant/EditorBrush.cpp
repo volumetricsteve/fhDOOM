@@ -3784,8 +3784,8 @@ void DrawSpeaker(brush_t *b, bool bSelected, bool twoD) {
 		}
 		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, max);
 	} else {
-		glPushMatrix();
-		glTranslatef(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z );
+    GL_ModelViewMatrix.Push();		
+		GL_ModelViewMatrix.Translate(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z );
 		glColor3f( 0.4f, 0.4f, 0.4f );
 		glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
 		GLUquadricObj* qobj = gluNewQuadric();
@@ -3809,7 +3809,7 @@ void DrawSpeaker(brush_t *b, bool bSelected, bool twoD) {
 		}
 		gluSphere(qobj, max, 8, 8);
 		gluDeleteQuadric(qobj);
-		glPopMatrix();
+		GL_ModelViewMatrix.Pop();
 	}
 
 		

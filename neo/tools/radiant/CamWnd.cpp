@@ -2040,8 +2040,7 @@ void CCamWnd::Cam_Render() {
 
 	//wglSwapBuffers(dc.m_hDC);
 	// get back to the editor state
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+	GL_ModelViewMatrix.LoadIdentity();
 	Cam_BuildMatrix();
 }
 

@@ -1669,7 +1669,8 @@ void RB_STD_LightScale( void ) {
 	}
 
 	// full screen blends
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
+
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.LoadIdentity();
   GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
@@ -1698,10 +1699,8 @@ void RB_STD_LightScale( void ) {
 		glEnd();
 	}
 
-
-	glPopMatrix();
-	glEnable( GL_DEPTH_TEST );
-	glMatrixMode( GL_MODELVIEW );
+	GL_ProjectionMatrix.Pop();
+	glEnable( GL_DEPTH_TEST );	
 	GL_Cull( CT_FRONT_SIDED );
 }
 

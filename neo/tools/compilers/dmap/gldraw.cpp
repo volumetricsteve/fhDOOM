@@ -72,8 +72,7 @@ void Draw_ClearWindow( void ) {
 	GL_ProjectionMatrix.Ortho( dmapGlobals.drawBounds[0][0], dmapGlobals.drawBounds[1][0], 
 		dmapGlobals.drawBounds[0][1], dmapGlobals.drawBounds[1][1],
 		-1, 1 );
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();
 #endif
 	glColor3f (0,0,0);
 //	glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
