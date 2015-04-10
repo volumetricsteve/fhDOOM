@@ -235,7 +235,7 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 
 		// change the matrix if needed
 		if ( drawSurf->space != backEnd.currentSpace ) {
-			glLoadMatrixf( drawSurf->space->modelViewMatrix );
+			GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
 		}
 
 		if ( drawSurf->space->weaponDepthHack ) {
@@ -280,7 +280,7 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 	for ( drawSurf = drawSurfs ; drawSurf ; drawSurf = drawSurf->nextOnLight ) {
 		// change the matrix if needed
 		if ( drawSurf->space != backEnd.currentSpace ) {
-			glLoadMatrixf( drawSurf->space->modelViewMatrix );
+			GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
 		}
 
 		if ( drawSurf->space->weaponDepthHack ) {
@@ -471,20 +471,20 @@ to actually render the visible surfaces for this view
 */
 void RB_BeginDrawingView (void) {
 	// set the modelview matrix for the viewer
-  GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
+  GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );  
 
 	// set the window clipping
 	glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1, 
 		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1, 
 		backEnd.viewDef->viewport.x2 + 1 - backEnd.viewDef->viewport.x1,
-		backEnd.viewDef->viewport.y2 + 1 - backEnd.viewDef->viewport.y1 );
+		backEnd.viewDef->viewport.y2 + 1 - backEnd.viewDef->viewport.y1 );  
 
 	// the scissor may be smaller than the viewport for subviews
 	glScissor( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1, 
 		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1, 
 		backEnd.viewDef->scissor.x2 + 1 - backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1 );
-	backEnd.currentScissor = backEnd.viewDef->scissor;
+	backEnd.currentScissor = backEnd.viewDef->scissor;  
 
 	// ensures that depth writes are enabled for the depth clear
 	GL_State( GLS_DEFAULT );
@@ -503,8 +503,7 @@ void RB_BeginDrawingView (void) {
 	}
 
 	backEnd.glState.faceCulling = -1;		// force face culling to set next time
-	GL_Cull( CT_FRONT_SIDED );
-
+	GL_Cull( CT_FRONT_SIDED );  
 }
 
 /*
@@ -620,7 +619,7 @@ void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInterac
 	// change the matrix and light projection vectors if needed
 	if ( surf->space != backEnd.currentSpace ) {
 		backEnd.currentSpace = surf->space;
-		glLoadMatrixf( surf->space->modelViewMatrix );
+		GL_ModelViewMatrix.Load( surf->space->modelViewMatrix );
 	}
 
 	// change the scissor if needed

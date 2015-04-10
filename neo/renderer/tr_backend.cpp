@@ -402,84 +402,89 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
+#define USE_GL_MATRICES
 
 joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
   LoadIdentity();
 }
 
 void joGLMatrixStack::Load(const float* m) {  
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glLoadMatrixf(m);
-  glMatrixMode(GL_MODELVIEW);
-/*
+#else
   memcpy(Data(size), m, sizeof(joGLMatrixStack::Matrix));
   Upload();
-*/
+#endif
 }
 
 void joGLMatrixStack::LoadIdentity() {
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glLoadIdentity();
-  glMatrixMode(GL_MODELVIEW);
-/*
+#else
   static const float identity [16] = 
   { 1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1 };
-
-  static_assert(sizeof(Matrix) == sizeof(identity), "");
-
-  memcpy(Data(size), identity, sizeof(Matrix));
-  Upload();
-*/
+  
+  Load(&identity[0]);  
+#endif
 }
 
 void joGLMatrixStack::Push() {
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glPushMatrix();
-  glMatrixMode(GL_MODELVIEW);
-/*
+#else
   assert(size+1 < max_stack_size);
 
   memcpy(Data(size + 1), Data(size), sizeof(Matrix));
   size++;
 
   Upload();
-*/
+#endif
 }
 
 void joGLMatrixStack::Pop() {
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-/*
+#else
   if(size > 0)
     size--;
 
   Upload();
-*/
+#endif
 }
 
 void joGLMatrixStack::Ortho(float left, float right, float bottom, float top, float nearClip, float farClip) {
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glOrthof(left, right, bottom, top, nearClip, farClip);
-  glMatrixMode(GL_MODELVIEW);
+#else
+#endif
 }
 
 void joGLMatrixStack::Rotate(float angle, float x, float y, float z) {
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glRotatef(angle, x, y, z);
-  glMatrixMode(GL_MODELVIEW);
+#else
+#endif
 }
 
 void joGLMatrixStack::Translate(float x, float y, float z) {
+#ifdef USE_GL_MATRICES
   glMatrixMode(matrixmode);
   glTranslatef(x, y, z);
-  glMatrixMode(GL_MODELVIEW);
+#else
+#endif
 }
 
 void joGLMatrixStack::Get(float* dst) const {
+#ifdef USE_GL_MATRICES
   switch(matrixmode) {
   case GL_PROJECTION:
     glGetFloatv(GL_PROJECTION_MATRIX, dst);
@@ -493,12 +498,13 @@ void joGLMatrixStack::Get(float* dst) const {
   default:
     assert(0 && "unsupported matrix mode");
   }  
+#else
+#endif
 }
 
 void joGLMatrixStack::Upload() const {
   glMatrixMode(matrixmode);
   glLoadMatrixf(Data(size));
-  glMatrixMode(GL_MODELVIEW);
 }
 
 float* joGLMatrixStack::Data(int StackIndex) {

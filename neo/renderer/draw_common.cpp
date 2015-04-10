@@ -674,7 +674,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 
 	// change the matrix if needed
 	if ( surf->space != backEnd.currentSpace ) {
-		glLoadMatrixf( surf->space->modelViewMatrix );
+		GL_ModelViewMatrix.Load( surf->space->modelViewMatrix );
 		backEnd.currentSpace = surf->space;
 		RB_SetProgramEnvironmentSpace();
 	}
@@ -1005,7 +1005,7 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		return numDrawSurfs;
 	}
 
-	RB_LogComment( "---------- RB_STD_DrawShaderPasses ----------\n" );
+	RB_LogComment( "---------- RB_STD_DrawShaderPasses ----------\n" );  
 
 	// if we are about to draw the first surface that needs
 	// the rendering in a texture, copy it over
@@ -1029,7 +1029,7 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	GL_SelectTexture( 0 );
 	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
-	RB_SetProgramEnvironment();
+	RB_SetProgramEnvironment();  
 
 	// we don't use RB_RenderDrawSurfListWithFunction()
 	// because we want to defer the matrix load because many
@@ -1051,9 +1051,9 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			&& !backEnd.currentRenderCopied ) {
 			break;
 		}
-
-		RB_STD_T_RenderShaderPasses( drawSurfs[i] );
-	}
+    
+		RB_STD_T_RenderShaderPasses( drawSurfs[i] );    
+	}  
 
 	GL_Cull( CT_FRONT_SIDED );
 	glColor3f( 1, 1, 1 );
@@ -1724,7 +1724,7 @@ void	RB_STD_DrawView( void ) {
 	numDrawSurfs = backEnd.viewDef->numDrawSurfs;
 
 	// clear the z buffer, set the projection matrix, etc
-	RB_BeginDrawingView();
+	RB_BeginDrawingView();  
 
 	// decide how much overbrighting we are going to do
 	RB_DetermineLightScale();
@@ -1734,16 +1734,16 @@ void	RB_STD_DrawView( void ) {
 	RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
 
 	// main light renderer
-  RB_ARB2_DrawInteractions();
+  RB_ARB2_DrawInteractions();  
 
 	// disable stencil shadow test
 	glStencilFunc( GL_ALWAYS, 128, 255 );
 
 	// uplight the entire screen to crutch up not having better blending range
-	RB_STD_LightScale();
+	RB_STD_LightScale();  
 
 	// now draw any non-light dependent shading passes
-	int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );
+	int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );  
 
 	// fob and blend lights
 	RB_STD_FogAllLights();
@@ -1753,6 +1753,5 @@ void	RB_STD_DrawView( void ) {
 		RB_STD_DrawShaderPasses( drawSurfs+processed, numDrawSurfs-processed );
 	}
 
-	RB_RenderDebugTools( drawSurfs, numDrawSurfs );
-
+	RB_RenderDebugTools( drawSurfs, numDrawSurfs );  
 }

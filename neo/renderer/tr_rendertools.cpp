@@ -125,7 +125,7 @@ RB_SimpleSurfaceSetup
 void RB_SimpleSurfaceSetup( const drawSurf_t *drawSurf ) {
 	// change the matrix if needed
 	if ( drawSurf->space != backEnd.currentSpace ) {
-		glLoadMatrixf( drawSurf->space->modelViewMatrix );
+		GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
 		backEnd.currentSpace = drawSurf->space;
 	}
 
@@ -146,7 +146,7 @@ RB_SimpleWorldSetup
 */
 void RB_SimpleWorldSetup( void ) {
 	backEnd.currentSpace = &backEnd.viewDef->worldSpace;
-	glLoadMatrixf( backEnd.viewDef->worldSpace.modelViewMatrix );
+	GL_ModelViewMatrix.Load( backEnd.viewDef->worldSpace.modelViewMatrix );
 
 	backEnd.currentScissor = backEnd.viewDef->scissor;
 	glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
@@ -169,7 +169,7 @@ void RB_PolygonClear( void ) {
   GL_ModelViewMatrix.Push();
 	
 	glPushAttrib( GL_ALL_ATTRIB_BITS  );
-	glLoadIdentity();
+  GL_ModelViewMatrix.LoadIdentity();	
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_CULL_FACE );
@@ -871,7 +871,7 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 	for ( ; vModels ; vModels = vModels->next ) {
 		idBounds	b;
 
-		glLoadMatrixf( vModels->modelViewMatrix );
+		GL_ModelViewMatrix.Load( vModels->modelViewMatrix );
 
 		if ( !vModels->entityDef ) {
 			continue;
@@ -2290,7 +2290,7 @@ void RB_TestImage( void ) {
 		w *= (float)glConfig.vidHeight / glConfig.vidWidth;
 	}
 
-	glLoadIdentity();	
+  GL_ModelViewMatrix.LoadIdentity();	
 	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.LoadIdentity();

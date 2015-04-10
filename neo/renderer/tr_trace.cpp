@@ -397,7 +397,7 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			continue;
 		}
 
-		glLoadMatrixf( surf->space->modelViewMatrix );
+		GL_ModelViewMatrix.Load( surf->space->modelViewMatrix );
 
 		// highlight the surface
 		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
