@@ -7,8 +7,8 @@ textures/glsltest/flatcolored
     sort postProcess
     
     {
-        vertexShader default.vsh
-        fragmentShader  default.psh  
+        vertexShader    test.vp
+        fragmentShader  test.fp
 
         shaderParm 0     time * 0.05, time * 0.2, 1.0, 1.0
         shaderMap  0     _currentRender 
