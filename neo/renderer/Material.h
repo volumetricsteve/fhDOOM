@@ -201,11 +201,9 @@ typedef struct {
 } newShaderStage_t;
 
 typedef struct {
-  char   vertexShaderName[64];
-  char   fragmentShaderName[64];
   int    modelViewMatrixLocation;
   int    projectionMatrixLocation;
-  int    localLightOriginLocation;  
+  int    localLightOriginLocation;
   int    localLightProjectionLocation;
   int    diffuseTextureMatrixLocation;
   int    specularTextureMatrixLocation;
@@ -215,6 +213,20 @@ typedef struct {
   int    localViewOriginLocation;
   int    shaderParmLocations[MAX_VERTEX_PARMS];
   int    samplerLocations[MAX_FRAGMENT_IMAGES];
+} glslUniformLocations_t;
+
+typedef struct {
+  static const int vertex_attrib_position = 0;
+  static const int vertex_attrib_texcoord = 1;
+  static const int vertex_attrib_normal   = 2;
+  static const int vertex_attrib_color    = 3;
+  static const int vertex_attrib_binormal = 4;
+  static const int vertex_attrib_tangent  = 5;  
+
+  char   vertexShaderName[64];
+  char   fragmentShaderName[64];
+  glslUniformLocations_t uniforms;
+
   GLuint ident;
 } glslProgramDef_t;
 
