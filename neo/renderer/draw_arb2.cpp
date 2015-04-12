@@ -210,12 +210,19 @@ void RB_ARB2_CreateDrawInteractions( const drawSurf_t *surf ) {
 }
 
 
+void RB_GLSL_DrawInteractions( void );
 /*
 ==================
 RB_ARB2_DrawInteractions
 ==================
 */
 void RB_ARB2_DrawInteractions( void ) {
+
+  if(r_ignore.GetBool()) {
+    RB_GLSL_DrawInteractions();
+    return;
+  }
+
 	viewLight_t		*vLight;
 	const idMaterial	*lightShader;
 
@@ -692,4 +699,272 @@ void R_ReloadGlslPrograms_f( const idCmdArgs &args ) {
   }
 
   common->Printf( "----- R_ReloadGlslPrograms -----\n" );
+}
+
+
+
+
+/*
+==================
+RB_GLSL_DrawInteraction
+==================
+*/
+void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());  
+  
+  glUniform1i(glslProgramDef_t::uniform_texture0, 0);
+  glUniform1i(glslProgramDef_t::uniform_texture1, 1);
+  glUniform1i(glslProgramDef_t::uniform_texture2, 2);
+  glUniform1i(glslProgramDef_t::uniform_texture3, 3);
+  glUniform1i(glslProgramDef_t::uniform_texture4, 4);
+  glUniform1i(glslProgramDef_t::uniform_texture5, 5);
+  glUniform1i(glslProgramDef_t::uniform_texture6, 6);
+  glUniform1i(glslProgramDef_t::uniform_texture7, 7);
+
+  // load all the vertex program parameters
+/*
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_LIGHT_ORIGIN, din->localLightOrigin.ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_VIEW_ORIGIN, din->localViewOrigin.ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_LIGHT_PROJECT_S, din->lightProjection[0].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_LIGHT_PROJECT_T, din->lightProjection[1].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_LIGHT_PROJECT_Q, din->lightProjection[2].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_LIGHT_FALLOFF_S, din->lightProjection[3].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_BUMP_MATRIX_S, din->bumpMatrix[0].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_BUMP_MATRIX_T, din->bumpMatrix[1].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_DIFFUSE_MATRIX_S, din->diffuseMatrix[0].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_DIFFUSE_MATRIX_T, din->diffuseMatrix[1].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_SPECULAR_MATRIX_S, din->specularMatrix[0].ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_SPECULAR_MATRIX_T, din->specularMatrix[1].ToFloatPtr());
+
+  static const float zero[4] = { 0, 0, 0, 0 };
+  static const float one[4] = { 1, 1, 1, 1 };
+  static const float negOne[4] = { -1, -1, -1, -1 };
+
+  switch (din->vertexColor) {
+  case SVC_IGNORE:
+    glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_COLOR_MODULATE, zero);
+    glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_COLOR_ADD, one);
+    break;
+  case SVC_MODULATE:
+    glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_COLOR_MODULATE, one);
+    glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_COLOR_ADD, zero);
+    break;
+  case SVC_INVERSE_MODULATE:
+    glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_COLOR_MODULATE, negOne);
+    glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, PP_COLOR_ADD, one);
+    break;
+  }
+
+  // set the constant colors
+  glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, din->diffuseColor.ToFloatPtr());
+  glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 1, din->specularColor.ToFloatPtr());
+*/
+  // set the textures
+
+  // texture 1 will be the per-surface bump map
+  GL_SelectTextureNoClient(1);
+  din->bumpImage->Bind();
+
+  // texture 2 will be the light falloff texture
+  GL_SelectTextureNoClient(2);
+  din->lightFalloffImage->Bind();
+
+  // texture 3 will be the light projection texture
+  GL_SelectTextureNoClient(3);
+  din->lightImage->Bind();
+
+  // texture 4 is the per-surface diffuse map
+  GL_SelectTextureNoClient(4);
+  din->diffuseImage->Bind();
+
+  // texture 5 is the per-surface specular map
+  GL_SelectTextureNoClient(5);
+  din->specularImage->Bind();
+
+  // draw it
+  RB_DrawElementsWithCounters(din->surf->geo);
+}
+
+
+static const glslProgramDef_t* interactionProgram = nullptr;
+
+/*
+=============
+RB_GLSL_CreateDrawInteractions
+
+=============
+*/
+void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
+  if (!surf) {
+    return;
+  }
+
+  if(!interactionProgram) {
+    interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
+
+    if(!interactionProgram) {
+      return;
+    }
+  }
+
+  // perform setup here that will be constant for all interactions
+  GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);  
+
+  // bind the vertex program
+  glDisable(GL_VERTEX_PROGRAM_ARB);
+  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  glUseProgram(interactionProgram->ident);
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+
+  // texture 0 is the normalization cube map for the vector towards the light
+  GL_SelectTextureNoClient(0);
+  if (backEnd.vLight->lightShader->IsAmbientLight()) {
+    globalImages->ambientNormalMap->Bind();
+  }
+  else {
+    globalImages->normalCubeMapImage->Bind();
+  }
+
+  // texture 6 is the specular lookup table
+  GL_SelectTextureNoClient(6);
+  globalImages->specularTableImage->Bind();
+
+  for (; surf; surf = surf->nextOnLight) {
+    // perform setup here that will not change over multiple interaction passes
+
+    // set the vertex pointers
+    idDrawVert	*ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache);
+
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+
+    // this may cause RB_ARB2_DrawInteraction to be exacuted multiple
+    // times with different colors and images if the surface or light have multiple layers
+    RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
+  }
+
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+
+  // disable features
+  GL_SelectTextureNoClient(6);
+  globalImages->BindNull();
+
+  GL_SelectTextureNoClient(5);
+  globalImages->BindNull();
+
+  GL_SelectTextureNoClient(4);
+  globalImages->BindNull();
+
+  GL_SelectTextureNoClient(3);
+  globalImages->BindNull();
+
+  GL_SelectTextureNoClient(2);
+  globalImages->BindNull();
+
+  GL_SelectTextureNoClient(1);
+  globalImages->BindNull();
+
+  backEnd.glState.currenttmu = -1;
+  GL_SelectTexture(0);
+
+  glUseProgram(0);
+}
+
+
+
+/*
+==================
+RB_GLSL_DrawInteractions
+==================
+*/
+void RB_GLSL_DrawInteractions(void) {
+  viewLight_t		*vLight;
+  const idMaterial	*lightShader;
+
+  GL_SelectTexture(0);
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+  //
+  // for each light, perform adding and shadowing
+  //
+  for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+    backEnd.vLight = vLight;
+
+    // do fogging later
+    if (vLight->lightShader->IsFogLight()) {
+      continue;
+    }
+    if (vLight->lightShader->IsBlendLight()) {
+      continue;
+    }
+
+    if (!vLight->localInteractions && !vLight->globalInteractions
+      && !vLight->translucentInteractions) {
+      continue;
+    }
+
+    lightShader = vLight->lightShader;
+
+    // clear the stencil buffer if needed
+    if (vLight->globalShadows || vLight->localShadows) {
+      backEnd.currentScissor = vLight->scissorRect;
+      if (r_useScissor.GetBool()) {
+        glScissor(backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
+          backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
+          backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
+          backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1);
+      }
+      glClear(GL_STENCIL_BUFFER_BIT);
+    }
+    else {
+      // no shadows, so no need to read or write the stencil buffer
+      // we might in theory want to use GL_ALWAYS instead of disabling
+      // completely, to satisfy the invarience rules
+      glStencilFunc(GL_ALWAYS, 128, 255);
+    }
+
+    RB_StencilShadowPass(vLight->globalShadows);
+    RB_GLSL_CreateDrawInteractions(vLight->localInteractions);
+    RB_StencilShadowPass(vLight->localShadows);
+    RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
+
+    glUseProgram(0);
+
+    // translucent surfaces never get stencil shadowed
+    if (r_skipTranslucent.GetBool()) {
+      continue;
+    }
+
+    glStencilFunc(GL_ALWAYS, 128, 255);
+
+    backEnd.depthFunc = GLS_DEPTHFUNC_LESS;
+    RB_GLSL_CreateDrawInteractions(vLight->translucentInteractions);
+
+    backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
+  }
+
+  // disable stencil shadow test
+  glStencilFunc(GL_ALWAYS, 128, 255);
+
+  GL_SelectTexture(0);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 }
