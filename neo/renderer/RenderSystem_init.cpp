@@ -44,6 +44,7 @@ static void GfxInfo_f( void );
 
 const char *r_rendererArgs[] = { "best", "arb", "arb2", "Cg", "exp", "nv10", "nv20", "r200", NULL };
 
+idCVar r_glDebugOutput( "r_glDebugOutput", "0", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "print OpenGL debug output: 0 = Off, 1 = Asynchronous, 2 = Synchronous" );
 idCVar r_inhibitFragmentProgram( "r_inhibitFragmentProgram", "0", CVAR_RENDERER | CVAR_BOOL, "ignore the fragment program extension" );
 idCVar r_glDriver( "r_glDriver", "", CVAR_RENDERER, "\"opengl32\", etc." );
 idCVar r_useLightPortalFlow( "r_useLightPortalFlow", "1", CVAR_RENDERER | CVAR_BOOL, "use a more precise area reference determination" );
@@ -405,6 +406,98 @@ static bool R_GetModeInfo( int *width, int *height, int mode ) {
     return true;
 }
 
+/*
+====================
+R_GLDebugOutput
+
+Format and print warnings from OpenGL Debug Output to console.
+====================
+*/
+void GLAPIENTRY R_GLDebugOutput
+(
+GLenum source,
+GLenum type,
+GLuint id,
+GLenum severity,
+GLsizei length,
+const GLchar* message,
+GLvoid* userParam
+)
+{
+  const char* debSource = "?source?";
+  const char* debType = "?type?";
+  const char* debSev = "?severity?";  
+
+#pragma warning( push )
+#pragma warning( disable : 4996 )
+
+  switch(source) {
+  case GL_DEBUG_SOURCE_API_ARB:
+    debSource = "OpenGL";
+    break;
+  case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+    debSource = "Window System";
+    break;
+  case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+    debSource = "Shader Compiler";
+    break;
+  case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+    debSource = "Third Party";
+    break;
+  case GL_DEBUG_SOURCE_APPLICATION_ARB:
+    debSource = "Application";
+    break;
+  case GL_DEBUG_SOURCE_OTHER_ARB:
+    debSource = "Other";
+    break;
+  default:
+    break;
+  }
+
+  switch(type) {
+  case GL_DEBUG_TYPE_ERROR_ARB:
+    debType = "ERROR";
+    break;
+  case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+    debType = "DEPRECATED";
+    break;
+  case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+    debType = "UNDEFINED";
+    break;
+  case GL_DEBUG_TYPE_PORTABILITY_ARB:
+    debType = "PORTABILITY";
+    break;
+  case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+    debType = "PERFORMANCE";
+    break;
+  case GL_DEBUG_TYPE_OTHER_ARB:
+    debType = "MESSAGE";
+    break;
+  default:
+    break;
+  }
+
+  switch(severity) {
+  case GL_DEBUG_SEVERITY_HIGH_ARB:
+    debSev = "HIGH";
+    break;
+  case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+    debSev = "MEDIUM";
+    break;
+  case GL_DEBUG_SEVERITY_LOW_ARB:
+    debSev = "LOW";
+    break;
+  case GL_DEBUG_SEVERITY_NOTIFICATION:
+    debSev = "NOTE";
+    break;
+  default:
+    break;
+  }
+
+  common->Printf("(GL %u) %s, %s, %s: %s\n", id, debSource, debType, debSev, message);
+#pragma warning( pop ) 
+}
+
 
 /*
 ==================
@@ -497,7 +590,20 @@ void R_InitOpenGL( void ) {
 	glConfig.isInitialized = true;
 
 	// recheck all the extensions (FIXME: this might be dangerous)
-	R_CheckPortableExtensions();
+	R_CheckPortableExtensions();  
+
+  if(r_glDebugOutput.GetInteger() == 1 || r_glDebugOutput.GetInteger() == 2) {
+    if(r_glDebugOutput.GetInteger() == 1) {
+      glEnable(GL_DEBUG_OUTPUT);
+    } else {
+      glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    }
+
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, NULL, GL_FALSE);
+    glDebugMessageCallback(R_GLDebugOutput, NULL);
+  }
 
 	// parse our vertex and fragment programs, possibly disably support for
 	// one of the paths if there was an error
