@@ -1104,8 +1104,8 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 
     assert(shadowProgram);
     glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, localLight.ToFloatPtr());
-    glUniform4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_ProjectionMatrix.Top());
-    glUniform4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_ModelViewMatrix.Top());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
 	}
 
 	tri = surf->geo;
