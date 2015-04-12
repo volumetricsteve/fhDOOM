@@ -777,27 +777,19 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 
 
       for (int i = 0; i < glslStage->numShaderParms; i++) {
-        if(glslStage->program->uniforms.shaderParmLocations[i] == -1)
-          continue;
-
         float	parm[4];
         parm[0] = regs[glslStage->shaderParms[i][0]];
         parm[1] = regs[glslStage->shaderParms[i][1]];
         parm[2] = regs[glslStage->shaderParms[i][2]];
         parm[3] = regs[glslStage->shaderParms[i][3]];
-        glUniform4fv(glslStage->program->uniforms.shaderParmLocations[i], 1, parm);
+        glUniform4fv(glslProgramDef_t::uniform_shaderparm0 + i, 1, parm);
       }
 
-      if(glslStage->program->uniforms.modelViewMatrixLocation != -1) {
-        glUniformMatrix4fv(glslStage->program->uniforms.modelViewMatrixLocation, 1, GL_FALSE, GL_ModelViewMatrix.Top());
-      }
-
-      if (glslStage->program->uniforms.projectionMatrixLocation != -1) {
-        glUniformMatrix4fv(glslStage->program->uniforms.projectionMatrixLocation, 1, GL_FALSE, GL_ProjectionMatrix.Top());
-      }
+      glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top());
+      glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top());
 
       for (int i = 0; i < glslStage->numShaderMaps; i++) {
-        if (glslStage->shaderMap[i] && glslStage->program->uniforms.samplerLocations[i] != -1) {
+        if (glslStage->shaderMap[i]) {
           GL_SelectTexture(i);
           glslStage->shaderMap[i]->Bind();
         }
@@ -807,7 +799,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       RB_DrawElementsWithCounters(tri);
 
       for (int i = 0; i < glslStage->numShaderMaps; i++) {
-        if (glslStage->shaderMap[i] && glslStage->program->uniforms.samplerLocations[i] != -1) {
+        if (glslStage->shaderMap[i]) {
           GL_SelectTexture(i);
           globalImages->BindNull();
         }
@@ -1111,8 +1103,9 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 		localLight.w = 0.0f;
 
     assert(shadowProgram);
-    assert(shadowProgram->uniforms.localLightOriginLocation != -1);
-    glUniform4fv(shadowProgram->uniforms.localLightOriginLocation, 1, localLight.ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, localLight.ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_ProjectionMatrix.Top());
+    glUniform4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_ModelViewMatrix.Top());
 	}
 
 	tri = surf->geo;
@@ -1192,6 +1185,7 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 		GL_Cull( CT_FRONT_SIDED );
 		glEnable( GL_STENCIL_TEST );
 
+    
 		return;
 	}
 

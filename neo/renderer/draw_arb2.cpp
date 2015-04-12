@@ -631,24 +631,6 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
     glDeleteProgram(programDef.ident);
 
   programDef.ident = program;
-
-  programDef.uniforms.modelViewMatrixLocation = glGetUniformLocation(program, "rpModelView");
-  programDef.uniforms.projectionMatrixLocation = glGetUniformLocation(program, "rpProjection");
-  programDef.uniforms.localLightOriginLocation = glGetUniformLocation(program, "rpLocalLightOrigin");
-
-  programDef.uniforms.shaderParmLocations[0] = glGetUniformLocation(program, "shaderParm0");
-  programDef.uniforms.shaderParmLocations[1] = glGetUniformLocation(program, "shaderParm1");
-  programDef.uniforms.shaderParmLocations[2] = glGetUniformLocation(program, "shaderParm2");
-  programDef.uniforms.shaderParmLocations[3] = glGetUniformLocation(program, "shaderParm3");
-
-  programDef.uniforms.samplerLocations[0] = glGetUniformLocation(program, "texture0");
-  programDef.uniforms.samplerLocations[1] = glGetUniformLocation(program, "texture1");
-  programDef.uniforms.samplerLocations[2] = glGetUniformLocation(program, "texture2");
-  programDef.uniforms.samplerLocations[3] = glGetUniformLocation(program, "texture3");
-  programDef.uniforms.samplerLocations[4] = glGetUniformLocation(program, "texture4");
-  programDef.uniforms.samplerLocations[5] = glGetUniformLocation(program, "texture5");
-  programDef.uniforms.samplerLocations[6] = glGetUniformLocation(program, "texture6");
-  programDef.uniforms.samplerLocations[7] = glGetUniformLocation(program, "texture7");
 }
 
 /*

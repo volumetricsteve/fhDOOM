@@ -201,21 +201,6 @@ typedef struct {
 } newShaderStage_t;
 
 typedef struct {
-  int    modelViewMatrixLocation;
-  int    projectionMatrixLocation;
-  int    localLightOriginLocation;
-  int    localLightProjectionLocation;
-  int    diffuseTextureMatrixLocation;
-  int    specularTextureMatrixLocation;
-  int    bumpTextureMatrixLocation;
-  int    vertexColorModulateLocation;
-  int    vertexColorAddLocation;
-  int    localViewOriginLocation;
-  int    shaderParmLocations[MAX_VERTEX_PARMS];
-  int    samplerLocations[MAX_FRAGMENT_IMAGES];
-} glslUniformLocations_t;
-
-typedef struct {
   static const int vertex_attrib_position = 0;
   static const int vertex_attrib_texcoord = 1;
   static const int vertex_attrib_normal   = 2;
@@ -223,10 +208,42 @@ typedef struct {
   static const int vertex_attrib_binormal = 4;
   static const int vertex_attrib_tangent  = 5;  
 
+  static const int uniform_modelMatrix      = 0;
+  static const int uniform_viewMatrix       = 1;
+  static const int uniform_modelViewMatrix  = 2;
+  static const int uniform_projectionMatrix = 3;
+
+  static const int uniform_localLightOrigin = 4;  
+  static const int uniform_localViewOrigin  = 5;
+
+  static const int uniform_lightProjection  = 6;
+
+  static const int uniform_bumpMatrix       = 7;
+  static const int uniform_diffuseMatrix    = 8;
+  static const int uniform_specularMatrix   = 9;
+
+  static const int uniform_color_modulate   = 10;
+  static const int uniform_color_add        = 11;
+
+  static const int uniform_diffuse_color    = 12;
+  static const int uniform_specular_color   = 13;
+
+  static const int uniform_shaderparm0      = 14;
+  static const int uniform_shaderparm1      = uniform_shaderparm0 + 1;
+  static const int uniform_shaderparm2      = uniform_shaderparm0 + 2;
+  static const int uniform_shaderparm3      = uniform_shaderparm0 + 3;
+
+  static const int uniform_texture0         = 18;
+  static const int uniform_texture1         = uniform_texture0 + 1;
+  static const int uniform_texture2         = uniform_texture0 + 2;
+  static const int uniform_texture3         = uniform_texture0 + 3;
+  static const int uniform_texture4         = uniform_texture0 + 4;
+  static const int uniform_texture5         = uniform_texture0 + 5;
+  static const int uniform_texture6         = uniform_texture0 + 6;
+  static const int uniform_texture7         = uniform_texture0 + 7;
+
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
-  glslUniformLocations_t uniforms;
-
   GLuint ident;
 } glslProgramDef_t;
 
