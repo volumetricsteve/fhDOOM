@@ -207,6 +207,7 @@ typedef struct {
   static const int vertex_attrib_color    = 3;
   static const int vertex_attrib_binormal = 4;
   static const int vertex_attrib_tangent  = 5;  
+  static const int vertex_attrib_position_shadow  = 6;  
 
   static const int uniform_modelMatrix      = 0;
   static const int uniform_viewMatrix       = 1;

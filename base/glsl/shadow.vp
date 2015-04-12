@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 330
 #extension GL_ARB_explicit_uniform_location : enable
 
 layout(location = 0)  uniform mat4 rpModelMatrix;
@@ -33,9 +33,11 @@ layout(location = 25) uniform sampler2D texture7;
 
 // ----------------- end of uniforms  ----------------------
 
+layout(location = 6) in vec4 vertex_position_shadow;
+
 void main(void)
 {
-  vec4 pos = gl_Vertex - rpLocalLightOrigin;
+  vec4 pos = vertex_position_shadow - rpLocalLightOrigin;
   pos = ( pos.wwww * rpLocalLightOrigin ) + pos;
 
 	gl_Position = rpProjectionMatrix * rpModelViewMatrix * pos;

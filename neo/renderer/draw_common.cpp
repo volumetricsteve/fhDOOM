@@ -1114,7 +1114,8 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 		return;
 	}
 
-	glVertexPointer( 4, GL_FLOAT, sizeof( shadowCache_t ), vertexCache.Position(tri->shadowCache) );
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), vertexCache.Position(tri->shadowCache));
 
 	// we always draw the sil planes, but we may not need to draw the front or rear caps
 	int	numIndexes;
@@ -1184,7 +1185,7 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 		RB_DrawShadowElementsWithCounters( tri, numIndexes );
 		GL_Cull( CT_FRONT_SIDED );
 		glEnable( GL_STENCIL_TEST );
-
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
     
 		return;
 	}
@@ -1209,6 +1210,8 @@ static void RB_T_Shadow( const drawSurf_t *surf ) {
 	glStencilOp( GL_KEEP, GL_KEEP, tr.stencilDecr );
 	GL_Cull( CT_BACK_SIDED );
 	RB_DrawShadowElementsWithCounters( tri, numIndexes );
+
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
 }
 
 
