@@ -498,6 +498,69 @@ void R_ARB2_Init( void ) {
 
 /*
 =================
+R_PreprocessShader
+=================
+*/
+static bool R_PreprocessShader(char* src, int srcsize, char* dest, int destsize) {
+  static const char* const inc_stmt = "#include ";
+
+  char* inc_start = strstr(src, inc_stmt);
+  if(!inc_start) {
+    if(srcsize >= destsize) {
+      common->Warning(": File too large\n");
+      return false;
+    }     
+
+    memcpy(dest, src, srcsize);
+    dest[srcsize] = '\0';
+
+    return true;
+  }
+
+  char* filename_start = strstr(inc_start, "\"");
+  if(!filename_start)
+    return false;
+  
+  filename_start++;
+
+  char* filename_stop = strstr(filename_start, "\"");
+  if(!filename_stop)
+    return false;  
+
+  int filename_len = (ptrdiff_t)filename_stop - (ptrdiff_t)filename_start;
+  filename_stop++;
+
+  int bytes_before_inc = (ptrdiff_t)inc_start - (ptrdiff_t)src;
+  int bytes_after_inc = (ptrdiff_t)srcsize - ((ptrdiff_t)filename_stop - (ptrdiff_t)src);
+  
+  idStr fullPath = idStr("glsl/") + idStr(filename_start, 0, filename_len);
+
+  char	*fileBuffer = nullptr;
+  fileSystem->ReadFile(fullPath.c_str(), (void **)&fileBuffer, NULL);
+  if (!fileBuffer) {
+    common->Printf(": File not found\n");
+    return false;
+  }
+  int file_size = strlen(fileBuffer);
+
+  if(file_size + bytes_before_inc + bytes_after_inc >= destsize) {
+    common->Printf(": File too large\n");
+    fileSystem->FreeFile(fileBuffer);
+    return false;
+  }
+
+  memcpy(dest, src, bytes_before_inc);
+  dest += bytes_before_inc;
+  memcpy(dest, fileBuffer, file_size);
+  dest += file_size;
+  memcpy(dest, filename_stop, bytes_after_inc);
+  dest[bytes_after_inc] = '\0';
+  return true;
+}
+
+
+/*
+=================
 R_LoadGlslShader
 =================
 */
@@ -524,10 +587,16 @@ static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
     return 0;
   }
 
-  // copy to stack memory and free
-  char* buffer = (char *)_alloca(strlen(fileBuffer) + 1);
-  strcpy(buffer, fileBuffer);
+  const int buffer_size = 1024 * 256;
+  char* buffer = new char[buffer_size];
+
+  bool ok = R_PreprocessShader(fileBuffer, strlen(fileBuffer), buffer, buffer_size);
+
   fileSystem->FreeFile(fileBuffer);
+
+  if(!ok) {
+    return 0;
+  }
 
   GLuint shaderObject = glCreateShader(shaderType);
 
@@ -535,6 +604,8 @@ static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
 
   glShaderSource(shaderObject, 1, (const GLchar**)&buffer, &bufferLen);
   glCompileShader(shaderObject);
+
+  delete buffer;
 
   GLint success = 0;
   glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &success);
