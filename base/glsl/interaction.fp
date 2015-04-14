@@ -22,14 +22,12 @@ out vec4 result;
 // texture 5 is the per-surface specular map
 // texture 6 is the specular lookup table
 
-
-
 vec4 blinnPhong(float specularExponent)
 {
   vec3 L = normalize(frag.L);
 
   vec3 H = normalize(frag.H);
-  vec3 N = normalize(2.0 * texture2D(texture1, frag.texNormal.st).agb - 1.0);
+  vec3 N = 2.0 * texture2D(texture1, frag.texNormal.st).agb - 1.0;
 
   float NdotL = clamp(dot(N, L), 0.0, 1.0);
   float NdotH = clamp(dot(N, H), 0.0, 1.0);
@@ -83,7 +81,7 @@ vec4 phong(float specularExponent)
 void main(void)
 {  
   bool usePhong = false;
-  float specularExponent = 16.0;
+  float specularExponent = 10.0;
 
   if(usePhong)
     result = phong(specularExponent);
