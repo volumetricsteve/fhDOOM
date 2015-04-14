@@ -7,26 +7,34 @@ layout(location = 2)  uniform mat4 rpModelViewMatrix;
 layout(location = 3)  uniform mat4 rpProjectionMatrix;
 
 layout(location = 4)  uniform vec4 rpLocalLightOrigin;
-layout(location = 5)  uniform mat4 rpLocalViewOrigin;
-layout(location = 6)  uniform mat4 rpLightProjection;
-layout(location = 7)  uniform mat4 rpBumpMatrix;
-layout(location = 8)  uniform mat4 rpDiffuseMatrix;
-layout(location = 9)  uniform mat4 rpSpecularMatrix;
-layout(location = 10) uniform mat4 rpColorModulate;
-layout(location = 11) uniform mat4 rpColorAdd;
-layout(location = 12) uniform mat4 rpDiffuseColor;
-layout(location = 13) uniform mat4 rpSpecularColor;
+layout(location = 5)  uniform vec4 rpLocalViewOrigin;
+layout(location = 6)  uniform vec4 rpLightProjectionS;
+layout(location = 7)  uniform vec4 rpLightProjectionT;
+layout(location = 8)  uniform vec4 rpLightProjectionQ;
+layout(location = 9)  uniform vec4 rpLightFallOff;
 
-layout(location = 14) uniform vec4 shaderParm0;
-layout(location = 15) uniform vec4 shaderParm1;
-layout(location = 16) uniform vec4 shaderParm2;
-layout(location = 17) uniform vec4 shaderParm3;
+layout(location = 10) uniform vec4 rpBumpMatrixS;
+layout(location = 11) uniform vec4 rpBumpMatrixT;
+layout(location = 12) uniform vec4 rpDiffuseMatrixS;
+layout(location = 13) uniform vec4 rpDiffuseMatrixT;
+layout(location = 14) uniform vec4 rpSpecularMatrixS;
+layout(location = 15) uniform vec4 rpSpecularMatrixT;
 
-layout(location = 18) uniform sampler2D texture0;
-layout(location = 19) uniform sampler2D texture1;
-layout(location = 20) uniform sampler2D texture2;
-layout(location = 21) uniform sampler2D texture3;
-layout(location = 22) uniform sampler2D texture4;
-layout(location = 23) uniform sampler2D texture5;
-layout(location = 24) uniform sampler2D texture6;
-layout(location = 25) uniform sampler2D texture7;
+layout(location = 16) uniform vec4 rpColorModulate;
+layout(location = 17) uniform vec4 rpColorAdd;
+layout(location = 18) uniform vec4 rpDiffuseColor;
+layout(location = 19) uniform vec4 rpSpecularColor;
+
+layout(location = 20) uniform vec4 shaderParm0;
+layout(location = 21) uniform vec4 shaderParm1;
+layout(location = 22) uniform vec4 shaderParm2;
+layout(location = 23) uniform vec4 shaderParm3;
+
+layout(location = 24) uniform sampler2D texture0;
+layout(location = 25) uniform sampler2D texture1;
+layout(location = 26) uniform sampler2D texture2;
+layout(location = 27) uniform sampler2D texture3;
+layout(location = 28) uniform sampler2D texture4;
+layout(location = 29) uniform sampler2D texture5;
+layout(location = 30) uniform sampler2D texture6;
+layout(location = 31) uniform sampler2D texture7;

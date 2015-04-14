@@ -217,24 +217,30 @@ typedef struct {
   static const int uniform_localLightOrigin = 4;  
   static const int uniform_localViewOrigin  = 5;
 
-  static const int uniform_lightProjection  = 6;
+  static const int uniform_lightProjectionMatrixS  = 6;
+  static const int uniform_lightProjectionMatrixT  = 7;
+  static const int uniform_lightProjectionMatrixQ  = 8;
+  static const int uniform_lightFallOffS     = 9;
 
-  static const int uniform_bumpMatrix       = 7;
-  static const int uniform_diffuseMatrix    = 8;
-  static const int uniform_specularMatrix   = 9;
+  static const int uniform_bumpMatrixS       = 10;
+  static const int uniform_bumpMatrixT       = 11;
+  static const int uniform_diffuseMatrixS    = 12;
+  static const int uniform_diffuseMatrixT    = 13;
+  static const int uniform_specularMatrixS   = 14;
+  static const int uniform_specularMatrixT   = 15;
 
-  static const int uniform_color_modulate   = 10;
-  static const int uniform_color_add        = 11;
+  static const int uniform_color_modulate   = 16;
+  static const int uniform_color_add        = 17;
 
-  static const int uniform_diffuse_color    = 12;
-  static const int uniform_specular_color   = 13;
+  static const int uniform_diffuse_color    = 18;
+  static const int uniform_specular_color   = 19;
 
-  static const int uniform_shaderparm0      = 14;
+  static const int uniform_shaderparm0      = 20;
   static const int uniform_shaderparm1      = uniform_shaderparm0 + 1;
   static const int uniform_shaderparm2      = uniform_shaderparm0 + 2;
   static const int uniform_shaderparm3      = uniform_shaderparm0 + 3;
 
-  static const int uniform_texture0         = 18;
+  static const int uniform_texture0         = 24;
   static const int uniform_texture1         = uniform_texture0 + 1;
   static const int uniform_texture2         = uniform_texture0 + 2;
   static const int uniform_texture3         = uniform_texture0 + 3;

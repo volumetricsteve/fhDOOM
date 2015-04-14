@@ -110,43 +110,19 @@ Version 2
 }
 // entity 2
 {
-"classname" "light"
-"name" "light_1"
-"origin" "136 -200 112"
-"noshadows" "0"
-"nospecular" "0"
-"nodiffuse" "0"
-"falloff" "0"
-"_color" "1 0.78 0.63"
-"light_radius" "300 300 300"
-}
-// entity 3
-{
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "-64 -32 0"
 }
-// entity 4
+// entity 3
 {
 "classname" "light"
 "name" "light_2"
-"origin" "-200 80 112"
+"origin" "-200 80 144"
 "noshadows" "0"
 "nospecular" "0"
 "nodiffuse" "0"
 "falloff" "0"
 "_color" "0.53 0.84 1"
-"light_radius" "300 300 300"
-}
-// entity 5
-{
-"classname" "light"
-"name" "light_3"
-"origin" "-184 -152 112"
-"noshadows" "0"
-"nospecular" "0"
-"nodiffuse" "0"
-"falloff" "0"
-"_color" "0.66 1 0.67"
 "light_radius" "300 300 300"
 }

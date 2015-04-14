@@ -780,12 +780,47 @@ void R_ReloadGlslPrograms_f( const idCmdArgs &args ) {
 RB_GLSL_DrawInteraction
 ==================
 */
-void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
+void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
 
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
   glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());  
+  glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
+  
+  glUniform4fv(glslProgramDef_t::uniform_lightProjectionMatrixS, 1, din->lightProjection[0].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_lightProjectionMatrixT, 1, din->lightProjection[1].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_lightProjectionMatrixQ, 1, din->lightProjection[2].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_lightFallOffS, 1, din->lightProjection[3].ToFloatPtr());
+
+  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, din->bumpMatrix[0].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, din->bumpMatrix[1].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, din->diffuseMatrix[0].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, din->diffuseMatrix[1].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_specularMatrixS, 1, din->specularMatrix[0].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_specularMatrixT, 1, din->specularMatrix[1].ToFloatPtr());
+
+  static const float zero[4] = { 0, 0, 0, 0 };
+  static const float one[4] = { 1, 1, 1, 1 };
+  static const float negOne[4] = { -1, -1, -1, -1 };
+
+  switch (din->vertexColor) {
+  case SVC_IGNORE:
+    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, zero);
+    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    break;
+  case SVC_MODULATE:
+    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, one);
+    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, zero);
+    break;
+  case SVC_INVERSE_MODULATE:
+    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, negOne);
+    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    break;
+  }
+
+  glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());  
   
   glUniform1i(glslProgramDef_t::uniform_texture0, 0);
   glUniform1i(glslProgramDef_t::uniform_texture1, 1);
