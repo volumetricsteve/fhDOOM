@@ -548,29 +548,6 @@ void RB_SetProgramEnvironment( void ) {
 		return;
 	}
 
-#if 0
-	// screen power of two correction factor, one pixel in so we don't get a bilerp
-	// of an uncopied pixel
-	int	 w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-	pot = globalImages->currentRenderImage->uploadWidth;
-	if ( w == pot ) {
-		parm[0] = 1.0;
-	} else {
-		parm[0] = (float)(w-1) / pot;
-	}
-
-	int	 h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-	pot = globalImages->currentRenderImage->uploadHeight;
-	if ( h == pot ) {
-		parm[1] = 1.0;
-	} else {
-		parm[1] = (float)(h-1) / pot;
-	}
-
-	parm[2] = 0;
-	parm[3] = 1;
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 0, parm );
-#else
 	// screen power of two correction factor, assuming the copy to _currentRender
 	// also copied an extra row and column for the bilerp
 	int	 w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
@@ -584,7 +561,7 @@ void RB_SetProgramEnvironment( void ) {
 	parm[2] = 0;
 	parm[3] = 1;
 	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 0, parm );
-#endif
+
 
 	glProgramEnvParameter4fvARB( GL_FRAGMENT_PROGRAM_ARB, 0, parm );
 
@@ -603,8 +580,6 @@ void RB_SetProgramEnvironment( void ) {
 	parm[2] = backEnd.viewDef->renderView.vieworg[2];
 	parm[3] = 1.0;
 	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 1, parm );
-
-
 }
 
 /*
@@ -1072,234 +1047,6 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 }
 
 
-
-/*
-==============================================================================
-
-BACK END RENDERING OF STENCIL SHADOWS
-
-==============================================================================
-*/
-
-
-static const glslProgramDef_t*  shadowProgram = nullptr;
-
-/*
-=====================
-RB_T_Shadow
-
-the shadow volumes face INSIDE
-=====================
-*/
-
-static void RB_T_Shadow( const drawSurf_t *surf ) {
-	const srfTriangles_t	*tri;
-
-	// set the light position if we are using a vertex program to project the rear surfaces
-	if ( surf->space != backEnd.currentSpace ) {
-		idVec4 localLight;
-
-		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.vLight->globalLightOrigin, localLight.ToVec3() );
-		localLight.w = 0.0f;
-
-    assert(shadowProgram);
-    glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, localLight.ToFloatPtr());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-	}
-
-	tri = surf->geo;
-
-	if ( !tri->shadowCache ) {
-		return;
-	}
-
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), vertexCache.Position(tri->shadowCache));
-
-	// we always draw the sil planes, but we may not need to draw the front or rear caps
-	int	numIndexes;
-	bool external = false;
-
-	if ( !r_useExternalShadows.GetInteger() ) {
-		numIndexes = tri->numIndexes;
-	} else if ( r_useExternalShadows.GetInteger() == 2 ) { // force to no caps for testing
-		numIndexes = tri->numShadowIndexesNoCaps;
-	} else if ( !(surf->dsFlags & DSF_VIEW_INSIDE_SHADOW) ) { 
-		// if we aren't inside the shadow projection, no caps are ever needed needed
-		numIndexes = tri->numShadowIndexesNoCaps;
-		external = true;
-	} else if ( !backEnd.vLight->viewInsideLight && !(surf->geo->shadowCapPlaneBits & SHADOW_CAP_INFINITE) ) {
-		// if we are inside the shadow projection, but outside the light, and drawing
-		// a non-infinite shadow, we can skip some caps
-		if ( backEnd.vLight->viewSeesShadowPlaneBits & surf->geo->shadowCapPlaneBits ) {
-			// we can see through a rear cap, so we need to draw it, but we can skip the
-			// caps on the actual surface
-			numIndexes = tri->numShadowIndexesNoFrontCaps;
-		} else {
-			// we don't need to draw any caps
-			numIndexes = tri->numShadowIndexesNoCaps;
-		}
-		external = true;
-	} else {
-		// must draw everything
-		numIndexes = tri->numIndexes;
-	}
-
-	// set depth bounds
-	if( glConfig.depthBoundsTestAvailable && r_useDepthBoundsTest.GetBool() ) {
-		glDepthBoundsEXT( surf->scissorRect.zmin, surf->scissorRect.zmax );
-	}
-
-	// debug visualization
-	if ( r_showShadows.GetInteger() ) {
-		if ( r_showShadows.GetInteger() == 3 ) {
-			if ( external ) {
-				glColor3f( 0.1/backEnd.overBright, 1/backEnd.overBright, 0.1/backEnd.overBright );
-			} else {
-				// these are the surfaces that require the reverse
-				glColor3f( 1/backEnd.overBright, 0.1/backEnd.overBright, 0.1/backEnd.overBright );
-			}
-		} else {
-			// draw different color for turboshadows
-			if ( surf->geo->shadowCapPlaneBits & SHADOW_CAP_INFINITE ) {
-				if ( numIndexes == tri->numIndexes ) {
-					glColor3f( 1/backEnd.overBright, 0.1/backEnd.overBright, 0.1/backEnd.overBright );
-				} else {
-					glColor3f( 1/backEnd.overBright, 0.4/backEnd.overBright, 0.1/backEnd.overBright );
-				}
-			} else {
-				if ( numIndexes == tri->numIndexes ) {
-					glColor3f( 0.1/backEnd.overBright, 1/backEnd.overBright, 0.1/backEnd.overBright );
-				} else if ( numIndexes == tri->numShadowIndexesNoFrontCaps ) {
-					glColor3f( 0.1/backEnd.overBright, 1/backEnd.overBright, 0.6/backEnd.overBright );
-				} else {
-					glColor3f( 0.6/backEnd.overBright, 1/backEnd.overBright, 0.1/backEnd.overBright );
-				}
-			}
-		}
-
-		glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-		glDisable( GL_STENCIL_TEST );
-		GL_Cull( CT_TWO_SIDED );
-		RB_DrawShadowElementsWithCounters( tri, numIndexes );
-		GL_Cull( CT_FRONT_SIDED );
-		glEnable( GL_STENCIL_TEST );
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
-    
-		return;
-	}
-
-	// patent-free work around
-	if ( !external ) {
-		// "preload" the stencil buffer with the number of volumes
-		// that get clipped by the near or far clip plane
-		glStencilOp( GL_KEEP, tr.stencilDecr, tr.stencilDecr );
-		GL_Cull( CT_FRONT_SIDED );
-		RB_DrawShadowElementsWithCounters( tri, numIndexes );
-		glStencilOp( GL_KEEP, tr.stencilIncr, tr.stencilIncr );
-		GL_Cull( CT_BACK_SIDED );
-		RB_DrawShadowElementsWithCounters( tri, numIndexes );
-	}
-
-	// traditional depth-pass stencil shadows
-	glStencilOp( GL_KEEP, GL_KEEP, tr.stencilIncr );
-	GL_Cull( CT_FRONT_SIDED );
-	RB_DrawShadowElementsWithCounters( tri, numIndexes );
-
-	glStencilOp( GL_KEEP, GL_KEEP, tr.stencilDecr );
-	GL_Cull( CT_BACK_SIDED );
-	RB_DrawShadowElementsWithCounters( tri, numIndexes );
-
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
-}
-
-
-/*
-=====================
-RB_StencilShadowPass
-
-Stencil test should already be enabled, and the stencil buffer should have
-been set to 128 on any surfaces that might receive shadows
-=====================
-*/
-
-
-
-void RB_StencilShadowPass( const drawSurf_t *drawSurfs ) {
-	if ( !r_shadows.GetBool() ) {
-		return;
-	}
-
-	if ( !drawSurfs ) {
-		return;
-	}
-
-  if( !shadowProgram ) {
-    shadowProgram = R_FindGlslProgram(shadowVertexShaderName, shadowFragmentShaderName);
-
-    if (!shadowProgram || !shadowProgram->ident) {
-      return;
-    }
-  }
-
-  glDisable(GL_VERTEX_PROGRAM_ARB);
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  glUseProgram(shadowProgram->ident);
-
-	RB_LogComment( "---------- RB_StencilShadowPass ----------\n" );
-
-	globalImages->BindNull();
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	// for visualizing the shadows
-	if ( r_showShadows.GetInteger() ) {
-		if ( r_showShadows.GetInteger() == 2 ) {
-			// draw filled in
-			GL_State( GLS_DEPTHMASK | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_LESS  );
-		} else {
-			// draw as lines, filling the depth buffer
-			GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_POLYMODE_LINE | GLS_DEPTHFUNC_ALWAYS  );
-		}
-	} else {
-		// don't write to the color buffer, just the stencil buffer
-		GL_State( GLS_DEPTHMASK | GLS_COLORMASK | GLS_ALPHAMASK | GLS_DEPTHFUNC_LESS );
-	}
-
-	if ( r_shadowPolygonFactor.GetFloat() || r_shadowPolygonOffset.GetFloat() ) {
-		glPolygonOffset( r_shadowPolygonFactor.GetFloat(), -r_shadowPolygonOffset.GetFloat() );
-		glEnable( GL_POLYGON_OFFSET_FILL );
-	}
-
-	glStencilFunc( GL_ALWAYS, 1, 255 );
-
-	if ( glConfig.depthBoundsTestAvailable && r_useDepthBoundsTest.GetBool() ) {
-		glEnable( GL_DEPTH_BOUNDS_TEST_EXT );
-	}
-
-	RB_RenderDrawSurfChainWithFunction( drawSurfs, RB_T_Shadow );
-
-	GL_Cull( CT_FRONT_SIDED );
-
-	if ( r_shadowPolygonFactor.GetFloat() || r_shadowPolygonOffset.GetFloat() ) {
-		glDisable( GL_POLYGON_OFFSET_FILL );
-	}
-
-	if ( glConfig.depthBoundsTestAvailable && r_useDepthBoundsTest.GetBool() ) {
-		glDisable( GL_DEPTH_BOUNDS_TEST_EXT );
-	}
-
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	glStencilFunc( GL_GEQUAL, 128, 255 );
-	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-
-  glUseProgram(0);
-  glEnable(GL_VERTEX_PROGRAM_ARB);
-}
-
-
-
 /*
 =============================================================================================
 
@@ -1614,31 +1361,6 @@ void RB_STD_FogAllLights( void ) {
 		if ( !vLight->lightShader->IsFogLight() && !vLight->lightShader->IsBlendLight() ) {
 			continue;
 		}
-
-#if 0 // _D3XP disabled that
-		if ( r_ignore.GetInteger() ) {
-			// we use the stencil buffer to guarantee that no pixels will be
-			// double fogged, which happens in some areas that are thousands of
-			// units from the origin
-			backEnd.currentScissor = vLight->scissorRect;
-			if ( r_useScissor.GetBool() ) {
-				glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
-					backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
-					backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
-					backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
-			}
-			glClear( GL_STENCIL_BUFFER_BIT );
-
-			glEnable( GL_STENCIL_TEST );
-
-			// only pass on the cleared stencil values
-			glStencilFunc( GL_EQUAL, 128, 255 );
-
-			// when we pass the stencil test and depth test and are going to draw,
-			// increment the stencil buffer so we don't ever draw on that pixel again
-			glStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
-		}
-#endif
 
 		if ( vLight->lightShader->IsFogLight() ) {
 			RB_FogPass( vLight->globalInteractions, vLight->localInteractions );
