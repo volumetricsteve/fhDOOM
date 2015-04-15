@@ -11,6 +11,7 @@ static const char* const shadowFragmentShaderName = "shadow.fp";
 
 static const glslProgramDef_t* shadowProgram = nullptr;
 static const glslProgramDef_t* interactionProgram = nullptr;
+static const glslProgramDef_t* depthProgram = nullptr;
 
 /*
 ====================
@@ -468,8 +469,6 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
 }
 
 
-static const glslProgramDef_t* depthProgram = nullptr;
-
 /*
 =====================
 RB_GLSL_FillDepthBuffer
@@ -533,6 +532,79 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
     GL_SelectTexture(0);
   }
 
+}
+
+
+
+/*
+=====================
+RB_GLSL_RenderSpecialShaderStage
+=====================
+*/
+void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const srfTriangles_t	*tri) {
+
+  idDrawVert *ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+
+  GL_State(pStage->drawStateBits);
+  glUseProgram(glslStage->program->ident);
+
+
+  for (int i = 0; i < glslStage->numShaderParms; i++) {
+    float	parm[4];
+    parm[0] = regs[glslStage->shaderParms[i][0]];
+    parm[1] = regs[glslStage->shaderParms[i][1]];
+    parm[2] = regs[glslStage->shaderParms[i][2]];
+    parm[3] = regs[glslStage->shaderParms[i][3]];
+    glUniform4fv(glslProgramDef_t::uniform_shaderparm0 + i, 1, parm);
+  }
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top());
+
+  for (int i = 0; i < glslStage->numShaderMaps; i++) {
+    if (glslStage->shaderMap[i]) {
+      GL_SelectTexture(i);
+      glslStage->shaderMap[i]->Bind();
+    }
+  }
+
+  // draw it
+  RB_DrawElementsWithCounters(tri);
+
+  for (int i = 0; i < glslStage->numShaderMaps; i++) {
+    if (glslStage->shaderMap[i]) {
+      GL_SelectTexture(i);
+      globalImages->BindNull();
+    }
+  }
+
+  glUseProgram(0);
+  GL_SelectTexture(0);
+
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
 }
 
 

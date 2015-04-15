@@ -4,6 +4,19 @@ Version 2
 "classname" "worldspawn"
 // primitive 0
 {
+ patchDef2
+ {
+  "textures/sfx/vp1"
+  ( 3 3 0 0 0 )
+  (
+   (  ( -311.7207946777 240 32.0048828125 0 0 ) ( -311.7207946777 148 32.0048828125 0 0.5 ) ( -311.7207946777 56 32.0048828125 0 1 ) )
+   (  ( -312 240 120 0.5 0 ) ( -312 148 120 0.5 0.5 ) ( -312 56 120 0.5 1 ) )
+   (  ( -312.2792053223 240 207.9951171875 1 0 ) ( -312.2792053223 148 207.9951171875 1 0.5 ) ( -312.2792053223 56 207.9951171875 1 1 ) )
+  )
+ }
+}
+// primitive 1
+{
  brushDef3
  {
   ( -0 -0 -1 128 ) ( ( 0.0078125 0 2 ) ( 0 0.0078125 1 ) ) "textures/base_floor/sflpanel3" 0 0 0
@@ -14,7 +27,7 @@ Version 2
   ( -1 0 0 0 ) ( ( 0.0078125 -0 -1.00000453 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
  }
 }
-// primitive 1
+// primitive 2
 {
  brushDef3
  {
@@ -26,7 +39,7 @@ Version 2
   ( -1 0 0 -0 ) ( ( 0.0078125 -0 -1.00000453 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
  }
 }
-// primitive 2
+// primitive 3
 {
  brushDef3
  {
@@ -38,7 +51,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 3
+// primitive 4
 {
  patchDef2
  {
@@ -51,7 +64,7 @@ Version 2
   )
  }
 }
-// primitive 4
+// primitive 5
 {
  patchDef2
  {
@@ -64,7 +77,7 @@ Version 2
   )
  }
 }
-// primitive 5
+// primitive 6
 {
  brushDef3
  {
@@ -76,7 +89,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 6
+// primitive 7
 {
  brushDef3
  {
@@ -88,7 +101,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 7
+// primitive 8
 {
  brushDef3
  {
@@ -100,7 +113,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 8
+// primitive 9
 {
  brushDef3
  {
@@ -112,7 +125,7 @@ Version 2
   ( -1 0 0 320 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel33" 0 0 0
  }
 }
-// primitive 9
+// primitive 10
 {
  brushDef3
  {
@@ -124,7 +137,7 @@ Version 2
   ( -0.9999999404 0 0 -455.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 10
+// primitive 11
 {
  brushDef3
  {

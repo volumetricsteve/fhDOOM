@@ -621,6 +621,7 @@ void RB_SetProgramEnvironmentSpace( void ) {
 	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 8, parm );
 }
 
+
 /*
 ==================
 RB_STD_T_RenderShaderPasses
@@ -693,10 +694,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 		RB_EnterModelDepthHack( surf->space->modelDepthHack );
 	}
 
-	idDrawVert *ac = (idDrawVert *)vertexCache.Position( tri->ambientCache );
-	glVertexPointer( 3, GL_FLOAT, sizeof( idDrawVert ), ac->xyz.ToFloatPtr() );
-	glTexCoordPointer( 2, GL_FLOAT, sizeof( idDrawVert ), reinterpret_cast<void *>(&ac->st) );
-
 	for ( stage = 0; stage < shader->GetNumStages() ; stage++ ) {		
 		pStage = shader->GetStage(stage);
 
@@ -715,6 +712,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			continue;
 		}
     
+    // see if we are a glsl-style stage
     if ( glslShaderStage_t *glslStage = pStage->glslStage ) {
       //--------------------------
       //
@@ -729,66 +727,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       if(!glslStage->program)
         continue;
 
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
-
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
-
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
-
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
-
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
-
-      GL_State(pStage->drawStateBits);
-      glUseProgram(glslStage->program->ident);
-
-
-      for (int i = 0; i < glslStage->numShaderParms; i++) {
-        float	parm[4];
-        parm[0] = regs[glslStage->shaderParms[i][0]];
-        parm[1] = regs[glslStage->shaderParms[i][1]];
-        parm[2] = regs[glslStage->shaderParms[i][2]];
-        parm[3] = regs[glslStage->shaderParms[i][3]];
-        glUniform4fv(glslProgramDef_t::uniform_shaderparm0 + i, 1, parm);
-      }
-
-      glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top());
-      glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top());
-
-      for (int i = 0; i < glslStage->numShaderMaps; i++) {
-        if (glslStage->shaderMap[i]) {
-          GL_SelectTexture(i);
-          glslStage->shaderMap[i]->Bind();
-        }
-      }
-
-      // draw it
-      RB_DrawElementsWithCounters(tri);
-
-      for (int i = 0; i < glslStage->numShaderMaps; i++) {
-        if (glslStage->shaderMap[i]) {
-          GL_SelectTexture(i);
-          globalImages->BindNull();
-        }
-      }
-
-      glUseProgram(0);
-      GL_SelectTexture(0);      
-
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);     
+      RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);   
 
       continue;
     }
@@ -805,71 +744,8 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 				continue;
 			}
 
-			glColorPointer( 4, GL_UNSIGNED_BYTE, sizeof( idDrawVert ), (void *)&ac->color );
-			glVertexAttribPointerARB( 9, 3, GL_FLOAT, false, sizeof( idDrawVert ), ac->tangents[0].ToFloatPtr() );
-			glVertexAttribPointerARB( 10, 3, GL_FLOAT, false, sizeof( idDrawVert ), ac->tangents[1].ToFloatPtr() );
-			glNormalPointer( GL_FLOAT, sizeof( idDrawVert ), ac->normal.ToFloatPtr() );
+      RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);
 
-			glEnableClientState( GL_COLOR_ARRAY );
-			glEnableVertexAttribArrayARB( 9 );
-			glEnableVertexAttribArrayARB( 10 );
-			glEnableClientState( GL_NORMAL_ARRAY );
-
-			GL_State( pStage->drawStateBits );
-			
-			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, newStage->vertexProgram );
-			glEnable( GL_VERTEX_PROGRAM_ARB );
-
-			// megaTextures bind a lot of images and set a lot of parameters
-			if ( newStage->megaTexture ) {
-				newStage->megaTexture->SetMappingForSurface( tri );
-				idVec3	localViewer;
-				R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewer );
-				newStage->megaTexture->BindForViewOrigin( localViewer );
-			}
-
-			for ( int i = 0 ; i < newStage->numVertexParms ; i++ ) {
-				float	parm[4];
-				parm[0] = regs[ newStage->vertexParms[i][0] ];
-				parm[1] = regs[ newStage->vertexParms[i][1] ];
-				parm[2] = regs[ newStage->vertexParms[i][2] ];
-				parm[3] = regs[ newStage->vertexParms[i][3] ];
-				glProgramLocalParameter4fvARB( GL_VERTEX_PROGRAM_ARB, i, parm );
-			}
-
-			for ( int i = 0 ; i < newStage->numFragmentProgramImages ; i++ ) {
-				if ( newStage->fragmentProgramImages[i] ) {
-					GL_SelectTexture( i );
-					newStage->fragmentProgramImages[i]->Bind();
-				}
-			}
-			glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, newStage->fragmentProgram );
-			glEnable( GL_FRAGMENT_PROGRAM_ARB );
-
-			// draw it
-			RB_DrawElementsWithCounters( tri );
-
-			for ( int i = 1 ; i < newStage->numFragmentProgramImages ; i++ ) {
-				if ( newStage->fragmentProgramImages[i] ) {
-					GL_SelectTexture( i );
-					globalImages->BindNull();
-				}
-			}
-			if ( newStage->megaTexture ) {
-				newStage->megaTexture->Unbind();
-			}
-
-			GL_SelectTexture( 0 );
-
-			glDisable( GL_VERTEX_PROGRAM_ARB );
-			glDisable( GL_FRAGMENT_PROGRAM_ARB );
-			// Fixme: Hack to get around an apparent bug in ATI drivers.  Should remove as soon as it gets fixed.
-			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, 0 );
-
-			glDisableClientState( GL_COLOR_ARRAY );
-			glDisableVertexAttribArrayARB( 9 );
-			glDisableVertexAttribArrayARB( 10 );
-			glDisableClientState( GL_NORMAL_ARRAY );
 			continue;
 		}
 
@@ -878,6 +754,10 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 		// old style stages
 		//
 		//--------------------------
+
+    idDrawVert *ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
+    glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+    glTexCoordPointer(2, GL_FLOAT, sizeof(idDrawVert), reinterpret_cast<void *>(&ac->st));
 
 		// set the color
 		color[0] = regs[ pStage->color.registers[0] ];
@@ -1468,13 +1348,18 @@ void	RB_STD_DrawView( void ) {
 
 	// fill the depth buffer and clear color buffer to black except on
 	// subviews
-	if(r_ignore2.GetBool())
+	if(r_ignore.GetBool())
     RB_GLSL_FillDepthBuffer( drawSurfs, numDrawSurfs );
   else
 	  RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
 
 	// main light renderer
-  RB_ARB2_DrawInteractions();  
+  
+  if (r_ignore.GetBool())
+    RB_GLSL_DrawInteractions();
+  else
+    RB_ARB2_DrawInteractions();    
+
 
 	// disable stencil shadow test
 	glStencilFunc( GL_ALWAYS, 128, 255 );
