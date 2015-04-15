@@ -602,8 +602,8 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
   if (shader->GetSort() == SS_SUBVIEW) {
     GL_State(GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO | GLS_DEPTHFUNC_LESS);
     color[0] =
-      color[1] =
-      color[2] = (1.0 / backEnd.overBright);
+    color[1] =
+     color[2] = (1.0 / backEnd.overBright);
     color[3] = 1;
   }
   else {
@@ -632,7 +632,6 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
     // draw a normal opaque surface
     bool	didDraw = false;
 
-    glEnable(GL_ALPHA_TEST);
     // perforated surfaces may have multiple alpha tested stages
     for (stage = 0; stage < shader->GetNumStages(); stage++) {
       pStage = shader->GetStage(stage);
@@ -656,23 +655,56 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
       // skip the entire stage if alpha would be black
       if (color[3] <= 0) {
         continue;
-      }
-      glColor4fv(color);
-
-      glAlphaFunc(GL_GREATER, regs[pStage->alphaTestRegister]);
-
+      }      
+      
       // bind the texture
       pStage->texture.image->Bind();
 
-      // set texture matrix and texGens
-      RB_PrepareStageTexturing(pStage, surf, ac);
+      //RB_PrepareStageTexturing(pStage, surf, ac);
+      {
+        glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
+        glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
+
+        // set texture matrix and texGens      
+
+        if (pStage->privatePolygonOffset && !surf->material->TestMaterialFlag(MF_POLYGONOFFSET)) {
+          glEnable(GL_POLYGON_OFFSET_FILL);
+          glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset);
+        }
+
+        if(pStage->texture.hasMatrix) {
+          idVec4 textureMatrix[2];
+          RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
+          glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+          glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+        }
+      }
 
       // draw it
       RB_DrawElementsWithCounters(tri);
 
-      RB_FinishStageTexturing(pStage, surf, ac);
+      //RB_FinishStageTexturing(pStage, surf, ac);
+      {      
+        if (pStage->privatePolygonOffset && !surf->material->TestMaterialFlag(MF_POLYGONOFFSET) ) {
+          glDisable(GL_POLYGON_OFFSET_FILL);
+        }
+
+        idVec4 textureMatrix[2];
+        textureMatrix[0][0] = 1;
+        textureMatrix[0][1] = 0;
+        textureMatrix[0][2] = 0;
+        textureMatrix[0][3] = 0;      
+        textureMatrix[1][0] = 0;
+        textureMatrix[1][1] = 1;
+        textureMatrix[1][2] = 0;
+        textureMatrix[1][3] = 0;
+        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+
+        glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+      }
     }
-    glDisable(GL_ALPHA_TEST);
+    //glDisable(GL_ALPHA_TEST);
     if (!didDraw) {
       drawSolid = true;
     }

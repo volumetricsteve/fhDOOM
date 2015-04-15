@@ -15,3 +15,23 @@ textures/glsltest/flatcolored
         shaderMap  1    textures/rock/zbtest.tga 
     }
 }
+
+
+
+textures/glsltest/scrolledAlpha
+{
+    qer_editorimage textures/base_trim/sgirder1a.tga
+    noshadows
+    twoSided
+    {
+        blend bumpmap
+        map addnormals (models/seneca/textures/sgirder1_local.tga, heightmap (models/seneca/textures/sgirder1a_bmp.tga, 2) )
+        scroll  time * 0 , time * 0.2 
+    }
+    {
+        blend diffusemap
+        map models/seneca/textures/sgirder1a_d.tga
+        alphaTest 0.5
+        scroll  time * 0 , time * 0.2 
+    }
+}

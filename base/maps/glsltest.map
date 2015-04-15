@@ -4,6 +4,42 @@ Version 2
 "classname" "worldspawn"
 // primitive 0
 {
+ brushDef3
+ {
+  ( -0 -0 -1 128 ) ( ( 0.0078125 0 2 ) ( 0 0.0078125 1 ) ) "textures/base_floor/sflpanel3" 0 0 0
+  ( 0 -0 1 -136 ) ( ( 0.015625 0 3 ) ( 0 0.015625 1 ) ) "textures/base_floor/sflgrate1cav" 0 0 0
+  ( 0 -1 0 -256 ) ( ( 0.0078125 0 -0.0000000894 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
+  ( 1 0 -0 -128 ) ( ( 0.0078125 0 2 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
+  ( 0 1 0 128 ) ( ( 0.0078125 0 1 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
+  ( -1 0 0 0 ) ( ( 0.0078125 -0 -1.00000453 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
+ }
+}
+// primitive 1
+{
+ brushDef3
+ {
+  ( 0 0 -1 -0 ) ( ( 0.0625 0 12 ) ( -0 0.0625 -4 ) ) "textures/common/nodraw" 0 0 0
+  ( -0 0 1 -128 ) ( ( 0.0625 0 12 ) ( 0 0.0625 4 ) ) "textures/common/nodraw" 0 0 0
+  ( -0 -1 -0 -256 ) ( ( 0.0078125 0 -0.0000000894 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
+  ( 1 0 0 -128 ) ( ( 0.0078125 0 2 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
+  ( -0 1 0 128 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/glsltest/scrolledalpha" 0 0 0
+  ( -1 0 0 -0 ) ( ( 0.0078125 -0 -1.00000453 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
+ }
+}
+// primitive 2
+{
+ brushDef3
+ {
+  ( 0 0 -1 -8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( -0 0 1 -0 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
+  ( -0 -1 -0 -384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 1 0 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( -0 1 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( -1 0 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+ }
+}
+// primitive 3
+{
  patchDef2
  {
   "textures/hell/lavascroll_ns"
@@ -15,7 +51,7 @@ Version 2
   )
  }
 }
-// primitive 1
+// primitive 4
 {
  patchDef2
  {
@@ -28,7 +64,7 @@ Version 2
   )
  }
 }
-// primitive 2
+// primitive 5
 {
  brushDef3
  {
@@ -40,7 +76,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 3
+// primitive 6
 {
  brushDef3
  {
@@ -52,7 +88,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 4
+// primitive 7
 {
  brushDef3
  {
@@ -64,7 +100,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 5
+// primitive 8
 {
  brushDef3
  {
@@ -76,7 +112,7 @@ Version 2
   ( -1 0 0 320 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel33" 0 0 0
  }
 }
-// primitive 6
+// primitive 9
 {
  brushDef3
  {
@@ -88,14 +124,14 @@ Version 2
   ( -0.9999999404 0 0 -455.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 7
+// primitive 10
 {
  brushDef3
  {
   ( 0 0 -1 -8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( -0 0 1 -0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_sofloor1_d02c" 0 0 0
   ( -0 -1 -0 -384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( 1 0 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 1 0 -0 192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( -0 1 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
@@ -123,6 +159,31 @@ Version 2
 "nospecular" "0"
 "nodiffuse" "0"
 "falloff" "0"
-"_color" "0.53 0.84 1"
+"_color" "0.91 0.97 1"
+"light_radius" "300 300 300"
+}
+// entity 4
+{
+"classname" "light"
+"name" "light_3"
+"origin" "128 -256 248"
+"noshadows" "0"
+"nospecular" "0"
+"nodiffuse" "0"
+"falloff" "0"
+"_color" "1 0.58 0.38"
+"light_radius" "300 300 300"
+}
+// entity 5
+{
+"classname" "light"
+"name" "light_4"
+"origin" "256 256 144"
+"noshadows" "0"
+"nospecular" "0"
+"nodiffuse" "0"
+"falloff" "0"
+"texture" "lights/tabletest"
+"_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }

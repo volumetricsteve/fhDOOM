@@ -38,3 +38,7 @@ layout(location = 28) uniform sampler2D texture4;
 layout(location = 29) uniform sampler2D texture5;
 layout(location = 30) uniform sampler2D texture6;
 layout(location = 31) uniform sampler2D texture7;
+
+
+layout(location = 100) uniform int rpAlphaTestEnabled;
+layout(location = 101) uniform float rpAlphaTestThreshold;

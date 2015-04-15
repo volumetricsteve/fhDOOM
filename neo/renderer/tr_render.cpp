@@ -314,6 +314,8 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 /*
 ======================
 RB_GetShaderTextureMatrix
+
+Read shader texture matrix into a 4x4 matrix
 ======================
 */
 void RB_GetShaderTextureMatrix( const float *shaderRegisters,
@@ -346,6 +348,30 @@ void RB_GetShaderTextureMatrix( const float *shaderRegisters,
 	matrix[7] = 0;
 	matrix[11] = 0;
 	matrix[15] = 1;
+}
+
+/*
+======================
+RB_GetShaderTextureMatrix
+
+Read shader texture matrix into a 2x4 matrix (2 * vec4)
+======================
+*/
+void RB_GetShaderTextureMatrix( const float *shaderRegisters, 
+  const textureStage_t *texture, idVec4 matrix[2] ) {
+
+  float m[16];
+  RB_GetShaderTextureMatrix( shaderRegisters, texture, m);
+
+  matrix[0][0] = m[0];
+  matrix[0][1] = m[4];
+  matrix[0][2] = m[8];
+  matrix[0][3] = m[12];
+
+  matrix[1][0] = m[1];
+  matrix[1][1] = m[5];
+  matrix[1][2] = m[9];
+  matrix[1][3] = m[13];
 }
 
 /*

@@ -249,6 +249,9 @@ typedef struct {
   static const int uniform_texture6         = uniform_texture0 + 6;
   static const int uniform_texture7         = uniform_texture0 + 7;
 
+  static const int uniform_alphaTestEnabled   = 100;
+  static const int uniform_alphaTestThreshold = 101;
+
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
   GLuint ident;

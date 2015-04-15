@@ -20,7 +20,10 @@ void main(void)
 {
   gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);
 
-  result.texcoord = vertex_texcoord;
+  vec4 vertex_texcoord4 = vec4(vertex_texcoord, 1.0, 1.0);
+  result.texcoord.x = dot(rpDiffuseMatrixS, vertex_texcoord4);
+  result.texcoord.y = dot(rpDiffuseMatrixT, vertex_texcoord4);
+
   result.normal = vertex_normal;
   result.binormal = vertex_binormal;
   result.tangent = vertex_tangent;
