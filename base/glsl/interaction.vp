@@ -23,7 +23,7 @@ void main(void)
 {
   gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);  
 
-  vec4 vertex_texcoord4 = vec4(vertex_texcoord, 0.0, 0.0);
+  vec4 vertex_texcoord4 = vec4(vertex_texcoord, 1.0, 1.0);
 
   result.texNormal.x = dot(rpBumpMatrixS, vertex_texcoord4);
   result.texNormal.y = dot(rpBumpMatrixT, vertex_texcoord4);
