@@ -1324,6 +1324,7 @@ int		R_FindARBProgram( GLenum target, const char *program );
 
 const glslProgramDef_t*  R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
+void RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
 
 typedef enum {
 	PROG_INVALID,

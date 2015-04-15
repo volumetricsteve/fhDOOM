@@ -309,6 +309,7 @@ SET(SOURCES
   renderer/Cinematic.h
   renderer/draw_arb2.cpp
   renderer/draw_common.cpp
+  renderer/draw_glsl.cpp
   #renderer/draw_exp.cpp
   #renderer/draw_exp_stub.cpp
 
