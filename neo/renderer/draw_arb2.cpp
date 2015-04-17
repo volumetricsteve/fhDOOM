@@ -84,33 +84,6 @@ void RB_PrepareStageTexturing(const shaderStage_t *pStage, const drawSurf_t *sur
     glTexGenfv(GL_Q, GL_OBJECT_PLANE, plane);
   }
 
-  if (pStage->texture.texgen == TG_SCREEN2) {
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_Q);
-
-    float	mat[16], plane[4];
-    myGlMultMatrix(surf->space->modelViewMatrix, backEnd.viewDef->projectionMatrix, mat);
-
-    plane[0] = mat[0];
-    plane[1] = mat[4];
-    plane[2] = mat[8];
-    plane[3] = mat[12];
-    glTexGenfv(GL_S, GL_OBJECT_PLANE, plane);
-
-    plane[0] = mat[1];
-    plane[1] = mat[5];
-    plane[2] = mat[9];
-    plane[3] = mat[13];
-    glTexGenfv(GL_T, GL_OBJECT_PLANE, plane);
-
-    plane[0] = mat[3];
-    plane[1] = mat[7];
-    plane[2] = mat[11];
-    plane[3] = mat[15];
-    glTexGenfv(GL_Q, GL_OBJECT_PLANE, plane);
-  }
-
   if (pStage->texture.texgen == TG_GLASSWARP) {
     glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, FPROG_GLASSWARP);
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -203,11 +176,6 @@ void RB_FinishStageTexturing(const shaderStage_t *pStage, const drawSurf_t *surf
   }
 
   if (pStage->texture.texgen == TG_SCREEN) {
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    glDisable(GL_TEXTURE_GEN_Q);
-  }
-  if (pStage->texture.texgen == TG_SCREEN2) {
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
     glDisable(GL_TEXTURE_GEN_Q);

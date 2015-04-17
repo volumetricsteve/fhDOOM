@@ -948,9 +948,6 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   if (pStage->texture.texgen == TG_SCREEN) {
     //
   }
-  if (pStage->texture.texgen == TG_SCREEN2) {
-    //
-  }
   if (pStage->texture.texgen == TG_GLASSWARP) {
    //
   }

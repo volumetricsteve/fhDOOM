@@ -1331,7 +1331,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			continue;
 		}
 		if (  !token.Icmp( "screen2" ) ) {
-			ts->texgen = TG_SCREEN2;
+			ts->texgen = TG_SCREEN;
 			continue;
 		}
 		if (  !token.Icmp( "glassWarp" ) ) {
