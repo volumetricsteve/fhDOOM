@@ -12,6 +12,7 @@ static const char* const shadowFragmentShaderName = "shadow.fp";
 static const glslProgramDef_t* shadowProgram = nullptr;
 static const glslProgramDef_t* interactionProgram = nullptr;
 static const glslProgramDef_t* depthProgram = nullptr;
+static const glslProgramDef_t* defaultProgram = nullptr;
 
 /*
 ====================
@@ -23,6 +24,9 @@ static void GL_SelectTextureNoClient(int unit) {
   glActiveTextureARB(GL_TEXTURE0_ARB + unit);
   RB_LogComment("glActiveTextureARB( %i )\n", unit);
 }
+
+
+
 
 
 
@@ -883,6 +887,154 @@ void R_ReloadGlslPrograms_f( const idCmdArgs &args ) {
 
   common->Printf( "----- R_ReloadGlslPrograms -----\n" );
 }
+
+
+/*
+====================
+RB_GLSL_RenderShaderStage
+====================
+*/
+void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage) {
+
+  if(!defaultProgram) {
+    defaultProgram = R_FindGlslProgram("default.vp", "default.fp");
+    if(!defaultProgram)
+      return;
+  }
+
+  const srfTriangles_t* const tri = surf->geo;
+
+  glUseProgram(defaultProgram->ident);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+
+  idDrawVert *ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+
+  // set the color  
+  float color[4];
+  color[0] = surf->shaderRegisters[pStage->color.registers[0]];
+  color[1] = surf->shaderRegisters[pStage->color.registers[1]];
+  color[2] = surf->shaderRegisters[pStage->color.registers[2]];
+  color[3] = surf->shaderRegisters[pStage->color.registers[3]];
+
+  // skip the entire stage if an add would be black
+  if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE)
+    && color[0] <= 0 && color[1] <= 0 && color[2] <= 0) {
+    return;
+  }
+
+  // skip the entire stage if a blend would be completely transparent
+  if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
+    && color[3] <= 0) {
+    return;
+  }
+
+  if (pStage->texture.texgen == TG_DIFFUSE_CUBE) {
+    //
+  }
+  if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
+    //
+  }
+  if (pStage->texture.texgen == TG_SCREEN) {
+    //
+  }
+  if (pStage->texture.texgen == TG_SCREEN2) {
+    //
+  }
+  if (pStage->texture.texgen == TG_GLASSWARP) {
+   //
+  }
+  if (pStage->texture.texgen == TG_REFLECT_CUBE) {
+    // see if there is also a bump map specified
+    const shaderStage_t *bumpStage = surf->material->GetBumpStage();
+    if (bumpStage) {
+      //
+    }
+    else {
+      //
+    }
+  }
+
+
+  // bind the texture
+  RB_BindVariableStageImage(&pStage->texture, surf->shaderRegisters);
+
+  // set the state
+  GL_State(pStage->drawStateBits);
+
+  static const float zero[4] = { 0, 0, 0, 0 };
+  static const float one[4] = { 1, 1, 1, 1 };
+  static const float negOne[4] = { -1, -1, -1, -1 };
+
+  switch (pStage->vertexColor) {
+  case SVC_IGNORE:
+    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, zero);
+    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    break;
+  case SVC_MODULATE:
+    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, one);
+    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, zero);
+    break;
+  case SVC_INVERSE_MODULATE:
+    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, negOne);
+    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    break;
+  }
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
+  // set privatePolygonOffset if necessary
+  if (pStage->privatePolygonOffset) {
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset);
+  }
+
+  // set the texture matrix
+  idVec4 textureMatrix[2];
+  textureMatrix[0][0] = 1;
+  textureMatrix[0][1] = 0;
+  textureMatrix[0][2] = 0;
+  textureMatrix[0][3] = 0;
+  textureMatrix[1][0] = 0;
+  textureMatrix[1][1] = 1;
+  textureMatrix[1][2] = 0;
+  textureMatrix[1][3] = 0;
+  if(pStage->texture.hasMatrix)
+    RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
+  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, textureMatrix[0].ToFloatPtr());
+  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrix[1].ToFloatPtr());
+
+  glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
+
+  // texture 1 will be the per-surface bump map
+  GL_SelectTextureNoClient(1);
+  pStage->texture.image->Bind();
+  GL_SelectTextureNoClient(0);
+  
+
+  // draw it
+  RB_DrawElementsWithCounters(tri);
+
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glUseProgram(0);
+}
+
 
 /*
 ==================

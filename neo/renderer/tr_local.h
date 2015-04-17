@@ -1322,12 +1322,14 @@ void	RB_ARB2_DrawInteractions( void );
 void  RB_ARB2_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, newShaderStage_t* newStage, const srfTriangles_t	*tri);
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
 int		R_FindARBProgram( GLenum target, const char *program );
+void  RB_STD_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage);
 
 void	RB_GLSL_DrawInteractions( void );
 const glslProgramDef_t*  R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
 void  RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
 void  RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const srfTriangles_t	*tri);
+void  RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage);
 
 typedef enum {
 	PROG_INVALID,
