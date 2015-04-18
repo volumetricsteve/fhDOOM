@@ -81,12 +81,12 @@ Version 2
 {
  brushDef3
  {
-  ( 0 0 -1 320 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall22a2" 0 0 0
-  ( -0 0 1 -328 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 -1 -0 -384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( 1 0 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 1 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 0 0 -1 320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -0 0 1 -328 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -0 -1 -0 -384 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( 1 0 0 -320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -0 1 0 -320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -1 0 0 -448 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
 // primitive 7
@@ -117,12 +117,12 @@ Version 2
 {
  brushDef3
  {
-  ( 0 0 -1 -0 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 0 1 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 -1 -0 -384 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( 1 0 0 -328 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 1 0 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -1 0 0 320 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel33" 0 0 0
+  ( 0 0 -1 -0 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -0 0 1 -320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -0 -1 -0 -384 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( 1 0 0 -328 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -0 1 0 -320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
+  ( -1 0 0 320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
 // primitive 10

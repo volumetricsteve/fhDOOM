@@ -1,0 +1,16 @@
+-------------------------------------------------------------------------------
+      personal notes, ToDo's and other stuff to remember
+-------------------------------------------------------------------------------
+
+ * where/when is R_WobbleskyTexGen called? GLSL render path doesn't need it 
+   anymore, because the wobble effect is implemented in the skybox vertex shader
+   * less work on CPU
+   * less data to be transferred from CPU to GPU
+   * but: probably not that important... only a couple of vertices are usually 
+     used for skyboxes anyways...
+
+ * RB_ARB2_RenderSpecialShaderStage: code for megatextures is disabled... 
+   * re-enable? does it work? not used in original game, no shaders available, but
+     might be interesting to look at... 
+   or
+   * remove?

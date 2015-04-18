@@ -52,3 +52,6 @@ void main(void)
 
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;
 }
+
+
+vec2 transformTexCoord(vec2 texcoord, vec4 s, vec4 t);

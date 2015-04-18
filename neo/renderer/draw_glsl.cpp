@@ -13,6 +13,8 @@ static const glslProgramDef_t* shadowProgram = nullptr;
 static const glslProgramDef_t* interactionProgram = nullptr;
 static const glslProgramDef_t* depthProgram = nullptr;
 static const glslProgramDef_t* defaultProgram = nullptr;
+//static const glslProgramDef_t* diffuseCubeProgram = nullptr;
+static const glslProgramDef_t* skyboxProgram = nullptr;
 
 /*
 ====================
@@ -901,24 +903,18 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     if(!defaultProgram)
       return;
   }
-
-  const srfTriangles_t* const tri = surf->geo;
-
-  glUseProgram(defaultProgram->ident);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
-
-  idDrawVert *ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+/*
+  if (!diffuseCubeProgram) {
+    diffuseCubeProgram = R_FindGlslProgram("diffuseCube.vp", "diffuseCube.fp");
+    if (!diffuseCubeProgram)
+      return;
+  }
+*/
+  if (!skyboxProgram) {
+    skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
+    if (!skyboxProgram)
+      return;
+  }
 
   // set the color  
   float color[4];
@@ -938,30 +934,58 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     && color[3] <= 0) {
     return;
   }
+  
+  idDrawVert *ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache); 
+
 
   if (pStage->texture.texgen == TG_DIFFUSE_CUBE) {
-    //
+    return;
   }
-  if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
-    //
+  else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
+    glUseProgram(skyboxProgram->ident);
+
+    idVec4 localViewOrigin;
+    R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
+    localViewOrigin[3] = 1.0f;
+    glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
+
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);    
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);    
+
+    glUniform1i(glslProgramDef_t::uniform_cubemap1, 1);
   }
-  if (pStage->texture.texgen == TG_SCREEN) {
-    //
+  else if (pStage->texture.texgen == TG_SCREEN) {
+    return;
   }
-  if (pStage->texture.texgen == TG_GLASSWARP) {
-   //
+  else if (pStage->texture.texgen == TG_GLASSWARP) {
+   return;
   }
-  if (pStage->texture.texgen == TG_REFLECT_CUBE) {
+  else if (pStage->texture.texgen == TG_REFLECT_CUBE) {
     // see if there is also a bump map specified
     const shaderStage_t *bumpStage = surf->material->GetBumpStage();
     if (bumpStage) {
-      //
+      return;
     }
     else {
-      //
+      return;
     }
   }
+  else {
+    glUseProgram(defaultProgram->ident);
 
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
+
+    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
+  }
 
   // bind the texture
   RB_BindVariableStageImage(&pStage->texture, surf->shaderRegisters);
@@ -1021,7 +1045,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   
 
   // draw it
-  RB_DrawElementsWithCounters(tri);
+  RB_DrawElementsWithCounters(surf->geo);
 
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);

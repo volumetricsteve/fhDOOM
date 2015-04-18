@@ -39,6 +39,14 @@ layout(location = 29) uniform sampler2D texture5;
 layout(location = 30) uniform sampler2D texture6;
 layout(location = 31) uniform sampler2D texture7;
 
+layout(location = 40) uniform samplerCube cubemap0;
+layout(location = 41) uniform samplerCube cubemap1;
+layout(location = 42) uniform samplerCube cubemap2;
+layout(location = 43) uniform samplerCube cubemap3;
+layout(location = 44) uniform samplerCube cubemap4;
+layout(location = 45) uniform samplerCube cubemap5;
+layout(location = 46) uniform samplerCube cubemap6;
+layout(location = 47) uniform samplerCube cubemap7;
 
 layout(location = 100) uniform int rpAlphaTestEnabled;
 layout(location = 101) uniform float rpAlphaTestThreshold;
