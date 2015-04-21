@@ -28,7 +28,65 @@ static void GL_SelectTextureNoClient(int unit) {
 }
 
 
+/*
+==================
+R_WobbleskyTexGen
+==================
+*/
+static void R_CreateWobbleskyTexMatrix(const drawSurf_t *surf, float time, float matrix[16]) {
+  
+  const int *parms = surf->material->GetTexGenRegisters();
 
+  float	wobbleDegrees = surf->shaderRegisters[parms[0]];
+  float	wobbleSpeed = surf->shaderRegisters[parms[1]];
+  float	rotateSpeed = surf->shaderRegisters[parms[2]];
+
+  wobbleDegrees = wobbleDegrees * idMath::PI / 180;
+  wobbleSpeed = wobbleSpeed * 2 * idMath::PI / 60;
+  rotateSpeed = rotateSpeed * 2 * idMath::PI / 60;
+
+  // very ad-hoc "wobble" transform  
+  float	a = time * wobbleSpeed;
+  float	s = sin(a) * sin(wobbleDegrees);
+  float	c = cos(a) * sin(wobbleDegrees);
+  float	z = cos(wobbleDegrees);
+
+  idVec3	axis[3];
+
+  axis[2][0] = c;
+  axis[2][1] = s;
+  axis[2][2] = z;
+
+  axis[1][0] = -sin(a * 2) * sin(wobbleDegrees);
+  axis[1][2] = -s * sin(wobbleDegrees);
+  axis[1][1] = sqrt(1.0f - (axis[1][0] * axis[1][0] + axis[1][2] * axis[1][2]));
+
+  // make the second vector exactly perpendicular to the first
+  axis[1] -= (axis[2] * axis[1]) * axis[2];
+  axis[1].Normalize();
+
+  // construct the third with a cross
+  axis[0].Cross(axis[1], axis[2]);
+
+  // add the rotate
+  s = sin(rotateSpeed * time);
+  c = cos(rotateSpeed * time);
+  
+  matrix[0] = axis[0][0] * c + axis[1][0] * s;
+  matrix[4] = axis[0][1] * c + axis[1][1] * s;
+  matrix[8] = axis[0][2] * c + axis[1][2] * s;
+
+  matrix[1] = axis[1][0] * c - axis[0][0] * s;
+  matrix[5] = axis[1][1] * c - axis[0][1] * s;
+  matrix[9] = axis[1][2] * c - axis[0][2] * s;
+
+  matrix[2] = axis[2][0];
+  matrix[6] = axis[2][1];
+  matrix[10] = axis[2][2];
+
+  matrix[3] = matrix[7] = matrix[11] = 0.0f;
+  matrix[12] = matrix[13] = matrix[14] = 0.0f;
+}
 
 
 
@@ -944,10 +1002,22 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
     glUseProgram(skyboxProgram->ident);
 
+    float textureMatrix[16];
+    memset(textureMatrix, 0, sizeof(textureMatrix));
+    textureMatrix[0] = 1;
+    textureMatrix[5] = 1;
+    textureMatrix[10] = 1;
+    textureMatrix[15] = 1;
+
+    if (pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
+      R_CreateWobbleskyTexMatrix(surf, backEnd.viewDef->floatTime, textureMatrix);
+    }
+
     idVec4 localViewOrigin;
     R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
     localViewOrigin[3] = 1.0f;
     glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_textureMatrix0, 1, false, textureMatrix);
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);    
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);

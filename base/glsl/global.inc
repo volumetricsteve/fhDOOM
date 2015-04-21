@@ -48,5 +48,10 @@ layout(location = 45) uniform samplerCube cubemap5;
 layout(location = 46) uniform samplerCube cubemap6;
 layout(location = 47) uniform samplerCube cubemap7;
 
+layout(location = 50) uniform mat4 textureMatrix0;
+layout(location = 51) uniform mat4 textureMatrix1;
+layout(location = 52) uniform mat4 textureMatrix2;
+layout(location = 53) uniform mat4 textureMatrix3;
+
 layout(location = 100) uniform int rpAlphaTestEnabled;
 layout(location = 101) uniform float rpAlphaTestThreshold;

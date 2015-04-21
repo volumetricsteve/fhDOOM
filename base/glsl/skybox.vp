@@ -11,15 +11,18 @@ out vs_output
 {
   vec4 color;
   vec3 cubecoord;
-  vec2 texcoord;
 } result;
 
 void main(void)
 {
   gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);  
 
-  result.cubecoord = vertex_position - rpLocalViewOrigin.xyz;
-  result.texcoord = vertex_texcoord;
+  
+  vec4 cubecoord = textureMatrix0 * vec4(vertex_position - rpLocalViewOrigin.xyz, 1.0);
+  
+
+
+  result.cubecoord = cubecoord.xyz;
 
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;
 }

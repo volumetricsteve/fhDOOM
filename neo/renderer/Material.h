@@ -257,6 +257,11 @@ typedef struct {
   static const int uniform_cubemap6 = uniform_cubemap0 + 6;
   static const int uniform_cubemap7 = uniform_cubemap0 + 7;
 
+  static const int uniform_textureMatrix0 = 50;
+  static const int uniform_textureMatrix1 = uniform_textureMatrix0 + 1;
+  static const int uniform_textureMatrix2 = uniform_textureMatrix0 + 2;
+  static const int uniform_textureMatrix3 = uniform_textureMatrix0 + 3;
+
   static const int uniform_alphaTestEnabled   = 100;
   static const int uniform_alphaTestThreshold = 101;
 

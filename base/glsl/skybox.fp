@@ -4,7 +4,6 @@ in vs_output
 {
   vec4 color;
   vec3 cubecoord;
-  vec2 texcoord;
 } frag;
 
 out vec4 result;
@@ -20,6 +19,5 @@ out vec4 result;
 
 void main(void)
 {  
-  //result = texture2D(texture1, frag.texcoord);
   result = texture(cubemap1, frag.cubecoord);
 }
