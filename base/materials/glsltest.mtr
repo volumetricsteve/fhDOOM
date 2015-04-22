@@ -35,3 +35,27 @@ textures/glsltest/scrolledAlpha
         scroll  time * 0 , time * 0.2 
     }
 }
+
+textures/glsltest/bumpyenv
+
+{
+//  DECAL_MACRO
+    noShadows
+    //polygonOffset
+    nonsolid
+    noimpact
+    qer_editorimage textures/decals/p_oppressive.tga
+      
+    diffusemap textures/decals/p_oppressive.tga
+    specularmap textures/decals/p_poster_s.tga
+    bumpmap     textures/decals/pipevent_local.tga
+
+    {
+        blend add
+        cubeMap     env/gen1
+        texgen      reflect
+    }
+
+
+       
+}

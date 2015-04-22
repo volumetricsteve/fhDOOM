@@ -15,6 +15,7 @@ static const glslProgramDef_t* depthProgram = nullptr;
 static const glslProgramDef_t* defaultProgram = nullptr;
 //static const glslProgramDef_t* diffuseCubeProgram = nullptr;
 static const glslProgramDef_t* skyboxProgram = nullptr;
+static const glslProgramDef_t* bumpyEnvProgram = nullptr;
 
 /*
 ====================
@@ -974,6 +975,12 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
       return;
   }
 
+  if (!bumpyEnvProgram) {
+    bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");
+    if (!bumpyEnvProgram)
+      return;
+  }
+
   // set the color  
   float color[4];
   color[0] = surf->shaderRegisters[pStage->color.registers[0]];
@@ -1002,22 +1009,16 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
     glUseProgram(skyboxProgram->ident);
 
-    float textureMatrix[16];
-    memset(textureMatrix, 0, sizeof(textureMatrix));
-    textureMatrix[0] = 1;
-    textureMatrix[5] = 1;
-    textureMatrix[10] = 1;
-    textureMatrix[15] = 1;
-
+    idMat4 textureMatrix = mat4_identity;
     if (pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
-      R_CreateWobbleskyTexMatrix(surf, backEnd.viewDef->floatTime, textureMatrix);
+      R_CreateWobbleskyTexMatrix(surf, backEnd.viewDef->floatTime, textureMatrix.ToFloatPtr());
     }
 
     idVec4 localViewOrigin;
     R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
     localViewOrigin[3] = 1.0f;
     glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_textureMatrix0, 1, false, textureMatrix);
+    glUniformMatrix4fv(glslProgramDef_t::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);    
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
@@ -1031,17 +1032,64 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     return;
   }
   else if (pStage->texture.texgen == TG_GLASSWARP) {
-   return;
+    return;
   }
   else if (pStage->texture.texgen == TG_REFLECT_CUBE) {
+
+    glUseProgram(bumpyEnvProgram->ident);
+
+    idMat4 textureMatrix = mat4_identity;
+
+    idVec4 localViewOrigin;
+    R_GlobalPointToLocal(surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3());
+    localViewOrigin[3] = 1.0f;
+    glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
+
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+
+    glUniform1i(glslProgramDef_t::uniform_cubemap1, 1);
+    glUniform1i(glslProgramDef_t::uniform_texture2, 2);
+
+    // set the texture matrix
+    idVec4 textureMatrixST[2];
+    textureMatrixST[0][0] = 1;
+    textureMatrixST[0][1] = 0;
+    textureMatrixST[0][2] = 0;
+    textureMatrixST[0][3] = 0;
+    textureMatrixST[1][0] = 0;
+    textureMatrixST[1][1] = 1;
+    textureMatrixST[1][2] = 0;
+    textureMatrixST[1][3] = 0;
+
+
     // see if there is also a bump map specified
-    const shaderStage_t *bumpStage = surf->material->GetBumpStage();
-    if (bumpStage) {
-      return;
+    GL_SelectTextureNoClient(2);
+    if(const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
+      RB_GetShaderTextureMatrix(surf->shaderRegisters, &bumpStage->texture, textureMatrixST);
+
+      //void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
+      bumpStage->texture.image->Bind();
+    } else {
+      globalImages->flatNormalMap->Bind();
     }
-    else {
-      return;
-    }
+    GL_SelectTextureNoClient(0);
+
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, textureMatrixST[0].ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrixST[1].ToFloatPtr());
+
   }
   else {
     glUseProgram(defaultProgram->ident);
@@ -1108,7 +1156,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
   glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
 
-  // texture 1 will be the per-surface bump map
+  
   GL_SelectTextureNoClient(1);
   pStage->texture.image->Bind();
   GL_SelectTextureNoClient(0);
