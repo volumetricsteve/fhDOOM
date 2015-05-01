@@ -1128,8 +1128,9 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, negOne);
     glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
     break;
-  }
+  }  
 
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 

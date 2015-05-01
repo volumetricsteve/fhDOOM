@@ -11,8 +11,12 @@ out vs_output
 {
   vec4 color;
   vec3 cubecoord;
+
   vec3 normal;
-  vec2 texNormal;
+  vec3 tangent;
+  vec3 binormal;
+
+  vec2 texcoord;
 } result;
 
 void main(void)
@@ -20,16 +24,15 @@ void main(void)
   gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);  
   
   vec4 cubecoord = textureMatrix0 * vec4(vertex_position - rpLocalViewOrigin.xyz, 1.0);
-
   result.cubecoord = cubecoord.xyz;
   
-  result.normal = vertex_normal;
+  result.normal = (rpModelMatrix * vec4(vertex_normal, 1.0)).xyz;
+  result.tangent = (rpModelMatrix * vec4(vertex_tangent, 1.0)).xyz;
+  result.binormal = (rpModelMatrix * vec4(vertex_binormal, 1.0)).xyz;
 
   vec4 vertex_texcoord4 = vec4(vertex_texcoord, 1.0, 1.0);
-
-  result.texNormal.x = dot(rpBumpMatrixS, vertex_texcoord4);
-  result.texNormal.y = dot(rpBumpMatrixT, vertex_texcoord4);
-
+  result.texcoord.x = dot(rpBumpMatrixS, vertex_texcoord4);
+  result.texcoord.y = dot(rpBumpMatrixT, vertex_texcoord4);
 
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;
 }
