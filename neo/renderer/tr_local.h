@@ -1309,6 +1309,7 @@ void RB_STD_DrawView( void );
 void RB_STD_FogAllLights( void );
 void RB_BakeTextureMatrixIntoTexgen( idPlane lightProject[3], const float textureMatrix[16] );
 
+
 /*
 ============================================================
 
@@ -1323,6 +1324,7 @@ void  RB_ARB2_RenderSpecialShaderStage(const float* regs, const shaderStage_t* p
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
 int		R_FindARBProgram( GLenum target, const char *program );
 void  RB_STD_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage);
+void  RB_STD_FogPass( const drawSurf_t *drawSurfs,  const drawSurf_t *drawSurfs2 );
 
 void	RB_GLSL_DrawInteractions( void );
 const glslProgramDef_t*  R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
