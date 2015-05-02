@@ -1140,28 +1140,28 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset);
   }
 
-  // set the texture matrix
-  idVec4 textureMatrix[2];
-  textureMatrix[0][0] = 1;
-  textureMatrix[0][1] = 0;
-  textureMatrix[0][2] = 0;
-  textureMatrix[0][3] = 0;
-  textureMatrix[1][0] = 0;
-  textureMatrix[1][1] = 1;
-  textureMatrix[1][2] = 0;
-  textureMatrix[1][3] = 0;
-  if(pStage->texture.hasMatrix)
-    RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, textureMatrix[0].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrix[1].ToFloatPtr());
+  if(pStage->texture.image) {
+    // set the texture matrix
+    idVec4 textureMatrix[2];
+    textureMatrix[0][0] = 1;
+    textureMatrix[0][1] = 0;
+    textureMatrix[0][2] = 0;
+    textureMatrix[0][3] = 0;
+    textureMatrix[1][0] = 0;
+    textureMatrix[1][1] = 1;
+    textureMatrix[1][2] = 0;
+    textureMatrix[1][3] = 0;
+    if(pStage->texture.hasMatrix)
+      RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, textureMatrix[0].ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrix[1].ToFloatPtr());    
+  
+    GL_SelectTextureNoClient(1);
+    pStage->texture.image->Bind();
+    GL_SelectTextureNoClient(0);
+  }
 
   glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
-
-  
-  GL_SelectTextureNoClient(1);
-  pStage->texture.image->Bind();
-  GL_SelectTextureNoClient(0);
-  
 
   // draw it
   RB_DrawElementsWithCounters(surf->geo);
