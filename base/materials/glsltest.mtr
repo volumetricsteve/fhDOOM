@@ -37,7 +37,6 @@ textures/glsltest/scrolledAlpha
 }
 
 textures/glsltest/bumpyenv
-
 {
 //  DECAL_MACRO
     noShadows
@@ -58,4 +57,38 @@ textures/glsltest/bumpyenv
 
 
        
+}
+
+
+
+textures/glsltest/glasswarp
+{
+    twoSided
+    noshadows
+    nonsolid
+    noimpact
+    translucent
+    sort 12
+
+    // WARP-GRADIENT TEXTURE STAGE
+    {
+        //if ( global6 == 0 )
+
+        highquality
+        glassWarp
+        translate   10.5 , 0.5
+        scale       10.5 , 0.5
+
+        map         textures/sfx/glasswarp.tga
+        alpha       1
+        blend       blend
+    }
+    {
+        if ( global6 == 0 )
+
+        highquality
+        map         textures/sfx/act1glass_d.tga
+        alpha       0
+        blend       blend
+    }
 }
