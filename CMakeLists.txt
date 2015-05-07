@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (doom)
 
-OPTION(FH_TOOLS "Compile Tools" ON)
+OPTION(ID_ALLOW_TOOLS "Compile Tools" ON)
 
 MACRO(add_msvc_precompiled_header PrecompiledHeader SourcesVar)
   IF(MSVC)
@@ -50,6 +50,10 @@ ENDMACRO()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+IF(ID_ALLOW_TOOLS)
+  add_definitions(-DID_ALLOW_TOOLS)
+ENDIF()
 
 IF(MSVC)
   SET(CMAKE_CXX_FLAGS         "/DWIN32 /D_WIN32 /D_WINDOWS /EHsc /GR /fp:fast /GS- /MP /W3 /D_MBCS /D_USE_32BIT_TIME_T /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE")    

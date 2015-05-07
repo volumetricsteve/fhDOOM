@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../idlib/precompiled.h"
 #pragma hdrstop
 
+#ifndef ID_ALLOW_TOOLS
+
 void	RadiantInit( void ) { common->Printf( "The level editor Radiant only runs on Win32\n" ); }
 void	RadiantShutdown( void ) {}
 void	RadiantRun( void ) {}
@@ -76,3 +78,5 @@ void	PDAEditorInit( const idDict *spawnArgs ) { common->Printf( "The PDA editor 
 
 void	MaterialEditorInit() { common->Printf( "The Material editor only runs on Win32\n" ); }
 void	MaterialEditorPrintConsole( const char *text ) {}
+
+#endif
