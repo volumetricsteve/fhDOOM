@@ -1,75 +1,7 @@
-cmake_minimum_required (VERSION 2.8.11)
-project (doom)
 
-
-MACRO(add_msvc_precompiled_header PrecompiledHeader SourcesVar)
-  IF(MSVC)
-    GET_FILENAME_COMPONENT(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
-
-    SET(PrecompiledSource ${CMAKE_CURRENT_BINARY_DIR}/precompiled.cpp)    
-    SET(PrecompiledBinary ${CMAKE_CURRENT_BINARY_DIR}/precompiled.pch)      
-
-    FILE(WRITE ${PrecompiledSource} "//generated cpp for precompiled header, DO NOT EDIT!\n#include \"${PrecompiledHeader}\"" )
-
-    SET(Sources ${${SourcesVar}})
-
-    set_property(
-      SOURCE ${PrecompiledSource}
-      APPEND_STRING 
-      PROPERTY COMPILE_FLAGS " /Yc\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\" "
-    )
-
-    set_property(
-      SOURCE ${Sources}
-      APPEND_STRING 
-      PROPERTY COMPILE_FLAGS " /Yu\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\" "
-    )    
-
-    # Add precompiled header to SourcesVar
-    LIST(APPEND ${SourcesVar} ${PrecompiledSource})
-  ENDIF(MSVC)
-ENDMACRO()
-
-MACRO(add_force_include Header SourcesVar)
-  SET(Sources ${${SourcesVar}})
-  IF(MSVC)
-    set_property(
-      SOURCE ${Sources}
-      APPEND_STRING 
-      PROPERTY COMPILE_FLAGS " /FI\"${Header}\" "
-    )
-  ELSE()
-    set_property(
-      SOURCE ${Sources}
-      APPEND_STRING 
-      PROPERTY COMPILE_FLAGS " -include \"${Header}\" "
-    )    
-  ENDIF()
-ENDMACRO()
-
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-SET(CMAKE_CXX_FLAGS         "/DWIN32 /D_WIN32 /D_WINDOWS /EHsc /GR /fp:fast /GS- /MP /W3 /D_MBCS /D_USE_32BIT_TIME_T /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE")    
-SET(CMAKE_CXX_FLAGS_DEBUG   "/D_DEBUG /MTd /Od /Zi")
-SET(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /GL")  
-
-SET(CMAKE_C_FLAGS         ${CMAKE_CXX_FLAGS})    
-SET(CMAKE_C_FLAGS_DEBUG   ${CMAKE_CXX_FLAGS_DEBUG})
-SET(CMAKE_C_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})    
-
-SET_PROPERTY(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER  "")
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
-
-add_subdirectory (idlib)
-add_subdirectory (curl)
-add_subdirectory (TypeInfo)
-add_subdirectory (game)
-add_subdirectory (d3xp)
-add_subdirectory (maya2md5)
-
-
-
+###############################################################################
+######################## GLEW #################################################
+###############################################################################
 SET(SOURCES 
   renderer/GL/glew.h
   renderer/GL/glxew.h
@@ -77,9 +9,14 @@ SET(SOURCES
   renderer/glew.c
 )
 add_library(glew STATIC ${SOURCES})
-SET_PROPERTY(TARGET glew PROPERTY FOLDER 3rdParty)
+IF(MSVC)
+  SET_PROPERTY(TARGET glew PROPERTY FOLDER 3rdParty)
+ENDIF()  
 
 
+###############################################################################
+######################## GLEW #################################################
+###############################################################################
 SET(SOURCES
   renderer/jpeg-6/jcapimin.c
   renderer/jpeg-6/jcapistd.c
@@ -148,6 +85,9 @@ add_library(jpeg-6 STATIC ${SOURCES})
 SET_PROPERTY(TARGET jpeg-6 PROPERTY FOLDER 3rdParty)
 
 
+###############################################################################
+######################## GLEW #################################################
+###############################################################################
 SET(SOURCES
   sound/OggVorbis/ogg/ogg.h
   sound/OggVorbis/ogg/os_types.h  
@@ -231,6 +171,28 @@ SET(SOURCES
 add_library(oggvorbis STATIC ${SOURCES})
 SET_PROPERTY(TARGET oggvorbis PROPERTY FOLDER 3rdParty)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################
+######################## GLEW #################################################
+###############################################################################
 SET(SOURCES
   cm/CollisionModel.h
   cm/CollisionModel_contacts.cpp
@@ -896,37 +858,50 @@ SET(SOURCES
   ui/Winvar.h
 )
 
-source_group(CM cm/.*)  
-source_group(Framework framework/.*)  
-source_group(Framework\\async framework/async/.*)  
-source_group(Renderer renderer/.*)  
-source_group(Renderer\\jpeg6 renderer/jpeg-6/.*)  
-source_group(Renderer\\GL renderer/GL/.*)  
-source_group(Sound sound/.*)  
-source_group(Sound\\ogg sound/OggVorbis/ogg/.*)  
-source_group(Sound\\oggsrc sound/OggVorbis/oggsrc/.*)  
-source_group(Sound\\vorbis sound/OggVorbis/vorbis/.*)  
-source_group(Sound\\vorbissrc sound/OggVorbis/vorbissrc/.*)  
-source_group(Sys sys/.*)  
-source_group(Sys\\win32 sys/win32/.*)  
-source_group(Tools tools/.*)  
-source_group(Tools\\AF tools/af/.*)  
-source_group(Tools\\ComAfx tools/comafx/.*)  
-source_group(Tools\\Common tools/common/.*)  
-source_group(Tools\\Compilers tools/compilers/.*)  
-source_group(Tools\\Debugger tools/debugger/.*)  
-source_group(Tools\\Decl tools/decl/.*)  
-source_group(Tools\\Guied tools/guied/.*)  
-source_group(Tools\\MaterialEditor tools/materialeditor/.*)  
-source_group(Tools\\Particle tools/particle/.*)  
-source_group(Tools\\PDA tools/pda/.*)  
-source_group(Tools\\Radiant tools/radiant/.*)  
-source_group(Tools\\Script tools/script/.*)  
-source_group(Tools\\Sound tools/sound/.*)  
-source_group(Ui ui/.*)  
+IF(MSVC)
+  source_group(CM cm/.*)  
+  source_group(Framework framework/.*)  
+  source_group(Framework\\async framework/async/.*)  
+  source_group(Renderer renderer/.*)  
+  source_group(Renderer\\jpeg6 renderer/jpeg-6/.*)  
+  source_group(Renderer\\GL renderer/GL/.*)  
+  source_group(Sound sound/.*)  
+  source_group(Sound\\ogg sound/OggVorbis/ogg/.*)  
+  source_group(Sound\\oggsrc sound/OggVorbis/oggsrc/.*)  
+  source_group(Sound\\vorbis sound/OggVorbis/vorbis/.*)  
+  source_group(Sound\\vorbissrc sound/OggVorbis/vorbissrc/.*)  
+  source_group(Sys sys/.*)  
+  source_group(Sys\\win32 sys/win32/.*)  
+  source_group(Tools tools/.*)  
+  source_group(Tools\\AF tools/af/.*)  
+  source_group(Tools\\ComAfx tools/comafx/.*)  
+  source_group(Tools\\Common tools/common/.*)  
+  source_group(Tools\\Compilers tools/compilers/.*)  
+  source_group(Tools\\Debugger tools/debugger/.*)  
+  source_group(Tools\\Decl tools/decl/.*)  
+  source_group(Tools\\Guied tools/guied/.*)  
+  source_group(Tools\\MaterialEditor tools/materialeditor/.*)  
+  source_group(Tools\\Particle tools/particle/.*)  
+  source_group(Tools\\PDA tools/pda/.*)  
+  source_group(Tools\\Radiant tools/radiant/.*)  
+  source_group(Tools\\Script tools/script/.*)  
+  source_group(Tools\\Sound tools/sound/.*)  
+  source_group(Ui ui/.*)  
 
 
-SET(WINSDK_LIB_DIR "C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x86")
+  SET(WINSDK_LIB_DIR "C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x86")
+  SET(EXTERNAL_LIBS
+    opengl32.lib 
+    Glu32.lib
+    Dbghelp.lib
+    wsock32.lib
+    iphlpapi.lib
+    "${CMAKE_CURRENT_SOURCE_DIR}/openal/lib/eaxguid.lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/openal/lib/openal32.lib"
+    "${WINSDK_LIB_DIR}/dinput8.lib"
+    "${WINSDK_LIB_DIR}/dsound.lib"
+    "${WINSDK_LIB_DIR}/dxguid.lib")
+ENDIF()  
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_force_include(precompiled.h SOURCES)
@@ -940,21 +915,12 @@ target_link_libraries(doom3
   glew
   jpeg-6
   oggvorbis
-  opengl32.lib 
-  Glu32.lib
-  Dbghelp.lib
-  wsock32.lib
-  iphlpapi.lib
-  "${PROJECT_SOURCE_DIR}/openal/lib/eaxguid.lib"
-  "${PROJECT_SOURCE_DIR}/openal/lib/openal32.lib"
-  "${WINSDK_LIB_DIR}/dinput8.lib"
-  "${WINSDK_LIB_DIR}/dsound.lib"
-  "${WINSDK_LIB_DIR}/dxguid.lib"
+  ${EXTERNAL_LIBS}
 )
 
 if(MSVC) # Check if we are using the Visual Studio compiler
   set_target_properties(doom3 PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
   set_target_properties(doom3 PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
+  SET_PROPERTY(TARGET doom3 PROPERTY FOLDER exes)
 endif()
 
-SET_PROPERTY(TARGET doom3                PROPERTY FOLDER exes)
