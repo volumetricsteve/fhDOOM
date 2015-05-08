@@ -212,8 +212,8 @@ LONG WINAPI InputLineWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 			}
 			s_wcd.consoleField = s_wcd.historyEditLines[ s_wcd.historyLine % COMMAND_HISTORY ];
 
-			SetWindowText( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer() );
-			SendMessage( s_wcd.hwndInputLine, EM_SETSEL, s_wcd.consoleField.GetCursor(), s_wcd.consoleField.GetCursor() );
+			SetWindowTextA( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer() );
+			SendMessageA( s_wcd.hwndInputLine, EM_SETSEL, s_wcd.consoleField.GetCursor(), s_wcd.consoleField.GetCursor() );
 			return 0;
 		}
 
@@ -224,8 +224,8 @@ LONG WINAPI InputLineWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 			s_wcd.historyLine++;
 			s_wcd.consoleField = s_wcd.historyEditLines[ s_wcd.historyLine % COMMAND_HISTORY ];
 
-			SetWindowText( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer() );
-			SendMessage( s_wcd.hwndInputLine, EM_SETSEL, s_wcd.consoleField.GetCursor(), s_wcd.consoleField.GetCursor() );
+			SetWindowTextA( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer() );
+			SendMessageA( s_wcd.hwndInputLine, EM_SETSEL, s_wcd.consoleField.GetCursor(), s_wcd.consoleField.GetCursor() );
 			return 0;
 		}
 		break;
@@ -233,15 +233,15 @@ LONG WINAPI InputLineWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_CHAR:
 		key = MapKey( lParam );
 
-		GetWindowText( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer(), MAX_EDIT_LINE );
-		SendMessage( s_wcd.hwndInputLine, EM_GETSEL, (WPARAM) NULL, (LPARAM) &cursor );
+		GetWindowTextA( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer(), MAX_EDIT_LINE );
+		SendMessageA( s_wcd.hwndInputLine, EM_GETSEL, (WPARAM) NULL, (LPARAM) &cursor );
 		s_wcd.consoleField.SetCursor( cursor );
 
 		// enter the line
 		if ( key == K_ENTER || key == K_KP_ENTER ) {
 			strncat( s_wcd.consoleText, s_wcd.consoleField.GetBuffer(), sizeof( s_wcd.consoleText ) - strlen( s_wcd.consoleText ) - 5 );
 			strcat( s_wcd.consoleText, "\n" );
-			SetWindowText( s_wcd.hwndInputLine, "" );
+			SetWindowTextA( s_wcd.hwndInputLine, "" );
 
 			Sys_Printf( "]%s\n", s_wcd.consoleField.GetBuffer() );
 
@@ -259,9 +259,9 @@ LONG WINAPI InputLineWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		if ( key == K_TAB ) {
 			s_wcd.consoleField.AutoComplete();
 
-			SetWindowText( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer() );
+			SetWindowTextA( s_wcd.hwndInputLine, s_wcd.consoleField.GetBuffer() );
 			//s_wcd.consoleField.SetWidthInChars( strlen( s_wcd.consoleField.GetBuffer() ) );
-			SendMessage( s_wcd.hwndInputLine, EM_SETSEL, s_wcd.consoleField.GetCursor(), s_wcd.consoleField.GetCursor() );
+			SendMessageA( s_wcd.hwndInputLine, EM_SETSEL, s_wcd.consoleField.GetCursor(), s_wcd.consoleField.GetCursor() );
 
 			return 0;
 		}
@@ -282,7 +282,7 @@ LONG WINAPI InputLineWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 */
 void Sys_CreateConsole( void ) {
 	HDC hDC;
-	WNDCLASS wc;
+	WNDCLASSA wc;
 	RECT rect;
 	const char *DEDCLASS = WIN32_CONSOLE_CLASS;
 	int nHeight;
@@ -303,7 +303,7 @@ void Sys_CreateConsole( void ) {
 	wc.lpszMenuName  = 0;
 	wc.lpszClassName = DEDCLASS;
 
-	if ( !RegisterClass (&wc) ) {
+	if ( !RegisterClassA (&wc) ) {
 		return;
 	}
 
@@ -323,9 +323,9 @@ void Sys_CreateConsole( void ) {
 
 	//s_wcd.hbmLogo = LoadBitmap( win32.hInstance, MAKEINTRESOURCE( IDB_BITMAP_LOGO) );
 
-	s_wcd.hWnd = CreateWindowEx( 0,
+	s_wcd.hWnd = CreateWindowExA( 0,
 							   DEDCLASS,
-							   GAME_NAME,
+							   "DOOM3-FH",
 							   DEDSTYLE,
 							   ( swidth - 600 ) / 2, ( sheight - 450 ) / 2 , rect.right - rect.left + 1, rect.bottom - rect.top + 1,
 							   NULL,
@@ -343,14 +343,14 @@ void Sys_CreateConsole( void ) {
 	hDC = GetDC( s_wcd.hWnd );
 	nHeight = -MulDiv( 8, GetDeviceCaps( hDC, LOGPIXELSY ), 72 );
 
-	s_wcd.hfBufferFont = CreateFont( nHeight, 0, 0, 0, FW_LIGHT, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_MODERN | FIXED_PITCH, "Courier New" );
+	s_wcd.hfBufferFont = CreateFontA( nHeight, 0, 0, 0, FW_LIGHT, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_MODERN | FIXED_PITCH, "Courier New" );
 
 	ReleaseDC( s_wcd.hWnd, hDC );
 
 	//
 	// create the input line
 	//
-	s_wcd.hwndInputLine = CreateWindow( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | 
+	s_wcd.hwndInputLine = CreateWindowA( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | 
 												ES_LEFT | ES_AUTOHSCROLL,
 												6, 400, 528, 20,
 												s_wcd.hWnd, 
@@ -360,21 +360,21 @@ void Sys_CreateConsole( void ) {
 	//
 	// create the buttons
 	//
-	s_wcd.hwndButtonCopy = CreateWindow( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+	s_wcd.hwndButtonCopy = CreateWindowA( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 												5, 425, 72, 24,
 												s_wcd.hWnd, 
 												( HMENU ) COPY_ID,	// child window ID
 												win32.hInstance, NULL );
 	SendMessage( s_wcd.hwndButtonCopy, WM_SETTEXT, 0, ( LPARAM ) "copy" );
 
-	s_wcd.hwndButtonClear = CreateWindow( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+	s_wcd.hwndButtonClear = CreateWindowA( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 												82, 425, 72, 24,
 												s_wcd.hWnd, 
 												( HMENU ) CLEAR_ID,	// child window ID
 												win32.hInstance, NULL );
 	SendMessage( s_wcd.hwndButtonClear, WM_SETTEXT, 0, ( LPARAM ) "clear" );
 
-	s_wcd.hwndButtonQuit = CreateWindow( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+	s_wcd.hwndButtonQuit = CreateWindowA( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 												462, 425, 72, 24,
 												s_wcd.hWnd, 
 												( HMENU ) QUIT_ID,	// child window ID
@@ -385,7 +385,7 @@ void Sys_CreateConsole( void ) {
 	//
 	// create the scrollbuffer
 	//
-	s_wcd.hwndBuffer = CreateWindow( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | 
+	s_wcd.hwndBuffer = CreateWindowA( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | 
 												ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY,
 												6, 40, 526, 354,
 												s_wcd.hWnd, 
@@ -543,13 +543,13 @@ void Conbuf_AppendText( const char *pMsg )
 void Win_SetErrorText( const char *buf ) {
 	idStr::Copynz( s_wcd.errorString, buf, sizeof( s_wcd.errorString ) );
 	if ( !s_wcd.hwndErrorBox ) {
-		s_wcd.hwndErrorBox = CreateWindow( "static", NULL, WS_CHILD | WS_VISIBLE | SS_SUNKEN,
+		s_wcd.hwndErrorBox = CreateWindowA( "static", NULL, WS_CHILD | WS_VISIBLE | SS_SUNKEN,
 													6, 5, 526, 30,
 													s_wcd.hWnd, 
 													( HMENU ) ERRORBOX_ID,	// child window ID
 													win32.hInstance, NULL );
-		SendMessage( s_wcd.hwndErrorBox, WM_SETFONT, ( WPARAM ) s_wcd.hfBufferFont, 0 );
-		SetWindowText( s_wcd.hwndErrorBox, s_wcd.errorString );
+		SendMessageA( s_wcd.hwndErrorBox, WM_SETFONT, ( WPARAM ) s_wcd.hfBufferFont, 0 );
+		SetWindowTextA( s_wcd.hwndErrorBox, s_wcd.errorString );
 
 		DestroyWindow( s_wcd.hwndInputLine );
 		s_wcd.hwndInputLine = NULL;

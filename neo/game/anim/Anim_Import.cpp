@@ -108,10 +108,10 @@ bool idModelExport::CheckMayaInstall( void ) {
 	HKEY	hKey;	
 
 	// only check the non-version specific key so that we only have to update the maya dll when new versions are released
-	const long aliasMaya = RegOpenKey( HKEY_LOCAL_MACHINE, "SOFTWARE\\Alias|Wavefront\\Maya", &hKey );
+	const long aliasMaya = RegOpenKeyA( HKEY_LOCAL_MACHINE, "SOFTWARE\\Alias|Wavefront\\Maya", &hKey );
 	RegCloseKey( hKey );
 
-  const long autodeskMaya = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Autodesk\\Maya", &hKey);
+  const long autodeskMaya = RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Autodesk\\Maya", &hKey);
   RegCloseKey(hKey);
 
 	if ( aliasMaya != ERROR_SUCCESS && autodeskMaya != ERROR_SUCCESS) {

@@ -600,7 +600,7 @@ bool QGL_Init( const char *dllname )
 
 	common->Printf( "...calling LoadLibrary( '%s' ): ", dllname );
 
-	if ( ( win32.hinstOpenGL = LoadLibrary( dllname ) ) == 0 )
+	if ( ( win32.hinstOpenGL = LoadLibraryA( dllname ) ) == 0 )
 	{
 		common->Printf( "failed\n" );
 		return false;

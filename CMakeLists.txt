@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 2.8.11)
 project (doom)
 
 OPTION(ID_ALLOW_TOOLS "Compile Tools" ON)
+OPTION(ID_UNICODE "Use unicode version of WIN32 API" OFF)
 
 MACRO(add_msvc_precompiled_header PrecompiledHeader SourcesVar)
   IF(MSVC)
@@ -56,7 +57,11 @@ IF(ID_ALLOW_TOOLS)
 ENDIF()
 
 IF(MSVC)
-  SET(CMAKE_CXX_FLAGS         "/DWIN32 /D_WIN32 /D_WINDOWS /EHsc /GR /fp:fast /GS- /MP /W3 /D_MBCS /D_USE_32BIT_TIME_T /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE")    
+  IF(ID_UNICODE)
+    add_definitions(-D_UNICODE)
+  ENDIF()
+
+  SET(CMAKE_CXX_FLAGS         "/DWIN32 /D_WIN32 /D_WINDOWS /EHsc /GR /fp:fast /GS- /MP /W3 /D_USE_32BIT_TIME_T /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE")    
   SET(CMAKE_CXX_FLAGS_DEBUG   "/D_DEBUG /MTd /Od /Zi")
   SET(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /GL")  
 

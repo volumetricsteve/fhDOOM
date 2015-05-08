@@ -273,7 +273,7 @@ EnumWindowsProc
 BOOL CALLBACK EnumWindowsProc( HWND hwnd, LPARAM lParam ) {
 	char buff[1024];
 
-	::GetWindowText( hwnd, buff, sizeof( buff ) );
+	::GetWindowTextA( hwnd, buff, sizeof( buff ) );
 	if ( idStr::Icmpn( buff, EDITOR_WINDOWTEXT, strlen( EDITOR_WINDOWTEXT ) ) == 0 ) {
 		com_hwndMsg = hwnd;
 		return FALSE;
@@ -432,7 +432,7 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 
 	if ( com_outputMsg ) {
 		if ( com_msgID == -1 ) {
-			com_msgID = ::RegisterWindowMessage( DMAP_MSGID );
+			com_msgID = ::RegisterWindowMessageA( DMAP_MSGID );
 			if ( !FindEditor() ) {
 				com_outputMsg = false;
 			} else {
@@ -440,8 +440,8 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 			}
 		}
 		if ( com_hwndMsg ) {
-			ATOM atom = ::GlobalAddAtom( msg );
-			::PostMessage( com_hwndMsg, com_msgID, 0, static_cast<LPARAM>(atom) );
+			ATOM atom = ::GlobalAddAtomA( msg );
+			::PostMessageA( com_hwndMsg, com_msgID, 0, static_cast<LPARAM>(atom) );
 		}
 	}
 

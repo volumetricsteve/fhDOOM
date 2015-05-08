@@ -93,16 +93,16 @@ double Sys_ClockTicksPerSecond( void ) {
 		LPBYTE ProcSpeed;
 		DWORD buflen, ret;
 
-		if ( !RegOpenKeyEx( HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0, KEY_READ, &hKey ) ) {
+		if ( !RegOpenKeyExA( HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0, KEY_READ, &hKey ) ) {
 			ProcSpeed = 0;
 			buflen = sizeof( ProcSpeed );
-			ret = RegQueryValueEx( hKey, "~MHz", NULL, NULL, (LPBYTE) &ProcSpeed, &buflen );
+			ret = RegQueryValueExA( hKey, "~MHz", NULL, NULL, (LPBYTE) &ProcSpeed, &buflen );
 			// If we don't succeed, try some other spellings.
 			if ( ret != ERROR_SUCCESS ) {
-				ret = RegQueryValueEx( hKey, "~Mhz", NULL, NULL, (LPBYTE) &ProcSpeed, &buflen );
+				ret = RegQueryValueExA( hKey, "~Mhz", NULL, NULL, (LPBYTE) &ProcSpeed, &buflen );
 			}
 			if ( ret != ERROR_SUCCESS ) {
-				ret = RegQueryValueEx( hKey, "~mhz", NULL, NULL, (LPBYTE) &ProcSpeed, &buflen );
+				ret = RegQueryValueExA( hKey, "~mhz", NULL, NULL, (LPBYTE) &ProcSpeed, &buflen );
 			}
 			RegCloseKey( hKey );
 			if ( ret == ERROR_SUCCESS ) {

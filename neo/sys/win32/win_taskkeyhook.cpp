@@ -40,8 +40,8 @@ If you have questions concerning this license or the applicable additional terms
 #define DLLEXPORT __declspec(dllexport)
 
 // Magic registry key/value for "Remove Task Manager" policy.
-LPCTSTR KEY_DisableTaskMgr = "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System";
-LPCTSTR VAL_DisableTaskMgr = "DisableTaskMgr";
+static const char* const KEY_DisableTaskMgr = "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System";
+static const char* const VAL_DisableTaskMgr = "DisableTaskMgr";
 
 // The section is SHARED among all instances of this DLL.
 // A low-level keyboard hook is always a system-wide hook.
@@ -100,13 +100,13 @@ IsTaskMgrDisabled
 BOOL IsTaskMgrDisabled() {
 	HKEY hk;
 
-	if ( RegOpenKey( HKEY_CURRENT_USER, KEY_DisableTaskMgr, &hk ) != ERROR_SUCCESS ) {
+	if ( RegOpenKeyA( HKEY_CURRENT_USER, KEY_DisableTaskMgr, &hk ) != ERROR_SUCCESS ) {
 		return FALSE; // no key ==> not disabled
 	}
 
 	DWORD val = 0;
 	DWORD len = 4;
-	return RegQueryValueEx( hk, VAL_DisableTaskMgr, NULL, NULL, (BYTE*)&val, &len ) == ERROR_SUCCESS && val == 1;
+	return RegQueryValueExA( hk, VAL_DisableTaskMgr, NULL, NULL, (BYTE*)&val, &len ) == ERROR_SUCCESS && val == 1;
 }
 
 /*
@@ -130,16 +130,16 @@ void DisableTaskKeys( BOOL bDisable, BOOL bBeep, BOOL bTaskMgr ) {
 	// task manager (Ctrl+Alt+Del)
 	if ( bTaskMgr ) {
 		HKEY hk;
-		if ( RegOpenKey( HKEY_CURRENT_USER, KEY_DisableTaskMgr, &hk ) != ERROR_SUCCESS ) {
-			RegCreateKey( HKEY_CURRENT_USER, KEY_DisableTaskMgr, &hk );
+		if ( RegOpenKeyA( HKEY_CURRENT_USER, KEY_DisableTaskMgr, &hk ) != ERROR_SUCCESS ) {
+			RegCreateKeyA( HKEY_CURRENT_USER, KEY_DisableTaskMgr, &hk );
 		}
 		if ( bDisable ) {
 			// disable TM: set policy = 1
 			DWORD val = 1;
-			RegSetValueEx( hk, VAL_DisableTaskMgr, NULL, REG_DWORD, (BYTE*)&val, sizeof(val) );
+			RegSetValueExA( hk, VAL_DisableTaskMgr, NULL, REG_DWORD, (BYTE*)&val, sizeof(val) );
 		} else {
 			// enable TM: remove policy 
-			RegDeleteValue( hk,VAL_DisableTaskMgr );
+			RegDeleteValueA( hk,VAL_DisableTaskMgr );
 		}
 	}
 }

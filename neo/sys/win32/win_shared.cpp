@@ -96,7 +96,7 @@ int Sys_GetDriveFreeSpace( const char *path ) {
 	DWORDLONG lpTotalNumberOfFreeBytes;
 	int ret = 26;
 	//FIXME: see why this is failing on some machines
-	if ( ::GetDiskFreeSpaceEx( path, (PULARGE_INTEGER)&lpFreeBytesAvailable, (PULARGE_INTEGER)&lpTotalNumberOfBytes, (PULARGE_INTEGER)&lpTotalNumberOfFreeBytes ) ) {
+	if ( ::GetDiskFreeSpaceExA( path, (PULARGE_INTEGER)&lpFreeBytesAvailable, (PULARGE_INTEGER)&lpTotalNumberOfBytes, (PULARGE_INTEGER)&lpTotalNumberOfFreeBytes ) ) {
 		ret = ( double )( lpFreeBytesAvailable ) / ( 1024.0 * 1024.0 );
 	}
 	return ret;
@@ -241,7 +241,7 @@ char *Sys_GetCurrentUser( void ) {
 	unsigned long size = sizeof( s_userName );
 
 
-	if ( !GetUserName( s_userName, &size ) ) {
+	if ( !GetUserNameA( s_userName, &size ) ) {
 		strcpy( s_userName, "player" );
 	}
 
@@ -340,12 +340,12 @@ Sym_Init
 ==================
 */
 void Sym_Init( long addr ) {
-	TCHAR moduleName[MAX_STRING_CHARS];
+	char moduleName[MAX_STRING_CHARS];
 	MEMORY_BASIC_INFORMATION mbi;
 
 	VirtualQuery( (void*)addr, &mbi, sizeof(mbi) );
 
-	GetModuleFileName( (HMODULE)mbi.AllocationBase, moduleName, sizeof( moduleName ) );
+	GetModuleFileNameA( (HMODULE)mbi.AllocationBase, moduleName, sizeof( moduleName ) );
 
 	char *ext = moduleName + strlen( moduleName );
 	while( ext > moduleName && *ext != '.' ) {

@@ -446,7 +446,7 @@ static void GLW_CreateWindowClasses( void ) {
 	wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground = (struct HBRUSH__ *)COLOR_GRAYTEXT;
 	wc.lpszMenuName  = 0;
-	wc.lpszClassName = WIN32_WINDOW_CLASS_NAME;
+	wc.lpszClassName = _T(WIN32_WINDOW_CLASS_NAME);
 
 	if ( !RegisterClass( &wc ) ) {
 		common->FatalError( "GLW_CreateWindow: could not register window class" );
@@ -464,7 +464,7 @@ static void GLW_CreateWindowClasses( void ) {
 	wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground = (struct HBRUSH__ *)COLOR_GRAYTEXT;
 	wc.lpszMenuName  = 0;
-	wc.lpszClassName = WIN32_FAKE_WINDOW_CLASS_NAME;
+	wc.lpszClassName = _T(WIN32_FAKE_WINDOW_CLASS_NAME);
 
 	if ( !RegisterClass( &wc ) ) {
 		common->FatalError( "GLW_CreateWindow: could not register window class" );
@@ -535,8 +535,8 @@ static bool GLW_CreateWindow( glimpParms_t parms ) {
 
 	win32.hWnd = CreateWindowEx (
 		 exstyle, 
-		 WIN32_WINDOW_CLASS_NAME,
-		 GAME_NAME,
+		 _T(WIN32_WINDOW_CLASS_NAME),
+		 _T(GAME_NAME),
 		 stylebits,
 		 x, y, w, h,
 		 NULL,

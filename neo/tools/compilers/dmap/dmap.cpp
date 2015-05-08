@@ -379,8 +379,8 @@ void Dmap( const idCmdArgs &args ) {
 
 #ifdef _WIN32
 	if ( com_outputMsg && com_hwndMsg != NULL ) {
-		unsigned int msg = ::RegisterWindowMessage( DMAP_DONE );
-		::PostMessage( com_hwndMsg, msg, 0, 0 );
+		unsigned int msg = ::RegisterWindowMessageA( DMAP_DONE );
+		::PostMessageA( com_hwndMsg, msg, 0, 0 );
 	}
 #endif
 }
