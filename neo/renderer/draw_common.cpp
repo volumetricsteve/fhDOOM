@@ -529,7 +529,11 @@ void RB_STD_FogAllLights( void ) {
 		}
 
 		if ( vLight->lightShader->IsFogLight() ) {
-			RB_STD_FogPass( vLight->globalInteractions, vLight->localInteractions );
+      if(r_ignore.GetBool()) {
+        RB_GLSL_FogPass( vLight->globalInteractions, vLight->localInteractions );
+      } else {
+			  RB_STD_FogPass( vLight->globalInteractions, vLight->localInteractions );
+      }
 		} else if ( vLight->lightShader->IsBlendLight() ) {
 			RB_BlendLight( vLight->globalInteractions, vLight->localInteractions );
 		}

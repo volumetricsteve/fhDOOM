@@ -6,6 +6,18 @@ Version 2
 {
  brushDef3
  {
+  ( -1 0 0 -120 ) ( ( 0.03125 0 -0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 0 1 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 1 0 -0 -248 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 0 -1 0 184 ) ( ( 0.0078125 0 -0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
+  ( 0 -0 1 8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0 ) ) "textures/common/caulk" 0 0 0
+  ( -0 -0 -1 -703.9999389648 ) ( ( 0.03125 0 0 ) ( 0 0.031250149 -0.0000015795 ) ) "textures/common/caulk" 0 0 0
+ }
+}
+// primitive 1
+{
+ brushDef3
+ {
   ( 0 0 -1 136 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
   ( -0 0 1 -184 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
   ( -0 -1 -0 -1720 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
@@ -14,7 +26,7 @@ Version 2
   ( -1 0 0 -1808 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 1
+// primitive 2
 {
  brushDef3
  {
@@ -26,7 +38,7 @@ Version 2
   ( 0.7071067095 0.7071069479 -0 -135.7578125 ) ( ( 0.03125 -0 -0.0000002454 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 2
+// primitive 3
 {
  brushDef3
  {
@@ -38,7 +50,7 @@ Version 2
   ( -0.7071067691 -0.7071067691 0 45.2548370361 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 3
+// primitive 4
 {
  brushDef3
  {
@@ -50,7 +62,7 @@ Version 2
   ( 1 0.0000001192 -0 -256 ) ( ( 0.03125 0 -4 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 4
+// primitive 5
 {
  brushDef3
  {
@@ -62,59 +74,47 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 5
+// primitive 6
 {
  brushDef3
  {
-  ( 0 0 -1 -328 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 0 1 320 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
+  ( -0 -0 -1 -704 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( 0 -0 1 696 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
   ( -0 -1 -0 -56 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( 1 0 0 -248 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( -0 1 0 -184 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 6
-{
- brushDef3
- {
-  ( 0 0 -1 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
-  ( -0 0 1 8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
-  ( -0 -1 -0 -64 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
-  ( 1 0 0 -248 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
-  ( -0 1 0 56 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
-  ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
- }
-}
 // primitive 7
 {
  brushDef3
  {
-  ( 0 0 -1 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
+  ( -0 -0 -1 -704 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
   ( -0 0 1 8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
-  ( -0 -1 -0 -56 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
-  ( 1 0 0 120 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
-  ( -0 1 0 -184 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
-  ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
+  ( -0 -1 -0 -64 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
+  ( 1 0 -0 -248 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
+  ( -0 1 0 56 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
+  ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
 // primitive 8
 {
  brushDef3
  {
-  ( 0 0 -0.9999999404 -319.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 0 0.9999999404 7.9999995232 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 -1 -0 184 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
-  ( 1 0 0 -248 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -0 1 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
-  ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
+  ( -0 -0 -1 -704 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
+  ( -0 0 1 8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.0000000109 ) ) "textures/common/caulk" 0 0 0
+  ( -0 -1 -0 -56 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
+  ( 1 0 -0 120 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
+  ( -0 1 0 -184 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
+  ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
 // primitive 9
 {
  brushDef3
  {
-  ( 0 0 -1 -320 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
+  ( -0 -0 -1 -704 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
   ( -0 0 1 8 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0.25 ) ) "textures/common/caulk" 0 0 0
   ( -0 -1 -0 -56 ) ( ( 0.03125 0 0.25 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
   ( 1 0 0 -256 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
@@ -336,15 +336,15 @@ Version 2
 {
 "classname" "light"
 "name" "light_5"
-"origin" "-40 -16 72"
+"origin" "-8 -16 -312"
 "shaderParm3" "20"
 "noshadows" "0"
 "nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0.000000"
+"falloff" "0"
 "texture" "fogs/basicfog"
-"_color" "0.63 1 0.49"
-"light_radius" "500 500 500"
+"_color" "0.35 1 0"
+"light_radius" "500 500 400"
 }
 // entity 2
 {

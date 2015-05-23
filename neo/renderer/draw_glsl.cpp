@@ -16,6 +16,7 @@ static const glslProgramDef_t* defaultProgram = nullptr;
 //static const glslProgramDef_t* diffuseCubeProgram = nullptr;
 static const glslProgramDef_t* skyboxProgram = nullptr;
 static const glslProgramDef_t* bumpyEnvProgram = nullptr;
+static const glslProgramDef_t* fogProgram = nullptr;
 
 /*
 ====================
@@ -88,6 +89,211 @@ static void R_CreateWobbleskyTexMatrix(const drawSurf_t *surf, float time, float
   matrix[3] = matrix[7] = matrix[11] = 0.0f;
   matrix[12] = matrix[13] = matrix[14] = 0.0f;
 }
+
+/*
+===============
+RB_RenderTriangleSurface
+
+Sets texcoord and vertex pointers
+===============
+*/
+static void RB_GLSL_RenderTriangleSurface(const srfTriangles_t *tri) {
+  if (!tri->ambientCache) {
+    RB_DrawElementsImmediate(tri);
+    return;
+  }
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), vertexCache.Position(tri->ambientCache));
+  RB_DrawElementsWithCounters(tri);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+}
+
+static idPlane	fogPlanes[4];
+
+/*
+=====================
+RB_T_BasicFog
+
+=====================
+*/
+static void RB_T_BasicFog(const drawSurf_t *surf) {
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
+  if (backEnd.currentSpace != surf->space) {
+    idPlane	local;
+
+    GL_SelectTexture(0);
+
+    R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
+    local[3] += 0.5;
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, local.ToFloatPtr());
+    //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
+
+    //		R_GlobalPlaneToLocal( surf->space->modelMatrix, fogPlanes[1], local );
+    //		local[3] += 0.5;
+    local[0] = local[1] = local[2] = 0; local[3] = 0.5;
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, local.ToFloatPtr());
+    //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
+
+    GL_SelectTexture(1);
+
+    // GL_S is constant per viewer
+    R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
+    local[3] += FOG_ENTER;
+    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, local.ToFloatPtr());
+    //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
+
+    R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
+    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, local.ToFloatPtr());
+    //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
+  }
+
+  RB_GLSL_RenderTriangleSurface(surf->geo);
+
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+}
+
+
+/*
+==================
+RB_GLSL_FogPass
+==================
+*/
+void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
+  RB_LogComment("---------- RB_GLSL_FogPass ----------\n");
+
+  if (!fogProgram) {
+    fogProgram = R_FindGlslProgram("fog.vp", "fog.fp");
+
+    if (!fogProgram) {
+      return;
+    }
+  }
+
+  glUseProgram(fogProgram->ident);
+
+  // create a surface for the light frustom triangles, which are oriented drawn side out
+  const srfTriangles_t* frustumTris = backEnd.vLight->frustumTris;
+
+  // if we ran out of vertex cache memory, skip it
+  if (!frustumTris->ambientCache) {
+    return;
+  }    
+  
+  drawSurf_t ds;
+  memset(&ds, 0, sizeof(ds));
+  ds.space = &backEnd.viewDef->worldSpace;
+  ds.geo = frustumTris;
+  ds.scissorRect = backEnd.viewDef->scissor;
+
+  // find the current color and density of the fog
+  const idMaterial *lightShader = backEnd.vLight->lightShader;
+  const float	     *regs        = backEnd.vLight->shaderRegisters;
+  // assume fog shaders have only a single stage
+  const shaderStage_t	*stage = lightShader->GetStage(0);
+
+  backEnd.lightColor[0] = regs[stage->color.registers[0]];
+  backEnd.lightColor[1] = regs[stage->color.registers[1]];
+  backEnd.lightColor[2] = regs[stage->color.registers[2]];
+  backEnd.lightColor[3] = regs[stage->color.registers[3]];
+  
+  glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, backEnd.lightColor);
+
+  // calculate the falloff planes
+  float	a;
+
+  // if they left the default value on, set a fog distance of 500
+  if (backEnd.lightColor[3] <= 1.0) {
+    a = -0.5f / DEFAULT_FOG_DISTANCE;
+  }
+  else {
+    // otherwise, distance = alpha color
+    a = -0.5f / backEnd.lightColor[3];
+  }
+
+  
+
+  // texture 0 is the falloff image
+  GL_SelectTexture(0);
+  globalImages->fogImage->Bind();
+
+  //GL_Bind( tr.whiteImage );
+  /*
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glEnable(GL_TEXTURE_GEN_S);
+  glEnable(GL_TEXTURE_GEN_T);
+  glTexCoord2f(0.5f, 0.5f);		// make sure Q is set
+  */
+
+  fogPlanes[0][0] = a * backEnd.viewDef->worldSpace.modelViewMatrix[2];
+  fogPlanes[0][1] = a * backEnd.viewDef->worldSpace.modelViewMatrix[6];
+  fogPlanes[0][2] = a * backEnd.viewDef->worldSpace.modelViewMatrix[10];
+  fogPlanes[0][3] = a * backEnd.viewDef->worldSpace.modelViewMatrix[14];
+
+  fogPlanes[1][0] = a * backEnd.viewDef->worldSpace.modelViewMatrix[0];
+  fogPlanes[1][1] = a * backEnd.viewDef->worldSpace.modelViewMatrix[4];
+  fogPlanes[1][2] = a * backEnd.viewDef->worldSpace.modelViewMatrix[8];
+  fogPlanes[1][3] = a * backEnd.viewDef->worldSpace.modelViewMatrix[12];
+
+
+  // texture 1 is the entering plane fade correction
+  GL_SelectTexture(1);
+  globalImages->fogEnterImage->Bind();
+
+  //globalImages->fogEnterImage->Bind();
+  /*
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glEnable(GL_TEXTURE_GEN_S);
+  glEnable(GL_TEXTURE_GEN_T);
+  glTexCoord2f(FOG_ENTER + s, FOG_ENTER);
+  */
+
+  // T will get a texgen for the fade plane, which is always the "top" plane on unrotated lights
+  fogPlanes[2][0] = 0.001f * backEnd.vLight->fogPlane[0];
+  fogPlanes[2][1] = 0.001f * backEnd.vLight->fogPlane[1];
+  fogPlanes[2][2] = 0.001f * backEnd.vLight->fogPlane[2];
+  fogPlanes[2][3] = 0.001f * backEnd.vLight->fogPlane[3];
+
+  // S is based on the view origin
+  float s = backEnd.viewDef->renderView.vieworg * fogPlanes[2].Normal() + fogPlanes[2][3];
+
+  fogPlanes[3][0] = 0;
+  fogPlanes[3][1] = 0;
+  fogPlanes[3][2] = 0;
+  fogPlanes[3][3] = FOG_ENTER + s; 
+
+
+  // draw it
+  backEnd.glState.forceGlState = true;
+  GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL);
+  RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_T_BasicFog);
+  RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_T_BasicFog);
+
+  // the light frustum bounding planes aren't in the depth buffer, so use depthfunc_less instead
+  // of depthfunc_equal
+  if (!r_ignore2.GetBool()) {
+    GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
+    GL_Cull(CT_BACK_SIDED);
+    RB_RenderDrawSurfChainWithFunction(&ds, RB_T_BasicFog);
+    GL_Cull(CT_FRONT_SIDED);
+  }
+
+  GL_SelectTexture(1);
+  //glDisable(GL_TEXTURE_GEN_S);
+  //glDisable(GL_TEXTURE_GEN_T);
+  globalImages->BindNull();
+
+  GL_SelectTexture(0);
+  //glDisable(GL_TEXTURE_GEN_S);
+  //glDisable(GL_TEXTURE_GEN_T);
+  // 
+  
+  glUseProgram(0);
+}
+
 
 
 

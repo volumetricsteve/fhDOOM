@@ -75,7 +75,7 @@ static void RB_T_BasicFog(const drawSurf_t *surf) {
 
 /*
 ==================
-RB_FogPass
+RB_STD_FogPass
 ==================
 */
 void RB_STD_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
@@ -85,7 +85,7 @@ void RB_STD_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
   const shaderStage_t	*stage;
   const float			*regs;
 
-  RB_LogComment("---------- RB_FogPass ----------\n");
+  RB_LogComment("---------- RB_GLSL_FogPass ----------\n");
 
   // create a surface for the light frustom triangles, which are oriented drawn side out
   frustumTris = backEnd.vLight->frustumTris;
@@ -127,8 +127,9 @@ void RB_STD_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
   GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL);
 
   // texture 0 is the falloff image
-  GL_SelectTexture(0);
+  GL_SelectTexture(0);  
   globalImages->fogImage->Bind();
+
   //GL_Bind( tr.whiteImage );
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   glEnable(GL_TEXTURE_GEN_S);
@@ -149,6 +150,8 @@ void RB_STD_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
   // texture 1 is the entering plane fade correction
   GL_SelectTexture(1);
   globalImages->fogEnterImage->Bind();
+
+  //globalImages->fogEnterImage->Bind();
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   glEnable(GL_TEXTURE_GEN_S);
   glEnable(GL_TEXTURE_GEN_T);
@@ -176,10 +179,12 @@ void RB_STD_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
 
   // the light frustum bounding planes aren't in the depth buffer, so use depthfunc_less instead
   // of depthfunc_equal
-  GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
-  GL_Cull(CT_BACK_SIDED);
-  RB_RenderDrawSurfChainWithFunction(&ds, RB_T_BasicFog);
-  GL_Cull(CT_FRONT_SIDED);
+  if(!r_ignore2.GetBool()) {
+    GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
+    GL_Cull(CT_BACK_SIDED);
+    RB_RenderDrawSurfChainWithFunction(&ds, RB_T_BasicFog);
+    GL_Cull(CT_FRONT_SIDED);
+  }
 
   GL_SelectTexture(1);
   glDisable(GL_TEXTURE_GEN_S);
