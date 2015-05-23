@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (doom)
+project (fhDOOM)
 
 OPTION(ID_ALLOW_TOOLS "Compile Tools" ON)
 OPTION(ID_UNICODE "Use unicode version of WIN32 API" OFF)
