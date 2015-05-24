@@ -916,9 +916,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_force_include(precompiled.h SOURCES)
 add_msvc_precompiled_header(precompiled.h SOURCES)
 
+set(TARGET_NAME "fhDOOM")
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
-add_executable(doom3 ${SOURCES})
-target_link_libraries(doom3 
+add_executable(${TARGET_NAME} ${SOURCES})
+target_link_libraries(${TARGET_NAME}
   idlib 
   curl
   glew
@@ -926,10 +927,11 @@ target_link_libraries(doom3
   oggvorbis
   ${EXTERNAL_LIBS}
 )
+add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
 
-if(MSVC) # Check if we are using the Visual Studio compiler
-  set_target_properties(doom3 PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
-  set_target_properties(doom3 PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
-  SET_PROPERTY(TARGET doom3 PROPERTY FOLDER exes)
+if(MSVC)
+  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
+  set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER exes)
 endif()
 
