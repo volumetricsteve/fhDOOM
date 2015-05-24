@@ -165,27 +165,10 @@ const int MAX_EXPRESSION_REGISTERS = 4096;
 #include "../tools/compilers/aas/AASFile.h"
 #include "../tools/compilers/aas/AASFileManager.h"
 
-// game
-#if defined(_D3XP)
-#include "../d3xp/Game.h"
-#else
-#include "../game/Game.h"
-#endif
-
 //-----------------------------------------------------
 
-#ifndef _D3SDK
-
-#ifdef GAME_DLL
-
-#if defined(_D3XP)
-#include "../d3xp/Game_local.h"
-#else
-#include "../game/Game_local.h"
-#endif
-
-#else
-
+#ifndef GAME_DLL
+#include "../game/Game.h"
 #include "../framework/DemoChecksum.h"
 
 // framework
@@ -209,7 +192,6 @@ const int MAX_EXPRESSION_REGISTERS = 4096;
 
 #endif /* !GAME_DLL */
 
-#endif /* !_D3SDK */
 
 //-----------------------------------------------------
 
