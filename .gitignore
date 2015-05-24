@@ -12,3 +12,11 @@ build2
 /d3xp
 /neo/sys/win32/rc/*.aps
 /base/maps/*.bak
+/base/pak004.pk4
+/base/pak000.pk4
+/base/pak001.pk4
+/base/pak002.pk4
+/base/pak003.pk4
+/base/DoomConfig.cfg
+/base/config.spec
+/base/warnings.txt
