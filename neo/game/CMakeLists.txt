@@ -154,7 +154,8 @@ source_group(game\\Physics physics/.*)
 source_group(game\\Script script/.*)  
 
 
+set(TARGER_NAME "fhGame-x86")
 add_definitions(-D__DOOM__ -DGAME_DLL)
-add_library(gamex86 SHARED ${SOURCES})
-target_link_libraries(gamex86 idlib)
-SET_PROPERTY(TARGET gamex86                PROPERTY FOLDER dlls)  
+add_library(${TARGER_NAME} SHARED ${SOURCES})
+target_link_libraries(${TARGER_NAME} idlib)
+set_property(TARGET ${TARGER_NAME} PROPERTY FOLDER dlls)  

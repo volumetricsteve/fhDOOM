@@ -85,6 +85,8 @@ idCVar com_videoRam( "com_videoRam", "64", CVAR_INTEGER | CVAR_SYSTEM | CVAR_NOC
 
 idCVar com_product_lang_ext( "com_product_lang_ext", "1", CVAR_INTEGER | CVAR_SYSTEM | CVAR_ARCHIVE, "Extension to use when creating language files." );
 
+idCVar com_gamelib( "com_gameLib", "fhGame-", CVAR_SYSTEM | CVAR_INIT, "name of game dynamic library to search for" );
+
 // com_speeds times
 int				time_gameFrame;
 int				time_gameDraw;
@@ -2620,8 +2622,10 @@ void idCommonLocal::LoadGameDLL( void ) {
 	gameImport_t	gameImport;
 	gameExport_t	gameExport;
 	GetGameAPI_t	GetGameAPI;
+  
+  idStr gamelib = com_gamelib.GetString();
 
-	fileSystem->FindDLL( "game", dllPath, true );
+	fileSystem->FindDLL( gamelib, dllPath, true );
 
 	if ( !dllPath[ 0 ] ) {
 		common->FatalError( "couldn't find game dynamic library" );
