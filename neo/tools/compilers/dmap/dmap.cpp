@@ -43,17 +43,24 @@ bool ProcessModel( uEntity_t *e, bool floodFill ) {
 
 	// build a bsp tree using all of the sides
 	// of all of the structural brushes
+	dmapGlobals.timingMakeStructural.Start();
 	faces = MakeStructuralBspFaceList ( e->primitives );
 	e->tree = FaceBSP( faces );
+  dmapGlobals.timingMakeStructural.Stop();
 
 	// create portals at every leaf intersection
 	// to allow flood filling
+	dmapGlobals.timingMakeTreePortals.Start();
 	MakeTreePortals( e->tree );
+  dmapGlobals.timingMakeTreePortals.Stop();
 
 	// classify the leafs as opaque or areaportal
+  dmapGlobals.timingFilterBrushesIntoTree.Start();
 	FilterBrushesIntoTree( e );
+  dmapGlobals.timingFilterBrushesIntoTree.Stop();
 
 	// see if the bsp is completely enclosed
+  dmapGlobals.timingFloodAndFill.Start();
 	if ( floodFill && !dmapGlobals.noFlood ) {
 		if ( FloodEntities( e->tree ) ) {
 			// set the outside leafs to opaque
@@ -69,36 +76,49 @@ bool ProcessModel( uEntity_t *e, bool floodFill ) {
 			return false;
 		}
 	}
+  dmapGlobals.timingFloodAndFill.Stop();
 
 	// get minimum convex hulls for each visible side
 	// this must be done before creating area portals,
 	// because the visible hull is used as the portal
+	dmapGlobals.timingClipSidesByTree.Start();
 	ClipSidesByTree( e );
+  dmapGlobals.timingClipSidesByTree.Stop();
 
 	// determine areas before clipping tris into the
 	// tree, so tris will never cross area boundaries
+	dmapGlobals.timingFloodAreas.Start();
 	FloodAreas( e );
+  dmapGlobals.timingFloodAreas.Stop();
 
 	// we now have a BSP tree with solid and non-solid leafs marked with areas
 	// all primitives will now be clipped into this, throwing away
 	// fragments in the solid areas
+	dmapGlobals.timingPutPrimitivesInAreas.Start();
 	PutPrimitivesInAreas( e );
+  dmapGlobals.timingPutPrimitivesInAreas.Stop();
 
 	// now build shadow volumes for the lights and split
 	// the optimize lists by the light beam trees
 	// so there won't be unneeded overdraw in the static
 	// case
+	dmapGlobals.timingPreLight.Start();
 	Prelight( e );
+  dmapGlobals.timingPreLight.Stop();
 
 	// optimizing is a superset of fixing tjunctions
+  dmapGlobals.timingOptimize.Start();
 	if ( !dmapGlobals.noOptimize ) {
 		OptimizeEntity( e );
 	} else  if ( !dmapGlobals.noTJunc ) {
 		FixEntityTjunctions( e );
 	}
+  dmapGlobals.timingOptimize.Stop();
 
 	// now fix t junctions across areas
+  dmapGlobals.timingFixTJunctions.Start();
 	FixGlobalTjunctions( e );
+  dmapGlobals.timingFixTJunctions.Stop();
 
 	return true;
 }
@@ -171,7 +191,6 @@ void ResetDmapGlobals( void ) {
 	dmapGlobals.entityNum = 0;
 	dmapGlobals.mapLights.Clear();
 	dmapGlobals.verbose = false;
-	dmapGlobals.glview = false;
 	dmapGlobals.noOptimize = false;
 	dmapGlobals.verboseentities = false;
 	dmapGlobals.noCurves = false;
@@ -232,9 +251,7 @@ void Dmap( const idCmdArgs &args ) {
 			}
 		}
 
-		if ( !idStr::Icmp( s,"glview" ) ) {
-			dmapGlobals.glview = true;
-		} else if ( !idStr::Icmp( s, "v" ) ) {
+    if ( !idStr::Icmp( s, "v" ) ) {
 			common->Printf( "verbose = true\n" );
 			dmapGlobals.verbose = true;
 		} else if ( !idStr::Icmp( s, "draw" ) ) {
@@ -385,12 +402,28 @@ void Dmap( const idCmdArgs &args ) {
 #endif
 }
 
+
+static void printTimingsStats(const fhDmapTimingStats& stats, const char* name) {
+  common->Printf("%s: %i %i %f %i %i\n", name, stats.Sum(), stats.Min(), stats.Avg(), stats.Max(), stats.Num());
+}
+
 /*
 ============
 Dmap_f
 ============
 */
 void Dmap_f( const idCmdArgs &args ) {
+
+  dmapGlobals.timingMakeStructural.Reset();
+  dmapGlobals.timingMakeTreePortals.Reset();
+  dmapGlobals.timingFilterBrushesIntoTree.Reset();
+  dmapGlobals.timingFloodAndFill.Reset();
+  dmapGlobals.timingClipSidesByTree.Reset();
+  dmapGlobals.timingFloodAreas.Reset();
+  dmapGlobals.timingPutPrimitivesInAreas.Reset();
+  dmapGlobals.timingPreLight.Reset();
+  dmapGlobals.timingOptimize.Reset();
+  dmapGlobals.timingFixTJunctions.Reset();
 
 	common->ClearWarnings( "running dmap" );
 
@@ -400,5 +433,16 @@ void Dmap_f( const idCmdArgs &args ) {
 	Dmap( args );
 	common->SetRefreshOnPrint( false );
 
-	common->PrintWarnings();
+	common->PrintWarnings();  
+
+  printTimingsStats(dmapGlobals.timingMakeStructural,        "Make Structural  ");
+  printTimingsStats(dmapGlobals.timingMakeTreePortals,       "Make Tree Portals");
+  printTimingsStats(dmapGlobals.timingFilterBrushesIntoTree, "Filter Brushes   ");
+  printTimingsStats(dmapGlobals.timingFloodAndFill,          "Flood and Fill   ");
+  printTimingsStats(dmapGlobals.timingClipSidesByTree,       "Clip Sides       ");
+  printTimingsStats(dmapGlobals.timingFloodAreas,            "Flood Areas      ");
+  printTimingsStats(dmapGlobals.timingPutPrimitivesInAreas,  "Put Primitives   ");
+  printTimingsStats(dmapGlobals.timingPreLight,              "Prelight         ");
+  printTimingsStats(dmapGlobals.timingOptimize,              "Optimize         ");
+  printTimingsStats(dmapGlobals.timingFixTJunctions,         "Fix T Junctions  ");
 }
