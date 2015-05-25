@@ -98,29 +98,6 @@ void Draw_ClearWindow( void ) {
 
 }
 
-void Draw_SetRed (void)
-{
-	if (!dmapGlobals.drawflag)
-		return;
-
-	glColor3f (1,0,0);
-}
-
-void Draw_SetGrey (void)
-{
-	if (!dmapGlobals.drawflag)
-		return;
-
-	glColor3f( 0.5f, 0.5f, 0.5f);
-}
-
-void Draw_SetBlack (void)
-{
-	if (!dmapGlobals.drawflag)
-		return;
-
-	glColor3f( 0.0f, 0.0f, 0.0f );
-}
 
 void DrawWinding ( const idWinding *w )
 {
