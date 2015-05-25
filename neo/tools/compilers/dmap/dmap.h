@@ -391,10 +391,6 @@ void		FreeDMapFile( void );
 // draw.cpp -- draw debug views either directly, or through glserv.exe
 
 void Draw_ClearWindow( void );
-void DrawWinding( const idWinding *w );
-void DrawAuxWinding( const idWinding *w );
-
-void DrawLine( idVec3 v1, idVec3 v2, int color );
 
 void GLS_BeginScene( void );
 void GLS_Winding( const idWinding *w, int code );
@@ -422,13 +418,6 @@ void FillOutside( uEntity_t *e );
 void FloodAreas( uEntity_t *e );
 void MakeTreePortals( tree_t *tree );
 void FreePortal( uPortal_t *p );
-
-//=============================================================================
-
-// glfile.cpp -- write a debug file to be viewd with glview.exe
-
-void OutputWinding( idWinding *w, idFile *glview );
-void WriteGLView( tree_t *tree, char *source );
 
 //=============================================================================
 
@@ -533,7 +522,6 @@ mapTri_t	*CopyMapTri( const mapTri_t *tri );
 float		MapTriArea( const mapTri_t *tri );
 mapTri_t	*RemoveBadTris( const mapTri_t *tri );
 void		BoundTriList( const mapTri_t *list, idBounds &b );
-void		DrawTri( const mapTri_t *tri );
 void		FlipTriList( mapTri_t *tris );
 void		TriVertsFromOriginal( mapTri_t *tri, const mapTri_t *original );
 void		PlaneForTri( const mapTri_t *tri, idPlane &plane );

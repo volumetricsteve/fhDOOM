@@ -35,7 +35,6 @@ If you have questions concerning this license or the applicable additional terms
 #include <windows.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-//#include <GL/glaux.h>
 
 #define	WIN_SIZE	1024
 
@@ -52,28 +51,12 @@ void Draw_ClearWindow( void ) {
 	glClearColor( 0.5, 0.5, 0.5, 0 );
 	glClear( GL_COLOR_BUFFER_BIT );
 
-#if 0
-	int		w, h, g;
-	float	mx, my;
-
-	w = (dmapGlobals.drawBounds.b[1][0] - dmapGlobals.drawBounds.b[0][0]);
-	h = (dmapGlobals.drawBounds.b[1][1] - dmapGlobals.drawBounds.b[0][1]);
-
-	mx = dmapGlobals.drawBounds.b[0][0] + w/2;
-	my = dmapGlobals.drawBounds.b[1][1] + h/2;
-
-	g = w > h ? w : h;
-
-	glLoadIdentity ();
-    gluPerspective (90,  1,  2,  16384);
-	gluLookAt (mx, my, draw_maxs[2] + g/2, mx , my, draw_maxs[2], 0, 1, 0);
-#else
   GL_ProjectionMatrix.LoadIdentity();
 	GL_ProjectionMatrix.Ortho( dmapGlobals.drawBounds[0][0], dmapGlobals.drawBounds[1][0], 
 		dmapGlobals.drawBounds[0][1], dmapGlobals.drawBounds[1][1],
 		-1, 1 );
   GL_ModelViewMatrix.LoadIdentity();
-#endif
+
 	glColor3f (0,0,0);
 //	glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
@@ -81,92 +64,11 @@ void Draw_ClearWindow( void ) {
 //	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-#if 0
-//glColor4f (1,0,0,0.5);
-//	glBegin( GL_LINE_LOOP );
-	glBegin( GL_QUADS );
-
-	glVertex2f( dmapGlobals.drawBounds.b[0][0] + 20, dmapGlobals.drawBounds.b[0][1] + 20 );
-	glVertex2f( dmapGlobals.drawBounds.b[1][0] - 20, dmapGlobals.drawBounds.b[0][1] + 20 );
-	glVertex2f( dmapGlobals.drawBounds.b[1][0] - 20, dmapGlobals.drawBounds.b[1][1] - 20 );
-	glVertex2f( dmapGlobals.drawBounds.b[0][0] + 20, dmapGlobals.drawBounds.b[1][1] - 20 );
-
-	glEnd ();
-#endif
 
 	glFlush ();
 
 }
 
-
-void DrawWinding ( const idWinding *w )
-{
-	int		i;
-
-	if (!dmapGlobals.drawflag)
-		return;
-
-	glColor3f( 0.3f, 0.0f, 0.0f );
-	glBegin (GL_POLYGON);
-	for ( i = 0; i < w->GetNumPoints(); i++ )
-		glVertex3f( (*w)[i][0], (*w)[i][1], (*w)[i][2] );
-	glEnd ();
-
-	glColor3f( 1, 0, 0 );
-	glBegin (GL_LINE_LOOP);
-	for ( i = 0; i < w->GetNumPoints(); i++ )
-		glVertex3f( (*w)[i][0], (*w)[i][1], (*w)[i][2] );
-	glEnd ();
-
-	glFlush ();
-}
-
-void DrawAuxWinding ( const idWinding *w)
-{
-	int		i;
-
-	if (!dmapGlobals.drawflag)
-		return;
-
-	glColor3f( 0.0f, 0.3f, 0.0f );
-	glBegin (GL_POLYGON);
-	for ( i = 0; i < w->GetNumPoints(); i++ )
-		glVertex3f( (*w)[i][0], (*w)[i][1], (*w)[i][2] );
-	glEnd ();
-
-	glColor3f( 0.0f, 1.0f, 0.0f );
-	glBegin (GL_LINE_LOOP);
-	for ( i = 0; i < w->GetNumPoints(); i++ )
-		glVertex3f( (*w)[i][0], (*w)[i][1], (*w)[i][2] );
-	glEnd ();
-
-	glFlush ();
-}
-
-void DrawLine( idVec3 v1, idVec3 v2, int color ) {
-	if (!dmapGlobals.drawflag)
-		return;
-
-	switch( color ) {
-	case 0: glColor3f( 0, 0, 0 ); break;
-	case 1: glColor3f( 0, 0, 1 ); break;
-	case 2: glColor3f( 0, 1, 0 ); break;
-	case 3: glColor3f( 0, 1, 1 ); break;
-	case 4: glColor3f( 1, 0, 0 ); break;
-	case 5: glColor3f( 1, 0, 1 ); break;
-	case 6: glColor3f( 1, 1, 0 ); break;
-	case 7: glColor3f( 1, 1, 1 ); break;
-	}
-	
-
-	glBegin( GL_LINES );
-
-	glVertex3fv( v1.ToFloatPtr() );
-	glVertex3fv( v2.ToFloatPtr() );
-
-	glEnd();
-	glFlush();
-}
 
 //============================================================
 
@@ -243,25 +145,6 @@ void GLS_EndScene (void)
 {
 	closesocket (draw_socket);
 	draw_socket = 0;
-}
-#else
-void Draw_ClearWindow( void ) {
-}
-
-void DrawWinding( const idWinding *w) {
-}
-
-void DrawAuxWinding ( const idWinding *w) {
-}
-
-void GLS_Winding( const idWinding *w, int code ) {
-}
-
-void GLS_BeginScene (void) {
-}
-
-void GLS_EndScene (void)
-{
 }
 
 #endif
