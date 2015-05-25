@@ -1784,43 +1784,6 @@ static void AddVertexToIsland_r( optVertex_t *vert, optIsland_t *island ) {
 
 }
 
-/*
-====================
-SeparateIslands
-
-While the algorithm should theoretically handle any collection
-of triangles, there are speed and stability benefits to making
-it work on as small a list as possible, so separate disconnected
-collections of edges and process separately.
-
-FIXME: we need to separate the source triangles before
-doing this, because PointInSourceTris() can give a bad answer if
-the source list has triangles not used in the optimization
-====================
-*/
-static void SeparateIslands( optimizeGroup_t *opt ) {
-	int		i;
-	optIsland_t	island;
-	int		numIslands;
-
-	DrawAllEdges();
-
-	numIslands = 0;
-	for ( i = 0 ; i < numOptVerts ; i++ ) {
-		if ( optVerts[i].addedToIsland ) {
-			continue;
-		}
-		numIslands++;
-		memset( &island, 0, sizeof( island ) );
-		island.group = opt;
-		AddVertexToIsland_r( &optVerts[i], &island );
-		OptimizeIsland( &island );
-	}
-	if ( dmapGlobals.verbose ) {
-		common->Printf( "%6i islands\n", numIslands );
-	}
-}
-
 static void DontSeparateIslands( optimizeGroup_t *opt ) {
 	int		i;
 	optIsland_t	island;
