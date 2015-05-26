@@ -48,59 +48,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "rc/doom_resource.h"
 #include "../../renderer/tr_local.h"
 
-
-/*
-** QGL_Shutdown
-**
-** Unloads the specified DLL then nulls out all the proc pointers.  This
-** is only called during a hard shutdown of the OGL subsystem (e.g. vid_restart).
-*/
-static void QGL_Shutdown(void)
-{
-  common->Printf("...shutting down QGL\n");
-
-  if (win32.hinstOpenGL)
-  {
-    common->Printf("...unloading OpenGL DLL\n");
-    FreeLibrary(win32.hinstOpenGL);
-  }
-
-  win32.hinstOpenGL = NULL;
-}
-
-/*
-** QGL_Init
-**
-** This is responsible for binding our gl function pointers to
-** the appropriate GL stuff.  In Windows this means doing a
-** LoadLibrary and a bunch of calls to GetProcAddress.  On other
-** operating systems we need to do the right thing, whatever that
-** might be.
-*/
-static bool QGL_Init(const char *dllname)
-{
-  assert(win32.hinstOpenGL == 0);
-
-  common->Printf("...initializing QGL\n");
-
-  common->Printf("...calling LoadLibrary( '%s' ): ", dllname);
-
-  if ((win32.hinstOpenGL = LoadLibraryA(dllname)) == 0)
-  {
-    common->Printf("failed\n");
-    return false;
-  }
-  common->Printf("succeeded\n");
-
-  glActiveTextureARB = 0;
-  glClientActiveTextureARB = 0;
-  glMultiTexCoord2fARB = 0;
-
-  return true;
-}
-
-
-
 /*
 ========================
 GLimp_GetOldGammaRamp
@@ -181,7 +128,7 @@ FakeWndProc
 Only used to get wglExtensions
 ====================
 */
-LONG WINAPI FakeWndProc (
+static LONG WINAPI FakeWndProc (
     HWND    hWnd,
     UINT    uMsg,
     WPARAM  wParam,
@@ -233,15 +180,6 @@ LONG WINAPI FakeWndProc (
 }
 
 //=============================================================================
-
-/*
-====================
-GLW_WM_CREATE
-====================
-*/
-void GLW_WM_CREATE( HWND hWnd ) {
-}
-
 
 
 /*
@@ -565,14 +503,6 @@ GLW_SetFullScreen
 ===================
 */
 static bool GLW_SetFullScreen( glimpParms_t parms ) {
-#if 0
-	// for some reason, bounds checker claims that windows is
-	// writing past the bounds of dm in the get display frequency call
-	union {
-		DEVMODE dm;
-		byte	filler[1024];
-	} hack;
-#endif
 	DEVMODE dm;
 	int		cdsRet;
 
@@ -704,26 +634,9 @@ bool GLimp_Init( glimpParms_t parms ) {
 	// create our window classes if we haven't already
 	GLW_CreateWindowClasses();
 
-	// this will load the dll and set all our gl* function pointers,
-	// but doesn't create a window
-
-	// r_glDriver is only intended for using instrumented OpenGL
-	// dlls.  Normal users should never have to use it, and it is
-	// not archived.
-	driverName = r_glDriver.GetString()[0] ? r_glDriver.GetString() : "opengl32";
-	if ( !QGL_Init( driverName ) ) {
-		common->Printf( "^3GLimp_Init() could not load r_glDriver \"%s\"^0\n", driverName );
-		return false;
-	}
-
-	// getting the wgl extensions involves creating a fake window to get a context,
-	// which is pretty disgusting, and seems to mess with the AGP VAR allocation
-	//GLW_GetWGLExtensionsWithFakeWindow();
-
 	// try to change to fullscreen
 	if ( parms.fullScreen ) {
 		if ( !GLW_SetFullScreen( parms ) ) {
-			GLimp_Shutdown();
 			return false;
 		}
 	}
@@ -731,15 +644,8 @@ bool GLimp_Init( glimpParms_t parms ) {
 	// try to create a window with the correct pixel format
 	// and init the renderer context
 	if ( !GLW_CreateWindow( parms ) ) {
-		GLimp_Shutdown();
 		return false;
 	}
-
-	// wglSwapinterval, etc
-	//GLW_CheckWGLExtensions( win32.hDC );
-
-	// check logging
-	//GLimp_EnableLogging( ( r_logFile.GetInteger() != 0 ) );
 
 	return true;
 }
@@ -878,9 +784,6 @@ void GLimp_Shutdown( void ) {
 
 	// restore gamma
 	GLimp_RestoreGamma();
-
-	// shutdown QGL subsystem
-	QGL_Shutdown();
 }
 
 
@@ -903,8 +806,6 @@ void GLimp_SwapBuffers( void ) {
 	}
 
 	wglSwapBuffers( win32.hDC );
-
-//Sys_DebugPrintf( "*** SwapBuffers() ***\n" );
 }
 
 /*
@@ -947,159 +848,4 @@ void GLimp_DeactivateContext( void ) {
 	}
 #endif
 
-}
-
-/*
-===================
-GLimp_RenderThreadWrapper
-
-===================
-*/
-static void GLimp_RenderThreadWrapper( void ) {
-	win32.glimpRenderThread();
-
-	// unbind the context before we die
-	wglMakeCurrent( win32.hDC, NULL );
-}
-
-/*
-=======================
-GLimp_SpawnRenderThread
-
-Returns false if the system only has a single processor
-=======================
-*/
-bool GLimp_SpawnRenderThread( void (*function)( void ) ) {
-	SYSTEM_INFO info;
-
-	// check number of processors
-	GetSystemInfo( &info );
-	if ( info.dwNumberOfProcessors < 2 ) {
-		return false;
-	}
-	
-	// create the IPC elements
-	win32.renderCommandsEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
-	win32.renderCompletedEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
-	win32.renderActiveEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
-
-	win32.glimpRenderThread = function;
-
-	win32.renderThreadHandle = CreateThread(
-	   NULL,	// LPSECURITY_ATTRIBUTES lpsa,
-	   0,		// DWORD cbStack,
-	   (LPTHREAD_START_ROUTINE)GLimp_RenderThreadWrapper,	// LPTHREAD_START_ROUTINE lpStartAddr,
-	   0,			// LPVOID lpvThreadParm,
-	   0,			//   DWORD fdwCreate,
-	   &win32.renderThreadId );
-
-	if ( !win32.renderThreadHandle ) {
-		common->Error( "GLimp_SpawnRenderThread: failed" );
-	}
-
-	SetThreadPriority( win32.renderThreadHandle, THREAD_PRIORITY_ABOVE_NORMAL );
-#if 0
-	// make sure they always run on different processors
-	SetThreadAffinityMask( GetCurrentThread, 1 );
-	SetThreadAffinityMask( win32.renderThreadHandle, 2 );
-#endif
-
-	return true;
-}
-
-
-//#define	DEBUG_PRINTS
-
-/*
-===================
-GLimp_BackEndSleep
-
-===================
-*/
-void *GLimp_BackEndSleep( void ) {
-	void	*data;
-
-#ifdef DEBUG_PRINTS
-OutputDebugString( "-->GLimp_BackEndSleep\n" );
-#endif
-	ResetEvent( win32.renderActiveEvent );
-
-	// after this, the front end can exit GLimp_FrontEndSleep
-	SetEvent( win32.renderCompletedEvent );
-
-	WaitForSingleObject( win32.renderCommandsEvent, INFINITE );
-
-	ResetEvent( win32.renderCompletedEvent );
-	ResetEvent( win32.renderCommandsEvent );
-
-	data = win32.smpData;
-
-	// after this, the main thread can exit GLimp_WakeRenderer
-	SetEvent( win32.renderActiveEvent );
-
-#ifdef DEBUG_PRINTS
-OutputDebugString( "<--GLimp_BackEndSleep\n" );
-#endif
-	return data;
-}
-
-/*
-===================
-GLimp_FrontEndSleep
-
-===================
-*/
-void GLimp_FrontEndSleep( void ) {
-#ifdef DEBUG_PRINTS
-OutputDebugString( "-->GLimp_FrontEndSleep\n" );
-#endif
-	WaitForSingleObject( win32.renderCompletedEvent, INFINITE );
-
-#ifdef DEBUG_PRINTS
-OutputDebugString( "<--GLimp_FrontEndSleep\n" );
-#endif
-}
-
-volatile bool	renderThreadActive;
-
-/*
-===================
-GLimp_WakeBackEnd
-
-===================
-*/
-void GLimp_WakeBackEnd( void *data ) {
-	int		r;
-
-#ifdef DEBUG_PRINTS
-OutputDebugString( "-->GLimp_WakeBackEnd\n" );
-#endif
-	win32.smpData = data;
-
-	if ( renderThreadActive ) {
-		common->FatalError( "GLimp_WakeBackEnd: already active" );
-	}
-
-	r = WaitForSingleObject( win32.renderActiveEvent, 0 );
-	if ( r == WAIT_OBJECT_0 ) {
-		common->FatalError( "GLimp_WakeBackEnd: already signaled" );
-	}
-
-	r = WaitForSingleObject( win32.renderCommandsEvent, 0 );
-	if ( r == WAIT_OBJECT_0 ) {
-		common->FatalError( "GLimp_WakeBackEnd: commands already signaled" );
-	}
-
-	// after this, the renderer can continue through GLimp_RendererSleep
-	SetEvent( win32.renderCommandsEvent );
-
-	r = WaitForSingleObject( win32.renderActiveEvent, 5000 );
-
-	if ( r == WAIT_TIMEOUT ) {
-		common->FatalError( "GLimp_WakeBackEnd: WAIT_TIMEOUT" );
-	}
-
-#ifdef DEBUG_PRINTS
-OutputDebugString( "<--GLimp_WakeBackEnd\n" );
-#endif
 }
