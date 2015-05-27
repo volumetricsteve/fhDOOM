@@ -806,7 +806,6 @@ extern glconfig_t			glConfig;		// outside of TR since it shouldn't be cleared du
 extern idCVar r_ext_vertex_array_range;
 
 extern idCVar r_glDebugOutput;  // opengl debug output
-extern idCVar r_glDriver;				// "opengl32", etc
 extern idCVar r_mode;					// video mode number
 extern idCVar r_displayRefresh;			// optional display refresh rate option for vid mode
 extern idCVar r_fullscreen;				// 0 = windowed, 1 = full screen
@@ -1122,15 +1121,6 @@ void		GLimp_SetGamma( unsigned short red[256],
 // Sets the hardware gamma ramps for gamma and brightness adjustment.
 // These are now taken as 16 bit values, so we can take full advantage
 // of dacs with >8 bits of precision
-
-
-bool		GLimp_SpawnRenderThread( void (*function)( void ) );
-// Returns false if the system only has a single processor
-
-void *		GLimp_BackEndSleep( void );
-void		GLimp_FrontEndSleep( void );
-void		GLimp_WakeBackEnd( void *data );
-// these functions implement the dual processor syncronization
 
 void		GLimp_ActivateContext( void );
 void		GLimp_DeactivateContext( void );

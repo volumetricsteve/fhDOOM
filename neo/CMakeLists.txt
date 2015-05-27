@@ -172,28 +172,11 @@ add_library(oggvorbis STATIC ${SOURCES})
 SET_PROPERTY(TARGET oggvorbis PROPERTY FOLDER 3rdParty)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ###############################################################################
 ######################## GLEW #################################################
 ###############################################################################
 SET(SOURCES
+  main.cpp
   cm/CollisionModel.h
   cm/CollisionModel_contacts.cpp
   cm/CollisionModel_contents.cpp
@@ -362,9 +345,7 @@ SET(SOURCES
   #sys/gllog/gl.api
   #sys/gllog/glX.api  
 
-  sys/sys_local.cpp
-  sys/sys_local.h
-  sys/sys_public.h  
+ 
 
   tools/compilers/aas/AASBuild.cpp
   tools/compilers/aas/AASBuild_file.cpp
@@ -468,52 +449,7 @@ SET(SOURCES
   tools/edit_stub.cpp
 )
 
-IF(WIN32)
-  SET(SOURCES ${SOURCES}
-    sys/win32/eax.h      
-    #sys/win32/rc/AFEditor.rc
-    sys/win32/rc/AFEditor_resource.h
-    #sys/win32/rc/Common.rc
-    sys/win32/rc/Common_resource.h
-    sys/win32/rc/CreateResourceIDs.cpp
-    sys/win32/rc/CreateResourceIDs.h
-    #sys/win32/rc/Debugger.rc
-    sys/win32/rc/Debugger_resource.h
-    #sys/win32/rc/DeclEditor.rc
-    sys/win32/rc/DeclEditor_resource.h
-    sys/win32/rc/doom.rc
-    sys/win32/rc/doom_resource.h
-    #sys/win32/rc/GuiEd.rc
-    sys/win32/rc/GuiEd_resource.h
-    #sys/win32/rc/MaterialEditor.rc
-    sys/win32/rc/MaterialEditor_Resource.h
-    #sys/win32/rc/ParticleEditor.rc
-    sys/win32/rc/ParticleEditor_resource.h
-    #sys/win32/rc/PDAEditor.rc
-    sys/win32/rc/PDAEditor_resource.h
-    #sys/win32/rc/PropTree.rc
-    sys/win32/rc/PropTree_resource.h
-    #sys/win32/rc/Radiant.rc
-    sys/win32/rc/Radiant_resource.h
-    #sys/win32/rc/ScriptEditor.rc
-    sys/win32/rc/ScriptEditor_resource.h
-    #sys/win32/rc/SoundEditor.rc
-    sys/win32/rc/SoundEditor_resource.h
-    sys/win32/win_cpu.cpp
-    #sys/win32/win_gamma.cpp
-    sys/win32/win_glimp.cpp
-    sys/win32/win_input.cpp
-    sys/win32/win_local.h
-    sys/win32/win_main.cpp
-    sys/win32/win_net.cpp
-    sys/win32/win_qgl.cpp
-    sys/win32/win_shared.cpp
-    sys/win32/win_snd.cpp
-    sys/win32/win_syscon.cpp
-    sys/win32/win_taskkeyhook.cpp
-    sys/win32/win_wndproc.cpp
-  )
-ENDIF()
+
 
 IF(ID_ALLOW_TOOLS)
   SET(SOURCES ${SOURCES}
@@ -924,6 +860,7 @@ target_link_libraries(${TARGET_NAME}
   glew
   jpeg-6
   oggvorbis
+  syslib
   ${EXTERNAL_LIBS}
 )
 add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
@@ -933,4 +870,7 @@ if(MSVC)
   set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER exes)
 endif()
+
+
+
 
