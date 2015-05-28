@@ -575,8 +575,4 @@ extern idSys *				sys;
 bool Sys_LoadOpenAL( void );
 void Sys_FreeOpenAL( void );
 
-#ifdef _WIN32
-int Win_Main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-#endif
-
 #endif /* !__SYS_PUBLIC__ */
