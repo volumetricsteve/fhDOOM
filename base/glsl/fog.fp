@@ -9,8 +9,8 @@ in vs_output
 out vec4 result;
 
 void main(void)
-{  
-  result = texture2D( texture1, frag.texcoord1 ) * rpDiffuseColor;
+{
+  result = texture2D( texture0, frag.texcoord0 ) * vec4(rpDiffuseColor.rgb, 1.0);
 /*
   result.r = frag.texcoord0.x;
   result.g = frag.texcoord0.y;

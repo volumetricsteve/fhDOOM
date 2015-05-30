@@ -143,17 +143,15 @@ static void RB_T_BasicFog(const drawSurf_t *surf) {
     // GL_S is constant per viewer
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
     local[3] += FOG_ENTER;
-    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, local.ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, local.ToFloatPtr());
     //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
 
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
-    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, local.ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, local.ToFloatPtr());
     //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
   }
 
   RB_GLSL_RenderTriangleSurface(surf->geo);
-
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 }
 
 
@@ -212,21 +210,11 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   else {
     // otherwise, distance = alpha color
     a = -0.5f / backEnd.lightColor[3];
-  }
-
-  
+  }  
 
   // texture 0 is the falloff image
   GL_SelectTexture(0);
   globalImages->fogImage->Bind();
-
-  //GL_Bind( tr.whiteImage );
-  /*
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glEnable(GL_TEXTURE_GEN_S);
-  glEnable(GL_TEXTURE_GEN_T);
-  glTexCoord2f(0.5f, 0.5f);		// make sure Q is set
-  */
 
   fogPlanes[0][0] = a * backEnd.viewDef->worldSpace.modelViewMatrix[2];
   fogPlanes[0][1] = a * backEnd.viewDef->worldSpace.modelViewMatrix[6];
@@ -238,18 +226,9 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   fogPlanes[1][2] = a * backEnd.viewDef->worldSpace.modelViewMatrix[8];
   fogPlanes[1][3] = a * backEnd.viewDef->worldSpace.modelViewMatrix[12];
 
-
   // texture 1 is the entering plane fade correction
   GL_SelectTexture(1);
   globalImages->fogEnterImage->Bind();
-
-  //globalImages->fogEnterImage->Bind();
-  /*
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glEnable(GL_TEXTURE_GEN_S);
-  glEnable(GL_TEXTURE_GEN_T);
-  glTexCoord2f(FOG_ENTER + s, FOG_ENTER);
-  */
 
   // T will get a texgen for the fade plane, which is always the "top" plane on unrotated lights
   fogPlanes[2][0] = 0.001f * backEnd.vLight->fogPlane[0];
@@ -263,8 +242,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   fogPlanes[3][0] = 0;
   fogPlanes[3][1] = 0;
   fogPlanes[3][2] = 0;
-  fogPlanes[3][3] = FOG_ENTER + s; 
-
+  fogPlanes[3][3] = FOG_ENTER + s;
 
   // draw it
   backEnd.glState.forceGlState = true;
@@ -282,14 +260,9 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   }
 
   GL_SelectTexture(1);
-  //glDisable(GL_TEXTURE_GEN_S);
-  //glDisable(GL_TEXTURE_GEN_T);
   globalImages->BindNull();
 
   GL_SelectTexture(0);
-  //glDisable(GL_TEXTURE_GEN_S);
-  //glDisable(GL_TEXTURE_GEN_T);
-  // 
   
   glUseProgram(0);
 }
