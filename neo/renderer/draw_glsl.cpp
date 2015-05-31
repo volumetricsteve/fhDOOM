@@ -119,8 +119,12 @@ RB_T_BasicFog
 */
 static void RB_T_BasicFog(const drawSurf_t *surf) {
 
+  glUniform1i(glslProgramDef_t::uniform_texture0, 0);
+  glUniform1i(glslProgramDef_t::uniform_texture1, 1);
+
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
 
   if (backEnd.currentSpace != surf->space) {
     idPlane	local;

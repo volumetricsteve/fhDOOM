@@ -20,3 +20,6 @@ build2
 /base/DoomConfig.cfg
 /base/config.spec
 /base/warnings.txt
+/base/editor.cfg
+/base/maps/*.cm
+/base/maps/*.proc
