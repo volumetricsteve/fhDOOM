@@ -1288,8 +1288,11 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glUniform1i(glslProgramDef_t::uniform_texture1, 1);
   }
 
+  GL_SelectTexture(1);
+
   // bind the texture
   RB_BindVariableStageImage(&pStage->texture, surf->shaderRegisters);
+  GL_SelectTexture(0);
 
   // set the state
   GL_State(pStage->drawStateBits);
