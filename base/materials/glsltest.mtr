@@ -1,3 +1,41 @@
+textures/glsltest/heathaze_arb
+{
+    deform sprite
+    nonsolid
+    translucent
+    {
+      vertexProgram           heatHaze.vfp
+      vertexParm              0       time * 0.1 , time * 0.5 // texture scrolling
+      vertexParm              1       0.9            // magnitude of the distortion
+      fragmentProgram         heatHaze.vfp
+      fragmentMap             0       _currentRender
+      fragmentMap             1       textures/sfx/vp1.tga   // the normal map for distortion
+    }
+}
+
+textures/glsltest/heathaze
+{        
+    deform sprite
+    nonsolid
+    translucent
+    noshadows
+    forceOverlays      
+    sort postProcess
+    
+    {
+        vertexShader    heathaze.vp
+        fragmentShader  heathaze.fp
+
+        shaderParm 0       time * 0.1 , time * 0.5 // texture scrolling
+        shaderParm 1       0.9            // magnitude of the distortion
+
+        shaderMap 0        _currentRender
+        shaderMap 1        textures/sfx/vp1.tga   // the normal map for distortion
+    }
+}
+
+
+
 textures/glsltest/flatcolored
 {        
     translucent

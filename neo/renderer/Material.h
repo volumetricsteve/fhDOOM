@@ -264,6 +264,8 @@ typedef struct {
 
   static const int uniform_alphaTestEnabled   = 100;
   static const int uniform_alphaTestThreshold = 101;
+  static const int uniform_currentRenderSize  = 102;
+  
 
   char   vertexShaderName[64];
   char   fragmentShaderName[64];

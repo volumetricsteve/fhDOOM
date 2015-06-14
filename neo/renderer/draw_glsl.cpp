@@ -814,7 +814,6 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   GL_State(pStage->drawStateBits);
   glUseProgram(glslStage->program->ident);
 
-
   for (int i = 0; i < glslStage->numShaderParms; i++) {
     float	parm[4];
     parm[0] = regs[glslStage->shaderParms[i][0]];
@@ -824,11 +823,24 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
     glUniform4fv(glslProgramDef_t::uniform_shaderparm0 + i, 1, parm);
   }
 
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top());
+//  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
+  // current render
+  const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+  const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+  float currentRenderSize[4];
+  currentRenderSize[0] = globalImages->currentRenderImage->uploadWidth;
+  currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
+  currentRenderSize[2] = w;
+  currentRenderSize[3] = h;
+  glUniform4fv(glslProgramDef_t::uniform_currentRenderSize, 1, currentRenderSize);
+
+  // set textures
   for (int i = 0; i < glslStage->numShaderMaps; i++) {
     if (glslStage->shaderMap[i]) {
+      glUniform1i(glslProgramDef_t::uniform_texture0 + i, i);
       GL_SelectTexture(i);
       glslStage->shaderMap[i]->Bind();
     }
@@ -1319,6 +1331,16 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
+  // current render
+  const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+  const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+  float currentRenderSize[4];
+  currentRenderSize[0] = globalImages->currentRenderImage->uploadWidth;
+  currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
+  currentRenderSize[2] = w;
+  currentRenderSize[3] = h;
+  glUniform4fv(glslProgramDef_t::uniform_currentRenderSize, 1, currentRenderSize);
 
   // set privatePolygonOffset if necessary
   if (pStage->privatePolygonOffset) {

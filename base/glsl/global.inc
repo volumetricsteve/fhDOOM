@@ -55,3 +55,4 @@ layout(location = 53) uniform mat4 textureMatrix3;
 
 layout(location = 100) uniform int rpAlphaTestEnabled;
 layout(location = 101) uniform float rpAlphaTestThreshold;
+layout(location = 102) uniform vec4 rpCurrentRenderSize;
