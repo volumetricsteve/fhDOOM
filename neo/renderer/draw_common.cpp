@@ -267,7 +267,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 				continue;	
 
       glslShaderStage_t *glslStage = pStage->glslStage;
-      if (backEnd.glslReplaceArb2 && glslStage && glslStage->program && !r_skipGlsl.GetBool()) {
+      if (backEnd.glslEnabled && backEnd.glslReplaceArb2 && glslStage && glslStage->program && !r_skipGlsl.GetBool()) {
         RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
       } else {
         RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
