@@ -29,5 +29,5 @@ void main(void)
   mat3 TBN = mat3(tangent, binormal, normal);  
 
   vec3 r = reflect(frag.cubecoord, TBN * localNormal);
-  result = texture(cubemap1, r) * frag.color;
+  result = texture(cubemap1, r) * frag.color * rpDiffuseColor;
 }
