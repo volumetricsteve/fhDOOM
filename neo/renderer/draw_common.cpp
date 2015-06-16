@@ -262,26 +262,31 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			continue;
 		}    
     
-    if ( glslShaderStage_t *glslStage = pStage->glslStage ) { // see if we are a glsl-style stage
+    if ( newShaderStage_t *newStage = pStage->newStage ) { // see if we are a new-style stage		
+			if ( r_skipNewAmbient.GetBool() )
+				continue;	
+
+      glslShaderStage_t *glslStage = pStage->glslStage;
+      if (backEnd.glslReplaceArb2 && glslStage && glslStage->program && !r_skipGlsl.GetBool()) {
+        RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
+      } else {
+        RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
+      }
+    }
+    else if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
 
       if (r_skipGlsl.GetBool())
-        continue;      
-
-      if(!glslStage->program)
         continue;
 
-      RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);   
+      if (!glslStage->program)
+        continue;
 
-    }	else if ( newShaderStage_t *newStage = pStage->newStage ) { // see if we are a new-style stage		
+      RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
+    }
+    
+    else {
 
-			if ( r_skipNewAmbient.GetBool() )
-				continue;			
-
-      RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
-
-		} else {
-
-      if(r_ignore.GetBool())
+      if(backEnd.glslEnabled)
         RB_GLSL_RenderShaderStage(surf, pStage);
       else
         RB_STD_RenderShaderStage(surf, pStage);
@@ -529,7 +534,7 @@ void RB_STD_FogAllLights( void ) {
 		}
 
 		if ( vLight->lightShader->IsFogLight() ) {
-      if(r_ignore.GetBool()) {
+      if(backEnd.glslEnabled) {
         RB_GLSL_FogPass( vLight->globalInteractions, vLight->localInteractions );
       } else {
 			  RB_STD_FogPass( vLight->globalInteractions, vLight->localInteractions );
@@ -638,14 +643,14 @@ void	RB_STD_DrawView( void ) {
 
 	// fill the depth buffer and clear color buffer to black except on
 	// subviews
-	if(r_ignore.GetBool())
+	if(backEnd.glslEnabled)
     RB_GLSL_FillDepthBuffer( drawSurfs, numDrawSurfs );
   else
 	  RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
 
 	// main light renderer
   
-  if (r_ignore.GetBool())
+  if (backEnd.glslEnabled)
     RB_GLSL_DrawInteractions();
   else
     RB_ARB2_DrawInteractions();    

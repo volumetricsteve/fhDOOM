@@ -107,6 +107,10 @@ idCVar r_skipBump( "r_skipBump", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, 
 idCVar r_skipDiffuse( "r_skipDiffuse", "0", CVAR_RENDERER | CVAR_BOOL, "use black for diffuse" );
 idCVar r_skipROQ( "r_skipROQ", "0", CVAR_RENDERER | CVAR_BOOL, "skip ROQ decoding" );
 
+
+idCVar r_glslEnabled( "r_glslEnabled", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "use GLSL shaders for rendering" );
+idCVar r_glslReplaceArb2( "r_glslReplaceArb2", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "replace ARB2 shaders by GLSL shaders if possible" );
+
 idCVar r_ignore( "r_ignore", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
 idCVar r_ignore2( "r_ignore2", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
 idCVar r_usePreciseTriangleInteractions( "r_usePreciseTriangleInteractions", "0", CVAR_RENDERER | CVAR_BOOL, "1 = do winding clipping to determine if each ambiguous tri should be lit" );
@@ -232,7 +236,7 @@ R_CheckPortableExtensions
 static bool R_DoubleCheckExtension(char* name)
 {
   bool customCheck = R_CheckExtension(name);
-  bool glewCheck = static_cast<bool>(glewIsSupported(name));
+  bool glewCheck = glewIsSupported(name) == GL_TRUE;
 
   static const char* status[] = { 
     "[ FAILED ]",

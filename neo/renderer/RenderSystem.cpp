@@ -626,7 +626,9 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
 		int h = SCREEN_HEIGHT * r_screenFraction.GetInteger() / 100.0f;
 		CropRenderSize( w, h );
 	}
-
+  
+  backEnd.glslEnabled = r_glslEnabled.GetBool();
+  backEnd.glslReplaceArb2 = r_glslReplaceArb2.GetBool();
 
 	// this is the ONLY place this is modified
 	frameCount++;

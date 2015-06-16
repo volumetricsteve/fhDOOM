@@ -663,6 +663,9 @@ typedef struct {
 	glstate_t			glState;
 
 	int					c_copyFrameBuffer;
+
+  bool        glslEnabled;
+  bool        glslReplaceArb2;
 } backEndState_t;
 
 
@@ -967,6 +970,10 @@ extern idCVar r_debugPolygonFilled;
 extern idCVar r_materialOverride;		// override all materials
 
 extern idCVar r_debugRenderToTexture;
+
+extern idCVar r_glslEnabled;
+extern idCVar r_glslReplaceArb2;
+
 
 /*
 ====================================================================

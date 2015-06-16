@@ -68,6 +68,20 @@ typedef struct mtrParsingData_s {
 	bool			forceOverlays;
 } mtrParsingData_t;
 
+static void replaceBuildinVertexShader(const idStr& name, glslShaderStage_t& glslShaderStage){
+  if(!name.Icmp("heathaze.vfp"))
+    strcpy(glslShaderStage.vertexShaderName, "heathaze.vp"); 
+  else
+    common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
+}
+
+static void replaceBuildinFragmentShader(const idStr& name, glslShaderStage_t& glslShaderStage){
+  if (!name.Icmp("heathaze.vfp"))
+    strcpy(glslShaderStage.fragmentShaderName, "heathaze.fp");
+  else
+    common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
+}
+
 
 /*
 =============
@@ -875,7 +889,7 @@ If there are two values, 3 = 0.0, 4 = 1.0
 if there are three values, 4 = 1.0
 ================
 */
-void idMaterial::ParseVertexParm( idLexer &src, newShaderStage_t *newStage ) {
+void idMaterial::ParseVertexParm( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage ) {
 	idToken				token;
 
 	src.ReadTokenOnLine( &token );
@@ -888,35 +902,50 @@ void idMaterial::ParseVertexParm( idLexer &src, newShaderStage_t *newStage ) {
 	if ( parm >= newStage->numVertexParms ) {
 		newStage->numVertexParms = parm+1;
 	}
+  glslStage->numShaderParms = newStage->numVertexParms;
 
 	newStage->vertexParms[parm][0] = ParseExpression( src );
+  glslStage->shaderParms[parm][0] = newStage->vertexParms[parm][0];
 
 	src.ReadTokenOnLine( &token );
 	if ( !token[0] || token.Icmp( "," ) ) {
 		newStage->vertexParms[parm][1] =
 		newStage->vertexParms[parm][2] =
 		newStage->vertexParms[parm][3] = newStage->vertexParms[parm][0];
+
+    glslStage->shaderParms[parm][1] = newStage->vertexParms[parm][1];
+    glslStage->shaderParms[parm][2] = newStage->vertexParms[parm][2];
+    glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
 		return;
 	}
 
 	newStage->vertexParms[parm][1] = ParseExpression( src );
+  glslStage->shaderParms[parm][1] = newStage->vertexParms[parm][1];
 
 	src.ReadTokenOnLine( &token );
 	if ( !token[0] || token.Icmp( "," ) ) {
 		newStage->vertexParms[parm][2] = GetExpressionConstant( 0 );
 		newStage->vertexParms[parm][3] = GetExpressionConstant( 1 );
+
+    glslStage->shaderParms[parm][2] = newStage->vertexParms[parm][2];
+    glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
+    
 		return;
 	}
 
 	newStage->vertexParms[parm][2] = ParseExpression( src );
+  glslStage->shaderParms[parm][2] = newStage->vertexParms[parm][2];
 
 	src.ReadTokenOnLine( &token );
 	if ( !token[0] || token.Icmp( "," ) ) {
 		newStage->vertexParms[parm][3] = GetExpressionConstant( 1 );
+
+    glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
 		return;
 	}
 
 	newStage->vertexParms[parm][3] = ParseExpression( src );
+  glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
 }
 
 
@@ -979,7 +1008,7 @@ void idMaterial::ParseShaderParm(idLexer &src, glslShaderStage_t *glslStage) {
 idMaterial::ParseFragmentMap
 ================
 */
-void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage ) {
+void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage ) {
 	const char			*str;
 	textureFilter_t		tf;
 	textureRepeat_t		trp;
@@ -1073,6 +1102,11 @@ void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage ) {
 	if ( !newStage->fragmentProgramImages[unit] ) {
 		newStage->fragmentProgramImages[unit] = globalImages->defaultImage;
 	}
+
+  if(glslStage) {
+    glslStage->numShaderMaps = newStage->numFragmentProgramImages;
+    glslStage->shaderMap[unit] = newStage->fragmentProgramImages[unit];
+  }
 }
 
 /*
@@ -1652,18 +1686,23 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
+
+        replaceBuildinVertexShader(token, glslStage);
+        replaceBuildinFragmentShader(token, glslStage);
 			}
 			continue;
 		}
 		if ( !token.Icmp( "fragmentProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
+        replaceBuildinFragmentShader(token, glslStage);
 			}
 			continue;
 		}
 		if ( !token.Icmp( "vertexProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
+        replaceBuildinVertexShader(token, glslStage);
 			}
 			continue;
 		}
@@ -1702,12 +1741,12 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
     }
 
 		if ( !token.Icmp( "vertexParm" ) ) {
-			ParseVertexParm( src, &newStage );
+			ParseVertexParm( src, &newStage, &glslStage );
 			continue;
 		}
 
 		if (  !token.Icmp( "fragmentMap" ) ) {	
-			ParseFragmentMap( src, &newStage );
+			ParseFragmentMap( src, &newStage, &glslStage );
 			continue;
 		}
 
