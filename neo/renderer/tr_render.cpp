@@ -294,10 +294,22 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 		// change the scissor if needed
 		if ( r_useScissor.GetBool() && !backEnd.currentScissor.Equals( drawSurf->scissorRect ) ) {
 			backEnd.currentScissor = drawSurf->scissorRect;
-			glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
-				backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
-				backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
-				backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
+
+      const GLint x = backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1;
+      const GLint y = backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1;
+      const GLsizei width = backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1;
+      const GLsizei height = backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1;
+
+      if(width <= 0 || height <= 0){
+        if (drawSurf->space->weaponDepthHack || drawSurf->space->modelDepthHack != 0.0f) {
+          RB_LeaveDepthHack();
+        }
+
+        backEnd.currentSpace = drawSurf->space;
+        return;
+      }
+
+			glScissor( x, y, width, height );
 		}
 
 		// render it
