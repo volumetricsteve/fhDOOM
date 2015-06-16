@@ -19,5 +19,5 @@ out vec4 result;
 
 void main(void)
 {  
-  result = texture2D(texture1, frag.texcoord) * frag.color * rpDiffuseColor;
+  result = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));
 }
