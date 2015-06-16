@@ -118,13 +118,8 @@ RB_T_BasicFog
 =====================
 */
 static void RB_T_BasicFog(const drawSurf_t *surf) {
-
-  glUniform1i(glslProgramDef_t::uniform_texture0, 0);
-  glUniform1i(glslProgramDef_t::uniform_texture1, 1);
-
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-
 
   if (backEnd.currentSpace != surf->space) {
     idPlane	local;
@@ -175,7 +170,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
     }
   }
 
-  glUseProgram(fogProgram->ident);
+  GL_UseProgram(fogProgram);
 
   // create a surface for the light frustom triangles, which are oriented drawn side out
   const srfTriangles_t* frustumTris = backEnd.vLight->frustumTris;
@@ -268,7 +263,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
 
   GL_SelectTexture(0);
   
-  glUseProgram(0);
+  GL_UseProgram(nullptr);
 }
 
 
@@ -455,7 +450,7 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
 
   glDisable(GL_VERTEX_PROGRAM_ARB);
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  glUseProgram(shadowProgram->ident);
+  GL_UseProgram(shadowProgram);
 
   RB_LogComment("---------- RB_StencilShadowPass ----------\n");
 
@@ -506,7 +501,7 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   glStencilFunc(GL_GEQUAL, 128, 255);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-  glUseProgram(0);
+  GL_UseProgram(nullptr);
   glEnable(GL_VERTEX_PROGRAM_ARB);
 }
 
@@ -763,7 +758,7 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
       return;
   }
 
-  glUseProgram(depthProgram->ident);
+  GL_UseProgram(depthProgram);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 
@@ -771,7 +766,7 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glUseProgram(depthProgram->ident);
+  GL_UseProgram(nullptr);
 
   if (backEnd.viewDef->numClipPlanes) {
     GL_SelectTexture(1);
@@ -812,7 +807,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
 
   GL_State(pStage->drawStateBits);
-  glUseProgram(glslStage->program->ident);
+  GL_UseProgram(glslStage->program);
 
   for (int i = 0; i < glslStage->numShaderParms; i++) {
     float	parm[4];
@@ -840,7 +835,6 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   // set textures
   for (int i = 0; i < glslStage->numShaderMaps; i++) {
     if (glslStage->shaderMap[i]) {
-      glUniform1i(glslProgramDef_t::uniform_texture0 + i, i);
       GL_SelectTexture(i);
       glslStage->shaderMap[i]->Bind();
     }
@@ -856,7 +850,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
     }
   }
 
-  glUseProgram(0);
+  GL_UseProgram(nullptr);
   GL_SelectTexture(0);
 
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
@@ -1202,7 +1196,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     return;
   }
   else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
-    glUseProgram(skyboxProgram->ident);
+    GL_UseProgram(skyboxProgram);    
 
     idMat4 textureMatrix = mat4_identity;
     if (pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
@@ -1220,8 +1214,6 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);    
-
-    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
   }
   else if (pStage->texture.texgen == TG_SCREEN) {
     return;
@@ -1231,7 +1223,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   }
   else if (pStage->texture.texgen == TG_REFLECT_CUBE) {
 
-    glUseProgram(bumpyEnvProgram->ident);
+    GL_UseProgram(bumpyEnvProgram);
 
     idMat4 textureMatrix = mat4_identity;
 
@@ -1255,9 +1247,6 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
 
-    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
-    glUniform1i(glslProgramDef_t::uniform_texture2, 2);
-
     // set the texture matrix
     idVec4 textureMatrixST[2];
     textureMatrixST[0][0] = 1;
@@ -1268,7 +1257,6 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     textureMatrixST[1][1] = 1;
     textureMatrixST[1][2] = 0;
     textureMatrixST[1][3] = 0;
-
 
     // see if there is also a bump map specified
     GL_SelectTextureNoClient(2);
@@ -1287,7 +1275,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
   }
   else {
-    glUseProgram(defaultProgram->ident);
+    GL_UseProgram(defaultProgram);
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
@@ -1296,8 +1284,6 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
-
-    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
   }
 
   GL_SelectTexture(1);
@@ -1380,7 +1366,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
-  glUseProgram(0);
+  GL_UseProgram(nullptr);
 }
 
 
@@ -1431,15 +1417,6 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());  
   
-  glUniform1i(glslProgramDef_t::uniform_texture0, 0);
-  glUniform1i(glslProgramDef_t::uniform_texture1, 1);
-  glUniform1i(glslProgramDef_t::uniform_texture2, 2);
-  glUniform1i(glslProgramDef_t::uniform_texture3, 3);
-  glUniform1i(glslProgramDef_t::uniform_texture4, 4);
-  glUniform1i(glslProgramDef_t::uniform_texture5, 5);
-  glUniform1i(glslProgramDef_t::uniform_texture6, 6);
-  glUniform1i(glslProgramDef_t::uniform_texture7, 7);
-
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
   din->bumpImage->Bind();
@@ -1489,7 +1466,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   // bind the vertex program
   glDisable(GL_VERTEX_PROGRAM_ARB);
   glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  glUseProgram(interactionProgram->ident);
+  GL_UseProgram(interactionProgram);
 
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
@@ -1558,7 +1535,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   backEnd.glState.currenttmu = -1;
   GL_SelectTexture(0);
 
-  glUseProgram(0);
+  GL_UseProgram(nullptr);
 }
 
 
@@ -1619,7 +1596,7 @@ void RB_GLSL_DrawInteractions(void) {
     RB_GLSL_StencilShadowPass(vLight->localShadows);
     RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
 
-    glUseProgram(0);
+    GL_UseProgram(nullptr);
 
     // translucent surfaces never get stencil shadowed
     if (r_skipTranslucent.GetBool()) {

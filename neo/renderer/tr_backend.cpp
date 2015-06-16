@@ -402,6 +402,22 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
+void  GL_UseProgram( const glslProgramDef_t* program ) {
+  if(program && program->ident) {
+    glUseProgram(program->ident);
+    glUniform1i(glslProgramDef_t::uniform_texture0, 0);
+    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
+    glUniform1i(glslProgramDef_t::uniform_texture2, 2);
+    glUniform1i(glslProgramDef_t::uniform_texture3, 3);
+    glUniform1i(glslProgramDef_t::uniform_texture4, 4);
+    glUniform1i(glslProgramDef_t::uniform_texture5, 5);
+    glUniform1i(glslProgramDef_t::uniform_texture6, 6);
+    glUniform1i(glslProgramDef_t::uniform_texture7, 7);
+  } else {
+    glUseProgram(0);
+  }
+}
+
 joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
   LoadIdentity();
 }
