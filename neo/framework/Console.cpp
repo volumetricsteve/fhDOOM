@@ -33,7 +33,7 @@ void SCR_DrawTextLeftAlign( float &y, const char *text, ... ) id_attribute((form
 void SCR_DrawTextRightAlign( float &y, const char *text, ... ) id_attribute((format(printf,2,3)));
 
 #define	LINE_WIDTH				78
-#define	NUM_CON_TIMES			4
+#define	NUM_CON_TIMES			10
 #define	CON_TEXTSIZE			0x30000
 #define	TOTAL_LINES				(CON_TEXTSIZE / LINE_WIDTH)
 #define CONSOLE_FIRSTREPEAT		200
@@ -1000,6 +1000,8 @@ void idConsoleLocal::DrawNotify() {
 	currentColor = idStr::ColorIndex( C_COLOR_WHITE );
 	renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
 
+  const float fontScale = con_fontScale.GetFloat();
+
 	v = 0;
 	for ( i = current-NUM_CON_TIMES+1; i <= current; i++ ) {
 		if ( i < 0 ) {
@@ -1023,10 +1025,10 @@ void idConsoleLocal::DrawNotify() {
 				currentColor = idStr::ColorIndex(text_p[x]>>8);
 				renderSystem->SetColor( idStr::ColorForIndex( currentColor ) );
 			}
-			renderSystem->DrawSmallChar( (x+1)*SMALLCHAR_WIDTH, v, text_p[x] & 0xff, localConsole.charSetShader );
+			renderSystem->DrawScaledChar( (x+1)*SMALLCHAR_WIDTH*fontScale, v, text_p[x] & 0xff, localConsole.charSetShader, fontScale );
 		}
 
-		v += SMALLCHAR_HEIGHT;
+    v += SMALLCHAR_HEIGHT * fontScale;
 	}
 
 	renderSystem->SetColor( colorCyan );
