@@ -1,5 +1,7 @@
 #include "global.inc"
 
+layout(location = TEXTURE_UNIT_0) uniform sampler2D texture0;
+
 in vs_output
 {
   vec2 texcoord;

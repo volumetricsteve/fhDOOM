@@ -1221,7 +1221,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);    
 
-    glUniform1i(glslProgramDef_t::uniform_cubemap1, 1);
+    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
   }
   else if (pStage->texture.texgen == TG_SCREEN) {
     return;
@@ -1255,7 +1255,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
 
-    glUniform1i(glslProgramDef_t::uniform_cubemap1, 1);
+    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
     glUniform1i(glslProgramDef_t::uniform_texture2, 2);
 
     // set the texture matrix

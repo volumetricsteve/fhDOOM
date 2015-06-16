@@ -1,5 +1,7 @@
 #include "global.inc"
 
+layout(location = TEXTURE_UNIT_1) uniform sampler2D texture1;
+
 in vs_output
 {
   vec4 color;

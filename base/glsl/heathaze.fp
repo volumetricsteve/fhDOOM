@@ -1,5 +1,8 @@
 #include "global.inc"
 
+layout(location = TEXTURE_UNIT_0) uniform sampler2D texture0;
+layout(location = TEXTURE_UNIT_1) uniform sampler2D texture1;
+
 out vec4 result;
 
 vec2 fixScreenTexCoord(vec2 st)

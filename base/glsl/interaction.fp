@@ -1,5 +1,11 @@
 #include "global.inc"
 
+layout(location = TEXTURE_UNIT_1) uniform sampler2D texture1;
+layout(location = TEXTURE_UNIT_2) uniform sampler2D texture2;
+layout(location = TEXTURE_UNIT_3) uniform sampler2D texture3;
+layout(location = TEXTURE_UNIT_4) uniform sampler2D texture4;
+layout(location = TEXTURE_UNIT_5) uniform sampler2D texture5;
+
 in vs_output
 {
   vec4 color;
