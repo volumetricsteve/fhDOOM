@@ -455,7 +455,6 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   RB_LogComment("---------- RB_StencilShadowPass ----------\n");
 
   globalImages->BindNull();
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
   // for visualizing the shadows
   if (r_showShadows.GetInteger()) {
@@ -496,13 +495,10 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
     glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
 
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
   glStencilFunc(GL_GEQUAL, 128, 255);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
   GL_UseProgram(nullptr);
-//  glEnable(GL_VERTEX_PROGRAM_ARB);
 }
 
 
@@ -1474,7 +1470,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
-
+#if 0
   // texture 0 is the normalization cube map for the vector towards the light
   GL_SelectTextureNoClient(0);
   if (backEnd.vLight->lightShader->IsAmbientLight()) {
@@ -1487,7 +1483,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   // texture 6 is the specular lookup table
   GL_SelectTextureNoClient(6);
   globalImages->specularTableImage->Bind();
-
+#endif
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes
 
@@ -1514,8 +1510,10 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
 
   // disable features
+#if 0
   GL_SelectTextureNoClient(6);
   globalImages->BindNull();
+#endif
 
   GL_SelectTextureNoClient(5);
   globalImages->BindNull();
@@ -1548,9 +1546,6 @@ RB_GLSL_DrawInteractions
 void RB_GLSL_DrawInteractions(void) {
   viewLight_t		*vLight;
   const idMaterial	*lightShader;
-
-  GL_SelectTexture(0);
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
   //
   // for each light, perform adding and shadowing
@@ -1596,8 +1591,6 @@ void RB_GLSL_DrawInteractions(void) {
     RB_GLSL_StencilShadowPass(vLight->localShadows);
     RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
 
-    GL_UseProgram(nullptr);
-
     // translucent surfaces never get stencil shadowed
     if (r_skipTranslucent.GetBool()) {
       continue;
@@ -1613,8 +1606,5 @@ void RB_GLSL_DrawInteractions(void) {
 
   // disable stencil shadow test
   glStencilFunc(GL_ALWAYS, 128, 255);
-
-  GL_SelectTexture(0);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
