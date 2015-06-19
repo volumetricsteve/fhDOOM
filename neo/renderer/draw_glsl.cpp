@@ -502,7 +502,7 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
   GL_UseProgram(nullptr);
-  glEnable(GL_VERTEX_PROGRAM_ARB);
+//  glEnable(GL_VERTEX_PROGRAM_ARB);
 }
 
 
