@@ -2660,7 +2660,11 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 		Error( "idGameLocal::CalcFov: bad result" );
 	}
 
-	switch( r_aspectRatio.GetInteger() ) {
+  int aspectRatio = r_aspectRatio.GetInteger();
+  if (aspectRatio < 0)
+    aspectRatio = renderSystem->GetScreenAspectRatio();
+
+  switch (aspectRatio) {
 	default :
 	case 0 :
 		// 4:3

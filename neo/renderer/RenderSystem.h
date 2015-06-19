@@ -75,6 +75,7 @@ typedef struct glconfig_s {
 	bool				depthBoundsTestAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
+  int         vidAspectRatio;
 
 	int					displayFrequency;
 
@@ -162,6 +163,7 @@ public:
 	virtual bool			IsFullScreen( void ) const = 0;
 	virtual int				GetScreenWidth( void ) const = 0;
 	virtual int				GetScreenHeight( void ) const = 0;
+  virtual int       GetScreenAspectRatio( void ) const = 0;
 
 	// allocate a renderWorld to be used for drawing
 	virtual idRenderWorld *	AllocRenderWorld( void ) = 0;

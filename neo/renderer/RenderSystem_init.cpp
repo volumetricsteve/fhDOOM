@@ -361,52 +361,52 @@ will be used instead.
 */
 typedef struct vidmode_s {
     const char *description;
-    int         width, height;
+    int         width, height, aspectRatio;
 } vidmode_t;
 
+static const int AR_4_3 = 0;
+static const int AR_16_9 = 1;
+static const int AR_16_10 = 2;
+
 vidmode_t r_vidModes[] = {
-    { "Mode  0: 320x240",		320,	240 },
-    { "Mode  1: 400x300",		400,	300 },
-    { "Mode  2: 512x384",		512,	384 },
-    { "Mode  3: 640x480",		640,	480 },
-    { "Mode  4: 800x600",		800,	600 },
-    { "Mode  5: 1024x768",		1024,	768 },
-    { "Mode  6: 1152x864",		1152,	864 },
-    { "Mode  7: 1280x1024",		1280,	1024 },
-    { "Mode  8: 1600x1200",		1600,	1200 },
+    { "Mode  0: 320x240",		320,	240, AR_4_3 },
+    { "Mode  1: 400x300",		400,	300, AR_4_3 },
+    { "Mode  2: 512x384",		512,	384, AR_4_3 },
+    { "Mode  3: 640x480",		640,	480, AR_4_3 },
+    { "Mode  4: 800x600",		800,	600, AR_4_3 },
+    { "Mode  5: 1024x768",		1024,	768, AR_4_3 },
+    { "Mode  6: 1152x864",		1152,	864, AR_4_3 },
+    { "Mode  7: 1280x1024",		1280,	1024, AR_4_3 },
+    { "Mode  8: 1600x1200",		1600,	1200, AR_4_3 },
+    //widescreen/HD:
+    { "Mode  9: 1280x720",		1280,	720, AR_16_9 },
+    { "Mode 10: 1366x768",		1366,	768, AR_16_9 },
+    { "Mode 11: 1440x900",		1440,	900, AR_16_10 },
+    { "Mode 12: 1600x900",		1600,	900, AR_16_9 },
+    { "Mode 13: 1680x1050",		1680,	1050, AR_16_10 },
+    { "Mode 14: 1920x1080",		1920,	1080, AR_16_9 },
+    { "Mode 15: 1920x1200",		1920,	1200, AR_16_10 },
 };
 static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
 
-#if MACOS_X
-bool R_GetModeInfo( int *width, int *height, int mode ) {
-#else
-static bool R_GetModeInfo( int *width, int *height, int mode ) {
-#endif
-	vidmode_t	*vm;
+static bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode ) {	
 
-    if ( mode < -1 ) {
-        return false;
-	}
-	if ( mode >= s_numVidModes ) {
-		return false;
+  if ( mode < -1 || mode >= s_numVidModes ) {
+      return false;
 	}
 
 	if ( mode == -1 ) {
-		*width = r_customWidth.GetInteger();
-		*height = r_customHeight.GetInteger();
-		return true;
-	}
-
-	vm = &r_vidModes[mode];
-
-	if ( width ) {
-		*width  = vm->width;
-	}
-	if ( height ) {
-		*height = vm->height;
-	}
-
-    return true;
+		width = r_customWidth.GetInteger();
+		height = r_customHeight.GetInteger();
+    aspectRatio = -1;
+	} else {
+    const vidmode_t&	vm = r_vidModes[mode];
+    width = vm.width;
+    height = vm.height;
+    aspectRatio = vm.aspectRatio;
+  }
+  
+  return true;
 }
 
 /*
@@ -538,7 +538,7 @@ void R_InitOpenGL( void ) {
 	//
 	for ( i = 0 ; i < 2 ; i++ ) {
 		// set the parameters we are trying
-		R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, r_mode.GetInteger() );
+		R_GetModeInfo( glConfig.vidWidth, glConfig.vidHeight, glConfig.vidAspectRatio, r_mode.GetInteger() );
 
 		parms.width = glConfig.vidWidth;
 		parms.height = glConfig.vidHeight;
@@ -731,14 +731,19 @@ R_ListModes_f
 ==============
 */
 static void R_ListModes_f( const idCmdArgs &args ) {
-	int i;
+  static const char* ar[] = {
+    "4:3",
+    "16:9",
+    "16:10"
+  };
 
-	common->Printf( "\n" );
-	for ( i = 0; i < s_numVidModes; i++ ) {
-		common->Printf( "%s\n", r_vidModes[i].description );
-	}
-	common->Printf( "\n" );
+  common->Printf( "\n" );
+  for (int i = 0; i < s_numVidModes; ++i) {
+    common->Printf("  %i: %s (%s)\n", i, r_vidModes[i].description, ar[r_vidModes[i].aspectRatio]);
+  }
+  common->Printf( "\n" );
 }
+
 
 
 
@@ -2180,4 +2185,13 @@ idRenderSystemLocal::GetScreenHeight
 */
 int idRenderSystemLocal::GetScreenHeight( void ) const {
 	return glConfig.vidHeight;
+}
+
+/*
+========================
+idRenderSystemLocal::GetScreenAspectRatio
+========================
+*/
+int idRenderSystemLocal::GetScreenAspectRatio(void) const {
+  return glConfig.vidAspectRatio;
 }
