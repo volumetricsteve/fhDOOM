@@ -42,8 +42,8 @@ idVec4 idDeviceContext::colorWhite;
 idVec4 idDeviceContext::colorNone;
 
 
-idCVar gui_smallFontLimit( "gui_smallFontLimit", "0.30", CVAR_GUI | CVAR_ARCHIVE, "" );
-idCVar gui_mediumFontLimit( "gui_mediumFontLimit", "0.60", CVAR_GUI | CVAR_ARCHIVE, "" );
+idCVar gui_smallFontLimit( "gui_smallFontLimit", "0.1", CVAR_GUI | CVAR_ARCHIVE, "" );
+idCVar gui_mediumFontLimit( "gui_mediumFontLimit", "0.3", CVAR_GUI | CVAR_ARCHIVE, "" );
 
 
 idList<fontInfoEx_t> idDeviceContext::fonts;
