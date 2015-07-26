@@ -69,16 +69,14 @@ void idVertexCache::ActuallyFree( vertCache_t *block ) {
 		staticAllocTotal -= block->size;
 		staticCountTotal--;
 
-		if ( block->vbo ) {
-#if 0		// this isn't really necessary, it will be reused soon enough
+    assert(block->vbo);
+		
+#if 0		
+      // this isn't really necessary, it will be reused soon enough
 			// filling with zero length data is the equivalent of freeing
 			glBindBufferARB(GL_ARRAY_BUFFER_ARB, block->vbo);
 			glBufferDataARB(GL_ARRAY_BUFFER_ARB, 0, 0, GL_DYNAMIC_DRAW_ARB);
 #endif
-		} else if ( block->virtMem ) {
-			Mem_Free( block->virtMem );
-			block->virtMem = NULL;
-		}
 	}
 	block->tag = TAG_FREE;		// mark as free
 
@@ -116,25 +114,22 @@ void *idVertexCache::Position( vertCache_t *buffer ) {
 		common->FatalError( "idVertexCache::Position: bad vertCache_t" );
 	}
 
-	// the ARB vertex object just uses an offset
-	if ( buffer->vbo ) {
-		if ( r_showVertexCache.GetInteger() == 2 ) {
-			if ( buffer->tag == TAG_TEMP ) {
-				common->Printf( "GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size ); 
-			} else {
-				common->Printf( "GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size ); 
-			}
-		}
-		if ( buffer->indexBuffer ) {
-			glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, buffer->vbo );
+  assert(buffer->vbo);
+
+	if ( r_showVertexCache.GetInteger() == 2 ) {
+		if ( buffer->tag == TAG_TEMP ) {
+			common->Printf( "GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size ); 
 		} else {
-			glBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer->vbo );
+			common->Printf( "GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size ); 
 		}
-		return (void *)buffer->offset;
+	}
+	if ( buffer->indexBuffer ) {
+		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, buffer->vbo );
+	} else {
+		glBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer->vbo );
 	}
 
-	// virtual memory is a real pointer
-	return (void *)((byte *)buffer->virtMem + buffer->offset);
+	return (void *)buffer->offset;
 }
 
 void idVertexCache::UnbindIndex() {
@@ -265,22 +260,19 @@ void idVertexCache::Alloc( void *data, int size, vertCache_t **buffer, bool inde
 	block->indexBuffer = indexBuffer;
 
 	// copy the data
-	if ( block->vbo ) {
-		if ( indexBuffer ) {
-			glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, block->vbo );
-			glBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
-		} else {
-			glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
-			if ( allocatingTempBuffer ) {
-				glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STREAM_DRAW_ARB );
-			} else {
-				glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
-			}
-		}
+  assert(block->vbo);
+	
+	if ( indexBuffer ) {
+		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, block->vbo );
+		glBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
 	} else {
-		block->virtMem = Mem_Alloc( size );
-		SIMDProcessor->Memcpy( block->virtMem, data, size );
-	}
+		glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
+		if ( allocatingTempBuffer ) {
+			glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STREAM_DRAW_ARB );
+		} else {
+			glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
+		}
+	}	
 }
 
 /*
@@ -400,15 +392,11 @@ vertCache_t	*idVertexCache::AllocFrameTemp( void *data, int size ) {
 	block->frameUsed = 0;
 
 	// copy the data
-	block->virtMem = tempBuffers[listNum]->virtMem;
 	block->vbo = tempBuffers[listNum]->vbo;
 
-	if ( block->vbo ) {
-		glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
-		glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, block->offset, (GLsizeiptrARB)size, data );
-	} else {
-		SIMDProcessor->Memcpy( (byte *)block->virtMem + block->offset, data, size );
-	}
+  assert(block->vbo);	
+	glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
+	glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, block->offset, (GLsizeiptrARB)size, data );	
 
 	return block;
 }
