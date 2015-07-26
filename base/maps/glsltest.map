@@ -6,32 +6,6 @@ Version 2
 {
  patchDef2
  {
-  "textures/glass/breakyglass3"
-  ( 3 3 0 0 0 )
-  (
-   (  ( -311.7207946777 304 152.0048828125 0 0 ) ( -311.7207946777 252 152.0048828125 0 0.5 ) ( -311.7207946777 200 152.0048828125 0 1 ) )
-   (  ( -312 304 200 0.5 0 ) ( -312 252 200 0.5 0.5 ) ( -312 200 200 0.5 1 ) )
-   (  ( -312.2792053223 304 247.9951171875 1 0 ) ( -312.2792053223 252 247.9951171875 1 0.5 ) ( -312.2792053223 200 247.9951171875 1 1 ) )
-  )
- }
-}
-// primitive 1
-{
- patchDef2
- {
-  "textures/glsltest/heathaze"
-  ( 3 3 0 0 0 )
-  (
-   (  ( -311.7207946777 72.0048980713 152 0 0 ) ( -311.7207946777 72.0048904419 200 0 0.5 ) ( -311.7207946777 72.0048828125 248 0 1 ) )
-   (  ( -312 124 152 0.5 0 ) ( -312 124 200 0.5 0.5 ) ( -312 124 248 0.5 1 ) )
-   (  ( -312.2792053223 175.9951171875 152 1 0 ) ( -312.2792053223 175.9951171875 200 1 0.5 ) ( -312.2792053223 175.9951171875 248 1 1 ) )
-  )
- }
-}
-// primitive 2
-{
- patchDef2
- {
   "textures/glsltest/heathaze_arb"
   ( 3 3 0 0 0 )
   (
@@ -41,7 +15,7 @@ Version 2
   )
  }
 }
-// primitive 3
+// primitive 1
 {
  patchDef2
  {
@@ -54,7 +28,7 @@ Version 2
   )
  }
 }
-// primitive 4
+// primitive 2
 {
  patchDef2
  {
@@ -67,7 +41,7 @@ Version 2
   )
  }
 }
-// primitive 5
+// primitive 3
 {
  brushDef3
  {
@@ -79,7 +53,7 @@ Version 2
   ( -0 -0 -1 -703.9999389648 ) ( ( 0.03125 0 0 ) ( 0 0.031250149 -0.0000015795 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 6
+// primitive 4
 {
  brushDef3
  {
@@ -91,7 +65,7 @@ Version 2
   ( -1 0 0 -1808 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 7
+// primitive 5
 {
  brushDef3
  {
@@ -103,7 +77,7 @@ Version 2
   ( 0.7071067095 0.7071069479 -0 -135.7578125 ) ( ( 0.03125 -0 -0.0000002454 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 8
+// primitive 6
 {
  brushDef3
  {
@@ -115,7 +89,7 @@ Version 2
   ( -0.7071067691 -0.7071067691 0 45.2548370361 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 9
+// primitive 7
 {
  brushDef3
  {
@@ -127,7 +101,7 @@ Version 2
   ( 1 0.0000001192 -0 -256 ) ( ( 0.03125 0 -4 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 10
+// primitive 8
 {
  brushDef3
  {
@@ -139,7 +113,7 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 11
+// primitive 9
 {
  brushDef3
  {
@@ -151,7 +125,7 @@ Version 2
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 12
+// primitive 10
 {
  brushDef3
  {
@@ -163,7 +137,7 @@ Version 2
   ( -1 0 0 -120 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 13
+// primitive 11
 {
  brushDef3
  {
@@ -175,7 +149,7 @@ Version 2
   ( -1 0 0 -128 ) ( ( 0.03125 0 0 ) ( 0 0.03125 -0.25 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 14
+// primitive 12
 {
  brushDef3
  {
@@ -187,7 +161,7 @@ Version 2
   ( -1 0 0 248 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/sopanel2b3" 0 0 0
  }
 }
-// primitive 15
+// primitive 13
 {
  brushDef3
  {
@@ -199,7 +173,7 @@ Version 2
   ( -1 0 0 256 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 16
+// primitive 14
 {
  brushDef3
  {
@@ -211,7 +185,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.015625 0 0 ) ( 0 0.015625 0 ) ) "textures/base_floor/ghofloor1a" 0 0 0
  }
 }
-// primitive 17
+// primitive 15
 {
  brushDef3
  {
@@ -223,7 +197,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 12.0000047684 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 18
+// primitive 16
 {
  patchDef2
  {
@@ -236,7 +210,7 @@ Version 2
   )
  }
 }
-// primitive 19
+// primitive 17
 {
  patchDef2
  {
@@ -249,7 +223,7 @@ Version 2
   )
  }
 }
-// primitive 20
+// primitive 18
 {
  patchDef2
  {
@@ -262,7 +236,7 @@ Version 2
   )
  }
 }
-// primitive 21
+// primitive 19
 {
  brushDef3
  {
@@ -274,7 +248,7 @@ Version 2
   ( -1 0 0 0 ) ( ( 0.0078125 -0 -1.00000453 ) ( 0 0.125 17 ) ) "textures/base_trim/sfltrim2" 0 0 0
  }
 }
-// primitive 22
+// primitive 20
 {
  brushDef3
  {
@@ -286,7 +260,7 @@ Version 2
   ( -1 0 0 -0 ) ( ( 0.0078125 -0 -1.00000453 ) ( 0 0.0078125 1 ) ) "textures/base_trim/sgirder1a" 0 0 0
  }
 }
-// primitive 23
+// primitive 21
 {
  brushDef3
  {
@@ -298,7 +272,7 @@ Version 2
   ( -1 0 0 -192 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 24
+// primitive 22
 {
  patchDef2
  {
@@ -311,7 +285,7 @@ Version 2
   )
  }
 }
-// primitive 25
+// primitive 23
 {
  patchDef2
  {
@@ -324,7 +298,7 @@ Version 2
   )
  }
 }
-// primitive 26
+// primitive 24
 {
  brushDef3
  {
@@ -336,7 +310,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
-// primitive 27
+// primitive 25
 {
  brushDef3
  {
@@ -348,7 +322,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 28
+// primitive 26
 {
  brushDef3
  {
@@ -360,7 +334,7 @@ Version 2
   ( -1 0 0 -448 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 29
+// primitive 27
 {
  brushDef3
  {
@@ -372,7 +346,7 @@ Version 2
   ( -1 0 0 320 ) ( ( 0.001953125 0 0 ) ( 0 0.001953125 0 ) ) "textures/skies/hellsky2" 0 0 0
  }
 }
-// primitive 30
+// primitive 28
 {
  brushDef3
  {
@@ -384,7 +358,7 @@ Version 2
   ( -0.9999999404 0 0 -455.9999694824 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/caulk" 0 0 0
  }
 }
-// primitive 31
+// primitive 29
 {
  brushDef3
  {
@@ -399,6 +373,27 @@ Version 2
 }
 // entity 1
 {
+"classname" "func_fracture"
+"name" "func_fracture_1"
+"model" "func_fracture_1"
+"origin" "-312 208 216"
+"_color" "0.839216 0.156863 0.133333"
+// primitive 0
+{
+ patchDef2
+ {
+  "textures/glass/breakyglass3"
+  ( 3 3 0 0 0 )
+  (
+   (  ( -311.7207946777 264 168.0048828125 0 0 ) ( -311.7207946777 212 168.0048828125 0 0.5 ) ( -311.7207946777 160 168.0048828125 0 1 ) )
+   (  ( -312 264 216 0.5 0 ) ( -312 212 216 0.5 0.5 ) ( -312 160 216 0.5 1 ) )
+   (  ( -312.2792053223 264 263.9951171875 1 0 ) ( -312.2792053223 212 263.9951171875 1 0.5 ) ( -312.2792053223 160 263.9951171875 1 1 ) )
+  )
+ }
+}
+}
+// entity 2
+{
 "classname" "light"
 "name" "light_5"
 "origin" "-8 -16 -472"
@@ -410,7 +405,7 @@ Version 2
 "_color" "0.35 1 0"
 "light_radius" "500 500 400"
 }
-// entity 2
+// entity 3
 {
 "classname" "light"
 "name" "light_6"
@@ -423,20 +418,20 @@ Version 2
 "light_radius" "284 244 400"
 "light_center" "0 0 220"
 }
-// entity 3
+// entity 4
 {
 "classname" "func_static"
 "name" "func_static_1"
 "origin" "-168 -80 0"
 "model" "models/mapobjects/cpu/comrack.lwo"
 }
-// entity 4
+// entity 5
 {
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "-128 -168 0"
 }
-// entity 5
+// entity 6
 {
 "classname" "light"
 "name" "light_2"
@@ -448,7 +443,7 @@ Version 2
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }
-// entity 6
+// entity 7
 {
 "classname" "light"
 "name" "light_3"
@@ -460,7 +455,7 @@ Version 2
 "_color" "1 0.58 0.38"
 "light_radius" "300 300 300"
 }
-// entity 7
+// entity 8
 {
 "classname" "light"
 "name" "light_4"
@@ -472,4 +467,25 @@ Version 2
 "texture" "lights/tabletest"
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
+}
+// entity 9
+{
+"classname" "func_fracture"
+"name" "func_fracture_2"
+"model" "func_fracture_2"
+"origin" "-312 104 216"
+"_color" "0.839216 0.156863 0.133333"
+// primitive 0
+{
+ patchDef2
+ {
+  "textures/glsltest/breakyglass3"
+  ( 3 3 0 0 0 )
+  (
+   (  ( -311.7207946777 160 168.0048828125 0 0 ) ( -311.7207946777 108 168.0048828125 0 0.5 ) ( -311.7207946777 56 168.0048828125 0 1 ) )
+   (  ( -312 160 216 0.5 0 ) ( -312 108 216 0.5 0.5 ) ( -312 56 216 0.5 1 ) )
+   (  ( -312.2792053223 160 263.9951171875 1 0 ) ( -312.2792053223 108 263.9951171875 1 0.5 ) ( -312.2792053223 56 263.9951171875 1 1 ) )
+  )
+ }
+}
 }

@@ -33,7 +33,7 @@ void SCR_DrawTextLeftAlign( float &y, const char *text, ... ) id_attribute((form
 void SCR_DrawTextRightAlign( float &y, const char *text, ... ) id_attribute((format(printf,2,3)));
 
 #define	LINE_WIDTH				78
-#define	NUM_CON_TIMES			10
+#define	NUM_CON_TIMES			20
 #define	CON_TEXTSIZE			0x30000
 #define	TOTAL_LINES				(CON_TEXTSIZE / LINE_WIDTH)
 #define CONSOLE_FIRSTREPEAT		200
@@ -126,9 +126,9 @@ idConsole	*console = &localConsole;
 idCVar idConsoleLocal::con_speed( "con_speed", "3", CVAR_SYSTEM, "speed at which the console moves up and down" );
 idCVar idConsoleLocal::con_notifyTime( "con_notifyTime", "3", CVAR_SYSTEM, "time messages are displayed onscreen when console is pulled up" );
 #ifdef DEBUG
-idCVar idConsoleLocal::con_noPrint( "con_noPrint", "0", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "print on the console but not onscreen when console is pulled up" );
+idCVar idConsoleLocal::con_noPrint( "con_noPrint", "0", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT|CVAR_ARCHIVE, "print on the console but not onscreen when console is pulled up" );
 #else
-idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "print on the console but not onscreen when console is pulled up" );
+idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT|CVAR_ARCHIVE, "print on the console but not onscreen when console is pulled up" );
 #endif
 idCVar idConsoleLocal::con_fontScale( "con_fontScale", "0.6", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "scale of console font" );
 idCVar idConsoleLocal::con_size("con_size", "0.5", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "screen size of console");

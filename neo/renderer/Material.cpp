@@ -71,6 +71,10 @@ typedef struct mtrParsingData_s {
 static void replaceBuildinVertexShader(const idStr& name, glslShaderStage_t& glslShaderStage){
   if(!name.Icmp("heathaze.vfp"))
     strcpy(glslShaderStage.vertexShaderName, "heathaze.vp"); 
+  else if (!name.Icmp("heathazeWithMask.vfp"))
+    strcpy(glslShaderStage.vertexShaderName, "heathazeWithMask.vp");
+  else if (!name.Icmp("heathazeWithMaskAndVertex.vfp"))
+    strcpy(glslShaderStage.vertexShaderName, "heathazeWithMask.vp");
   else
     common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
 }
@@ -78,6 +82,10 @@ static void replaceBuildinVertexShader(const idStr& name, glslShaderStage_t& gls
 static void replaceBuildinFragmentShader(const idStr& name, glslShaderStage_t& glslShaderStage){
   if (!name.Icmp("heathaze.vfp"))
     strcpy(glslShaderStage.fragmentShaderName, "heathaze.fp");
+  else if (!name.Icmp("heathazeWithMask.vfp"))
+    strcpy(glslShaderStage.vertexShaderName, "heathazeWithMaskAndVertex.fp");
+  else if (!name.Icmp("heathazeWithMaskAndVertex.vfp"))
+    strcpy(glslShaderStage.vertexShaderName, "heathazeWithMaskAndVertex.fp");
   else
     common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
 }
@@ -2466,6 +2474,18 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 				}
 			}
 		}
+    if (pStage->glslStage) {
+      for (int j = 0; j < pStage->glslStage->numShaderMaps; j++) {
+        if (pStage->glslStage->shaderMap[j] == globalImages->currentRenderImage) {
+          if (sort != SS_PORTAL_SKY) {
+            sort = SS_POST_PROCESS;
+            coverage = MC_TRANSLUCENT;
+          }
+          i = numStages;
+          break;
+        }
+      }
+    }
 	}
 
 	// set the drawStateBits depth flags
@@ -2950,7 +2970,13 @@ idMaterial::ReloadImages
 void idMaterial::ReloadImages( bool force ) const
 {
 	for ( int i = 0 ; i < numStages ; i++ ) {
-		if ( stages[i].newStage ) {
+    if (stages[i].glslStage) {
+      for (int j = 0; j < stages[i].glslStage->numShaderMaps; j++) {
+        if (stages[i].glslStage->shaderMap[j]) {
+          stages[i].glslStage->shaderMap[j]->Reload(false, force);
+        }
+      }
+    } else	if ( stages[i].newStage ) {
 			for ( int j = 0 ; j < stages[i].newStage->numFragmentProgramImages ; j++ ) {
 				if ( stages[i].newStage->fragmentProgramImages[j] ) {
 					stages[i].newStage->fragmentProgramImages[j]->Reload( false, force );

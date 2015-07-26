@@ -34,6 +34,57 @@ textures/glsltest/heathaze
     }
 }
 
+textures/glsltest/breakyglass3_arb
+ {
+        {
+                vertexProgram           heatHazeWithMaskAndVertex.vfp
+                vertexParm              0       time * 0 , time * 0 // texture scrolling
+                vertexParm              1       10           // magnitude of the distortion
+                fragmentProgram         heatHazeWithMask.vfp
+                fragmentMap             0       _currentRender
+                fragmentMap             1       textures/particles/vpring1.tga   // the normal map for distortion
+                fragmentMap             2       textures/particles/vpring1_alpha.tga   // the distortion blend map
+        }    
+        
+}
+
+textures/glsltest/breakyglass3
+ {
+    noSelfShadow
+    noshadows
+    twosided
+    translucent
+    glass
+    forceoverlays
+
+    qer_editorimage textures/glass/breakyglass3
+
+    {
+        vertexShader    heathazeWithMask.vp
+        fragmentShader  heathazeWithMaskAndVertex.fp
+
+        shaderParm 0       time * 0.0 , time * 0.0 // texture scrolling
+        shaderParm 1       0.5                  // magnitude of the distortion
+
+        shaderMap 0        _currentRender
+        shaderMap 1        textures/glass/breakyglass3   // the normal map for distortion
+        shaderMap 2        textures/glass/4x4   // the normal map for distortion
+    }
+    {   
+        maskcolor               
+        map makealpha(textures/glass/breakyglass3)
+    }   
+    {
+        blend gl_dst_alpha, gl_one
+        maskalpha
+        cubeMap     env/gen2
+            red     Parm0
+            green   Parm1
+            blue    Parm2
+        texgen      reflect
+        vertexColor
+    }   
+}
 
 
 textures/glsltest/flatcolored

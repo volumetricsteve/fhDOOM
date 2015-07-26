@@ -1,0 +1,48 @@
+#include "global.inc"
+
+layout(location = 0) in vec3 vertex_position;
+layout(location = 1) in vec2 vertex_texcoord;
+layout(location = 2) in vec3 vertex_normal;
+layout(location = 3) in vec4 vertex_color;
+layout(location = 4) in vec3 vertex_binormal;
+layout(location = 5) in vec3 vertex_tangent;
+
+out vs_output
+{
+  vec4 color;
+  vec2 texcoord;
+  vec4 texcoord1;
+  vec4 texcoord2;
+} result;
+
+vec4 row(mat4 m, int r)
+{
+  return vec4(m[0][r], m[1][r], m[2][r], m[3][r]);
+}
+
+void main(void)
+{
+  gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);
+  result.color = vertex_color;
+  result.texcoord = vertex_texcoord;
+  result.texcoord1 = vec4(vertex_texcoord, 0, 0) + shaderParm0;
+
+  vec4 r0 = vec4(1, 0, 0, 1);
+  r0.z = dot( vec4(vertex_position, 1), row(rpModelViewMatrix, 2) );
+
+  float r1 = dot( r0, row(rpProjectionMatrix, 0) );
+  float r2 = dot( r0, row(rpProjectionMatrix, 3) );
+
+  // don't let the recip get near zero for polygons that cross the view plane
+  r2 = max( r2, 1.0 );
+  r2 = 1/r2;
+  //x = x * ( 1.0f / ( w + 0.00001f ) );
+
+  // clamp the distance so the the deformations don't get too wacky near the view
+  r1 = r1 * r2;
+  r1 = min(r1, 0.02);
+
+  vec4 deformMagnitude = shaderParm1;
+  result.texcoord2 = r1 * deformMagnitude;  
+  result.color = vec4(1,1,1,1);
+}
