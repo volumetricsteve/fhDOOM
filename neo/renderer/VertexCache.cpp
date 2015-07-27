@@ -132,6 +132,41 @@ void *idVertexCache::Position( vertCache_t *buffer ) {
 	return (void *)buffer->offset;
 }
 
+/*
+==============
+idVertexCache::Bind
+
+it will be an int offset cast to a pointer with
+ARB_vertex_buffer_object
+
+The ARB_vertex_buffer_object will be bound
+==============
+*/
+int idVertexCache::Bind(const vertCache_t *buffer) {
+  if (!buffer || buffer->tag == TAG_FREE) {
+    common->FatalError("idVertexCache::Position: bad vertCache_t");
+  }
+
+  assert(buffer->vbo);
+
+  if (r_showVertexCache.GetInteger() == 2) {
+    if (buffer->tag == TAG_TEMP) {
+      common->Printf("GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size);
+    }
+    else {
+      common->Printf("GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size);
+    }
+  }
+  if (buffer->indexBuffer) {
+    glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, buffer->vbo);
+  }
+  else {
+    glBindBufferARB(GL_ARRAY_BUFFER_ARB, buffer->vbo);
+  }
+
+  return buffer->offset;
+}
+
 void idVertexCache::UnbindIndex() {
 	glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
 }

@@ -59,6 +59,13 @@ public:
 
 	void			SetColor( dword color );
 	dword			GetColor( void ) const;
+
+  static const void* const xyzOffset;
+  static const void* const texcoordOffset;
+  static const void* const colorOffset;
+  static const void* const normalOffset;
+  static const void* const binormalOffset;
+  static const void* const tangentOffset;
 };
 
 ID_INLINE float idDrawVert::operator[]( const int index ) const {

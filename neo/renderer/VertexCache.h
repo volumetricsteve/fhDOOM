@@ -71,6 +71,8 @@ public:
 	// but it will be an int offset cast to a pointer of ARB_vertex_buffer_object
 	void *			Position( vertCache_t *buffer );
 
+  int       Bind( const vertCache_t *buffer );
+
 	// if r_useIndexBuffers is enabled, but you need to draw something without
 	// an indexCache, this must be called to reset GL_ELEMENT_ARRAY_BUFFER_ARB
 	void			UnbindIndex();

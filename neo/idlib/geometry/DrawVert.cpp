@@ -42,3 +42,12 @@ void idDrawVert::Normalize( void ) {
 	tangents[0].Cross( tangents[1], normal );
 	tangents[0].Normalize();
 }
+
+#define attributeOffset(Name) reinterpret_cast<const void*>(offsetof(idDrawVert, Name))
+
+const void* const idDrawVert::xyzOffset = attributeOffset(xyz);
+const void* const idDrawVert::texcoordOffset = attributeOffset(st);
+const void* const idDrawVert::colorOffset = attributeOffset(color);
+const void* const idDrawVert::normalOffset = attributeOffset(normal);
+const void* const idDrawVert::binormalOffset = attributeOffset(tangents[1]);
+const void* const idDrawVert::tangentOffset = attributeOffset(tangents[0]);

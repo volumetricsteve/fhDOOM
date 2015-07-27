@@ -13,7 +13,6 @@ static const glslProgramDef_t* shadowProgram = nullptr;
 static const glslProgramDef_t* interactionProgram = nullptr;
 static const glslProgramDef_t* depthProgram = nullptr;
 static const glslProgramDef_t* defaultProgram = nullptr;
-//static const glslProgramDef_t* diffuseCubeProgram = nullptr;
 static const glslProgramDef_t* skyboxProgram = nullptr;
 static const glslProgramDef_t* bumpyEnvProgram = nullptr;
 static const glslProgramDef_t* fogProgram = nullptr;
@@ -27,6 +26,19 @@ static void GL_SelectTextureNoClient(int unit) {
   backEnd.glState.currenttmu = unit;
   glActiveTextureARB(GL_TEXTURE0_ARB + unit);
   RB_LogComment("glActiveTextureARB( %i )\n", unit);
+}
+
+/*
+====================
+attributeOffset
+
+Calculate attribute offset by a (global) offset and (local) per-attribute offset
+====================
+*/
+template<typename T>
+static const void* attributeOffset(T offset, const void* attributeOffset)
+{
+  return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
 }
 
 
@@ -103,8 +115,10 @@ static void RB_GLSL_RenderTriangleSurface(const srfTriangles_t *tri) {
     return;
   }
 
+  auto offset = vertexCache.Bind(tri->ambientCache);
+
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), vertexCache.Position(tri->ambientCache));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, 0));
   RB_DrawElementsWithCounters(tri);
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 }
@@ -308,8 +322,9 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
     return;
   }
 
+  const auto offset = vertexCache.Bind(tri->shadowCache);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), vertexCache.Position(tri->shadowCache));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
 
   // we always draw the sil planes, but we may not need to draw the front or rear caps
   int	numIndexes;
@@ -588,9 +603,9 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
     color[3] = 1;
   }
 
-  idDrawVert *ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), reinterpret_cast<void *>(&ac->st));
+  const auto offset = vertexCache.Bind(tri->ambientCache);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
@@ -781,25 +796,21 @@ RB_GLSL_RenderSpecialShaderStage
 */
 void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const srfTriangles_t	*tri) {
 
-  idDrawVert *ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
+  const auto offset = vertexCache.Bind(tri->ambientCache);
 
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
-
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
-
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
-
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
-
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert),   attributeOffset(offset, idDrawVert::normalOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
 
   GL_State(pStage->drawStateBits);
   GL_UseProgram(glslStage->program);
@@ -1146,13 +1157,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     if(!defaultProgram)
       return;
   }
-/*
-  if (!diffuseCubeProgram) {
-    diffuseCubeProgram = R_FindGlslProgram("diffuseCube.vp", "diffuseCube.fp");
-    if (!diffuseCubeProgram)
-      return;
-  }
-*/
+
   if (!skyboxProgram) {
     skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
     if (!skyboxProgram)
@@ -1184,7 +1189,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     return;
   }
   
-  idDrawVert *ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache); 
+  const auto offset = vertexCache.Bind(surf->geo->ambientCache); 
 
 
   if (pStage->texture.texgen == TG_DIFFUSE_CUBE) {
@@ -1207,8 +1212,8 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);    
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);    
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));    
   }
   else if (pStage->texture.texgen == TG_SCREEN) {
     return;
@@ -1235,12 +1240,12 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::normalOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
 
     // set the texture matrix
     idVec4 textureMatrixST[2];
@@ -1276,9 +1281,9 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
   }
 
   GL_SelectTexture(1);
@@ -1469,32 +1474,19 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
-#if 0
-  // texture 0 is the normalization cube map for the vector towards the light
-  GL_SelectTextureNoClient(0);
-  if (backEnd.vLight->lightShader->IsAmbientLight()) {
-    globalImages->ambientNormalMap->Bind();
-  }
-  else {
-    globalImages->normalCubeMapImage->Bind();
-  }
 
-  // texture 6 is the specular lookup table
-  GL_SelectTextureNoClient(6);
-  globalImages->specularTableImage->Bind();
-#endif
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes
 
     // set the vertex pointers
-    idDrawVert	*ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache);
+    const auto offset = vertexCache.Bind(surf->geo->ambientCache);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), ac->st.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->normal.ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), (void *)&ac->color);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr());
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr());
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::normalOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
 
     // this may cause RB_ARB2_DrawInteraction to be exacuted multiple
     // times with different colors and images if the surface or light have multiple layers
