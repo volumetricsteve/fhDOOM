@@ -6,9 +6,6 @@
 #define MAX_GLPROGS 128
 static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
 
-static const char* const shadowVertexShaderName = "shadow.vp";
-static const char* const shadowFragmentShaderName = "shadow.fp";
-
 static const glslProgramDef_t* shadowProgram = nullptr;
 static const glslProgramDef_t* interactionProgram = nullptr;
 static const glslProgramDef_t* depthProgram = nullptr;
@@ -167,6 +164,24 @@ static void RB_T_BasicFog(const drawSurf_t *surf) {
   RB_GLSL_RenderTriangleSurface(surf->geo);
 }
 
+/*
+==================
+R_GLSL_Init
+
+Load default shaders.
+==================
+*/
+void	R_GLSL_Init( void )
+{
+  fogProgram = R_FindGlslProgram("fog.vp", "fog.fp");  
+  shadowProgram = R_FindGlslProgram("shadow.vp", "shadow.fp");
+  depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");  
+  defaultProgram = R_FindGlslProgram("default.vp", "default.fp");
+  skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
+  bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");  
+  interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
+}
+
 
 /*
 ==================
@@ -174,15 +189,9 @@ RB_GLSL_FogPass
 ==================
 */
 void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
-  RB_LogComment("---------- RB_GLSL_FogPass ----------\n");
+  assert(fogProgram);
 
-  if (!fogProgram) {
-    fogProgram = R_FindGlslProgram("fog.vp", "fog.fp");
-
-    if (!fogProgram) {
-      return;
-    }
-  }
+  RB_LogComment("---------- RB_GLSL_FogPass ----------\n");  
 
   GL_UseProgram(fogProgram);
 
@@ -447,20 +456,14 @@ been set to 128 on any surfaces that might receive shadows
 
 
 void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
+  assert(shadowProgram);
+
   if (!r_shadows.GetBool()) {
     return;
   }
 
   if (!drawSurfs) {
     return;
-  }
-
-  if (!shadowProgram) {
-    shadowProgram = R_FindGlslProgram(shadowVertexShaderName, shadowFragmentShaderName);
-
-    if (!shadowProgram || !shadowProgram->ident) {
-      return;
-    }
   }
 
   glDisable(GL_VERTEX_PROGRAM_ARB);
@@ -732,6 +735,8 @@ to force the alpha test to fail when behind that clip plane
 =====================
 */
 void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
+  assert(depthProgram);
+
   // if we are just doing 2D rendering, no need to fill the depth buffer
   if (!backEnd.viewDef->viewEntitys) {
     return;
@@ -761,12 +766,6 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
   // from the ambient pass and the light passes.
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_ALWAYS, 1, 255);
-
-  if (!depthProgram) {
-    depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");
-    if (!depthProgram)
-      return;
-  }
 
   GL_UseProgram(depthProgram);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
@@ -1151,24 +1150,9 @@ RB_GLSL_RenderShaderStage
 ====================
 */
 void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage) {
-
-  if(!defaultProgram) {
-    defaultProgram = R_FindGlslProgram("default.vp", "default.fp");
-    if(!defaultProgram)
-      return;
-  }
-
-  if (!skyboxProgram) {
-    skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
-    if (!skyboxProgram)
-      return;
-  }
-
-  if (!bumpyEnvProgram) {
-    bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");
-    if (!bumpyEnvProgram)
-      return;
-  }
+  assert(defaultProgram);
+  assert(skyboxProgram);
+  assert(bumpyEnvProgram);
 
   // set the color  
   float color[4];
@@ -1448,16 +1432,10 @@ RB_GLSL_CreateDrawInteractions
 =============
 */
 void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
+  assert(interactionProgram);
+
   if (!surf) {
     return;
-  }
-
-  if(!interactionProgram) {
-    interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
-
-    if(!interactionProgram) {
-      return;
-    }
   }
 
   // perform setup here that will be constant for all interactions
@@ -1598,4 +1576,5 @@ void RB_GLSL_DrawInteractions(void) {
   // disable stencil shadow test
   glStencilFunc(GL_ALWAYS, 128, 255);
 }
+
 

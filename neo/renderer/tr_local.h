@@ -1325,6 +1325,7 @@ int		R_FindARBProgram( GLenum target, const char *program );
 void  RB_STD_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage);
 void  RB_STD_FogPass( const drawSurf_t *drawSurfs,  const drawSurf_t *drawSurfs2 );
 
+void	R_GLSL_Init( void );
 void	RB_GLSL_DrawInteractions( void );
 const glslProgramDef_t*  R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName);
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
