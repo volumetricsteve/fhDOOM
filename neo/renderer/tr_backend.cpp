@@ -51,9 +51,16 @@ void RB_SetDefaultGLState( void ) {
 	glClearDepth( 1.0f );
 	glColor4f (1,1,1,1);
 
-	// the vertex array is always enabled
-	glEnableClientState( GL_VERTEX_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+	// the vertex array is always enabled when rendering with ARB2 path.
+  // GLSL path uses user defined vertex attributes, so we disable all build-in 
+  // arrays
+  if(!backEnd.glslEnabled) {
+	  glEnableClientState( GL_VERTEX_ARRAY );
+	  glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+  } else {
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  }
 	glDisableClientState( GL_COLOR_ARRAY );
 
 	//
@@ -110,16 +117,16 @@ RB_LogComment
 ====================
 */
 void RB_LogComment( const char *comment, ... ) {
-   va_list marker;
+  va_list marker;
 
-	if ( !tr.logFile ) {
-		return;
-	}
+  if ( !tr.logFile ) {
+    return;
+  }
 
-	fprintf( tr.logFile, "// " );
-	va_start( marker, comment );
-	vfprintf( tr.logFile, comment, marker );
-	va_end( marker );
+  fprintf( tr.logFile, "// " );
+  va_start( marker, comment );
+  vfprintf( tr.logFile, comment, marker );
+  va_end( marker );
 }
 
 

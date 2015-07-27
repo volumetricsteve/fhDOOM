@@ -95,7 +95,7 @@ void RB_SetProgramEnvironment( void ) {
 	float	parm[4];
 	int		pot;
 
-	if ( !glConfig.ARBVertexProgramAvailable ) {
+	if ( !glConfig.ARBVertexProgramAvailable || backEnd.glslEnabled ) {
 		return;
 	}
 
@@ -141,7 +141,7 @@ Sets variables related to the current space that can be used by all vertex progr
 ==================
 */
 void RB_SetProgramEnvironmentSpace( void ) {
-	if ( !glConfig.ARBVertexProgramAvailable ) {
+	if ( !glConfig.ARBVertexProgramAvailable || backEnd.glslEnabled ) {
 		return;
 	}
 
@@ -339,7 +339,8 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	globalImages->BindNull();
 
 	GL_SelectTexture( 0 );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+  if(!backEnd.glslEnabled)
+	  glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
 	RB_SetProgramEnvironment();  
 

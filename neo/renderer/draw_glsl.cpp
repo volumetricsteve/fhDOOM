@@ -735,7 +735,6 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 
   // the first texture will be used for alpha tested surfaces
   GL_SelectTexture(0);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
   // decal surfaces may enable polygon offset
   glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat());
