@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "simplex.h"	// line font definition
+#include "ImmediateMode.h"
 
 #define MAX_DEBUG_LINES			16384
 
@@ -1941,6 +1942,7 @@ RB_ShowDebugLines
 ================
 */
 void RB_ShowDebugLines( void ) {
+
 	int			i;
 	int			width;
 	debugLine_t	*line;
@@ -1969,37 +1971,36 @@ void RB_ShowDebugLines( void ) {
 		glDisable( GL_DEPTH_TEST );
 	}
 
-	glBegin( GL_LINES );
-
-	line = rb_debugLines;
-	for ( i = 0 ; i < rb_numDebugLines; i++, line++ ) {
-		if ( !line->depthTest ) {
-			glColor3fv( line->rgb.ToFloatPtr() );
-			glVertex3fv( line->start.ToFloatPtr() );
-			glVertex3fv( line->end.ToFloatPtr() );
-		}
-	}
-	glEnd();
+  fhLinesMode lines;
+  lines.Begin();
+  line = rb_debugLines;
+  for (i = 0; i < rb_numDebugLines; i++, line++) {
+    if ( !line->depthTest ) {
+      lines.Color3fv(line->rgb.ToFloatPtr());
+      lines.Vertex3fv(line->start.ToFloatPtr());
+      lines.Vertex3fv(line->end.ToFloatPtr());
+    }
+  }
+  lines.End();
 
 	if ( !r_debugLineDepthTest.GetBool() ) {
 		glEnable( GL_DEPTH_TEST );
 	}
 
-	glBegin( GL_LINES );
-
-	line = rb_debugLines;
-	for ( i = 0 ; i < rb_numDebugLines; i++, line++ ) {
-		if ( line->depthTest ) {
-			glColor4fv( line->rgb.ToFloatPtr() );
-			glVertex3fv( line->start.ToFloatPtr() );
-			glVertex3fv( line->end.ToFloatPtr() );
-		}
-	}
-
-	glEnd();
+  lines.Begin();
+  line = rb_debugLines;
+  for (i = 0; i < rb_numDebugLines; i++, line++) {
+    if ( line->depthTest ) {
+      lines.Color3fv(line->rgb.ToFloatPtr());
+      lines.Vertex3fv(line->start.ToFloatPtr());
+      lines.Vertex3fv(line->end.ToFloatPtr());
+    }
+  }
+  lines.End();
 
 	glLineWidth( 1 );
 	GL_State( GLS_DEFAULT );
+
 }
 
 /*

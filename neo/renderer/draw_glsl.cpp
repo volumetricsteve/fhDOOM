@@ -2,17 +2,19 @@
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImmediateMode.h"
 
 #define MAX_GLPROGS 128
 static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
 
-static const glslProgramDef_t* shadowProgram = nullptr;
-static const glslProgramDef_t* interactionProgram = nullptr;
-static const glslProgramDef_t* depthProgram = nullptr;
-static const glslProgramDef_t* defaultProgram = nullptr;
-static const glslProgramDef_t* skyboxProgram = nullptr;
-static const glslProgramDef_t* bumpyEnvProgram = nullptr;
-static const glslProgramDef_t* fogProgram = nullptr;
+const glslProgramDef_t* shadowProgram = nullptr;
+const glslProgramDef_t* interactionProgram = nullptr;
+const glslProgramDef_t* depthProgram = nullptr;
+const glslProgramDef_t* defaultProgram = nullptr;
+const glslProgramDef_t* skyboxProgram = nullptr;
+const glslProgramDef_t* bumpyEnvProgram = nullptr;
+const glslProgramDef_t* fogProgram = nullptr;
+const glslProgramDef_t* vertexColorProgram = nullptr;
 
 /*
 ====================
@@ -180,6 +182,9 @@ void	R_GLSL_Init( void )
   skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
   bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");  
   interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
+  vertexColorProgram = R_FindGlslProgram("vertexcolor.vp", "vertexcolor.fp");
+
+  fhLinesMode::Init();
 }
 
 

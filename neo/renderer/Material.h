@@ -262,6 +262,15 @@ typedef struct {
   GLuint ident;
 } glslProgramDef_t;
 
+extern const glslProgramDef_t* shadowProgram;
+extern const glslProgramDef_t* interactionProgram;
+extern const glslProgramDef_t* depthProgram;
+extern const glslProgramDef_t* defaultProgram;
+extern const glslProgramDef_t* skyboxProgram;
+extern const glslProgramDef_t* bumpyEnvProgram;
+extern const glslProgramDef_t* fogProgram;
+extern const glslProgramDef_t* vertexColorProgram;
+
 typedef struct {
   const glslProgramDef_t*  program;
   int					numShaderParms;

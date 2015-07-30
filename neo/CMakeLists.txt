@@ -345,8 +345,8 @@ SET(SOURCES
   renderer/VertexCache.cpp
   renderer/VertexCache.h
   renderer/wglext.h
-
-
+  renderer/ImmediateMode.h
+  renderer/ImmediateMode.cpp
 
   sound/snd_cache.cpp
   sound/snd_decoder.cpp
