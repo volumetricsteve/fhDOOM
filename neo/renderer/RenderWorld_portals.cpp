@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImmediateMode.h"
 
 /*
 
@@ -1055,19 +1056,20 @@ void idRenderWorldLocal::ShowPortals() {
 				continue;
 			}
 
+      fhImmediateMode im;
 			if ( portalAreas[ p->intoArea ].viewCount != tr.viewCount ) {
 				// red = can't see
-				glColor3f( 1, 0, 0 );
+				im.Color3f( 1, 0, 0 );
 			} else {
 				// green = see through
-				glColor3f( 0, 1, 0 );
+				im.Color3f( 0, 1, 0 );
 			}
 
-			glBegin( GL_LINE_LOOP );
+			im.Begin( GL_LINE_LOOP );
 			for ( j = 0 ; j < w->GetNumPoints() ; j++ ) {
-				glVertex3fv( (*w)[j].ToFloatPtr() );
+				im.Vertex3fv( (*w)[j].ToFloatPtr() );
 			}
-			glEnd();
+			im.End();
 		}
 	}
 }

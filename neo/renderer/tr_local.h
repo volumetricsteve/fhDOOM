@@ -992,6 +992,19 @@ void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
 void  GL_UseProgram( const glslProgramDef_t* program );
 
+/*
+====================
+attributeOffset
+
+Calculate attribute offset by a (global) offset and (local) per-attribute offset
+====================
+*/
+template<typename T>
+const void* GL_AttributeOffset(T offset, const void* attributeOffset)
+{
+  return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
+}
+
 class joGLMatrixStack {
 public:
   explicit joGLMatrixStack(int mode);
@@ -1596,10 +1609,11 @@ void RB_AddDebugLine( const idVec4 &color, const idVec3 &start, const idVec3 &en
 void RB_ClearDebugLines( int time );
 void RB_AddDebugPolygon( const idVec4 &color, const idWinding &winding, const int lifeTime, const bool depthTest );
 void RB_ClearDebugPolygons( int time );
-void RB_DrawBounds( const idBounds &bounds );
+void RB_DrawBounds( const idBounds &bounds, const idVec4 &color );
+void RB_DrawBounds( const idBounds &bounds, const idVec3 &color );
 void RB_ShowLights( drawSurf_t **drawSurfs, int numDrawSurfs );
 void RB_ShowLightCount( drawSurf_t **drawSurfs, int numDrawSurfs );
-void RB_PolygonClear( void );
+void RB_PolygonClear( const idVec3 &clearColor );
 void RB_ScanStencilBuffer( void );
 void RB_ShowDestinationAlpha( void );
 void RB_ShowOverdraw( void );

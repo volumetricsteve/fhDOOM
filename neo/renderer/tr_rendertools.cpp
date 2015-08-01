@@ -84,37 +84,44 @@ static void RB_DrawText( const char *text, const idVec3 &origin, float scale, co
 RB_DrawBounds
 ================
 */
-void RB_DrawBounds( const idBounds &bounds ) {
+void RB_DrawBounds( const idBounds &bounds, const idVec3 &color ) {
+  RB_DrawBounds( bounds, idVec4(color.x, color.y, color.z, 1.0f) );
+}
+
+void RB_DrawBounds( const idBounds &bounds, const idVec4 &color ) {
 	if ( bounds.IsCleared() ) {
 		return;
-	}
+	} 
 
-	glBegin( GL_LINE_LOOP );
-	glVertex3f( bounds[0][0], bounds[0][1], bounds[0][2] );
-	glVertex3f( bounds[0][0], bounds[1][1], bounds[0][2] );
-	glVertex3f( bounds[1][0], bounds[1][1], bounds[0][2] );
-	glVertex3f( bounds[1][0], bounds[0][1], bounds[0][2] );
-	glEnd();
-	glBegin( GL_LINE_LOOP );
-	glVertex3f( bounds[0][0], bounds[0][1], bounds[1][2] );
-	glVertex3f( bounds[0][0], bounds[1][1], bounds[1][2] );
-	glVertex3f( bounds[1][0], bounds[1][1], bounds[1][2] );
-	glVertex3f( bounds[1][0], bounds[0][1], bounds[1][2] );
-	glEnd();
+  fhImmediateMode lines;
 
-	glBegin( GL_LINES );
-	glVertex3f( bounds[0][0], bounds[0][1], bounds[0][2] );
-	glVertex3f( bounds[0][0], bounds[0][1], bounds[1][2] );
+  lines.Color3fv(color.ToFloatPtr());
+  lines.Begin(GL_LINE_LOOP);  
+  lines.Vertex3f(bounds[0][0], bounds[0][1], bounds[0][2]);
+  lines.Vertex3f(bounds[0][0], bounds[1][1], bounds[0][2]);
+  lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[0][2]);
+  lines.Vertex3f(bounds[1][0], bounds[0][1], bounds[0][2]);
+  lines.End();
+  lines.Begin(GL_LINE_LOOP);
+  lines.Vertex3f(bounds[0][0], bounds[0][1], bounds[1][2]);
+  lines.Vertex3f(bounds[0][0], bounds[1][1], bounds[1][2]);
+  lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[1][2]);
+  lines.Vertex3f(bounds[1][0], bounds[0][1], bounds[1][2]);
+  lines.End();
 
-	glVertex3f( bounds[0][0], bounds[1][1], bounds[0][2] );
-	glVertex3f( bounds[0][0], bounds[1][1], bounds[1][2] );
+  lines.Begin(GL_LINES);
+  lines.Vertex3f(bounds[0][0], bounds[0][1], bounds[0][2]);
+  lines.Vertex3f(bounds[0][0], bounds[0][1], bounds[1][2]);
 
-	glVertex3f( bounds[1][0], bounds[0][1], bounds[0][2] );
-	glVertex3f( bounds[1][0], bounds[0][1], bounds[1][2] );
+  lines.Vertex3f(bounds[0][0], bounds[1][1], bounds[0][2]);
+  lines.Vertex3f(bounds[0][0], bounds[1][1], bounds[1][2]);
 
-	glVertex3f( bounds[1][0], bounds[1][1], bounds[0][2] );
-	glVertex3f( bounds[1][0], bounds[1][1], bounds[1][2] );
-	glEnd();
+  lines.Vertex3f(bounds[1][0], bounds[0][1], bounds[0][2]);
+  lines.Vertex3f(bounds[1][0], bounds[0][1], bounds[1][2]);
+
+  lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[0][2]);
+  lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[1][2]);
+  lines.End();  
 }
 
 
@@ -166,21 +173,23 @@ glColorMask, and the enabled state of depth buffering and
 stenciling will matter.
 =================
 */
-void RB_PolygonClear( void ) {
+void RB_PolygonClear( const idVec3 &clearColor ) {
   GL_ModelViewMatrix.Push();
-	
 	glPushAttrib( GL_ALL_ATTRIB_BITS  );
   GL_ModelViewMatrix.LoadIdentity();	
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_CULL_FACE );
 	glDisable( GL_SCISSOR_TEST );
-	glBegin( GL_POLYGON );
-	glVertex3f( -20, -20, -10 );
-	glVertex3f( 20, -20, -10 );
-	glVertex3f( 20, 20, -10 );
-	glVertex3f( -20, 20, -10 );
-	glEnd();
+
+  fhImmediateMode im;
+	im.Begin( GL_QUADS );
+  im.Color3fv(clearColor.ToFloatPtr());
+	im.Vertex3f( -20, -20, -10 );
+	im.Vertex3f( 20, -20, -10 );
+	im.Vertex3f( 20, 20, -10 );
+	im.Vertex3f( -20, 20, -10 );
+	im.End();
 	glPopAttrib();
 
 	GL_ModelViewMatrix.Pop();
@@ -193,8 +202,7 @@ RB_ShowDestinationAlpha
 */
 void RB_ShowDestinationAlpha( void ) {
 	GL_State( GLS_SRCBLEND_DST_ALPHA | GLS_DSTBLEND_ZERO | GLS_DEPTHMASK | GLS_DEPTHFUNC_ALWAYS );
-	glColor3f( 1, 1, 1 );
-	RB_PolygonClear();
+	RB_PolygonClear( idVec3(1,1,1) );
 }
 
 /*
@@ -286,10 +294,9 @@ static void R_ColorByStencilBuffer( void ) {
 
 	// now draw color for each stencil value
 	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-	for ( i = 0 ; i < 6 ; i++ ) {
-		glColor3fv( colors[i] );
+	for ( i = 0 ; i < 6 ; i++ ) {		
 		glStencilFunc( GL_EQUAL, i, 255 );
-		RB_PolygonClear();
+		RB_PolygonClear( idVec3(colors[i][0], colors[i][1], colors[i][2]) );
 	}
 
 	glStencilFunc( GL_ALWAYS, 0, 255 );
@@ -514,6 +521,12 @@ void RB_ShowLightCount( void ) {
 
 	globalImages->defaultImage->Bind();
 
+  if (backEnd.glslEnabled) {
+    GL_UseProgram(vertexColorProgram);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  }
+
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
 		for ( i = 0 ; i < 2 ; i++ ) {
 			for ( surf = i ? vLight->localInteractions: vLight->globalInteractions; surf; surf = (drawSurf_t *)surf->nextOnLight ) {
@@ -522,15 +535,34 @@ void RB_ShowLightCount( void ) {
 					continue;
 				}
 
-				const idDrawVert	*ac = (idDrawVert *)vertexCache.Position( surf->geo->ambientCache );
-				glVertexPointer( 3, GL_FLOAT, sizeof( idDrawVert ), &ac->xyz );
+        if (backEnd.glslEnabled) {
+          const int offset = vertexCache.Bind(surf->geo->ambientCache);
+
+          glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+          glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
+          glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
+          glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
+        } else {
+          const idDrawVert	*ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache);
+          glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), &ac->xyz);
+        }
+				
 				RB_DrawElementsWithCounters( surf->geo );
 			}
 		}
 	}
 
+  if (backEnd.glslEnabled) {
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+    GL_UseProgram(nullptr);
+  } 
+
+
 	// display the results
-	R_ColorByStencilBuffer();
+  if(!r_ignore.GetBool())
+	  R_ColorByStencilBuffer();
 
 	if ( r_showLightCount.GetInteger() > 2 ) {
 		RB_CountStencilBuffer();
@@ -878,20 +910,16 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 			continue;
 		}
 
-		// draw the reference bounds in yellow
-		glColor3f( 1, 1, 0 );
-		RB_DrawBounds( vModels->entityDef->referenceBounds );
+		// draw the reference bounds in yellow		
+		RB_DrawBounds( vModels->entityDef->referenceBounds, idVec3(1,1,0) );
 
-
-		// draw the model bounds in white
-		glColor3f( 1, 1, 1 );
-
+		// draw the model bounds in white	
 		idRenderModel *model = R_EntityDefDynamicModel( vModels->entityDef );
 		if ( !model ) {
 			continue;	// particles won't instantiate without a current view
 		}
 		b = model->Bounds( &vModels->entityDef->parms );
-		RB_DrawBounds( b );
+		RB_DrawBounds( b, idVec3( 1, 1, 1 ) );
 	}
 
 	glEnable( GL_DEPTH_TEST );
@@ -1767,9 +1795,11 @@ static void RB_DrawText( const char *text, const idVec3 &origin, float scale, co
 	float textLen, spacing;
 	idVec3 org, p1, p2;
 
+  fhImmediateMode im;
+
 	if ( text && *text ) {
-		glBegin( GL_LINES );
-		glColor3fv( color.ToFloatPtr() );
+		im.Begin( GL_LINES );
+		im.Color3fv( color.ToFloatPtr() );
 
 		if ( text[0] == '\n' ) {
 			line = 1;
@@ -1821,13 +1851,13 @@ static void RB_DrawText( const char *text, const idVec3 &origin, float scale, co
 				}
 				p2 = org + scale * simplex[charIndex][index] * -viewAxis[1] + scale * simplex[charIndex][index+1] * viewAxis[2];
 
-				glVertex3fv( p1.ToFloatPtr() );
-				glVertex3fv( p2.ToFloatPtr() );
+				im.Vertex3fv( p1.ToFloatPtr() );
+				im.Vertex3fv( p2.ToFloatPtr() );
 			}
 			org -= viewAxis[1] * ( spacing * scale );
 		}
 
-		glEnd();
+		im.End();
 	}
 }
 
@@ -1971,8 +2001,8 @@ void RB_ShowDebugLines( void ) {
 		glDisable( GL_DEPTH_TEST );
 	}
 
-  fhLinesMode lines;
-  lines.Begin();
+  fhImmediateMode lines;
+  lines.Begin(GL_LINES);
   line = rb_debugLines;
   for (i = 0; i < rb_numDebugLines; i++, line++) {
     if ( !line->depthTest ) {
@@ -1987,7 +2017,7 @@ void RB_ShowDebugLines( void ) {
 		glEnable( GL_DEPTH_TEST );
 	}
 
-  lines.Begin();
+  lines.Begin(GL_LINES);
   line = rb_debugLines;
   for (i = 0; i < rb_numDebugLines; i++, line++) {
     if ( line->depthTest ) {
@@ -2294,27 +2324,28 @@ void RB_TestImage( void ) {
   GL_ModelViewMatrix.LoadIdentity();	
 	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
   GL_ProjectionMatrix.Push();
-  GL_ProjectionMatrix.LoadIdentity();
-  
-	glColor3f( 1, 1, 1 );
-	GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
-
-	tr.testImage->Bind();
-	glBegin( GL_QUADS );
+  GL_ProjectionMatrix.LoadIdentity();  
 	
-	glTexCoord2f( 0, 1 );
-	glVertex2f( 0.5 - w, 0 );
+	GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
+  
+  fhImmediateMode im;
+  im.SetTexture(tr.testImage);
+  im.Color3f(1,1,1);
+	im.Begin( GL_QUADS );
+	
+	im.TexCoord2f( 0, 1 );
+	im.Vertex2f( 0.5 - w, 0 );
 
-	glTexCoord2f( 0, 0 );
-	glVertex2f( 0.5 - w, h*2 );
+	im.TexCoord2f( 0, 0 );
+	im.Vertex2f( 0.5 - w, h*2 );
 
-	glTexCoord2f( 1, 0 );
-	glVertex2f( 0.5 + w, h*2 );
+	im.TexCoord2f( 1, 0 );
+	im.Vertex2f( 0.5 + w, h*2 );
 
-	glTexCoord2f( 1, 1 );
-	glVertex2f( 0.5 + w, 0 );
+	im.TexCoord2f( 1, 1 );
+	im.Vertex2f( 0.5 + w, 0 );
 
-	glEnd();
+	im.End();
 
 	GL_ProjectionMatrix.Pop();	
 }

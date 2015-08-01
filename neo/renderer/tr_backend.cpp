@@ -29,7 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
-
+#include "ImmediateMode.h"
 
 frameData_t		*frameData;
 backEndState_t	backEnd;
@@ -684,17 +684,19 @@ void RB_ShowImages( void ) {
 			h *= image->uploadHeight / 512.0f;
 		}
 
-		image->Bind();
-		glBegin (GL_QUADS);
-		glTexCoord2f( 0, 0 );
-		glVertex2f( x, y );
-		glTexCoord2f( 1, 0 );
-		glVertex2f( x + w, y );
-		glTexCoord2f( 1, 1 );
-		glVertex2f( x + w, y + h );
-		glTexCoord2f( 0, 1 );
-		glVertex2f( x, y + h );
-		glEnd();
+    fhImmediateMode im;
+    im.Color3f(1,1,1);
+		im.SetTexture(image);
+		im.Begin (GL_QUADS);
+		im.TexCoord2f( 0, 0 );
+		im.Vertex2f( x, y );
+		im.TexCoord2f( 1, 0 );
+		im.Vertex2f( x + w, y );
+		im.TexCoord2f( 1, 1 );
+		im.Vertex2f( x + w, y + h );
+		im.TexCoord2f( 0, 1 );
+		im.Vertex2f( x, y + h );
+		im.End();
 	}
 
 	glFinish();

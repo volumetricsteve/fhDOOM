@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImmediateMode.h"
 
 static const char* const shadowVertexShaderName = "shadow.vp";
 static const char* const shadowFragmentShaderName = "shadow.fp";
@@ -600,16 +601,18 @@ void RB_STD_LightScale( void ) {
 		f /= 2;
 		if ( f > 1 ) {
 			f = 1;
-		}
-		glColor3f( f, f, f );
-		v = v * f * 2;
+		}   
 
-		glBegin( GL_QUADS );
-		glVertex2f( 0,0 );	
-		glVertex2f( 0,1 );
-		glVertex2f( 1,1 );	
-		glVertex2f( 1,0 );	
-		glEnd();
+    v = v * f * 2;
+
+    fhImmediateMode im;   
+		im.Color3f( f, f, f );
+		im.Begin( GL_QUADS );
+		im.Vertex2f( 0,0 );	
+		im.Vertex2f( 0,1 );
+		im.Vertex2f( 1,1 );	
+		im.Vertex2f( 1,0 );	
+		im.End();
 	}
 
 	GL_ProjectionMatrix.Pop();

@@ -1897,7 +1897,6 @@ static void R_SizeDown_f( const idCmdArgs &args ) {
 	}
 }
 
-
 /*
 ===============
 TouchGui_f

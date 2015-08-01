@@ -130,7 +130,7 @@ RB_T_BasicFog
 
 =====================
 */
-static void RB_T_BasicFog(const drawSurf_t *surf) {
+static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
@@ -184,7 +184,7 @@ void	R_GLSL_Init( void )
   interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
   vertexColorProgram = R_FindGlslProgram("vertexcolor.vp", "vertexcolor.fp");
 
-  fhLinesMode::Init();
+  fhImmediateMode::Init();
 }
 
 
@@ -274,15 +274,15 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   // draw it
   backEnd.glState.forceGlState = true;
   GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL);
-  RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_T_BasicFog);
-  RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_T_BasicFog);
+  RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BasicFog);
+  RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BasicFog);
 
   // the light frustum bounding planes aren't in the depth buffer, so use depthfunc_less instead
   // of depthfunc_equal
   if (!r_ignore2.GetBool()) {
     GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
     GL_Cull(CT_BACK_SIDED);
-    RB_RenderDrawSurfChainWithFunction(&ds, RB_T_BasicFog);
+    RB_RenderDrawSurfChainWithFunction(&ds, RB_GLSL_BasicFog);
     GL_Cull(CT_FRONT_SIDED);
   }
 

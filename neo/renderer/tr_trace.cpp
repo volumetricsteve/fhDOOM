@@ -407,9 +407,8 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		// draw the bounding box
 		GL_State( GLS_DEPTHFUNC_ALWAYS );
-
-		glColor4f( 1, 1, 1, 1 );
-		RB_DrawBounds( tri->bounds );
+		
+		RB_DrawBounds( tri->bounds, idVec3(1,1,1) );
 
 		if ( radius != 0.0f ) {
 			// draw the expanded triangles
@@ -421,7 +420,7 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		hit = R_LocalTrace( localStart, localEnd, radius, tri );
 		if ( hit.fraction < 1.0 ) {
 			glColor4f( 1, 1, 1, 1 );
-			RB_DrawBounds( idBounds( hit.point ).Expand( 1 ) );
+			RB_DrawBounds( idBounds( hit.point ).Expand( 1 ), idVec3(1,1,1) );
 		}
 	}
 }
