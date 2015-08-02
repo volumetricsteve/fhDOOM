@@ -594,7 +594,14 @@ void RB_ShowSilhouette( void ) {
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_STENCIL_TEST );
 
-	glColor3f( 0, 0, 0 );
+  if(backEnd.glslEnabled) {
+    GL_UseProgram(flatColorProgram);
+    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 0.0f, 1.0f);
+  } else {
+    glColor3f( 0, 0, 0 );
+  }	
 
 	GL_State( GLS_POLYMODE_LINE );
 
@@ -609,7 +616,7 @@ void RB_ShowSilhouette( void ) {
 	// now blend in edges that cast silhouettes
 	//
 	RB_SimpleWorldSetup();
-	glColor3f( 0.5, 0, 0 );
+	
 	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
 
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
@@ -642,10 +649,22 @@ void RB_ShowSilhouette( void ) {
             }
           }
 
-          //do nothing yet
+          glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+          glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+          glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.5f, 0.0f, 0.0f, 1.0f);
 
+          const int offset = vertexCache.Bind(tri->shadowCache);
+          glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+          glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), GL_AttributeOffset(offset, 0));
 
+          glDrawElements(GL_LINES,
+            indicesUsed,
+            GL_UNSIGNED_SHORT,
+            indices);
+
+          glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);          
         } else {
+          glColor3f( 0.5, 0, 0 );
 				  glVertexPointer( 3, GL_FLOAT, sizeof( shadowCache_t ), vertexCache.Position( tri->shadowCache ) );
 				  glBegin( GL_LINES );
 
@@ -670,10 +689,18 @@ void RB_ShowSilhouette( void ) {
 		}
 	}
 
+
+  if (backEnd.glslEnabled) {
+    GL_UseProgram(nullptr);
+  }
+  else {
+    glColor3f( 1,1,1 );
+  }
+
 	glEnable( GL_DEPTH_TEST );
 
 	GL_State( GLS_DEFAULT );
-	glColor3f( 1,1,1 );
+	
 	GL_Cull( CT_FRONT_SIDED );
 }
 
@@ -805,13 +832,8 @@ static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 
   if (backEnd.glslEnabled) {
-    GL_UseProgram(defaultProgram);
-    glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
-    glUniform4f(glslProgramDef_t::uniform_color_add, 1, 1, 1, 1);
+    GL_UseProgram(flatColorProgram);
     glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
-    GL_SelectTexture(1);
-    globalImages->whiteImage->Bind();
-    GL_SelectTexture(0);
   } else {
     glColor3f( 1, 1, 1 );
   }

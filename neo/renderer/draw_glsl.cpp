@@ -15,6 +15,7 @@ const glslProgramDef_t* skyboxProgram = nullptr;
 const glslProgramDef_t* bumpyEnvProgram = nullptr;
 const glslProgramDef_t* fogProgram = nullptr;
 const glslProgramDef_t* vertexColorProgram = nullptr;
+const glslProgramDef_t* flatColorProgram = nullptr;
 
 /*
 ====================
@@ -183,6 +184,7 @@ void	R_GLSL_Init( void )
   bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");  
   interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
   vertexColorProgram = R_FindGlslProgram("vertexcolor.vp", "vertexcolor.fp");
+  flatColorProgram = R_FindGlslProgram("flatcolor.vp", "flatcolor.fp");
 
   fhImmediateMode::Init();
 }
