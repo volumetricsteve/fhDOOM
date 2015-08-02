@@ -561,8 +561,7 @@ void RB_ShowLightCount( void ) {
 
 
 	// display the results
-  if(!r_ignore.GetBool())
-	  R_ColorByStencilBuffer();
+  R_ColorByStencilBuffer();
 
 	if ( r_showLightCount.GetInteger() > 2 ) {
 		RB_CountStencilBuffer();
@@ -621,26 +620,52 @@ void RB_ShowSilhouette( void ) {
 
 				const srfTriangles_t	*tri = surf->geo;
 
-				glVertexPointer( 3, GL_FLOAT, sizeof( shadowCache_t ), vertexCache.Position( tri->shadowCache ) );
-				glBegin( GL_LINES );
+        if(backEnd.glslEnabled) {
+          static const int maxIndices = 2048;
+          static unsigned short indices[maxIndices];
+          unsigned indicesUsed = 0;
 
-				for ( int j = 0 ; j < tri->numIndexes ; j+=3 ) {
-					int		i1 = tri->indexes[j+0];
-					int		i2 = tri->indexes[j+1];
-					int		i3 = tri->indexes[j+2];
+          for (int j = 0; j < tri->numIndexes && (indicesUsed+2) < maxIndices; j += 3) {
+            int		i1 = tri->indexes[j + 0];
+            int		i2 = tri->indexes[j + 1];
+            int		i3 = tri->indexes[j + 2];
 
-					if ( (i1 & 1) + (i2 & 1) + (i3 & 1) == 1 ) {
-						if ( (i1 & 1) + (i2 & 1) == 0 ) {
-							glArrayElement( i1 );
-							glArrayElement( i2 );
-						} else if ( (i1 & 1 ) + (i3 & 1) == 0 ) {
-							glArrayElement( i1 );
-							glArrayElement( i3 );
-						}
-					}
-				}
-				glEnd();
+            if ((i1 & 1) + (i2 & 1) + (i3 & 1) == 1) {
+              if ((i1 & 1) + (i2 & 1) == 0) {
+                indices[indicesUsed++] = (unsigned short)i1;
+                indices[indicesUsed++] = (unsigned short)i2;
+              }
+              else if ((i1 & 1) + (i3 & 1) == 0) {
+                indices[indicesUsed++] = (unsigned short)i1;
+                indices[indicesUsed++] = (unsigned short)i3;
+              }
+            }
+          }
 
+          //do nothing yet
+
+
+        } else {
+				  glVertexPointer( 3, GL_FLOAT, sizeof( shadowCache_t ), vertexCache.Position( tri->shadowCache ) );
+				  glBegin( GL_LINES );
+
+				  for ( int j = 0 ; j < tri->numIndexes ; j+=3 ) {
+					  int		i1 = tri->indexes[j+0];
+					  int		i2 = tri->indexes[j+1];
+					  int		i3 = tri->indexes[j+2];
+
+					  if ( (i1 & 1) + (i2 & 1) + (i3 & 1) == 1 ) {
+						  if ( (i1 & 1) + (i2 & 1) == 0 ) {
+							  glArrayElement( i1 );
+							  glArrayElement( i2 );
+						  } else if ( (i1 & 1 ) + (i3 & 1) == 0 ) {
+							  glArrayElement( i1 );
+							  glArrayElement( i3 );
+						  }
+					  }
+				  }
+				  glEnd();
+        }
 			}
 		}
 	}
@@ -769,9 +794,6 @@ Debugging tool
 =====================
 */
 static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
-	modelTrace_t mt;
-	idVec3 end;
-
 	if ( !r_showTris.GetInteger() ) {
 		return;
 	}
@@ -781,8 +803,18 @@ static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_STENCIL_TEST );
 
-	glColor3f( 1, 1, 1 );
 
+  if (backEnd.glslEnabled) {
+    GL_UseProgram(defaultProgram);
+    glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
+    glUniform4f(glslProgramDef_t::uniform_color_add, 1, 1, 1, 1);
+    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+    GL_SelectTexture(1);
+    globalImages->whiteImage->Bind();
+    GL_SelectTexture(0);
+  } else {
+    glColor3f( 1, 1, 1 );
+  }
 
 	GL_State( GLS_POLYMODE_LINE );
 
@@ -803,6 +835,10 @@ static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	}
 
 	RB_RenderDrawSurfListWithFunction( drawSurfs, numDrawSurfs, RB_T_RenderTriangleSurface );
+
+  if (backEnd.glslEnabled) {
+    GL_UseProgram(nullptr);
+  }
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_POLYGON_OFFSET_LINE );
@@ -952,7 +988,8 @@ static void RB_ShowTexturePolarity( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
-	glColor3f( 1, 1, 1 );
+  fhImmediateMode im;
+	im.Color3f( 1, 1, 1 );
 
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
@@ -963,7 +1000,7 @@ static void RB_ShowTexturePolarity( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		RB_SimpleSurfaceSetup( drawSurf );
 
-		glBegin( GL_TRIANGLES );
+		im.Begin( GL_TRIANGLES );
 		for ( j = 0 ; j < tri->numIndexes ; j+=3 ) {
 			idDrawVert	*a, *b, *c;
 			float		d0[5], d1[5];
@@ -983,17 +1020,17 @@ static void RB_ShowTexturePolarity( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			area = d0[3] * d1[4] - d0[4] * d1[3];
 
 			if ( idMath::Fabs( area ) < 0.0001 ) {
-				glColor4f( 0, 0, 1, 0.5 );
+				im.Color4f( 0, 0, 1, 0.5f );
 			} else  if ( area < 0 ) {
-				glColor4f( 1, 0, 0, 0.5 );
+				im.Color4f( 1, 0, 0, 0.5f );
 			} else {
-				glColor4f( 0, 1, 0, 0.5 );
+				im.Color4f( 0, 1, 0, 0.5f );
 			}
-			glVertex3fv( a->xyz.ToFloatPtr() );
-			glVertex3fv( b->xyz.ToFloatPtr() );
-			glVertex3fv( c->xyz.ToFloatPtr() );
+			im.Vertex3fv( a->xyz.ToFloatPtr() );
+			im.Vertex3fv( b->xyz.ToFloatPtr() );
+			im.Vertex3fv( c->xyz.ToFloatPtr() );
 		}
-		glEnd();
+		im.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1021,7 +1058,8 @@ static void RB_ShowUnsmoothedTangents( drawSurf_t **drawSurfs, int numDrawSurfs 
 
 	GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
-	glColor4f( 0, 1, 0, 0.5 );
+  fhImmediateMode im;
+	im.Color4f( 0, 1, 0, 0.5 );
 
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
@@ -1033,7 +1071,7 @@ static void RB_ShowUnsmoothedTangents( drawSurf_t **drawSurfs, int numDrawSurfs 
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		tri = drawSurf->geo;
-		glBegin( GL_TRIANGLES );
+		im.Begin( GL_TRIANGLES );
 		for ( j = 0 ; j < tri->numIndexes ; j+=3 ) {
 			idDrawVert	*a, *b, *c;
 
@@ -1041,11 +1079,11 @@ static void RB_ShowUnsmoothedTangents( drawSurf_t **drawSurfs, int numDrawSurfs 
 			b = tri->verts + tri->indexes[j+1];
 			c = tri->verts + tri->indexes[j+2];
 
-			glVertex3fv( a->xyz.ToFloatPtr() );
-			glVertex3fv( b->xyz.ToFloatPtr() );
-			glVertex3fv( c->xyz.ToFloatPtr() );
+			im.Vertex3fv( a->xyz.ToFloatPtr() );
+			im.Vertex3fv( b->xyz.ToFloatPtr() );
+			im.Vertex3fv( c->xyz.ToFloatPtr() );
 		}
-		glEnd();
+		im.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1076,6 +1114,8 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
+  fhImmediateMode im;
+
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
@@ -1085,25 +1125,25 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		if ( !tri->verts ) {
 			continue;
 		}
-		glBegin( GL_TRIANGLES );
+		im.Begin( GL_TRIANGLES );
 		for ( j = 0 ; j < tri->numIndexes ; j++ ) {
 			const idDrawVert *v;
 
 			v = &tri->verts[tri->indexes[j]];
 
 			if ( r_showTangentSpace.GetInteger() == 1 ) {
-				glColor4f( 0.5 + 0.5 * v->tangents[0][0],  0.5 + 0.5 * v->tangents[0][1],  
+				im.Color4f( 0.5 + 0.5 * v->tangents[0][0],  0.5 + 0.5 * v->tangents[0][1],  
 					0.5 + 0.5 * v->tangents[0][2], 0.5 );
 			} else if ( r_showTangentSpace.GetInteger() == 2 ) {
-				glColor4f( 0.5 + 0.5 * v->tangents[1][0],  0.5 + 0.5 * v->tangents[1][1],  
+				im.Color4f( 0.5 + 0.5 * v->tangents[1][0],  0.5 + 0.5 * v->tangents[1][1],  
 					0.5 + 0.5 * v->tangents[1][2], 0.5 );
 			} else {
-				glColor4f( 0.5 + 0.5 * v->normal[0],  0.5 + 0.5 * v->normal[1],  
+				im.Color4f( 0.5 + 0.5 * v->normal[0],  0.5 + 0.5 * v->normal[1],  
 					0.5 + 0.5 * v->normal[2], 0.5 );
 			}
-			glVertex3fv( v->xyz.ToFloatPtr() );
+			im.Vertex3fv( v->xyz.ToFloatPtr() );
 		}
-		glEnd();
+		im.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1130,6 +1170,8 @@ static void RB_ShowVertexColor( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	GL_State( GLS_DEPTHFUNC_LESS );
 
+  fhImmediateMode im;
+
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
@@ -1139,15 +1181,15 @@ static void RB_ShowVertexColor( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		if ( !tri->verts ) {
 			continue;
 		}
-		glBegin( GL_TRIANGLES );
+		im.Begin( GL_TRIANGLES );
 		for ( j = 0 ; j < tri->numIndexes ; j++ ) {
 			const idDrawVert *v;
 
 			v = &tri->verts[tri->indexes[j]];
-			glColor4ubv( v->color );
-			glVertex3fv( v->xyz.ToFloatPtr() );
+			im.Color4ubv( v->color );
+			im.Vertex3fv( v->xyz.ToFloatPtr() );
 		}
-		glEnd();
+		im.End();
 	}
 
 	GL_State( GLS_DEFAULT );
@@ -1193,6 +1235,7 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		showNumbers = false;
 	}
 
+  fhImmediateMode im;
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
@@ -1202,25 +1245,25 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		if ( !tri->verts ) {
 			continue;
 		}
+          
+    im.Begin(GL_LINES);
+    for (j = 0; j < tri->numVerts; j++) {
+      im.Color3f(0, 0, 1);
+      im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
+      VectorMA(tri->verts[j].xyz, size, tri->verts[j].normal, end);
+      im.Vertex3fv(end.ToFloatPtr());
 
-		glBegin( GL_LINES );
-		for ( j = 0 ; j < tri->numVerts ; j++ ) {
-			glColor3f( 0, 0, 1 );
-			glVertex3fv( tri->verts[j].xyz.ToFloatPtr() );
-			VectorMA( tri->verts[j].xyz, size, tri->verts[j].normal, end );
-			glVertex3fv( end.ToFloatPtr() );
+      im.Color3f(1, 0, 0);
+      im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
+      VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[0], end);
+      im.Vertex3fv(end.ToFloatPtr());
 
-			glColor3f( 1, 0, 0 );
-			glVertex3fv( tri->verts[j].xyz.ToFloatPtr() );
-			VectorMA( tri->verts[j].xyz, size, tri->verts[j].tangents[0], end );
-			glVertex3fv( end.ToFloatPtr() );
-
-			glColor3f( 0, 1, 0 );
-			glVertex3fv( tri->verts[j].xyz.ToFloatPtr() );
-			VectorMA( tri->verts[j].xyz, size, tri->verts[j].tangents[1], end );
-			glVertex3fv( end.ToFloatPtr() );
-		}
-		glEnd();
+      im.Color3f(0, 1, 0);
+      im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
+      VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[1], end);
+      im.Vertex3fv(end.ToFloatPtr());
+    }
+    im.End();   
 	}
 
 	if ( showNumbers ) {
@@ -1272,13 +1315,14 @@ static void RB_AltShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	glDisable( GL_STENCIL_TEST );
 	glDisable( GL_DEPTH_TEST );
 
+  fhImmediateMode im;
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		tri = drawSurf->geo;
-		glBegin( GL_LINES );
+		im.Begin( GL_LINES );
 		for ( j = 0 ; j < tri->numIndexes ; j += 3 ) {
 			const idDrawVert *v[3];
 			idVec3		mid;
@@ -1296,27 +1340,27 @@ static void RB_AltShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 				pos = ( mid + v[k]->xyz * 3.0f ) * 0.25f;
 
-				glColor3f( 0, 0, 1 );
-				glVertex3fv( pos.ToFloatPtr() );
+				im.Color3f( 0, 0, 1 );
+				im.Vertex3fv( pos.ToFloatPtr() );
 				VectorMA( pos, r_showNormals.GetFloat(), v[k]->normal, end );
-				glVertex3fv( end.ToFloatPtr() );
+				im.Vertex3fv( end.ToFloatPtr() );
 
-				glColor3f( 1, 0, 0 );
-				glVertex3fv( pos.ToFloatPtr() );
+				im.Color3f( 1, 0, 0 );
+				im.Vertex3fv( pos.ToFloatPtr() );
 				VectorMA( pos, r_showNormals.GetFloat(), v[k]->tangents[0], end );
-				glVertex3fv( end.ToFloatPtr() );
+				im.Vertex3fv( end.ToFloatPtr() );
 
-				glColor3f( 0, 1, 0 );
-				glVertex3fv( pos.ToFloatPtr() );
+				im.Color3f( 0, 1, 0 );
+				im.Vertex3fv( pos.ToFloatPtr() );
 				VectorMA( pos, r_showNormals.GetFloat(), v[k]->tangents[1], end );
-				glVertex3fv( end.ToFloatPtr() );
+				im.Vertex3fv( end.ToFloatPtr() );
 
-				glColor3f( 1, 1, 1 );
-				glVertex3fv( pos.ToFloatPtr() );
-				glVertex3fv( v[k]->xyz.ToFloatPtr() );
+				im.Color3f( 1, 1, 1 );
+				im.Vertex3fv( pos.ToFloatPtr() );
+				im.Vertex3fv( v[k]->xyz.ToFloatPtr() );
 			}
 		}
-		glEnd();
+		im.End();
 	}
 
 	glEnable( GL_DEPTH_TEST );
@@ -1346,6 +1390,7 @@ static void RB_ShowTextureVectors( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	globalImages->BindNull();
 
+  fhImmediateMode im;
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
@@ -1360,7 +1405,7 @@ static void RB_ShowTextureVectors( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		// draw non-shared edges in yellow
-		glBegin( GL_LINES );
+		im.Begin( GL_LINES );
 
 		for ( j = 0 ; j < tri->numIndexes ; j+= 3 ) {
 			const idDrawVert *a, *b, *c;
@@ -1408,16 +1453,16 @@ static void RB_ShowTextureVectors( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			tangents[0] = mid + tangents[0] * r_showTextureVectors.GetFloat();
 			tangents[1] = mid + tangents[1] * r_showTextureVectors.GetFloat();
 
-			glColor3f( 1, 0, 0 );
-			glVertex3fv( mid.ToFloatPtr() );
-			glVertex3fv( tangents[0].ToFloatPtr() );
+			im.Color3f( 1, 0, 0 );
+			im.Vertex3fv( mid.ToFloatPtr() );
+			im.Vertex3fv( tangents[0].ToFloatPtr() );
 
-			glColor3f( 0, 1, 0 );
-			glVertex3fv( mid.ToFloatPtr() );
-			glVertex3fv( tangents[1].ToFloatPtr() );
+			im.Color3f( 0, 1, 0 );
+			im.Vertex3fv( mid.ToFloatPtr() );
+			im.Vertex3fv( tangents[1].ToFloatPtr() );
 		}
 
-		glEnd();
+		im.End();
 	}
 }
 
@@ -1445,6 +1490,8 @@ static void RB_ShowDominantTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	globalImages->BindNull();
 
+  fhImmediateMode im;
+
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
@@ -1458,8 +1505,8 @@ static void RB_ShowDominantTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		}
 		RB_SimpleSurfaceSetup( drawSurf );
 
-		glColor3f( 1, 1, 0 );
-		glBegin( GL_LINES );
+		im.Color3f( 1, 1, 0 );
+		im.Begin( GL_LINES );
 
 		for ( j = 0 ; j < tri->numVerts ; j++ ) {
 			const idDrawVert *a, *b, *c;
@@ -1473,11 +1520,11 @@ static void RB_ShowDominantTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 			mid = ( a->xyz + b->xyz + c->xyz ) * ( 1.0f / 3.0f );
 
-			glVertex3fv( mid.ToFloatPtr() );
-			glVertex3fv( a->xyz.ToFloatPtr() );
+			im.Vertex3fv( mid.ToFloatPtr() );
+			im.Vertex3fv( a->xyz.ToFloatPtr() );
 		}
 
-		glEnd();
+		im.End();
 	}
 	glDisable( GL_POLYGON_OFFSET_LINE );
 }
@@ -1506,6 +1553,8 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	globalImages->BindNull();
 	glDisable( GL_DEPTH_TEST );
 
+  fhImmediateMode im;
+
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 
@@ -1519,8 +1568,8 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		RB_SimpleSurfaceSetup( drawSurf );
 
 		// draw non-shared edges in yellow
-		glColor3f( 1, 1, 0 );
-		glBegin( GL_LINES );
+		im.Color3f( 1, 1, 0 );
+		im.Begin( GL_LINES );
 
 		for ( j = 0 ; j < tri->numIndexes ; j+= 3 ) {
 			for ( k = 0 ; k < 3 ; k++ ) {
@@ -1544,14 +1593,14 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 				// if we didn't find a backwards listing, draw it in yellow
 				if ( m == tri->numIndexes ) {
-					glVertex3fv( ac[ i1 ].xyz.ToFloatPtr() );
-					glVertex3fv( ac[ i2 ].xyz.ToFloatPtr() );
+					im.Vertex3fv( ac[ i1 ].xyz.ToFloatPtr() );
+					im.Vertex3fv( ac[ i2 ].xyz.ToFloatPtr() );
 				}
 
 			}
 		}
 
-		glEnd();
+		im.End();
 
 		// draw dangling sil edges in red
 		if ( !tri->silEdges ) {
@@ -1562,9 +1611,9 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		// is the dangling edge
 		danglePlane = tri->numIndexes / 3;
 
-		glColor3f( 1, 0, 0 );
+		im.Color3f( 1, 0, 0 );
 
-		glBegin( GL_LINES );
+		im.Begin( GL_LINES );
 		for ( j = 0 ; j < tri->numSilEdges ; j++ ) {
 			edge = tri->silEdges + j;
 
@@ -1572,10 +1621,10 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 				continue;
 			}
 
-			glVertex3fv( ac[ edge->v1 ].xyz.ToFloatPtr() );
-			glVertex3fv( ac[ edge->v2 ].xyz.ToFloatPtr() );
+			im.Vertex3fv( ac[ edge->v1 ].xyz.ToFloatPtr() );
+			im.Vertex3fv( ac[ edge->v2 ].xyz.ToFloatPtr() );
 		}
-		glEnd();
+		im.End();
 	}
 
 	glEnable( GL_DEPTH_TEST );
@@ -1615,6 +1664,15 @@ void RB_ShowLights( void ) {
 
 	common->Printf( "volumes: " );	// FIXME: not in back end!
 
+  if(backEnd.glslEnabled) {
+    GL_UseProgram(defaultProgram);
+    glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
+    glUniform4f(glslProgramDef_t::uniform_color_add, 1, 1, 1, 1);
+    GL_SelectTexture(1);
+    globalImages->whiteImage->Bind();
+    GL_SelectTexture(0);
+  }
+
 	count = 0;
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
 		light = vLight->lightDef;
@@ -1625,7 +1683,10 @@ void RB_ShowLights( void ) {
 		// depth buffered planes
 		if ( r_showLights.GetInteger() >= 2 ) {
 			GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK );
-			glColor4f( 0, 0, 1, 0.25 );
+      if(backEnd.glslEnabled)
+        glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 1.0f, 0.25f);
+      else
+			  glColor4f( 0, 0, 1, 0.25 );
 			glEnable( GL_DEPTH_TEST );
 			RB_RenderTriangleSurface( tri );
 		}
@@ -1634,7 +1695,12 @@ void RB_ShowLights( void ) {
 		if ( r_showLights.GetInteger() >= 3 ) {
 			GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK  );
 			glDisable( GL_DEPTH_TEST );
-			glColor3f( 1, 1, 1 );
+
+      if (backEnd.glslEnabled)
+        glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1.0f, 1.0f, 1.0f, 1.0f);
+      else
+        glColor3f( 1, 1, 1 );		
+
 			RB_RenderTriangleSurface( tri );
 		}
 
@@ -1648,6 +1714,10 @@ void RB_ShowLights( void ) {
 			common->Printf( "%i ", index );
 		}
 	}
+
+  if (backEnd.glslEnabled) {
+    GL_UseProgram(nullptr);
+  }
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_POLYGON_OFFSET_LINE );
@@ -2115,20 +2185,18 @@ void RB_ShowDebugPolygons( void ) {
 		glEnable( GL_POLYGON_OFFSET_LINE );
 	}
 
+  fhImmediateMode im;
 	poly = rb_debugPolygons;
 	for ( i = 0 ; i < rb_numDebugPolygons; i++, poly++ ) {
-//		if ( !poly->depthTest ) {
+			im.Color4fv( poly->rgb.ToFloatPtr() );
 
-			glColor4fv( poly->rgb.ToFloatPtr() );
-
-			glBegin( GL_POLYGON );
+			im.Begin( GL_POLYGON );
 
 			for ( j = 0; j < poly->winding.GetNumPoints(); j++) {
-				glVertex3fv( poly->winding[j].ToFloatPtr() );
+				im.Vertex3fv( poly->winding[j].ToFloatPtr() );
 			}
 
-			glEnd();
-//		}
+			im.End();
 	}
 
 	GL_State( GLS_DEFAULT );

@@ -251,6 +251,9 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 		// change the matrix if needed
 		if ( drawSurf->space != backEnd.currentSpace ) {
 			GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
+      if(backEnd.glslEnabled) {
+        glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, drawSurf->space->modelViewMatrix);
+      }
 		}
 
 		if ( drawSurf->space->weaponDepthHack ) {
