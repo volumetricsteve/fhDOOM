@@ -808,6 +808,8 @@ static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
   if (backEnd.glslEnabled) {
     GL_UseProgram(flatColorProgram);
     glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
   } else {
     glColor3f( 1, 1, 1 );
   }
