@@ -77,7 +77,7 @@ void fhImmediateMode::Begin(GLenum mode)
   drawVertsUsed = 0;
 }
 
-void fhImmediateMode::End()
+void fhImmediateMode::End(bool geometryOnly)
 {
   if(!drawVertsUsed)
     return;
@@ -87,13 +87,19 @@ void fhImmediateMode::End()
     auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(idDrawVert));
     int offset = vertexCache.Bind(vert);
 
-    if(currentTexture) {
-      GL_SelectTexture(1);
-      currentTexture->Bind();
-      GL_UseProgram(defaultProgram);
-      GL_SelectTexture(0);
-    } else {
-      GL_UseProgram(vertexColorProgram);
+    if(!geometryOnly) {
+      if(currentTexture) {
+        GL_SelectTexture(1);
+        currentTexture->Bind();
+        GL_UseProgram(defaultProgram);
+        GL_SelectTexture(0);
+      } else {
+        GL_UseProgram(vertexColorProgram);
+      }
+
+      glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+      glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+      glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
     }
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
@@ -102,10 +108,6 @@ void fhImmediateMode::End()
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
-
-    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
 
     GLenum mode = currentMode;
     
@@ -121,10 +123,12 @@ void fhImmediateMode::End()
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    if(!geometryOnly) {    
+      GL_UseProgram(nullptr);
+    }
 
-    GL_UseProgram(nullptr);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    
   } else {
 
     if(currentTexture)

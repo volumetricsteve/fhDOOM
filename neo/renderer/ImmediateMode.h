@@ -21,7 +21,7 @@ public:
   void Vertex3fv(const float* c);
   void Vertex3f(float x, float y, float z);
   void Vertex2f(float x, float y);
-  void End();
+  void End(bool geometryOnly = false);
 
   static void Init();
 private:  

@@ -395,45 +395,95 @@ void RB_ShowIntensity( void ) {
 		return;
 	}
 
-	colorReadback = (byte *)R_StaticAlloc( glConfig.vidWidth * glConfig.vidHeight * 4 );
-	glReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_RGBA, GL_UNSIGNED_BYTE, colorReadback );
+  if(backEnd.glslEnabled) {
+    globalImages->currentRenderImage->CopyFramebuffer(backEnd.viewDef->viewport.x1,
+      backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+      backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true);
 
-	c = glConfig.vidWidth * glConfig.vidHeight * 4;
-	for ( i = 0; i < c ; i+=4 ) {
-		j = colorReadback[i];
-		if ( colorReadback[i+1] > j ) {
-			j = colorReadback[i+1];
-		}
-		if ( colorReadback[i+2] > j ) {
-			j = colorReadback[i+2];
-		}
-		if ( j < 128 ) {
-			colorReadback[i+0] = 2*(128-j);
-			colorReadback[i+1] = 2*j;
-			colorReadback[i+2] = 0;
-		} else {
-			colorReadback[i+0] = 0;
-			colorReadback[i+1] = 2*(255-j);
-			colorReadback[i+2] = 2*(j-128);
-		}
-	}
+    GL_ModelViewMatrix.LoadIdentity();
+    GL_State(GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);
+    GL_ProjectionMatrix.Push();
+    GL_ProjectionMatrix.LoadIdentity();
 
-	// draw it back to the screen
-  GL_ModelViewMatrix.LoadIdentity();	
-  GL_State( GLS_DEPTHFUNC_ALWAYS );
+    GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 
-  GL_ProjectionMatrix.Push();
-  GL_ProjectionMatrix.LoadIdentity();
-  GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
+    GL_UseProgram(intensityProgram);
+    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
+    // current render
+    float currentRenderSize[4];
+    currentRenderSize[0] = globalImages->currentRenderImage->uploadWidth;
+    currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
+    currentRenderSize[2] = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+    currentRenderSize[3] = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+    glUniform4fv(glslProgramDef_t::uniform_currentRenderSize, 1, currentRenderSize);
+
+    GL_SelectTexture(0);
+    globalImages->currentRenderImage->Bind();    
+
+    fhImmediateMode im;    
+    im.Color3f(1, 1, 1);
+    im.Begin(GL_QUADS);
+
+    im.TexCoord2f(0, 0);
+    im.Vertex2f(0, 0);
+
+    im.TexCoord2f(0, 1);
+    im.Vertex2f(0, 1);
+
+    im.TexCoord2f(1, 1);
+    im.Vertex2f(1, 1);
+
+    im.TexCoord2f(1, 0);
+    im.Vertex2f(1, 0);
+
+    im.End(true);
+
+    GL_UseProgram(nullptr);
+
+    GL_ProjectionMatrix.Pop();
+  } else {
+	  colorReadback = (byte *)R_StaticAlloc( glConfig.vidWidth * glConfig.vidHeight * 4 );
+	  glReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_RGBA, GL_UNSIGNED_BYTE, colorReadback );
+
+	  c = glConfig.vidWidth * glConfig.vidHeight * 4;
+	  for ( i = 0; i < c ; i+=4 ) {
+		  j = colorReadback[i];
+		  if ( colorReadback[i+1] > j ) {
+			  j = colorReadback[i+1];
+		  }
+		  if ( colorReadback[i+2] > j ) {
+			  j = colorReadback[i+2];
+		  }
+		  if ( j < 128 ) {
+			  colorReadback[i+0] = 2*(128-j);
+			  colorReadback[i+1] = 2*j;
+			  colorReadback[i+2] = 0;
+		  } else {
+			  colorReadback[i+0] = 0;
+			  colorReadback[i+1] = 2*(255-j);
+			  colorReadback[i+2] = 2*(j-128);
+		  }
+	  }
+
+	  // draw it back to the screen
+    GL_ModelViewMatrix.LoadIdentity();	
+    GL_State( GLS_DEPTHFUNC_ALWAYS );
+
+    GL_ProjectionMatrix.Push();
+    GL_ProjectionMatrix.LoadIdentity();
+    GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
   
-	glRasterPos2f( 0, 0 );
-  GL_ProjectionMatrix.Pop();
-	glColor3f( 1, 1, 1 );
-	globalImages->BindNull();	
+	  glRasterPos2f( 0, 0 );
+    GL_ProjectionMatrix.Pop();
+	  glColor3f( 1, 1, 1 );
+	  globalImages->BindNull();	
 
-	glDrawPixels( glConfig.vidWidth, glConfig.vidHeight, GL_RGBA , GL_UNSIGNED_BYTE, colorReadback );
+	  glDrawPixels( glConfig.vidWidth, glConfig.vidHeight, GL_RGBA , GL_UNSIGNED_BYTE, colorReadback );
 
-	R_StaticFree( colorReadback );
+	  R_StaticFree( colorReadback );
+  }
 }
 
 

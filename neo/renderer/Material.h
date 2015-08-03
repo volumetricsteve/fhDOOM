@@ -271,6 +271,7 @@ extern const glslProgramDef_t* bumpyEnvProgram;
 extern const glslProgramDef_t* fogProgram;
 extern const glslProgramDef_t* vertexColorProgram;
 extern const glslProgramDef_t* flatColorProgram;
+extern const glslProgramDef_t* intensityProgram;
 
 typedef struct {
   const glslProgramDef_t*  program;
