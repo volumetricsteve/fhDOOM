@@ -1283,7 +1283,7 @@ RENDER
 void RB_EnterWeaponDepthHack();
 void RB_EnterModelDepthHack( float depth );
 void RB_LeaveDepthHack();
-void RB_DrawElementsImmediate( const srfTriangles_t *tri );
+void RB_DrawElementsImmediate( const srfTriangles_t *tri, const idVec4 &color = idVec4(1,1,1,1) );
 void RB_RenderTriangleSurface( const srfTriangles_t *tri );
 void RB_T_RenderTriangleSurface( const drawSurf_t *surf );
 void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs, 

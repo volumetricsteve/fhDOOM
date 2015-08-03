@@ -50,9 +50,10 @@ void fhImmediateMode::Init()
 }
 
 
-fhImmediateMode::fhImmediateMode()
+fhImmediateMode::fhImmediateMode(bool geometryOnly)
 : drawVertsUsed(0)
 , currentTexture(nullptr)
+, geometryOnly(geometryOnly)
 {
   assert(!active);
   active = true;
@@ -77,7 +78,7 @@ void fhImmediateMode::Begin(GLenum mode)
   drawVertsUsed = 0;
 }
 
-void fhImmediateMode::End(bool geometryOnly)
+void fhImmediateMode::End()
 {
   if(!drawVertsUsed)
     return;
@@ -126,9 +127,6 @@ void fhImmediateMode::End(bool geometryOnly)
     if(!geometryOnly) {    
       GL_UseProgram(nullptr);
     }
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    
   } else {
 
     if(currentTexture)

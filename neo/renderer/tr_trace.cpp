@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImmediateMode.h"
 
 //#define TEST_TRACE
 
@@ -283,7 +284,7 @@ localTrace_t R_LocalTrace( const idVec3 &start, const idVec3 &end, const float r
 RB_DrawExpandedTriangles
 =================
 */
-void RB_DrawExpandedTriangles( const srfTriangles_t *tri, const float radius, const idVec3 &vieworg ) {
+void RB_DrawExpandedTriangles( const srfTriangles_t *tri, const float radius, const idVec3 &vieworg, const idVec3 &color ) {
 	int i, j, k;
 	idVec3 dir[6], normal, point;
 
@@ -309,7 +310,9 @@ void RB_DrawExpandedTriangles( const srfTriangles_t *tri, const float radius, co
 		dir[1].Normalize();
 		dir[2].Normalize();
 
-		glBegin( GL_LINE_LOOP );
+    fhImmediateMode im;
+    im.Color3fv(color.ToFloatPtr());
+		im.Begin( GL_LINE_LOOP );
 
 		for ( j = 0; j < 3; j++ ) {
 			k = ( j + 1 ) % 3;
@@ -324,22 +327,22 @@ void RB_DrawExpandedTriangles( const srfTriangles_t *tri, const float radius, co
 			dir[5].Normalize();
 
 			point = p[k] + dir[j] * radius;
-			glVertex3f( point[0], point[1], point[2] );
+			im.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[3] * radius;
-			glVertex3f( point[0], point[1], point[2] );
+			im.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[4] * radius;
-			glVertex3f( point[0], point[1], point[2] );
+			im.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[5] * radius;
-			glVertex3f( point[0], point[1], point[2] );
+			im.Vertex3f( point[0], point[1], point[2] );
 
 			point = p[k] + dir[k] * radius;
-			glVertex3f( point[0], point[1], point[2] );
+			im.Vertex3f( point[0], point[1], point[2] );
 		}
 
-		glEnd();
+		im.End();
 	}
 }
 
@@ -402,8 +405,7 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		// highlight the surface
 		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
-		glColor4f( 1, 0, 0, 0.25 );
-		RB_DrawElementsImmediate( tri );
+		RB_DrawElementsImmediate( tri, idVec4(1, 0, 0, 0.25f) );
 
 		// draw the bounding box
 		GL_State( GLS_DEPTHFUNC_ALWAYS );
@@ -411,15 +413,13 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		RB_DrawBounds( tri->bounds, idVec3(1,1,1) );
 
 		if ( radius != 0.0f ) {
-			// draw the expanded triangles
-			glColor4f( 0.5f, 0.5f, 1.0f, 1.0f );
-			RB_DrawExpandedTriangles( tri, radius, localStart );
+			// draw the expanded triangles			
+			RB_DrawExpandedTriangles( tri, radius, localStart, idVec3(0.5f, 0.5f, 0.5f) );
 		}
 
 		// check the exact surfaces
 		hit = R_LocalTrace( localStart, localEnd, radius, tri );
 		if ( hit.fraction < 1.0 ) {
-			glColor4f( 1, 1, 1, 1 );
 			RB_DrawBounds( idBounds( hit.point ).Expand( 1 ), idVec3(1,1,1) );
 		}
 	}

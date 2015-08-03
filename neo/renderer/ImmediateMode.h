@@ -5,7 +5,7 @@ class idDrawVert;
 class fhImmediateMode
 {
 public:
-  fhImmediateMode();
+  explicit fhImmediateMode(bool geometryOnly = false);
   ~fhImmediateMode();
 
   void SetTexture(idImage* texture);
@@ -21,10 +21,11 @@ public:
   void Vertex3fv(const float* c);
   void Vertex3f(float x, float y, float z);
   void Vertex2f(float x, float y);
-  void End(bool geometryOnly = false);
+  void End();
 
   static void Init();
 private:  
+  bool geometryOnly;
   float currentTexCoord[2];
   GLenum currentMode;
   byte currentColor[4];

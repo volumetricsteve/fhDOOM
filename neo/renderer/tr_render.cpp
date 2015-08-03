@@ -47,7 +47,7 @@ Draws with immediate mode commands, which is going to be very slow.
 This should never happen if the vertex cache is operating properly.
 =================
 */
-void RB_DrawElementsImmediate( const srfTriangles_t *tri ) {
+void RB_DrawElementsImmediate( const srfTriangles_t *tri, const idVec4 &color ) {
 
 	backEnd.pc.c_drawElements++;
 	backEnd.pc.c_drawIndexes += tri->numIndexes;
@@ -63,6 +63,7 @@ void RB_DrawElementsImmediate( const srfTriangles_t *tri ) {
 	}
 
   fhImmediateMode im;
+  im.Color4fv(color.ToFloatPtr());
 	im.Begin( GL_TRIANGLES );
 	for ( int i = 0 ; i < tri->numIndexes ; i++ ) {
 		im.TexCoord2fv( tri->verts[ tri->indexes[i] ].st.ToFloatPtr() );

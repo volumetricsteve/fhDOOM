@@ -422,7 +422,7 @@ void RB_ShowIntensity( void ) {
     GL_SelectTexture(0);
     globalImages->currentRenderImage->Bind();    
 
-    fhImmediateMode im;    
+    fhImmediateMode im(true);    
     im.Color3f(1, 1, 1);
     im.Begin(GL_QUADS);
 
@@ -438,7 +438,7 @@ void RB_ShowIntensity( void ) {
     im.TexCoord2f(1, 0);
     im.Vertex2f(1, 0);
 
-    im.End(true);
+    im.End();
 
     GL_UseProgram(nullptr);
 
