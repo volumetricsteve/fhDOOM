@@ -12,6 +12,7 @@ public:
 
   void Begin(GLenum mode);
   void TexCoord2f(float s, float t);
+  void TexCoord2fv(const float* v);
   void Color3fv(const float* c);  
   void Color3f(float r, float g, float b);  
   void Color4f(float r, float g, float b, float a);

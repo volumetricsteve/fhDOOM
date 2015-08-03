@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImmediateMode.h"
 
 /*
 
@@ -61,12 +62,13 @@ void RB_DrawElementsImmediate( const srfTriangles_t *tri ) {
 		}
 	}
 
-	glBegin( GL_TRIANGLES );
+  fhImmediateMode im;
+	im.Begin( GL_TRIANGLES );
 	for ( int i = 0 ; i < tri->numIndexes ; i++ ) {
-		glTexCoord2fv( tri->verts[ tri->indexes[i] ].st.ToFloatPtr() );
-		glVertex3fv( tri->verts[ tri->indexes[i] ].xyz.ToFloatPtr() );
+		im.TexCoord2fv( tri->verts[ tri->indexes[i] ].st.ToFloatPtr() );
+		im.Vertex3fv( tri->verts[ tri->indexes[i] ].xyz.ToFloatPtr() );
 	}
-	glEnd();
+	im.End();
 }
 
 

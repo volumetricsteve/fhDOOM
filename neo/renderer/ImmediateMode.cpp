@@ -151,6 +151,11 @@ void fhImmediateMode::TexCoord2f(float s, float t)
   currentTexCoord[1] = t;
 }
 
+void fhImmediateMode::TexCoord2fv(const float* v)
+{
+  TexCoord2f(v[0], v[1]);
+}
+
 void fhImmediateMode::Color4f(float r, float g, float b, float a)
 {
   currentColor[0] = static_cast<byte>(r * 255.0f);

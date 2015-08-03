@@ -787,32 +787,6 @@ static void RB_ShowShadowCount( void ) {
 	GL_Cull( CT_FRONT_SIDED );
 }
 
-
-/*
-===============
-RB_T_RenderTriangleSurfaceAsLines
-
-===============
-*/
-void RB_T_RenderTriangleSurfaceAsLines( const drawSurf_t *surf ) {
-	const srfTriangles_t *tri = surf->geo;
-
-	if ( !tri->verts ) {
-		return;
-	}
-
-	glBegin( GL_LINES );
-	for ( int i = 0 ; i < tri->numIndexes ; i+= 3 ) {
-		for ( int j = 0 ; j < 3 ; j++ ) {
-			int k = ( j + 1 ) % 3;
-			glVertex3fv( tri->verts[ tri->silIndexes[i+j] ].xyz.ToFloatPtr() );
-			glVertex3fv( tri->verts[ tri->silIndexes[i+k] ].xyz.ToFloatPtr() );
-		}
-	}
-	glEnd();
-}
-
-
 /*
 =====================
 RB_ShowTris
