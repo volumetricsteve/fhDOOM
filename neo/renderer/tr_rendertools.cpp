@@ -77,7 +77,7 @@ debugPolygon_t	rb_debugPolygons[ MAX_DEBUG_POLYGONS ];
 int				rb_numDebugPolygons = 0;
 int				rb_debugPolygonTime = 0;
 
-static void RB_DrawText( const char *text, const idVec3 &origin, float scale, const idVec4 &color, const idMat3 &viewAxis, const int align );
+void RB_DrawText( const char *text, const idVec3 &origin, float scale, const idVec4 &color, const idMat3 &viewAxis, const int align );
 
 /*
 ================
@@ -1908,7 +1908,7 @@ RB_DrawText
   align can be 0-left, 1-center (default), 2-right
 ================
 */
-static void RB_DrawText( const char *text, const idVec3 &origin, float scale, const idVec4 &color, const idMat3 &viewAxis, const int align ) {
+void RB_DrawText( const char *text, const idVec3 &origin, float scale, const idVec4 &color, const idMat3 &viewAxis, const int align ) {
 	int i, j, len, num, index, charIndex, line;
 	float textLen, spacing;
 	idVec3 org, p1, p2;

@@ -1603,6 +1603,7 @@ RENDERER DEBUG TOOLS
 */
 
 float RB_DrawTextLength( const char *text, float scale, int len );
+void RB_DrawText( const char *text, const idVec3 &origin, float scale, const idVec4 &color, const idMat3 &viewAxis, const int align );
 void RB_AddDebugText( const char *text, const idVec3 &origin, float scale, const idVec4 &color, const idMat3 &viewAxis, const int align, const int lifetime, const bool depthTest );
 void RB_ClearDebugText( int time );
 void RB_AddDebugLine( const idVec4 &color, const idVec3 &start, const idVec3 &end, const int lifeTime, const bool depthTest );
@@ -1619,6 +1620,7 @@ void RB_ShowDestinationAlpha( void );
 void RB_ShowOverdraw( void );
 void RB_RenderDebugTools( drawSurf_t **drawSurfs, int numDrawSurfs );
 void RB_ShutdownDebugTools( void );
+
 
 /*
 =============================================================

@@ -553,10 +553,8 @@ void joGLMatrixStack::Get(float* dst) const {
 }
 
 void joGLMatrixStack::Upload() const {
-  if(!backEnd.glslEnabled) {
-    glMatrixMode(matrixmode);
-    glLoadMatrixf(Data(size));
-  }
+  glMatrixMode(matrixmode);
+  glLoadMatrixf(Data(size));
 }
 
 float* joGLMatrixStack::Data(int StackIndex) {

@@ -35,7 +35,59 @@ If you have questions concerning this license or the applicable additional terms
 #include "DialogInfo.h"
 #include "splines.h"
 #include "../../renderer/tr_local.h"
+#include "../../renderer/ImmediateMode.h"
 #include "../../renderer/model_local.h"	// for idRenderModelLiquid
+
+
+
+void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color)
+{
+  static const idMat3 rotation = idAngles(90, 90, 0).ToMat3();
+  RB_DrawText(text, pos, 0.35f * scale, color, rotation, 0);
+}
+
+void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color, int viewType)
+{
+  static const idMat3 xyRotation = idAngles(90, 90, 0).ToMat3();
+  static const idMat3 xzRotation = idAngles(0, 90, 0).ToMat3();
+
+  idMat3 rotation = xyRotation;
+  if(viewType == XZ)
+    rotation = xzRotation;
+
+  RB_DrawText(text, pos, 0.35f * scale, color, rotation, 0);
+}
+
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType)
+{
+  drawText(text, scale, pos, idVec4(color.x, color.y, color.z, 1.0f), viewType);
+}
+
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color)
+{
+  drawText(text, scale, pos, idVec4(color.x, color.y, color.z, 1.0f));
+}
+
+void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec4& color)
+{
+  static const idMat3 xyRotation = idAngles(90, 90, 0).ToMat3();
+  static const idMat3 xzRotation = idAngles(0, 90, 0).ToMat3();
+  static const idMat3 yzRotation = idAngles(180, 0, 180).ToMat3();
+
+  idMat3 rotation = xyRotation;
+  if (m_nViewType == XZ)
+    rotation = xzRotation;
+  else if (m_nViewType == YZ)
+    rotation = yzRotation;
+
+  RB_DrawText(text, pos, 0.35f * 1.0/m_fScale, color, rotation, 0);
+}
+
+void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec3& color)
+{
+  DrawOrientedText(text, pos, idVec4(color.x, color.y, color.z, 1.0f));
+}
+
 
 #ifdef _DEBUG
 	#define new DEBUG_NEW
@@ -43,9 +95,6 @@ If you have questions concerning this license or the applicable additional terms
 static char		THIS_FILE[] = __FILE__;
 #endif
 
-const char		*g_pDimStrings[] = { "x:%.f", "y:%.f", "z:%.f" };
-const char		*g_pOrgStrings[] = { "(x:%.f  y:%.f)", "(x:%.f  z:%.f)", "(y:%.f  z:%.f)" };
-CString			g_strDim;
 CString			g_strStatus;
 
 bool			g_bCrossHairs = false;
@@ -83,24 +132,7 @@ CClipPoint		*g_pMovingPoint;
 int				g_nPointCount;
 int				g_nPointLimit;
 
-const int		XY_LEFT = 0x01;
-const int		XY_RIGHT = 0x02;
-const int		XY_UP = 0x04;
-const int		XY_DOWN = 0x08;
-
-PFNPathCallback *g_pPathFunc = NULL;
 void	Select_Ungroup();
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void AcquirePath(int nCount, PFNPathCallback *pFunc) {
-	g_nPathCount = 0;
-	g_nPathLimit = nCount;
-	g_pPathFunc = pFunc;
-	g_bPathMode = true;
-}
 
 CPtrArray	g_ptrMenus;
 
@@ -840,36 +872,6 @@ void CXYWnd::DropClipPoint(UINT nFlags, CPoint point) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CXYWnd::DropPathPoint(UINT nFlags, CPoint point) {
-	CRect	rctZ;
-	GetClientRect(rctZ);
-	if (g_pMovingPath) {
-		SetCapture();
-		SnapToPoint(point.x, rctZ.Height() - 1 - point.y, *g_pMovingPath);
-	}
-	else {
-		g_PathPoints[g_nPathCount].Set(true);
-		g_PathPoints[g_nPathCount].m_ptScreen = point;
-		SnapToPoint(point.x, rctZ.Height() - 1 - point.y, g_PathPoints[g_nPathCount]);
-		g_nPathCount++;
-		if (g_nPathCount == g_nPathLimit) {
-			if (g_pPathFunc) {
-				g_pPathFunc(true, g_nPathCount);
-			}
-
-			g_nPathCount = 0;
-			g_bPathMode = false;
-			g_pPathFunc = NULL;
-		}
-	}
-
-	Sys_UpdateWindows(XY | W_CAMERA_IFON);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void CXYWnd::AddPointPoint(UINT nFlags, idVec3 *pVec) {
 	g_PointPoints[g_nPointCount].Set(true);
 
@@ -907,9 +909,6 @@ void CXYWnd::OnLButtonDown(UINT nFlags, CPoint point) {
 	}
 	if (ClipMode() && !RogueClipMode()) {
 		DropClipPoint(nFlags, point);
-	}
-	else if (PathMode()) {
-		DropPathPoint(nFlags, point);
 	}
 	else {
 		OriginalButtonDown(nFlags, point);
@@ -1330,29 +1329,6 @@ void CXYWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				XY_MouseMoved(point.x, m_nHeight - 1 - point.y, nFlags);
 			}
 		}
-		else if (PathMode()) {
-			if (g_pMovingPath && GetCapture() == this) {
-				bCrossHair = true;
-				SnapToPoint(point.x, m_nHeight - 1 - point.y, g_pMovingPath->m_ptClip);
-				Sys_UpdateWindows(XY | W_CAMERA_IFON);
-			}
-			else {
-				g_pMovingPath = NULL;
-
-				int nDim1 = (m_nViewType == YZ) ? 1 : 0;
-				int nDim2 = (m_nViewType == XY) ? 1 : 2;
-				for (int n = 0; n < g_nPathCount; n++) {
-					if
-					(
-						fDiff(g_PathPoints[n].m_ptClip[nDim1], tdp[nDim1]) < 3 &&
-						fDiff(g_PathPoints[n].m_ptClip[nDim2], tdp[nDim2]) < 3
-					) {
-						bCrossHair = true;
-						g_pMovingPath = &g_PathPoints[n];
-					}
-				}
-			}
-		}
 		else {
 			bCrossHair = XY_MouseMoved(point.x, m_nHeight - 1 - point.y, nFlags);
 		}
@@ -1441,14 +1417,6 @@ bool CXYWnd::RogueClipMode() {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool CXYWnd::PathMode() {
-	return g_bPathMode;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 bool CXYWnd::PointMode() {
 	return g_bPointMode;
 }
@@ -1475,7 +1443,7 @@ void CXYWnd::OnPaint() {
 		common->Printf("ERROR: wglMakeCurrent failed.. Error:%i\n", glGetError());
 		common->Printf("Please restart Q3Radiant if the Map view is not working\n");
 		bPaint = false;
-	}
+	}  
 
 	if (bPaint) {
 		QE_CheckOpenGLForErrors();
@@ -1491,74 +1459,61 @@ void CXYWnd::OnPaint() {
 			GL_ModelViewMatrix.Rotate(-90, 1, 0, 0);		// put Z going up
 		}
 
+    fhImmediateMode im;
 		if ( g_bCrossHairs ) {
-			glColor4f( 0.2f, 0.9f, 0.2f, 0.8f );
-			glBegin(GL_LINES);
+			im.Color4f( 0.2f, 0.9f, 0.2f, 0.8f );
+			im.Begin(GL_LINES);
 			if (m_nViewType == XY) {
-				glVertex2f(-16384, tdp[1]);
-				glVertex2f(16384, tdp[1]);
-				glVertex2f(tdp[0], -16384);
-				glVertex2f(tdp[0], 16384);
+				im.Vertex2f(-16384, tdp[1]);
+				im.Vertex2f(16384, tdp[1]);
+				im.Vertex2f(tdp[0], -16384);
+				im.Vertex2f(tdp[0], 16384);
 			}
 			else if (m_nViewType == YZ) {
-				glVertex3f(tdp[0], -16384, tdp[2]);
-				glVertex3f(tdp[0], 16384, tdp[2]);
-				glVertex3f(tdp[0], tdp[1], -16384);
-				glVertex3f(tdp[0], tdp[1], 16384);
+				im.Vertex3f(tdp[0], -16384, tdp[2]);
+				im.Vertex3f(tdp[0], 16384, tdp[2]);
+				im.Vertex3f(tdp[0], tdp[1], -16384);
+				im.Vertex3f(tdp[0], tdp[1], 16384);
 			}
 			else {
-				glVertex3f(-16384, tdp[1], tdp[2]);
-				glVertex3f(16384, tdp[1], tdp[2]);
-				glVertex3f(tdp[0], tdp[1], -16384);
-				glVertex3f(tdp[0], tdp[1], 16384);
+				im.Vertex3f(-16384, tdp[1], tdp[2]);
+				im.Vertex3f(16384, tdp[1], tdp[2]);
+				im.Vertex3f(tdp[0], tdp[1], -16384);
+				im.Vertex3f(tdp[0], tdp[1], 16384);
 			}
 
-			glEnd();
+			im.End();
 		}
 
 		if (ClipMode()) {
+      const idVec3 clipColor = g_qeglobals.d_savedinfo.colors[COLOR_CLIPPER];
+
 			glPointSize(4);
-			glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_CLIPPER].ToFloatPtr());
-			glBegin(GL_POINTS);
-			if (g_Clip1.Set()) {
-				glVertex3fv(g_Clip1);
-			}
+			im.Color3fv(clipColor.ToFloatPtr());
+			im.Begin(GL_POINTS);
 
-			if (g_Clip2.Set()) {
-				glVertex3fv(g_Clip2);
-			}
+			if (g_Clip1.Set())
+				im.Vertex3fv(g_Clip1);
+			
+			if (g_Clip2.Set())
+				im.Vertex3fv(g_Clip2);
 
-			if (g_Clip3.Set()) {
-				glVertex3fv(g_Clip3);
-			}
+			if (g_Clip3.Set())
+				im.Vertex3fv(g_Clip3);
 
-			glEnd();
+			im.End();
 			glPointSize(1);
 
-			CString strMsg;
-			if (g_Clip1.Set()) {
-				glRasterPos3f(g_Clip1.m_ptClip[0] + 2, g_Clip1.m_ptClip[1] + 2, g_Clip1.m_ptClip[2] + 2);
-				strMsg = "1";
+      const idVec3 clipNumOffset(2,2,2);
 
-				// strMsg.Format("1 (%f, %f, %f)", g_Clip1[0], g_Clip1[1], g_Clip1[2]);
-				glCallLists(strMsg.GetLength(), GL_UNSIGNED_BYTE, strMsg);
-			}
+      if (g_Clip1.Set())
+        drawText("1", 1.0/m_fScale, g_Clip1.m_ptClip + clipNumOffset, clipColor); 
 
-			if (g_Clip2.Set()) {
-				glRasterPos3f(g_Clip2.m_ptClip[0] + 2, g_Clip2.m_ptClip[1] + 2, g_Clip2.m_ptClip[2] + 2);
-				strMsg = "2";
+      if (g_Clip2.Set())
+        drawText("2", 1.0/m_fScale, g_Clip2.m_ptClip + clipNumOffset, clipColor); 
 
-				// strMsg.Format("2 (%f, %f, %f)", g_Clip2[0], g_Clip2[1], g_Clip2[2]);
-				glCallLists(strMsg.GetLength(), GL_UNSIGNED_BYTE, strMsg);
-			}
-
-			if (g_Clip3.Set()) {
-				glRasterPos3f(g_Clip3.m_ptClip[0] + 2, g_Clip3.m_ptClip[1] + 2, g_Clip3.m_ptClip[2] + 2);
-				strMsg = "3";
-
-				// strMsg.Format("3 (%f, %f, %f)", g_Clip3[0], g_Clip3[1], g_Clip3[2]);
-				glCallLists(strMsg.GetLength(), GL_UNSIGNED_BYTE, strMsg);
-			}
+      if (g_Clip3.Set())
+        drawText("3", 1.0/m_fScale, g_Clip3.m_ptClip + clipNumOffset, clipColor); 
 
 			if (g_Clip1.Set() && g_Clip2.Set() && selected_brushes.next != &selected_brushes) {
 				ProduceSplitLists();
@@ -1566,7 +1521,7 @@ void CXYWnd::OnPaint() {
 				brush_t *pBrush;
 				brush_t *pList = ((m_nViewType == XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
 				for (pBrush = pList->next; pBrush != NULL && pBrush != pList; pBrush = pBrush->next) {
-					glColor3f(1, 1, 0);
+					im.Color3f(1, 1, 0);
 
 					face_t	*face;
 					int		order;
@@ -1577,40 +1532,14 @@ void CXYWnd::OnPaint() {
 						}
 
 						// draw the polygon
-						glBegin(GL_LINE_LOOP);
+						im.Begin(GL_LINE_LOOP);
 						for (int i = 0; i < w->GetNumPoints(); i++) {
-							glVertex3fv( (*w)[i].ToFloatPtr() );
+							im.Vertex3fv( (*w)[i].ToFloatPtr() );
 						}
 
-						glEnd();
+						im.End();
 					}
 				}
-			}
-		}
-
-		if (PathMode()) {
-			glPointSize(4);
-			glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_CLIPPER].ToFloatPtr());
-			glBegin(GL_POINTS);
-
-			int n;
-			for ( n = 0; n < g_nPathCount; n++) {
-				glVertex3fv(g_PathPoints[n]);
-			}
-
-			glEnd();
-			glPointSize(1);
-
-			CString strMsg;
-			for (n = 0; n < g_nPathCount; n++) {
-				glRasterPos3f
-				(
-					g_PathPoints[n].m_ptClip[0] + 2,
-					g_PathPoints[n].m_ptClip[1] + 2,
-					g_PathPoints[n].m_ptClip[2] + 2
-				);
-				strMsg.Format("%i", n + 1);
-				glCallLists(strMsg.GetLength(), GL_UNSIGNED_BYTE, strMsg);
 			}
 		}
 
@@ -1774,135 +1703,8 @@ void CreateRightClickEntity(CXYWnd *pWnd, int x, int y, char *pName) {
 	}
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-brush_t *CreateSmartBrush(idVec3 v) {
-	idVec3	mins, maxs;
-	int		i;
-	brush_t *n;
-
-	for (i = 0; i < 3; i++) {
-		mins[i] = v[i] - 16;
-		maxs[i] = v[i] + 16;
-	}
-
-	n = Brush_Create(mins, maxs, &g_qeglobals.d_texturewin.texdef);
-	if (!n) {
-		return NULL;
-	}
-
-	Brush_AddToList(n, &selected_brushes);
-
-	// Entity_LinkBrush(world_entity, n);
-	Brush_Build(n);
-	return n;
-}
-
-CString g_strSmartEntity;
 int		g_nSmartX;
 int		g_nSmartY;
-bool	g_bSmartWaiting;
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void _SmartPointDone(bool b, int n) {
-	g_bSmartWaiting = false;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CreateSmartEntity(CXYWnd *pWnd, int x, int y, const char *pName) {
-	g_nSmartX = x;
-	g_nSmartY = y;
-	g_strSmartEntity = pName;
-	if (g_strSmartEntity.Find("Smart_Train") >= 0) {
-		ShowInfoDialog("Select the path of the train by left clicking in XY, YZ and/or XZ views. You can move an already dropped point by grabbing and moving it. When you are finished, press ENTER to accept and create the entity and path(s), press ESC to abandon the creation");
-		g_bPathMode = true;
-		g_nPathLimit = 0;
-		g_nPathCount = 0;
-		g_bSmartGo = true;
-	}
-	else if (g_strSmartEntity.Find("Smart_Monster...") >= 0) {
-		g_bPathMode = true;
-		g_nPathLimit = 0;
-		g_nPathCount = 0;
-	}
-	else if (g_strSmartEntity.Find("Smart_Rotating") >= 0) {
-		g_bSmartWaiting = true;
-		ShowInfoDialog("Left click to specify the rotation origin");
-		AcquirePath(1, &_SmartPointDone);
-		while (g_bSmartWaiting) {
-			MSG msg;
-			if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
-
-		HideInfoDialog();
-
-		CPtrArray	array;
-		g_bScreenUpdates = false;
-		CreateRightClickEntity(g_pParentWnd->ActiveXY(), g_nSmartX, g_nSmartY, "func_rotating");
-		array.Add(reinterpret_cast < void * > (selected_brushes.next));
-		Select_Deselect();
-
-		brush_t *pBrush = CreateSmartBrush(g_PathPoints[0]);
-		array.Add(pBrush);
-		Select_Deselect();
-		Select_Brush(reinterpret_cast < brush_t * > (array.GetAt(0)));
-		Select_Brush(reinterpret_cast < brush_t * > (array.GetAt(1)));
-		ConnectEntities();
-		g_bScreenUpdates = true;
-	}
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void FinishSmartCreation() {
-	CPtrArray	array;
-	HideInfoDialog();
-
-	brush_t *pEntities = NULL;
-	if (g_strSmartEntity.Find("Smart_Train") >= 0) {
-		g_bScreenUpdates = false;
-		CreateRightClickEntity(g_pParentWnd->ActiveXY(), g_nSmartX, g_nSmartY, "func_train");
-		array.Add(reinterpret_cast < void * > (selected_brushes.next));
-		int n;
-		for (n = 0; n < g_nPathCount; n++) {
-			Select_Deselect();
-			CreateRightClickEntity
-			(
-				g_pParentWnd->ActiveXY(),
-				g_PathPoints[n].m_ptScreen.x,
-				g_PathPoints[n].m_ptScreen.y,
-				"path_corner"
-			);
-			array.Add(reinterpret_cast < void * > (selected_brushes.next));
-		}
-
-		for (n = 0; n < g_nPathCount; n++) {
-			Select_Deselect();
-			Select_Brush(reinterpret_cast < brush_t * > (array.GetAt(n)));
-			Select_Brush(reinterpret_cast < brush_t * > (array.GetAt(n + 1)));
-			ConnectEntities();
-		}
-
-		g_bScreenUpdates = true;
-	}
-
-	g_nPathCount = 0;
-	g_bPathMode = false;
-	Sys_UpdateWindows(W_ALL);
-}
 
 /*
  =======================================================================================================================
@@ -1911,12 +1713,8 @@ void FinishSmartCreation() {
 void CXYWnd::KillPathMode() {
 	g_bSmartGo = false;
 	g_bPathMode = false;
-	if (g_pPathFunc) {
-		g_pPathFunc(false, g_nPathCount);
-	}
 
-	g_nPathCount = 0;
-	g_pPathFunc = NULL;
+	g_nPathCount = 0;	
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -1956,12 +1754,7 @@ void CXYWnd::OnEntityCreate(unsigned int nID) {
 			return;
 		}
 
-		if (strItem.Find("Smart_") >= 0) {
-			CreateSmartEntity(this, m_ptDown.x, m_ptDown.y, strItem);
-		}
-		else {
-			CreateRightClickEntity(this, m_ptDown.x, m_ptDown.y, strItem.GetBuffer(0));
-		}
+		CreateRightClickEntity(this, m_ptDown.x, m_ptDown.y, strItem.GetBuffer(0));
 
 		Sys_UpdateWindows(W_ALL);
 
@@ -2781,7 +2574,8 @@ void CXYWnd::XY_DrawGrid() {
 	ye = startPos * ceil(ye / startPos);
 
 	// draw major blocks
-	glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR].ToFloatPtr());
+  fhImmediateMode im;
+	im.Color3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR].ToFloatPtr());
 
 	int stepSize = 64 * 0.1 / m_fScale;
 	if (stepSize < 64) {
@@ -2796,19 +2590,19 @@ void CXYWnd::XY_DrawGrid() {
 	}
 
 	if (g_qeglobals.d_showgrid) {
-		glBegin(GL_LINES);
+		im.Begin(GL_LINES);
 
 		for (x = xb; x <= xe; x += stepSize) {
-			glVertex2f(x, yb);
-			glVertex2f(x, ye);
+			im.Vertex2f(x, yb);
+			im.Vertex2f(x, ye);
 		}
 
 		for (y = yb; y <= ye; y += stepSize) {
-			glVertex2f(xb, y);
-			glVertex2f(xe, y);
+			im.Vertex2f(xb, y);
+			im.Vertex2f(xe, y);
 		}
 
-		glEnd();
+		im.End();
 	}
 
 	// draw minor blocks
@@ -2817,16 +2611,16 @@ void CXYWnd::XY_DrawGrid() {
 		g_qeglobals.d_gridsize * m_fScale >= 4 &&
 		!g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR].Compare( g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK] ) ) {
 
-		glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR].ToFloatPtr());
+		im.Color3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR].ToFloatPtr());
 
-		glBegin(GL_LINES);
+		im.Begin(GL_LINES);
 		for (x = xb; x < xe; x += g_qeglobals.d_gridsize) {
 			if (!((int)x & (startPos - 1))) {
 				continue;
 			}
 
-			glVertex2f(x, yb);
-			glVertex2f(x, ye);
+			im.Vertex2f(x, yb);
+			im.Vertex2f(x, ye);
 		}
 
 		for (y = yb; y < ye; y += g_qeglobals.d_gridsize) {
@@ -2834,11 +2628,11 @@ void CXYWnd::XY_DrawGrid() {
 				continue;
 			}
 
-			glVertex2f(xb, y);
-			glVertex2f(xe, y);
+			im.Vertex2f(xb, y);
+			im.Vertex2f(xe, y);
 		}
 
-		glEnd();
+		im.End();
 	}
 
 
@@ -2850,68 +2644,49 @@ void CXYWnd::XY_DrawGrid() {
 		{
 			if (g_pParentWnd->GetZWnd()->m_pZClip->IsEnabled())
 			{
-				glColor3f(ZCLIP_COLOUR);
+				im.Color3f(ZCLIP_COLOUR);
 				glLineWidth(2);
-				glBegin (GL_LINES);
+				im.Begin (GL_LINES);
 
-				glVertex2f (xb, g_pParentWnd->GetZWnd()->m_pZClip->GetTop());
-				glVertex2f (xe, g_pParentWnd->GetZWnd()->m_pZClip->GetTop());
+				im.Vertex2f (xb, g_pParentWnd->GetZWnd()->m_pZClip->GetTop());
+				im.Vertex2f (xe, g_pParentWnd->GetZWnd()->m_pZClip->GetTop());
 
-				glVertex2f (xb, g_pParentWnd->GetZWnd()->m_pZClip->GetBottom());
-				glVertex2f (xe, g_pParentWnd->GetZWnd()->m_pZClip->GetBottom());
+				im.Vertex2f (xb, g_pParentWnd->GetZWnd()->m_pZClip->GetBottom());
+				im.Vertex2f (xe, g_pParentWnd->GetZWnd()->m_pZClip->GetBottom());
 
-				glEnd ();
+				im.End ();
 				glLineWidth(1);
 			}
 		}		
 	}
 
-	
-
-
 	// draw coordinate text if needed
 	if (g_qeglobals.d_savedinfo.show_coordinates) {
-		// glColor4f(0, 0, 0, 0);
-		glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT].ToFloatPtr());
-
-		float	lastRaster = xb;
+    const float textScale = 1.0/m_fScale;
+    const idVec3 textColor = g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT];
+    const float textPadding = 4.0f;
 
 		for (x = xb; x < xe; x += stepSize) {
-			glRasterPos2f(x, m_vOrigin[nDim2] + h - 10 / m_fScale);
 			sprintf(text, "%i", (int)x);
-			glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
+      drawText(text, textScale, idVec3(textPadding + x, m_vOrigin[nDim2] + h - 10 / m_fScale, 0), textColor);
 		}
 
 		for (y = yb; y < ye; y += stepSize) {
-			glRasterPos2f(m_vOrigin[nDim1] - w + 1, y);
-			sprintf(text, "%i", (int)y);
-			glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
+      sprintf(text, "%i", (int)y);
+      drawText(text, textScale, idVec3(m_vOrigin[nDim1] - w + 1, textPadding + y, 0), textColor);
 		}
 
-		if (Active()) {
-			glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME].ToFloatPtr());
-		}
+    const idVec3 viewNameColor = g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME];
+		const char* viewName;
+		if (m_nViewType == XY)
+			viewName = "XY Top";		
+		else if (m_nViewType == XZ)
+			viewName = "XZ Front";
+		else
+			viewName = "YZ Side";
 
-		glRasterPos2f(m_vOrigin[nDim1] - w + 35 / m_fScale, m_vOrigin[nDim2] + h - 20 / m_fScale);
-
-		char	cView[20];
-		if (m_nViewType == XY) {
-			strcpy(cView, "XY Top");
-		}
-		else if (m_nViewType == XZ) {
-			strcpy(cView, "XZ Front");
-		}
-		else {
-			strcpy(cView, "YZ Side");
-		}
-
-		glCallLists(strlen(cView), GL_UNSIGNED_BYTE, cView);
+    drawText(viewName, textScale, idVec3(m_vOrigin[nDim1] - w + 35 / m_fScale, m_vOrigin[nDim2] + h - 20 / m_fScale, 0), textColor);
 	}
-
-	/*
-	 * if (true) { glColor3f(g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR]);
-	 * glBegin (GL_LINES); glVertex2f (x, yb); glVertex2f (x, ye); glEnd(); }
-	 */
 }
 
 /*
@@ -2959,53 +2734,35 @@ void CXYWnd::XY_DrawBlockGrid() {
 	ye = 1024 * ceil(ye / 1024);
 
 	// draw major blocks
-	glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDBLOCK].ToFloatPtr());
+  const idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_GRIDBLOCK];
+  fhImmediateMode im;
+	im.Color3fv(color.ToFloatPtr());
 	glLineWidth(0.5);
 
-	glBegin(GL_LINES);
+	im.Begin(GL_LINES);
 
 	for (x = xb; x <= xe; x += 1024) {
-		glVertex2f(x, yb);
-		glVertex2f(x, ye);
+		im.Vertex2f(x, yb);
+		im.Vertex2f(x, ye);
 	}
 
 	for (y = yb; y <= ye; y += 1024) {
-		glVertex2f(xb, y);
-		glVertex2f(xe, y);
+		im.Vertex2f(xb, y);
+		im.Vertex2f(xe, y);
 	}
 
-	glEnd();
+	im.End();
 	glLineWidth(0.25);
 
 	// draw coordinate text if needed
 	for (x = xb; x < xe; x += 1024) {
 		for (y = yb; y < ye; y += 1024) {
-			glRasterPos2f(x + 512, y + 512);
-			sprintf(text, "%i,%i", (int)floor(x / 1024), (int)floor(y / 1024));
-			glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
+      sprintf(text, "%i,%i", (int)floor(x / 1024), (int)floor(y / 1024));
+      drawText(text, 1.0/m_fScale, idVec3(x + 512, y + 512, 0), color); 
 		}
 	}
 
 	glColor4f(0, 0, 0, 0);
-}
-
-void GLColoredBoxWithLabel(float x, float y, float size, idVec4 color, const char *text, idVec4 textColor, float xofs, float yofs, float lineSize) {
-	globalImages->BindNull();	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_BLEND);
-	glColor4f(color[0], color[1], color[2], color[3]);
-	glBegin(GL_QUADS);
-	glVertex3f(x - size, y - size, 0);
-	glVertex3f(x + size, y - size, 0);
-	glVertex3f(x + size, y + size, 0);
-	glVertex3f(x - size, y + size, 0);
-	glEnd();
-
-	glColor4f(textColor[0], textColor[1], textColor[2], textColor[3]);
-	glLineWidth(lineSize);
-	glRasterPos2f(x + xofs, y + yofs);
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
 }
 
 /*
@@ -3033,20 +2790,24 @@ void CXYWnd::DrawRotateIcon() {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_CULL_FACE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f( 0.8f, 0.1f, 0.9f, 0.25f );
 
-	glBegin(GL_QUADS);
-	glVertex3f(x - 4, y - 4, 0);
-	glVertex3f(x + 4, y - 4, 0);
-	glVertex3f(x + 4, y + 4, 0);
-	glVertex3f(x - 4, y + 4, 0);
-	glEnd();
+  const idVec4 centerColor = idVec4(0.8f, 0.1f, 0.9f, 0.25f);
+  const idVec4 pointColor = idVec4(1.0f, 0.2f, 1.0f, 1.0f);
+
+  fhImmediateMode im;
+	im.Color4fv( centerColor.ToFloatPtr() );
+	im.Begin(GL_QUADS);
+	im.Vertex3f(x - 4, y - 4, 0);
+	im.Vertex3f(x + 4, y - 4, 0);
+	im.Vertex3f(x + 4, y + 4, 0);
+	im.Vertex3f(x - 4, y + 4, 0);
+	im.End();
 	glDisable(GL_BLEND);
 
-	glColor4f( 1.0f, 0.2f, 1.0f, 1.0f );
-	glBegin(GL_POINTS);
-	glVertex3f(x, y, 0);
-	glEnd();
+	im.Color4fv(pointColor.ToFloatPtr());
+	im.Begin(GL_POINTS);
+	im.Vertex3f(x, y, 0);
+	im.End();
 
 
 	int w = m_nWidth / 2 / m_fScale;
@@ -3065,8 +2826,8 @@ void CXYWnd::DrawRotateIcon() {
 	if (g_qeglobals.flatRotation) {
 		str += g_qeglobals.flatRotation == 2 ? " Flat [center] " : " Flat [ rot origin ] ";
 	}
-	glRasterPos2f(x, y);
-	glCallLists(str.Length(), GL_UNSIGNED_BYTE, str.c_str());
+
+  drawText(str.c_str(), 1.0/m_fScale, idVec3(x,y,0), pointColor);
 }
 
 /*
@@ -3094,29 +2855,22 @@ void CXYWnd::DrawCameraIcon() {
 
 	float scale = 1.0/m_fScale;	//jhefty - keep the camera icon proportionally the same size 
 
-	glColor3f(0.0, 0.0, 1.0);
-	glBegin(GL_LINE_STRIP);
-	glVertex3f(x - 16*scale, y, 0);
-	glVertex3f(x, y + 8*scale, 0);
-	glVertex3f(x + 16*scale, y, 0);
-	glVertex3f(x, y - 8*scale, 0);
-	glVertex3f(x - 16*scale, y, 0);
-	glVertex3f(x + 16*scale, y, 0);
-	glEnd();
+  fhImmediateMode im;
+	im.Color3f(0.0, 0.0, 1.0);
+	im.Begin(GL_LINE_STRIP);
+	im.Vertex3f(x - 16*scale, y, 0);
+	im.Vertex3f(x, y + 8*scale, 0);
+	im.Vertex3f(x + 16*scale, y, 0);
+	im.Vertex3f(x, y - 8*scale, 0);
+	im.Vertex3f(x - 16*scale, y, 0);
+	im.Vertex3f(x + 16*scale, y, 0);
+	im.End();
 
-	glBegin(GL_LINE_STRIP);
-	glVertex3f(x + (48 * cos( a + idMath::PI * 0.25f )*scale), y + (48 * sin( a + idMath::PI * 0.25f )*scale), 0);
-	glVertex3f(x, y, 0);
-	glVertex3f(x + (48 * cos( a - idMath::PI * 0.25f )*scale), y + (48 * sin( a - idMath::PI * 0.25f )*scale), 0);
-	glEnd();
-
-#if 0
-
-	char	text[128];
-	glRasterPos2f(x + 64, y + 64);
-	sprintf(text, "%f", g_pParentWnd->GetCamera()->Camera().angles[YAW]);
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
-#endif
+	im.Begin(GL_LINE_STRIP);
+	im.Vertex3f(x + (48 * cos( a + idMath::PI * 0.25f )*scale), y + (48 * sin( a + idMath::PI * 0.25f )*scale), 0);
+	im.Vertex3f(x, y, 0);
+	im.Vertex3f(x + (48 * cos( a - idMath::PI * 0.25f )*scale), y + (48 * sin( a - idMath::PI * 0.25f )*scale), 0);
+	im.End();
 }
 
 /*
@@ -3132,30 +2886,32 @@ void CXYWnd::DrawZIcon(void) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDisable(GL_CULL_FACE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.0, 0.0, 1.0, 0.25);
-		glBegin(GL_QUADS);
-		glVertex3f(x - 8, y - 8, 0);
-		glVertex3f(x + 8, y - 8, 0);
-		glVertex3f(x + 8, y + 8, 0);
-		glVertex3f(x - 8, y + 8, 0);
-		glEnd();
+
+    fhImmediateMode im;
+		im.Color4f(0.0, 0.0, 1.0, 0.25);
+		im.Begin(GL_QUADS);
+		im.Vertex3f(x - 8, y - 8, 0);
+		im.Vertex3f(x + 8, y - 8, 0);
+		im.Vertex3f(x + 8, y + 8, 0);
+		im.Vertex3f(x - 8, y + 8, 0);
+		im.End();
 		glDisable(GL_BLEND);
 
-		glColor4f(0.0, 0.0, 1.0, 1);
+		im.Color4f(0.0, 0.0, 1.0, 1);
 
-		glBegin(GL_LINE_LOOP);
-		glVertex3f(x - 8, y - 8, 0);
-		glVertex3f(x + 8, y - 8, 0);
-		glVertex3f(x + 8, y + 8, 0);
-		glVertex3f(x - 8, y + 8, 0);
-		glEnd();
+		im.Begin(GL_LINE_LOOP);
+		im.Vertex3f(x - 8, y - 8, 0);
+		im.Vertex3f(x + 8, y - 8, 0);
+		im.Vertex3f(x + 8, y + 8, 0);
+		im.Vertex3f(x - 8, y + 8, 0);
+		im.End();
 
-		glBegin(GL_LINE_STRIP);
-		glVertex3f(x - 4, y + 4, 0);
-		glVertex3f(x + 4, y + 4, 0);
-		glVertex3f(x - 4, y - 4, 0);
-		glVertex3f(x + 4, y - 4, 0);
-		glEnd();
+		im.Begin(GL_LINE_STRIP);
+		im.Vertex3f(x - 4, y + 4, 0);
+		im.Vertex3f(x + 4, y + 4, 0);
+		im.Vertex3f(x - 4, y - 4, 0);
+		im.Vertex3f(x + 4, y - 4, 0);
+		im.End();
 	}
 }
 
@@ -3378,11 +3134,12 @@ void DrawPathLines(void) {
 			s1[1] = dir[0] * 8 + dir[1] * 8;
 			s2[1] = -dir[0] * 8 + dir[1] * 8;
 
-			glColor3f(se->eclass->color[0], se->eclass->color[1], se->eclass->color[2]);
+      fhImmediateMode im;
+			im.Color3f(se->eclass->color[0], se->eclass->color[1], se->eclass->color[2]);
 
-			glBegin(GL_LINES);
-			glVertex3fv(mid.ToFloatPtr());
-			glVertex3fv(mid1.ToFloatPtr());
+			im.Begin(GL_LINES);
+			im.Vertex3fv(mid.ToFloatPtr());
+			im.Vertex3fv(mid1.ToFloatPtr());
 
 			arrows = (int)(len / 256) + 1;
 
@@ -3391,13 +3148,13 @@ void DrawPathLines(void) {
 
 				mid1 = mid + (f * dir);
 
-				glVertex3fv(mid1.ToFloatPtr());
-				glVertex3f(mid1[0] + s1[0], mid1[1] + s1[1], mid1[2]);
-				glVertex3fv(mid1.ToFloatPtr());
-				glVertex3f(mid1[0] + s2[0], mid1[1] + s2[1], mid1[2]);
+				im.Vertex3fv(mid1.ToFloatPtr());
+				im.Vertex3f(mid1[0] + s1[0], mid1[1] + s1[1], mid1[2]);
+				im.Vertex3fv(mid1.ToFloatPtr());
+				im.Vertex3f(mid1[0] + s2[0], mid1[1] + s2[1], mid1[2]);
 			}
 
-			glEnd();
+			im.End();
 		}
 	}
 
@@ -3408,128 +3165,161 @@ void DrawPathLines(void) {
 // =======================================================================================================================
 //    can be greatly simplified but per usual i am in a hurry which is not an excuse, just a fact
 // =======================================================================================================================
-//
-void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxBounds) {
-	idVec3	vSize;
-	VectorSubtract(vMaxBounds, vMinBounds, vSize);
 
-	glColor3f
-	(
-		g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0] * .65,
-		g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1] * .65,
-		g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2] * .65
-	);
+void CXYWnd::DrawOrigin(const idVec3& position, float originX, float originY, const char* axisX, const char* axisY, const idVec3& color)
+{
+  char text[256];
+  idStr::snPrintf(text, sizeof(text)-1, "(%s:%.f %s:%.f)", axisX, originX, axisY, originY);
+  DrawOrientedText(text, position, color);
+}
+
+void CXYWnd::DrawDimension(const idVec3& position, float value, const char* label, const idVec3& color)
+{
+  char text[256];
+  idStr::snPrintf(text, sizeof(text)-1, "%s:%.f", label, value);
+  DrawOrientedText(text, position, color);
+}
+
+void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxBounds) {
+	const idVec3 vSize = vMaxBounds - vMinBounds;	
+  const idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] * 0.65f;
+
+  fhImmediateMode im;
+	im.Color3fv(color.ToFloatPtr());
 
 	if (m_nViewType == XY) {
-		glBegin(GL_LINES);
 
-		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale, 0.0f);
-		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
+		im.Begin(GL_LINES);
 
-		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
-		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
+		im.Vertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale, 0.0f);
+		im.Vertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
 
-		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale, 0.0f);
-		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
+		im.Vertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
 
-		glVertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, vMinBounds[nDim2], 0.0f);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2], 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale, 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale, 0.0f);
 
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2], 0.0f);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, vMinBounds[nDim2], 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2], 0.0f);
 
-		glVertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2], 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
 
-		glEnd();
+		im.Vertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
 
-		glRasterPos3f(Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), vMinBounds[nDim2] - 20.0 / m_fScale, 0.0f);
-		g_strDim.Format(g_pDimStrings[nDim1], vSize[nDim1]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+		im.End();    
 
-		glRasterPos3f(vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2]), 0.0f);
-		g_strDim.Format(g_pDimStrings[nDim2], vSize[nDim2]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawOrigin(
+      idVec3(vMinBounds[nDim1] + 4, vMaxBounds[nDim2] + 8 / m_fScale, 0),
+      vMinBounds[nDim1], 
+      vMaxBounds[nDim2],
+      "x", 
+      "y",
+      color);
 
-		glRasterPos3f(vMinBounds[nDim1] + 4, vMaxBounds[nDim2] + 8 / m_fScale, 0.0f);
-		g_strDim.Format(g_pOrgStrings[0], vMinBounds[nDim1], vMaxBounds[nDim2]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawDimension(
+      idVec3(Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), vMinBounds[nDim2] - 20.0 / m_fScale, 0.0f),
+      vSize[nDim1],
+      "x",
+      color);
+
+    DrawDimension(
+      idVec3(vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2]), 0.0f),
+      vSize[nDim2],
+      "y",
+      color);    
 	}
 	else if (m_nViewType == XZ) {
-		glBegin(GL_LINES);
+		im.Begin(GL_LINES);
 
-		glVertex3f(vMinBounds[nDim1], 0, vMinBounds[nDim2] - 6.0f / m_fScale);
-		glVertex3f(vMinBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(vMinBounds[nDim1], 0, vMinBounds[nDim2] - 6.0f / m_fScale);
+		im.Vertex3f(vMinBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
 
-		glVertex3f(vMinBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
-		glVertex3f(vMaxBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(vMinBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(vMaxBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
 
-		glVertex3f(vMaxBounds[nDim1], 0, vMinBounds[nDim2] - 6.0f / m_fScale);
-		glVertex3f(vMaxBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(vMaxBounds[nDim1], 0, vMinBounds[nDim2] - 6.0f / m_fScale);
+		im.Vertex3f(vMaxBounds[nDim1], 0, vMinBounds[nDim2] - 10.0f / m_fScale);
 
-		glVertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, 0, vMinBounds[nDim2]);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMinBounds[nDim2]);
+		im.Vertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, 0, vMinBounds[nDim2]);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMinBounds[nDim2]);
 
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMinBounds[nDim2]);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMaxBounds[nDim2]);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMinBounds[nDim2]);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMaxBounds[nDim2]);
 
-		glVertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, 0, vMaxBounds[nDim2]);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMaxBounds[nDim2]);
+		im.Vertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, 0, vMaxBounds[nDim2]);
+		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, 0, vMaxBounds[nDim2]);
 
-		glEnd();
+		im.End();
 
-		glRasterPos3f(Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), 0, vMinBounds[nDim2] - 20.0 / m_fScale);
-		g_strDim.Format(g_pDimStrings[nDim1], vSize[nDim1]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawOrigin(
+      idVec3(vMinBounds[nDim1] + 4, 0, vMaxBounds[nDim2] + 8 / m_fScale),
+      vMinBounds[nDim1], 
+      vMaxBounds[nDim2],
+      "x", 
+      "z",
+      color);
 
-		glRasterPos3f(vMaxBounds[nDim1] + 16.0 / m_fScale, 0, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2]));
-		g_strDim.Format(g_pDimStrings[nDim2], vSize[nDim2]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawDimension(
+      idVec3(Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), 0, vMinBounds[nDim2] - 20.0 / m_fScale),
+      vSize[nDim1],
+      "x",
+      color);
 
-		glRasterPos3f(vMinBounds[nDim1] + 4, 0, vMaxBounds[nDim2] + 8 / m_fScale);
-		g_strDim.Format(g_pOrgStrings[1], vMinBounds[nDim1], vMaxBounds[nDim2]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawDimension(
+      idVec3(vMaxBounds[nDim1] + 16.0 / m_fScale, 0, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2])),
+      vSize[nDim2],
+      "z",
+      color);
 	}
 	else {
-		glBegin(GL_LINES);
+		im.Begin(GL_LINES);
 
-		glVertex3f(0, vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale);
-		glVertex3f(0, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(0, vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale);
+		im.Vertex3f(0, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
 
-		glVertex3f(0, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
-		glVertex3f(0, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(0, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(0, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
 
-		glVertex3f(0, vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale);
-		glVertex3f(0, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
+		im.Vertex3f(0, vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f / m_fScale);
+		im.Vertex3f(0, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / m_fScale);
 
-		glVertex3f(0, vMaxBounds[nDim1] + 6.0f / m_fScale, vMinBounds[nDim2]);
-		glVertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2]);
+		im.Vertex3f(0, vMaxBounds[nDim1] + 6.0f / m_fScale, vMinBounds[nDim2]);
+		im.Vertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2]);
 
-		glVertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2]);
-		glVertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2]);
+		im.Vertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMinBounds[nDim2]);
+		im.Vertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2]);
 
-		glVertex3f(0, vMaxBounds[nDim1] + 6.0f / m_fScale, vMaxBounds[nDim2]);
-		glVertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2]);
+		im.Vertex3f(0, vMaxBounds[nDim1] + 6.0f / m_fScale, vMaxBounds[nDim2]);
+		im.Vertex3f(0, vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2]);
 
-		glEnd();
+		im.End();
 
-		glRasterPos3f(0, Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), vMinBounds[nDim2] - 20.0 / m_fScale);
-		g_strDim.Format(g_pDimStrings[nDim1], vSize[nDim1]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawOrigin(
+      idVec3(0, vMinBounds[nDim1] + 4.0, vMaxBounds[nDim2] + 8 / m_fScale),
+      vMinBounds[nDim1],
+      vMaxBounds[nDim2],
+      "y", 
+      "z",
+      color);
 
-		glRasterPos3f(0, vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2]));
-		g_strDim.Format(g_pDimStrings[nDim2], vSize[nDim2]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawDimension(
+      idVec3(0, Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), vMinBounds[nDim2] - 20.0 / m_fScale),
+      vSize[nDim1],
+      "y",
+      color);
 
-		glRasterPos3f(0, vMinBounds[nDim1] + 4.0, vMaxBounds[nDim2] + 8 / m_fScale);
-		g_strDim.Format(g_pOrgStrings[2], vMinBounds[nDim1], vMaxBounds[nDim2]);
-		glCallLists(g_strDim.GetLength(), GL_UNSIGNED_BYTE, g_strDim);
+    DrawDimension(
+      idVec3(0, vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2])),
+      vSize[nDim2],
+      "z",
+      color);
 	}
 }
 
 /* XY_Draw */
-long		g_lCount = 0;
-long		g_lTotal = 0;
 extern void DrawBrushEntityName(brush_t *b);
 
 /*
@@ -3888,16 +3678,6 @@ void CXYWnd::Clip() {
 
 			Sys_UpdateWindows(W_ALL);
 		}
-	}
-	else if (PathMode()) {
-		FinishSmartCreation();
-		if (g_pPathFunc) {
-			g_pPathFunc(true, g_nPathCount);
-		}
-
-		g_pPathFunc = NULL;
-		g_nPathCount = 0;
-		g_bPathMode = false;
 	}
 }
 

@@ -55,15 +55,11 @@ fhImmediateMode::fhImmediateMode(bool geometryOnly)
 , currentTexture(nullptr)
 , geometryOnly(geometryOnly)
 {
-  assert(!active);
-  active = true;
 }
 
 fhImmediateMode::~fhImmediateMode()
 {
   End();
-  assert(active);
-  active = false;
 }
 
 void fhImmediateMode::SetTexture(idImage* texture)
@@ -74,12 +70,16 @@ void fhImmediateMode::SetTexture(idImage* texture)
 void fhImmediateMode::Begin(GLenum mode)
 {
   End();
+  assert(!active);
+  active = true;
+
   currentMode = mode;
   drawVertsUsed = 0;
 }
 
 void fhImmediateMode::End()
 {
+  active = false;
   if(!drawVertsUsed)
     return;
 

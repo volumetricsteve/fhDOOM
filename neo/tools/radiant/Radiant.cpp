@@ -294,7 +294,8 @@ BOOL CRadiantApp::InitInstance()
 
 	g_PrefsDlg.LoadPrefs();
 
-	glEnableClientState( GL_VERTEX_ARRAY );
+  if(!backEnd.glslEnabled)
+	  glEnableClientState( GL_VERTEX_ARRAY );
 
 	CString strTemp = m_lpCmdLine;
 	strTemp.MakeLower();

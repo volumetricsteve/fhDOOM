@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../../sys/win32/rc/guied_resource.h"
 #include "../../renderer/tr_local.h"
+#include "../../renderer/ImmediateMode.h"
 #include "../../sys/win32/win_local.h"
 #include "../../ui/DeviceContext.h"
 #include "../../ui/EditWindow.h"
@@ -219,40 +220,41 @@ void rvGEWorkspace::RenderGrid ( void )
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
-	glColor4f ( color[0], color[1], color[2], 0.5f );
+  fhImmediateMode im;
+	im.Color4f ( color[0], color[1], color[2], 0.5f );
 		
-	glBegin ( GL_LINES );
+	im.Begin ( GL_LINES );
 	step = mApplication->GetOptions().GetGridWidth ( ) * g_ZoomScales[mZoom];
 	for ( x = mRect.x + mRect.w; x >= mRect.x ; x -= step )
 	{
-		glVertex2f ( x, mRect.y );
-		glVertex2f ( x, mRect.y + mRect.h );
+		im.Vertex2f ( x, mRect.y );
+		im.Vertex2f ( x, mRect.y + mRect.h );
 	}
 	step = mApplication->GetOptions().GetGridHeight ( ) * g_ZoomScales[mZoom];
 	for ( y = mRect.y + mRect.h; y >= mRect.y ; y -= step )
 	{
-		glVertex2f ( mRect.x, y );
-		glVertex2f ( mRect.x + mRect.w, y );
+		im.Vertex2f ( mRect.x, y );
+		im.Vertex2f ( mRect.x + mRect.w, y );
 	}
-	glEnd ( );
+	im.End ( );
 
 	glDisable(GL_BLEND);
-	glColor3f ( color[0], color[1], color[2] );
+	im.Color3f ( color[0], color[1], color[2] );
 		
-	glBegin ( GL_LINES );
+	im.Begin ( GL_LINES );
 	step = mApplication->GetOptions().GetGridWidth ( ) * g_ZoomScales[mZoom];
 	for ( x = mRect.x + mRect.w; x >= mRect.x ; x -= step * 4 )
 	{
-		glVertex2f ( x, mRect.y );
-		glVertex2f ( x, mRect.y + mRect.h );
+		im.Vertex2f ( x, mRect.y );
+		im.Vertex2f ( x, mRect.y + mRect.h );
 	}
 	step = mApplication->GetOptions().GetGridHeight ( ) * g_ZoomScales[mZoom];
 	for ( y = mRect.y + mRect.h; y >= mRect.y ; y -= step * 4 )
 	{
-		glVertex2f ( mRect.x, y );
-		glVertex2f ( mRect.x + mRect.w, y );
+		im.Vertex2f ( mRect.x, y );
+		im.Vertex2f ( mRect.x + mRect.w, y );
 	}
-	glEnd ( );
+	im.End ( );
 }
 
 /*
@@ -294,13 +296,14 @@ void rvGEWorkspace::Render ( HDC hdc )
 
   GL_ModelViewMatrix.LoadIdentity();
 
-	glColor3f ( mApplication->GetOptions().GetWorkspaceColor()[0], mApplication->GetOptions().GetWorkspaceColor()[1], mApplication->GetOptions().GetWorkspaceColor()[2] );	
-	glBegin ( GL_QUADS );
-	glVertex2f ( mRect.x, mRect.y );
-	glVertex2f ( mRect.x + mRect.w, mRect.y );
-	glVertex2f ( mRect.x + mRect.w, mRect.y + mRect.h );
-	glVertex2f ( mRect.x, mRect.y + mRect.h );
-	glEnd ( );
+  fhImmediateMode im;
+	im.Color3f ( mApplication->GetOptions().GetWorkspaceColor()[0], mApplication->GetOptions().GetWorkspaceColor()[1], mApplication->GetOptions().GetWorkspaceColor()[2] );	
+	im.Begin ( GL_QUADS );
+	im.Vertex2f ( mRect.x, mRect.y );
+	im.Vertex2f ( mRect.x + mRect.w, mRect.y );
+	im.Vertex2f ( mRect.x + mRect.w, mRect.y + mRect.h );
+	im.Vertex2f ( mRect.x, mRect.y + mRect.h );
+	im.End ( );
 
 	// Prepare the renderSystem view to draw the GUI in
 	viewDef_t viewDef;
