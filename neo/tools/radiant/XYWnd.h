@@ -207,6 +207,7 @@ protected:
 
   CMenu m_mnuDrop;
   int m_nViewType;
+  const char* m_sViewName;
 
   unsigned int m_nTimerID;
   int m_nScrollFlags;

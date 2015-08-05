@@ -43,7 +43,7 @@ If you have questions concerning this license or the applicable additional terms
 void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color)
 {
   static const idMat3 rotation = idAngles(90, 90, 0).ToMat3();
-  RB_DrawText(text, pos, 0.35f * scale, color, rotation, 0);
+  RB_DrawText(text, pos, 0.4f * scale, color, rotation, 0);
 }
 
 void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color, int viewType)
@@ -55,7 +55,7 @@ void drawText(const char* text, float scale, const idVec3& pos, const idVec4& co
   if(viewType == XZ)
     rotation = xzRotation;
 
-  RB_DrawText(text, pos, 0.35f * scale, color, rotation, 0);
+  RB_DrawText(text, pos, 0.4f * scale, color, rotation, 0);
 }
 
 void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType)
@@ -80,7 +80,7 @@ void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec4&
   else if (m_nViewType == YZ)
     rotation = yzRotation;
 
-  RB_DrawText(text, pos, 0.35f * 1.0/m_fScale, color, rotation, 0);
+  RB_DrawText(text, pos, 0.4f * 1.0/m_fScale, color, rotation, 0);
 }
 
 void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec3& color)
@@ -551,6 +551,7 @@ CXYWnd::CXYWnd() {
 	g_nPathLimit = 0;
 	m_nTimerID = -1;
 	m_nButtonstate = 0;
+  m_sViewName = "?";
 	XY_Init();
 }
 
@@ -632,41 +633,6 @@ BOOL CXYWnd::PreCreateWindow(CREATESTRUCT &cs) {
 
 HDC				s_hdcXY;
 HGLRC			s_hglrcXY;
-
-static unsigned s_stipple[32] = {
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-	0xaaaaaaaa,
-	0x55555555,
-};
 
 /*
  =======================================================================================================================
@@ -786,8 +752,6 @@ int CXYWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 	s_hdcXY = ::GetDC(GetSafeHwnd());
 	QEW_SetupPixelFormat(s_hdcXY, false);
 
-	glPolygonStipple((unsigned char *)s_stipple);
-	glLineStipple(3, 0xaaaa);
 	return 0;
 }
 
@@ -2527,7 +2491,7 @@ bool CXYWnd::XY_MouseMoved(int x, int y, int buttons) {
 
 /*
  =======================================================================================================================
-    DRAWING £
+    DRAWING
     XY_DrawGrid
  =======================================================================================================================
  */
@@ -2574,6 +2538,7 @@ void CXYWnd::XY_DrawGrid() {
 	ye = startPos * ceil(ye / startPos);
 
 	// draw major blocks
+  glLineWidth(0.25);
   fhImmediateMode im;
 	im.Color3fv(g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR].ToFloatPtr());
 
@@ -2677,15 +2642,7 @@ void CXYWnd::XY_DrawGrid() {
 		}
 
     const idVec3 viewNameColor = g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME];
-		const char* viewName;
-		if (m_nViewType == XY)
-			viewName = "XY Top";		
-		else if (m_nViewType == XZ)
-			viewName = "XZ Front";
-		else
-			viewName = "YZ Side";
-
-    drawText(viewName, textScale, idVec3(m_vOrigin[nDim1] - w + 35 / m_fScale, m_vOrigin[nDim2] + h - 20 / m_fScale, 0), textColor);
+    drawText(m_sViewName, textScale, idVec3(m_vOrigin[nDim1] - w + 35 / m_fScale, m_vOrigin[nDim2] + h - 20 / m_fScale, 0), textColor);
 	}
 }
 
@@ -3377,8 +3334,7 @@ void CXYWnd::XY_Draw() {
 
 	// draw stuff
 	globalImages->BindNull();
-	// now draw the grid
-	glLineWidth(0.25);
+	// now draw the grid	
 	XY_DrawGrid();
 	glLineWidth(0.5);
 
@@ -3459,11 +3415,6 @@ void CXYWnd::XY_Draw() {
 		glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
 	}
 
-	if (g_PrefsDlg.m_bNoStipple == FALSE) {
-		glEnable(GL_LINE_STIPPLE);
-		glLineStipple(3, 0xaaaa);
-	}
-
 	glLineWidth(1);
 
 	idVec3	vMinBounds;
@@ -3495,11 +3446,7 @@ void CXYWnd::XY_Draw() {
 			}
 		}
 	}
-
-	if (g_PrefsDlg.m_bNoStipple == FALSE) {
-		glDisable(GL_LINE_STIPPLE);
-	}
-
+  
 	glLineWidth(0.5);
 
 	if (!bFixedSize && !RotateMode() && !ScaleMode() && drawn - nSaveDrawn > 0 && g_PrefsDlg.m_bSizePaint) {
@@ -3765,13 +3712,13 @@ void CXYWnd::OnDestroy() {
  */
 void CXYWnd::SetViewType(int n) {
 	m_nViewType = n;
-	char *p = "YZ Side";
+	m_sViewName = "YZ Side";
 	if (m_nViewType == XY) {
-		p = "XY Top";
+		m_sViewName = "XY Top";
 	} else if (m_nViewType == XZ) {
-		p = "XZ Front";
+		m_sViewName = "XZ Front";
 	}
-	SetWindowText(p);
+	SetWindowText(m_sViewName);
 };
 
 /*
