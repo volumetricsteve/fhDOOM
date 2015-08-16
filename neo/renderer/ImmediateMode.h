@@ -23,6 +23,8 @@ public:
   void Vertex2f(float x, float y);
   void End();
 
+  void Sphere(float radius, int rings, int sectors, bool inverse = false);
+
   static void Init();
 private:  
   bool geometryOnly;
@@ -33,3 +35,4 @@ private:
 
   int drawVertsUsed;
 };
+

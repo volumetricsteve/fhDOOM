@@ -3365,14 +3365,12 @@ void CXYWnd::XY_Draw() {
 
 		drawn++;
 
-		if (brush->owner != e && brush->owner) {
-			glColor3fv(brush->owner->eclass->color.ToFloatPtr());
-		}
-		else {
-			glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES].ToFloatPtr());
-		}
+    const idVec3 brushColor =
+      (brush->owner != e && brush->owner) ? 
+      brush->owner->eclass->color : 
+      g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES];
 
-		Brush_DrawXY( brush, m_nViewType );
+		Brush_DrawXY( brush, m_nViewType, false, brushColor );
 	}
 
 	DrawPathLines();
@@ -3405,14 +3403,15 @@ void CXYWnd::XY_Draw() {
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0], g_qeglobals.d_select_translate[1], g_qeglobals.d_select_translate[2]);
 
+  idVec3 brushColor;
 	if (RotateMode()) {
-		glColor3f( 0.8f, 0.1f, 0.9f );
+		brushColor.Set( 0.8f, 0.1f, 0.9f );
 	}
 	else if (ScaleMode()) {
-		glColor3f( 0.1f, 0.8f, 0.1f );
+		brushColor.Set( 0.1f, 0.8f, 0.1f );
 	}
 	else {
-		glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+    brushColor = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
 	}
 
 	glLineWidth(1);
@@ -3426,7 +3425,7 @@ void CXYWnd::XY_Draw() {
 	bool	bFixedSize = false;
 	for (brush = selected_brushes.next; brush != &selected_brushes; brush = brush->next) {
 		drawn++;
-		Brush_DrawXY(brush, m_nViewType, true);
+		Brush_DrawXY(brush, m_nViewType, true, brushColor);
 
 		if (!bFixedSize) {
 			if (brush->owner->eclass->fixedsize) {

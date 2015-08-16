@@ -2240,56 +2240,7 @@ void DrawPatchMesh( patchMesh_t *pm,bool bPoints,int *list,bool bShade = false )
 
 		int			width	= cp->GetWidth();
 		int			height	= cp->GetHeight();
-		/*
-					for (i = 0; i < width; i++) {
-						for (j = 0; j < height; j++) {
-							glBegin(GL_POINTS);
-							int index = j * width + i;
-							glVertex3fv((*cp)[index].xyz);
-							glEnd();
-							char msg[64];
-							sprintf(msg, "(%0.3f, %0.3f, %0.3f)(%0.3f, %0.3f)", (*cp)[index].xyz.x, (*cp)[index].xyz.y, (*cp)[index].xyz.z, (*cp)[index].st.x, (*cp)[index].st.y);
-							glRasterPos3f((*cp)[index].xyz.x + 1, (*cp)[index].xyz.y + 1, (*cp)[index].xyz.z + 1);
-							glCallLists (strlen(msg), GL_UNSIGNED_BYTE, msg);
-						}
-					}
-			*/
-#ifdef TEST_SURFACE_CLIPPING
-		int			n;
-		idSurface	*surf	= cp;
-		idSurface	*front, *back;
 
-		surf->Split(idPlane(1, 0, 0, 0), 0.1f, &front, &back);
-		if ( front && back ) {
-			front->TranslateSelf(idVec3(10, 10, 10));
-			(*front) += (*back);
-			surf = front;
-		} else {
-			surf = cp;
-		}
-		//		surf->ClipInPlace( idPlane( 1, 0, 0, 0 ), 0.1f, true );
-
-		glBegin(GL_TRIANGLES);
-		for ( i = 0; i < surf->GetNumIndexes(); i += 3 ) {
-			n = surf->GetIndexes()[i + 0];
-			glTexCoord2fv((*surf)[n].st.ToFloatPtr());
-			glVertex3fv((*surf)[n].xyz.ToFloatPtr());
-			n = surf->GetIndexes()[i + 1];
-			glTexCoord2fv((*surf)[n].st.ToFloatPtr());
-			glVertex3fv((*surf)[n].xyz.ToFloatPtr());
-			n = surf->GetIndexes()[i + 2];
-			glTexCoord2fv((*surf)[n].st.ToFloatPtr());
-			glVertex3fv((*surf)[n].xyz.ToFloatPtr());
-		}
-		glEnd();
-
-		if ( front ) {
-			delete front;
-		}
-		if ( back ) {
-			delete back;
-		}
-#else
 		for ( i = 0 ; i < width - 1; i++ ) {
 			glBegin(GL_QUAD_STRIP);
 			for ( j = 0 ; j < height; j++ ) {
@@ -2313,7 +2264,6 @@ void DrawPatchMesh( patchMesh_t *pm,bool bPoints,int *list,bool bShade = false )
 			}
 			glEnd();
 		}
-#endif
 
 		if ( list == &pm->nListSelected ) {
 			globalImages->BindNull();

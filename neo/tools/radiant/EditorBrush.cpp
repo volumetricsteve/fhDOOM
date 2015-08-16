@@ -34,6 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../../renderer/tr_local.h"
 #include "../../renderer/model_local.h"	// for idRenderModelMD5
+#include "../../renderer/ImmediateMode.h"
 
 void	Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset);
 void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam );
@@ -52,32 +53,59 @@ const int POINTS_PER_KNOT = 50;
 DrawRenderModel
 ================
 */
-void DrawRenderModel( idRenderModel *model, idVec3 &origin, idMat3 &axis, bool cameraView ) {
+void DrawRenderModel( idRenderModel *model, idVec3 &origin, idMat3 &axis, bool cameraView, const idVec3& color ) {
 	for ( int i = 0; i < model->NumSurfaces(); i++ ) {
 		const modelSurface_t *surf = model->Surface( i );
 		const idMaterial *material = surf->shader;
 
 		int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
-		if ( cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light) ) {
-			material->GetEditorImage()->Bind();
-		}
+    if(!r_glslEnabled.GetBool() || false) {
 
-		glBegin( GL_TRIANGLES );
+      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
+        material->GetEditorImage()->Bind();
+      }
 
-		const srfTriangles_t	*tri = surf->geometry;
-		for ( int j = 0; j < tri->numIndexes; j += 3 ) {
-			for ( int k = 0; k < 3; k++ ) {
-				int		index = tri->indexes[j + k];
-				idVec3	v;
+      glColor3fv(color.ToFloatPtr());
+		  glBegin( GL_TRIANGLES );
 
-				v = tri->verts[index].xyz * axis + origin;
-				glTexCoord2f( tri->verts[index].st.x, tri->verts[index].st.y );
-				glVertex3fv( v.ToFloatPtr() );
-			}
-		}
+		  const srfTriangles_t	*tri = surf->geometry;
+		  for ( int j = 0; j < tri->numIndexes; j += 3 ) {
+			  for ( int k = 0; k < 3; k++ ) {
+				  int		index = tri->indexes[j + k];
+				  idVec3	v;
 
-		glEnd();
+				  v = tri->verts[index].xyz * axis + origin;
+				  glTexCoord2f( tri->verts[index].st.x, tri->verts[index].st.y );
+				  glVertex3fv( v.ToFloatPtr() );
+			  }
+		  }
+
+		  glEnd();
+    } else {
+      fhImmediateMode im;
+
+      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
+        im.SetTexture(material->GetEditorImage());
+      }
+      
+      im.Begin(GL_TRIANGLES);
+      im.Color3fv(color.ToFloatPtr());
+
+      const srfTriangles_t	*tri = surf->geometry;
+      for (int j = 0; j < tri->numIndexes; j += 3) {
+        for (int k = 0; k < 3; k++) {
+          int		index = tri->indexes[j + k];
+          idVec3	v;
+
+          v = tri->verts[index].xyz * axis + origin;
+          im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
+          im.Vertex3fv(v.ToFloatPtr());
+        }
+      }     
+      
+      im.End();
+    }
 	}
 }
 
@@ -3590,7 +3618,6 @@ DrawProjectedLight
 ================
 */
 void DrawProjectedLight(brush_t *b, bool bSelected, bool texture) {
-	int		i;
 	idVec3	v1, v2, cross, vieworg, edge[8][2], v[4];
 	idVec3	target, start;
 
@@ -3615,14 +3642,19 @@ void DrawProjectedLight(brush_t *b, bool bSelected, bool texture) {
 
 	tri = R_PolytopeSurface(6, planes, NULL);
 
-	glColor3f(1, 0, 1);
-	for (i = 0; i < tri->numIndexes; i += 3) {
-		glBegin(GL_LINE_LOOP);
-		glVertex3fv(tri->verts[tri->indexes[i]].xyz.ToFloatPtr());
-		glVertex3fv(tri->verts[tri->indexes[i + 1]].xyz.ToFloatPtr());
-		glVertex3fv(tri->verts[tri->indexes[i + 2]].xyz.ToFloatPtr());
-		glEnd();
-	}
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDisable(GL_CULL_FACE);
+  fhImmediateMode im;
+  im.Color3f(1,0,1);
+  im.Begin(GL_TRIANGLES);
+  for (int i = 0; i < tri->numIndexes; i += 3) {    
+    im.Vertex3fv(tri->verts[tri->indexes[i]].xyz.ToFloatPtr());
+    im.Vertex3fv(tri->verts[tri->indexes[i + 1]].xyz.ToFloatPtr());
+    im.Vertex3fv(tri->verts[tri->indexes[i + 2]].xyz.ToFloatPtr());
+  }
+  im.End();
+  glEnable(GL_CULL_FACE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	R_FreeStaticTriSurf(tri);
 
@@ -3639,60 +3671,56 @@ void DrawProjectedLight(brush_t *b, bool bSelected, bool texture) {
 	}
 	idVec3 tv;
 	idVec3 *origin = (b->trackLightOrigin) ? &b->owner->lightOrigin : &b->owner->origin;
-	if (b->pointLight) {
-		if ( b->lightCenter[0] || b->lightCenter[1] || b->lightCenter[2] ) {
-			glPointSize(8);
-			glColor3f( 1.0f, 0.4f, 0.8f );
-			glBegin(GL_POINTS);
-			tv = b->lightCenter;
-			if (transform) {
-				tv -= *origin;
-				tv *= mat;
-				tv += *origin;
-			}
-			glVertex3fv(tv.ToFloatPtr());
-			glEnd();
-			glPointSize(1);
-		}
-		return;
-	}
 
-	// projected light
-	glPointSize(8);
-	glColor3f( 1.0f, 0.4f, 0.8f );
-	glBegin(GL_POINTS);
-	tv = b->lightRight;
-	if (transform) {
-		tv -= *origin;
-		tv *= mat;
-		tv += *origin;
-	}
-	glVertex3fv(tv.ToFloatPtr());
-	tv = b->lightTarget;
-	if (transform) {
-		tv -= *origin;
-		tv *= mat;
-		tv += *origin;
-	}
-	glVertex3fv(tv.ToFloatPtr());
-	tv = b->lightUp;
-	if (transform) {
-		tv -= *origin;
-		tv *= mat;
-		tv += *origin;
-	}
-	glVertex3fv(tv.ToFloatPtr());
-	glEnd();
 
-	if (b->startEnd) {
-		glColor3f( 0.4f, 1.0f, 0.8f );
-		glBegin(GL_POINTS);
-		glVertex3fv(b->lightStart.ToFloatPtr());
-		glVertex3fv(b->lightEnd.ToFloatPtr());
-		glEnd();
-	}
+  glPointSize(8);
+  im.Begin(GL_POINTS);
+  im.Color3f(1.0f, 0.4f, 0.8f);
 
-	glPointSize(1);
+  if (b->pointLight) {
+    // point light
+    if (b->lightCenter[0] || b->lightCenter[1] || b->lightCenter[2]) {        
+      tv = b->lightCenter;
+      if (transform) {
+        tv -= *origin;
+        tv *= mat;
+        tv += *origin;
+      }
+      im.Vertex3fv(tv.ToFloatPtr());        
+    }
+  } else {
+    // projected light
+    tv = b->lightRight;
+    if (transform) {
+      tv -= *origin;
+      tv *= mat;
+      tv += *origin;
+    }
+    im.Vertex3fv(tv.ToFloatPtr());
+    tv = b->lightTarget;
+    if (transform) {
+      tv -= *origin;
+      tv *= mat;
+      tv += *origin;
+    }
+    im.Vertex3fv(tv.ToFloatPtr());
+    tv = b->lightUp;
+    if (transform) {
+      tv -= *origin;
+      tv *= mat;
+      tv += *origin;
+    }
+    im.Vertex3fv(tv.ToFloatPtr());
+
+    if (b->startEnd) {
+      im.Color3f(0.4f, 1.0f, 0.8f);
+      im.Vertex3fv(b->lightStart.ToFloatPtr());
+      im.Vertex3fv(b->lightEnd.ToFloatPtr());
+    }
+  }
+
+  im.End();
+  glPointSize(1);
 }
 
 /*
@@ -3700,7 +3728,7 @@ void DrawProjectedLight(brush_t *b, bool bSelected, bool texture) {
 GLCircle
 ================
 */
-void GLCircle(float x, float y, float z, float r) 
+static void GLCircle(float x, float y, float z, float r, const idVec4& color) 
 { 
 	float ix = 0; 
 	float iy = r; 
@@ -3708,7 +3736,9 @@ void GLCircle(float x, float y, float z, float r)
 	float idgr = -6;
 	float idgd = 4 * r - 10;
 	glPointSize(0.5f);
-	glBegin(GL_POINTS);
+  fhImmediateMode im;
+  im.Color4fv(color.ToFloatPtr());
+	im.Begin(GL_POINTS);
 	while (ix <= iy) {
 		if (ig < 0) {
 			ig += idgd;
@@ -3720,16 +3750,16 @@ void GLCircle(float x, float y, float z, float r)
 		}
 		idgr -= 4;
 		ix++;
-		glVertex3f(x + ix, y + iy, z);
-		glVertex3f(x - ix, y + iy, z);
-		glVertex3f(x + ix, y - iy, z);
-		glVertex3f(x - ix, y - iy, z);
-		glVertex3f(x + iy, y + ix, z);
-		glVertex3f(x - iy, y + ix, z);
-		glVertex3f(x + iy, y - ix, z);
-		glVertex3f(x - iy, y - ix, z);
+		im.Vertex3f(x + ix, y + iy, z);
+		im.Vertex3f(x - ix, y + iy, z);
+		im.Vertex3f(x + ix, y - iy, z);
+		im.Vertex3f(x - ix, y - iy, z);
+		im.Vertex3f(x + iy, y + ix, z);
+		im.Vertex3f(x - iy, y + ix, z);
+		im.Vertex3f(x + iy, y - ix, z);
+		im.Vertex3f(x - iy, y - ix, z);
 	}
-	glEnd();
+	im.End();
 } 
 
 /*
@@ -3769,46 +3799,49 @@ void DrawSpeaker(brush_t *b, bool bSelected, bool twoD) {
 	min *= METERS_TO_DOOM;
 	max *= METERS_TO_DOOM;
 
-	if (twoD) {
-		if (bSelected) {
-			glColor4f(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z, .5);
-		} else {
-			glColor4f(b->owner->eclass->color.x, b->owner->eclass->color.y, b->owner->eclass->color.z, .5);
-		}
-		glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, min);
-		if (bSelected) {
-			glColor4f(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z, 1);
-		} else {
-			glColor4f(b->owner->eclass->color.x, b->owner->eclass->color.y, b->owner->eclass->color.z, 1);
-		}
-		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, max);
+  idVec4 minColor;    
+  idVec4 maxColor;
+
+  if (bSelected) {
+    minColor.Set(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z, .5);
+  }
+  else {
+    minColor.Set(b->owner->eclass->color.x, b->owner->eclass->color.y, b->owner->eclass->color.z, .5);
+  }
+
+  maxColor.Set(minColor.x, minColor.y, minColor.z, 1.0f);
+
+	if (twoD) {    
+		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, min, minColor);
+		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, max, maxColor);
 	} else {
     GL_ModelViewMatrix.Push();		
 		GL_ModelViewMatrix.Translate(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z );
-		glColor3f( 0.4f, 0.4f, 0.4f );
-		glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-		GLUquadricObj* qobj = gluNewQuadric();
-		gluSphere(qobj, min, 8, 8);
-		glColor3f( 0.8f, 0.8f, 0.8f );
-		gluSphere(qobj, max, 8, 8);
-		glEnable(GL_BLEND);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		globalImages->BindNull();
-		if (bSelected) {
-			glColor4f( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z, 0.35f );
-		} else {
-			glColor4f( b->owner->eclass->color.x, b->owner->eclass->color.y, b->owner->eclass->color.z, 0.35f );
-		}
-		gluSphere(qobj, min, 8, 8);
-		if (bSelected) {
-			glColor4f( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z, 0.1f );
-		} else {
-			glColor4f( b->owner->eclass->color.x, b->owner->eclass->color.y, b->owner->eclass->color.z, 0.1f );
-		}
-		gluSphere(qobj, max, 8, 8);
-		gluDeleteQuadric(qobj);
+
+    minColor.w = 0.35f;
+    maxColor.w = 0.1f;
+
+    const int tesselation = 16;
+
+    glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+    fhImmediateMode im;    
+    im.Color3f(0.4f, 0.4f, 0.4f);
+    im.Sphere(min, tesselation, tesselation, true);
+    im.Color3f(0.8f, 0.8f, 0.8f);
+    im.Sphere(max, tesselation, tesselation, true);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    globalImages->BindNull();
+
+    im.Color4fv(minColor.ToFloatPtr());
+    im.Sphere(min, tesselation, tesselation, true);
+    im.Color4fv(maxColor.ToFloatPtr());
+    im.Sphere(max, tesselation, tesselation, true);
+
+    glDisable(GL_BLEND);
+    
 		GL_ModelViewMatrix.Pop();
 	}
 
@@ -3828,18 +3861,16 @@ void DrawLight(brush_t *b, bool bSelected) {
 	vTriColor[1] = 1.0f;
 	bTriPaint = true;
 
-	CString strColor = ValueForKey(b->owner, "_color");
-	if (strColor.GetLength() > 0) {
+	idStr strColor = ValueForKey(b->owner, "_color");
+	if (strColor.Length() > 0) {
 		float	fR, fG, fB;
-		int		n = sscanf(strColor, "%f %f %f", &fR, &fG, &fB);
+		int		n = sscanf(strColor.c_str(), "%f %f %f", &fR, &fG, &fB);
 		if (n == 3) {
 			vTriColor[0] = fR;
 			vTriColor[1] = fG;
 			vTriColor[2] = fB;
 		}
 	}
-
-	glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
 
 	idVec3	vCorners[4];
 	float	fMid = b->mins[2] + (b->maxs[2] - b->mins[2]) / 2;
@@ -3860,81 +3891,38 @@ void DrawLight(brush_t *b, bool bSelected) {
 	vCorners[3][1] = b->mins[1];
 	vCorners[3][2] = fMid;
 
-	idVec3	vTop, vBottom;
-
+	idVec3	vTop;
 	vTop[0] = b->mins[0] + ((b->maxs[0] - b->mins[0]) / 2);
 	vTop[1] = b->mins[1] + ((b->maxs[1] - b->mins[1]) / 2);
 	vTop[2] = b->maxs[2];
 
-	VectorCopy(vTop, vBottom);
+	idVec3 vBottom = vTop;
 	vBottom[2] = b->mins[2];
 
-	idVec3	vSave;
-	VectorCopy(vTriColor, vSave);
+  fhImmediateMode im;
+  im.Begin(GL_TRIANGLES);    
 
-	globalImages->BindNull();
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex3fv(vTop.ToFloatPtr());
-	int i;
-	for (i = 0; i <= 3; i++) {
-		vTriColor[0] *= 0.95f;
-		vTriColor[1] *= 0.95f;
-		vTriColor[2] *= 0.95f;
-		glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
-		glVertex3fv(vCorners[i].ToFloatPtr());
-	}
+  idVec3 shadedColor = vTriColor;  
+  for (int i = 0; i <= 3; i++) {         
+    im.Color3fv(shadedColor.ToFloatPtr());
+    im.Vertex3fv(vTop.ToFloatPtr());
+    im.Vertex3fv(vCorners[i].ToFloatPtr());
+    im.Vertex3fv(vCorners[(i<3) ? i+1 : 0].ToFloatPtr());
+    shadedColor *= 0.95f;
+  }
 
-	glVertex3fv(vCorners[0].ToFloatPtr());
-	glEnd();
+  shadedColor = vTriColor;   
+  for (int i = 3; i >= 0; i--) {      
+    im.Color3fv(shadedColor.ToFloatPtr());      
+    im.Vertex3fv(vBottom.ToFloatPtr());
+    im.Vertex3fv(vCorners[i].ToFloatPtr());      
+    im.Vertex3fv(vCorners[(i > 0) ? i - 1 : 3].ToFloatPtr());
+    shadedColor *= 0.95f;
+  }
 
-	VectorCopy(vSave, vTriColor);
-	vTriColor[0] *= 0.95f;
-	vTriColor[1] *= 0.95f;
-	vTriColor[2] *= 0.95f;
-
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex3fv(vBottom.ToFloatPtr());
-	glVertex3fv(vCorners[0].ToFloatPtr());
-	for (i = 3; i >= 0; i--) {
-		vTriColor[0] *= 0.95f;
-		vTriColor[1] *= 0.95f;
-		vTriColor[2] *= 0.95f;
-		glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
-		glVertex3fv(vCorners[i].ToFloatPtr());
-	}
-
-	glEnd();
+  im.End();      
 
 	DrawProjectedLight(b, bSelected, true);
-}
-
-/*
-================
-Control_Draw
-================
-*/
-void Control_Draw(brush_t *b) {
-	face_t		*face;
-	int			i, order;
-	qtexture_t	*prev = 0;
-	idWinding	*w;
-
-	// guarantee the texture will be set first
-	prev = NULL;
-	for ( face = b->brush_faces, order = 0; face; face = face->next, order++ ) {
-		w = face->face_winding;
-		if (!w) {
-			continue;	// freed face
-		}
-
-		glColor4f(1, 1, .5, 1);
-		glBegin(GL_POLYGON);
-		for (i = 0; i < w->GetNumPoints(); i++) {
-			glVertex3fv( (*w)[i].ToFloatPtr() );
-		}
-
-		glEnd();
-	}
 }
 
 /*
@@ -4015,11 +4003,11 @@ void Brush_DrawModel( brush_t *b, bool camera, bool bSelected ) {
 		idVec4	colorSave;
 		glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
 
-		if ( bSelected ) {
-			glColor3fv( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr() );
-		}
+    if (bSelected) {
+      glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+    }
 
-		DrawRenderModel( model, b->owner->origin, axis, camera );
+    DrawRenderModel(model, b->owner->origin, axis, camera, bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : colorSave.ToVec3());
 
 		glColor4fv( colorSave.ToFloatPtr() );
 
@@ -4042,9 +4030,9 @@ void Brush_DrawModel( brush_t *b, bool camera, bool bSelected ) {
             glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
             glDisable( GL_BLEND );
 			glDisable( GL_DEPTH_TEST );
-            glColor3f( 1.0f, 1.0f, 1.0f );
-            glPolygonOffset( 1.0f, 3.0f );
-            DrawRenderModel( model, b->owner->origin, axis, false );
+      glColor3f(1.0f, 1.0f, 1.0f);
+      glPolygonOffset(1.0f, 3.0f);
+      DrawRenderModel(model, b->owner->origin, axis, false, idVec3(1,1,1));
 			glEnable( GL_DEPTH_TEST );
         }
 
@@ -4299,12 +4287,14 @@ void Brush_DrawEnv( brush_t *b, bool cameraView, bool bSelected ) {
 		idVec4	colorSave;
 		glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
 
-		if ( bSelected ) {
-			glColor3fv( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr() );
-		} else {
-			glColor3f( 1.f, 1.f, 1.f );
-		}
-		DrawRenderModel( model, origin, axis, true );
+    if (bSelected) {
+      glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+    }
+    else {
+      glColor3f(1.f, 1.f, 1.f);
+    }
+    DrawRenderModel(model, origin, axis, true, bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : idVec3(1,1,1));
+
 		globalImages->BindNull();
 		delete model;
 		model = NULL;
@@ -4583,8 +4573,7 @@ void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam ) {
 	}
 
 	int maxage = b->owner->curve->GetNumValues();
-	int i, time = 0;
-	glColor3f( 0.0f, 0.0f, 1.0f );
+	int i, time = 0;	
 	for ( i = 0; i < maxage; i++) {
 
 		if ( bSelected && g_qeglobals.d_select_mode == sel_editpoint ) { 
@@ -4595,68 +4584,35 @@ void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam ) {
 					glBox(colorBlue, v, 8.0f );
 				}
 			} else {
-				glPointSize( 4.0f );
-				glBegin( GL_POINTS );
-				glVertex3f( v.x, v.y, v.z );
-				glEnd();
+        glPointSize( 4.0f );
+        fhImmediateMode im;		
+        im.Color4fv( colorBlue.ToFloatPtr() );
+				im.Begin( GL_POINTS );
+				im.Vertex3f( v.x, v.y, v.z );
+				im.End();
 
 				if ( PointInMoveList( b->owner->curve->GetValueAddress( i ) ) >= 0 ) {
 					glBox(colorBlue, v, 4.0f );
 				}
 			}
 		}
-/*		
-		if ( cam ) {
-			idSurface_SweptSpline *ss = SplineToSweptSpline( b->owner->curve );
-			if ( ss ) {
-				idMaterial *mat = declManager->FindMaterial( "_default" );
-				mat->GetEditorImage()->Bind();
-				glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-				glBegin( GL_TRIANGLES );
-				const int *indexes = ss->GetIndexes();
-				const idDrawVert *verts = ss->GetVertices();
-				for ( j = 0; j < ss->GetNumIndexes(); j += 3 ) {
-					for ( k = 0; k < 3; k++ ) {
-						int	index = indexes[ j + 2 - k ];
-						float f = ShadeForNormal( verts[index].normal  );
-						glColor3f( f, f, f );
-						glTexCoord2fv( verts[index].st.ToFloatPtr() );
-						glVertex3fv( verts[index].xyz.ToFloatPtr() );
-					}
-				}
-				glEnd();
-				delete ss;
-			}
-		} else {
-*/
-/*			glPointSize( 1.0f );
-			glBegin( GL_POINTS );
-			if ( i + 1  < maxage ) {
-				int start = b->owner->curve->GetTime( i );
-				int end = b->owner->curve->GetTime( i + 1 );
-				int inc = (end - start) / POINTS_PER_KNOT;
-				for ( int j = 0; j < POINTS_PER_KNOT; j++ ) {
-					idVec3 v = b->owner->curve->GetCurrentValue( start );
-					glVertex3f( v.x, v.y, v.z );
-					start += inc;								
-				}
-			}*/
-                // DHM - _D3XP : Makes it easier to see curve
-		glBegin( GL_LINE_STRIP );
+
+    // DHM - _D3XP : Makes it easier to see curve
 		if ( i + 1  < maxage ) {
+      fhImmediateMode im;
+      im.Begin(GL_LINE_STRIP);
+
 			int start = b->owner->curve->GetTime( i );
 			int end = b->owner->curve->GetTime( i + 1 );
 			int inc = (end - start) / POINTS_PER_KNOT;
 			for ( int j = 0; j <= POINTS_PER_KNOT; j++ ) {
 				idVec3 v = b->owner->curve->GetCurrentValue( start );
-				glVertex3f( v.x, v.y, v.z );
+				im.Vertex3f( v.x, v.y, v.z );
 				start += inc;								
 			}
-			}
-			glEnd();
-/*
+
+      im.End();
 		}
-*/
 
 	}
 	glPointSize(1);
@@ -4667,7 +4623,7 @@ void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam ) {
 Brush_DrawXY
 ================
 */
-void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, bool ignoreViewType) {
+void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color) {
 	face_t		*face;
 	int			order;
 	idWinding	*w;
@@ -4675,22 +4631,23 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, bool ignoreViewType
 
 	if ( b->hiddenBrush ) {
 		return;
-	}
+	}	
 
-	idVec4	colorSave;
-	glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
+  idVec4	colorSave;
+  glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
 
 	if (!(b->owner && (b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN))) {
-		glColor4f( 1.0f, 0.0f, 0.0f, 0.8f );
-		glPointSize(4);
-		glBegin(GL_POINTS);
-		glVertex3fv(b->owner->origin.ToFloatPtr());
-		glEnd();
+    glPointSize(4);
+    fhImmediateMode im;
+		im.Color4f( 1.0f, 0.0f, 0.0f, 0.8f );		
+		im.Begin(GL_POINTS);
+		im.Vertex3fv(b->owner->origin.ToFloatPtr());
+		im.End();
 	}
 
 	Brush_DrawCurve( b, bSelected, false );
 
-	glColor4fv(colorSave.ToFloatPtr());
+	glColor3fv(colorSave.ToFloatPtr());
 
 
 	if (b->pPatch) {
@@ -4763,37 +4720,38 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, bool ignoreViewType
 		if (b->owner->eclass->entityModel) {
 			Brush_DrawModel( b, false, bSelected );
 			DrawBrushEntityName(b);
-			glColor4fv(colorSave.ToFloatPtr());
+			glColor3fv(colorSave.ToFloatPtr());
             return;
 		}
 
 	}
 
-	glColor4fv(colorSave.ToFloatPtr());
+	glColor3fv(colorSave.ToFloatPtr());
 
 	if (b->modelHandle > 0) {
 		Brush_DrawEmitter( b, bSelected, false );
 		Brush_DrawModel(b, false, bSelected);
-		glColor4fv(colorSave.ToFloatPtr());
+		glColor3fv(colorSave.ToFloatPtr());
 		return;
 	}
 
+  fhImmediateMode im;
+  im.Color3fv(color.ToFloatPtr());
+  im.Begin(GL_LINES);
 	for (face = b->brush_faces, order = 0; face; face = face->next, order++) {
 		// only draw polygons facing in a direction we care about
-		if (!ignoreViewType) {
-			if (nViewType == XY) {
-				if (face->plane[2] <= 0) {
+		if (nViewType == XY) {
+			if (face->plane[2] <= 0) {
+				continue;
+			}
+		} else {
+			if (nViewType == XZ) {
+				if (face->plane[1] <= 0) {
 					continue;
 				}
 			} else {
-				if (nViewType == XZ) {
-					if (face->plane[1] <= 0) {
-						continue;
-					}
-				} else {
-					if (face->plane[0] <= 0) {
-						continue;
-					}
+				if (face->plane[0] <= 0) {
+					continue;
 				}
 			}
 		}
@@ -4807,17 +4765,18 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, bool ignoreViewType
 		// if (b->alphaBrush && !(face->texdef.flags & SURF_ALPHA)) continue;
 		// draw the polygon
 		//
-		glBegin(GL_LINE_LOOP);
+		
 		for (i = 0; i < w->GetNumPoints(); i++) {
-			glVertex3fv( (*w)[i].ToFloatPtr() );
+			im.Vertex3fv( (*w)[i].ToFloatPtr() );
+
+      if(i+1 < w->GetNumPoints())
+        im.Vertex3fv( (*w)[i+1].ToFloatPtr() );
+      else
+        im.Vertex3fv( (*w)[0].ToFloatPtr() );
 		}
-		glEnd();
-/*
-		for (i = 0; i < 3; i++) {
-			glLabeledPoint(idVec4(1, 0, 0, 1), face->planepts[i], 3, va("%i", i));
-		}
-*/
+		
 	}
+  im.End();
 
 	DrawBrushEntityName(b);
 }

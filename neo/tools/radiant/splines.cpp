@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "splines.h"
+#include "../../renderer/ImmediateMode.h"
 
 idCameraDef splineList;
 idCameraDef *g_splineList = &splineList;
@@ -67,7 +68,36 @@ void glBox(idVec4 &color, idVec3 &point, float size) {
 	maxs[0] += size;
 	maxs[1] -= size;
 	maxs[2] += size;
+
+  fhImmediateMode im;
+  im.Color4fv(color.ToFloatPtr());
+  im.Begin(GL_LINE_LOOP);
+  im.Vertex3f(mins[0],mins[1],mins[2]);
+  im.Vertex3f(maxs[0],mins[1],mins[2]);
+  im.Vertex3f(maxs[0],maxs[1],mins[2]);
+  im.Vertex3f(mins[0],maxs[1],mins[2]);
+  im.End();
+  im.Begin(GL_LINE_LOOP);
+  im.Vertex3f(mins[0],mins[1],maxs[2]);
+  im.Vertex3f(maxs[0],mins[1],maxs[2]);
+  im.Vertex3f(maxs[0],maxs[1],maxs[2]);
+  im.Vertex3f(mins[0],maxs[1],maxs[2]);
+  im.End();
+
+  im.Begin(GL_LINES);
+  im.Vertex3f(mins[0],mins[1],mins[2]);
+  im.Vertex3f(mins[0],mins[1],maxs[2]);
+  im.Vertex3f(mins[0],maxs[1],maxs[2]);
+  im.Vertex3f(mins[0],maxs[1],mins[2]);
+  im.Vertex3f(maxs[0],mins[1],mins[2]);
+  im.Vertex3f(maxs[0],mins[1],maxs[2]);
+  im.Vertex3f(maxs[0],maxs[1],maxs[2]);
+  im.Vertex3f(maxs[0],maxs[1],mins[2]);
+  im.End();
+
+#if 0
 	idVec4	saveColor;
+
 	glGetFloatv(GL_CURRENT_COLOR, saveColor.ToFloatPtr());
 	glColor3fv( color.ToFloatPtr() );
 	glBegin(GL_LINE_LOOP);
@@ -94,6 +124,7 @@ void glBox(idVec4 &color, idVec3 &point, float size) {
 	glVertex3f(maxs[0],maxs[1],mins[2]);
 	glEnd();
 	glColor4fv(saveColor.ToFloatPtr());
+#endif
 
 }
 

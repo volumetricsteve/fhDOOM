@@ -8,7 +8,7 @@ This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
+the Free SoftwareF oundation, either version 3 of the License, or
 (at your option) any later version.
 
 Doom 3 Source Code is distributed in the hope that it will be useful,
@@ -46,7 +46,7 @@ brush_t *	Brush_Clone (brush_t *b);
 brush_t *	Brush_FullClone(brush_t *b);
 brush_t *	Brush_Create (idVec3 mins, idVec3 maxs, texdef_t *texdef);
 void		Brush_Draw( brush_t *b, bool bSelected = false);
-void		Brush_DrawXY(brush_t *b, int nViewType, bool bSelected = false, bool ignoreViewType = false);
+void		Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color);
 void		Brush_SplitBrushByFace (brush_t *in, face_t *f, brush_t **front, brush_t **back);
 void		Brush_SelectFaceForDragging (brush_t *b, face_t *f, bool shear);
 void		Brush_SetTexture (brush_t *b, texdef_t *texdef, brushprimit_texdef_t *brushprimit_texdef, bool bFitScale = false);

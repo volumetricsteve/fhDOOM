@@ -13,6 +13,7 @@ namespace {
   //      stuff!?
   idDrawVert drawVerts[drawVertsCapacity];
   unsigned short lineIndices[drawVertsCapacity * 2];
+  unsigned short sphereIndices[drawVertsCapacity * 2];
 
   bool active = false;
 
@@ -83,7 +84,7 @@ void fhImmediateMode::End()
   if(!drawVertsUsed)
     return;
 
-  if(backEnd.glslEnabled)
+  if(r_glslEnabled.GetBool())
   {
     auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(idDrawVert));
     int offset = vertexCache.Bind(vert);
@@ -224,4 +225,105 @@ void fhImmediateMode::Vertex3f(float x, float y, float z)
 void fhImmediateMode::Vertex2f(float x, float y)
 {
   Vertex3f(x, y, 0.0f);
+}
+
+
+
+void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
+{
+  assert(!active);
+  assert(radius > 0.0f);
+  assert(rings > 1);
+  assert(sectors > 1);
+
+  float const R = 1. / (float)(rings - 1);
+  float const S = 1. / (float)(sectors - 1);  
+
+  int vertexNum = 0;   
+  for (int r = 0; r < rings; r++) {
+    for (int s = 0; s < sectors; s++) {
+      float const y = sin(-(idMath::PI/2.0f) + idMath::PI * r * R);
+      float const x = cos(2 * idMath::PI * s * S) * sin(idMath::PI * r * R);
+      float const z = sin(2 * idMath::PI * s * S) * sin(idMath::PI * r * R);
+
+      drawVerts[vertexNum].xyz.x = x * radius;
+      drawVerts[vertexNum].xyz.y = y * radius;
+      drawVerts[vertexNum].xyz.z = z * radius;
+      drawVerts[vertexNum].st.x = s*S;
+      drawVerts[vertexNum].st.y = r*R;
+      drawVerts[vertexNum].color[0] = currentColor[0];
+      drawVerts[vertexNum].color[1] = currentColor[1];
+      drawVerts[vertexNum].color[2] = currentColor[2];
+      drawVerts[vertexNum].color[3] = currentColor[3];
+
+      vertexNum += 1;
+    }
+  }
+
+  int indexNum = 0;
+  for (int r = 0; r < rings - 1; r++) {
+    for (int s = 0; s < sectors - 1; s++) {
+      if(r == 0) {
+        //faces of first ring are single triangles
+        sphereIndices[indexNum + 2] = r * sectors + s;        
+        sphereIndices[indexNum + 1] = (r + 1) * sectors + s;
+        sphereIndices[indexNum + 0] = (r + 1) * sectors + (s + 1);
+
+        indexNum += 3;
+      } else if (r == rings - 2) {
+        //faces of last ring are single triangles
+        sphereIndices[indexNum + 0] = r * sectors + s;
+        sphereIndices[indexNum + 1] = r * sectors + (s + 1);
+        sphereIndices[indexNum + 2] = (r + 1) * sectors + (s + 1);
+
+        indexNum += 3;
+      } else {
+        //faces of remaining rings are quads (two triangles)
+        sphereIndices[indexNum + 0] = r * sectors + s;
+        sphereIndices[indexNum + 1] = r * sectors + (s + 1);
+        sphereIndices[indexNum + 2] = (r + 1) * sectors + (s + 1);
+
+        sphereIndices[indexNum + 3] = sphereIndices[indexNum + 2];
+        sphereIndices[indexNum + 4] = (r + 1) * sectors + s;
+        sphereIndices[indexNum + 5] = sphereIndices[indexNum + 0];
+
+        indexNum += 6;
+      }
+    }
+  } 
+
+  if(inverse) {
+    for(int i = 0; i+2 < indexNum; i += 3) {
+      unsigned short tmp = sphereIndices[i];
+      sphereIndices[i] = sphereIndices[i+2];
+      sphereIndices[i+2] = tmp;
+    }
+  }
+  
+  GL_UseProgram(vertexColorProgram);  
+
+  auto vert = vertexCache.AllocFrameTemp(drawVerts, vertexNum * sizeof(idDrawVert));
+  int offset = vertexCache.Bind(vert);
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);  
+
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
+
+  glDrawElements(GL_TRIANGLES,
+    indexNum,
+    GL_UNSIGNED_SHORT,
+    sphereIndices);
+
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  
+  GL_UseProgram(nullptr);
 }
