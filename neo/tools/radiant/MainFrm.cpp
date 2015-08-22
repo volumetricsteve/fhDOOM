@@ -1875,12 +1875,9 @@ void CMainFrame::OnFileOpen() {
  =======================================================================================================================
  */
 void CMainFrame::OnFilePointfile() {
-	if (g_qeglobals.d_pointfile_display_list) {
-		Pointfile_Clear();
-	}
-	else {
-		Pointfile_Check();
-	}
+  Pointfile_Clear();
+	Pointfile_Check();
+	
 	Sys_UpdateWindows(W_ALL);
 }
 

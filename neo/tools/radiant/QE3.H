@@ -152,9 +152,7 @@ typedef struct
 	
 	qtexture_t	*d_qtextures;
 	
-	texturewin_t d_texturewin;
-	
-	int	         d_pointfile_display_list;
+	texturewin_t d_texturewin;	
 	
 	LPMRUMENU    d_lpMruMenu;
 	

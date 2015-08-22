@@ -55,6 +55,7 @@ fhImmediateMode::fhImmediateMode(bool geometryOnly)
 : drawVertsUsed(0)
 , currentTexture(nullptr)
 , geometryOnly(geometryOnly)
+, currentMode(GL_INVALID_ENUM)
 {
 }
 
@@ -146,6 +147,7 @@ void fhImmediateMode::End()
   }
 
   drawVertsUsed = 0;
+  currentMode = GL_INVALID_ENUM;
 }
 
 void fhImmediateMode::TexCoord2f(float s, float t)
@@ -326,4 +328,20 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
   
   GL_UseProgram(nullptr);
+}
+
+void fhImmediateMode::AddTrianglesFromPolygon(fhImmediateMode& im, const idVec3* xyz, int num)
+{
+  assert(im.getCurrentMode() == GL_TRIANGLES);
+
+  if(num < 3)
+    return;
+
+  for(int i=0; i<num; ++i) {
+    if(i>0 && i%3 == 0) {
+      im.Vertex3fv(xyz[0].ToFloatPtr());
+      im.Vertex3fv(xyz[i-1].ToFloatPtr());
+    }
+    im.Vertex3fv(xyz[i].ToFloatPtr());    
+  }
 }

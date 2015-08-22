@@ -25,6 +25,10 @@ public:
 
   void Sphere(float radius, int rings, int sectors, bool inverse = false);
 
+  GLenum getCurrentMode() const { return currentMode; }
+
+  static void AddTrianglesFromPolygon(fhImmediateMode& im, const idVec3* xyz, int num);
+
   static void Init();
 private:  
   bool geometryOnly;

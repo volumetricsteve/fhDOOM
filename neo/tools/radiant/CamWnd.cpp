@@ -38,6 +38,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../../renderer/tr_local.h"
 #include "../../renderer/model_local.h"	// for idRenderModelMD5
+#include "../../renderer/ImmediateMode.h"
 
 #ifdef _DEBUG
 	#define new DEBUG_NEW
@@ -1023,90 +1024,109 @@ void CCamWnd::Cam_Draw() {
 
 	setGLMode(m_Camera.draw_mode);
 	glDisable(GL_LIGHTING);
-	glColor4f( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2], 0.25f );
+	
 	glEnable(GL_BLEND);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	globalImages->BindNull();
+
+  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2], 0.25f );
+
+  for (brush = pList->next; brush != pList; brush = brush->next) {
+    if (brush->pPatch || brush->modelHandle > 0) {
+      Brush_Draw(brush, true);
+    }
+  }
+
+  glEnable(GL_BLEND);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  
+  globalImages->BindNull();
+
+  fhImmediateMode im;  
+  im.Begin(GL_TRIANGLES);  
+
 	for (brush = pList->next; brush != pList; brush = brush->next) {
 		if (brush->pPatch || brush->modelHandle > 0) {
-			Brush_Draw(brush, true);
-
-			// DHM - Nerve:: patch display lists/models mess with the state
-			glEnable(GL_BLEND);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			glColor4f( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2], 0.25f );
-			globalImages->BindNull();
-			continue;
+      continue;
 		}
 
-        if ( brush->owner->eclass->entityModel ) {
-            continue;
-        }
-
-		for (face = brush->brush_faces; face; face = face->next) {
-			Face_Draw(face);
+    if ( brush->owner->eclass->entityModel ) {
+        continue;
+    }
+    
+		for (face = brush->brush_faces; face; face = face->next) {      
+			Face_Draw(im, face, color);      
 		}
-	}
+	} 
 
 	int nCount = g_ptrSelectedFaces.GetSize();
 
 	if (!renderMode) {
 		for (int i = 0; i < nCount; i++) {
 			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
-			Face_Draw(selFace);
-			DrawAxial(selFace);
+			Face_Draw(im, selFace, color);
 		}
 	} 
+
+  im.End();
+
+  if (!renderMode) {
+    for (int i = 0; i < nCount; i++) {
+      face_t	*selFace = reinterpret_cast <face_t *> (g_ptrSelectedFaces.GetAt(i));   
+      DrawAxial(selFace);
+    }
+  }
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	if (renderMode) {
-		glColor3f(1, 0, 0);
+
+  im.Begin(GL_LINES);
+	if (renderMode) {		
 		for (int i = 0; i < nCount; i++) {
 			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
-			Face_Draw(selFace);
+			Face_DrawOutline(im, selFace, idVec3(1,0,0));
 		}
 	}
-
-	glColor3f(1, 1, 1);
+	
 	for (brush = pList->next; brush != pList; brush = brush->next) {
 		if (brush->pPatch || brush->modelHandle > 0) {
 			continue;
 		}
 
 		for (face = brush->brush_faces; face; face = face->next) {
-			Face_Draw(face);
+			Face_DrawOutline(im, face, idVec3(1,1,1));
 		}
 	}
+  im.End();
+
 	// edge / vertex flags
 	if (g_qeglobals.d_select_mode == sel_vertex) {
 		glPointSize(4);
-		glColor3f(0, 1, 0);
-		glBegin(GL_POINTS);
+
+		im.Color3f(0, 1, 0);
+		im.Begin(GL_POINTS);
 		for (i = 0; i < g_qeglobals.d_numpoints; i++) {
-			glVertex3fv( g_qeglobals.d_points[i].ToFloatPtr() );
+			im.Vertex3fv( g_qeglobals.d_points[i].ToFloatPtr() );
 		}
 
-		glEnd();
+		im.End();
 		glPointSize(1);
 	}
 	else if (g_qeglobals.d_select_mode == sel_edge) {
 		float	*v1, *v2;
 
 		glPointSize(4);
-		glColor3f(0, 0, 1);
-		glBegin(GL_POINTS);
+		im.Color3f(0, 0, 1);
+		im.Begin(GL_POINTS);
 		for (i = 0; i < g_qeglobals.d_numedges; i++) {
 			v1 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p1].ToFloatPtr();
 			v2 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p2].ToFloatPtr();
-			glVertex3f( (v1[0] + v2[0]) * 0.5f, (v1[1] + v2[1]) * 0.5f, (v1[2] + v2[2]) * 0.5f );
+			im.Vertex3f( (v1[0] + v2[0]) * 0.5f, (v1[1] + v2[1]) * 0.5f, (v1[2] + v2[2]) * 0.5f );
 		}
 
-		glEnd();
+		im.End();
 		glPointSize(1);
 	}
 
@@ -1120,10 +1140,8 @@ void CCamWnd::Cam_Draw() {
 	glEnable(GL_DEPTH_TEST);
 
 	DrawPathLines();
-
-	if (g_qeglobals.d_pointfile_display_list) {
-		Pointfile_Draw();
-	}
+  Pointfile_Draw();
+	
 
 	//
 	// bind back to the default texture so that we don't have problems elsewhere

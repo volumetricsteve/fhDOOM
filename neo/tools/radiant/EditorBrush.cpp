@@ -4408,7 +4408,7 @@ void Brush_Draw(brush_t *b, bool bSelected) {
 	}
 
 	if ( b->owner->eclass->entityModel ) {
-		glColor3fv( b->owner->eclass->color.ToFloatPtr() );
+		//glColor3fv( b->owner->eclass->color.ToFloatPtr() );
 		Brush_DrawModel( b, true, bSelected );
 		return;
 	}
@@ -4452,25 +4452,27 @@ void Brush_Draw(brush_t *b, bool bSelected) {
 			face->d_texture->GetEditorImage()->Bind();
 		}
 
+    fhImmediateMode im;
+
 		if (model) {
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f( face->d_color.x, face->d_color.y, face->d_color.z, 0.1f );
+			im.Color4f( face->d_color.x, face->d_color.y, face->d_color.z, 0.1f );
 		} else {
-			glColor4f( face->d_color.x, face->d_color.y, face->d_color.z, face->d_texture->GetEditorAlpha() );
+			im.Color4f( face->d_color.x, face->d_color.y, face->d_color.z, face->d_texture->GetEditorAlpha() );
 		}
 
-		glBegin(GL_POLYGON);
+		im.Begin(GL_POLYGON);
 
 		for (i = 0; i < w->GetNumPoints(); i++) {
 			if ( !b->forceWireFrame && ( nDrawMode == cd_texture || nDrawMode == cd_light ) ) {
-				glTexCoord2fv( &(*w)[i][3] );
+				im.TexCoord2fv( &(*w)[i][3] );
 			}
 
-			glVertex3fv( (*w)[i].ToFloatPtr() );
+			im.Vertex3fv( (*w)[i].ToFloatPtr() );
 		}
 
-		glEnd();
+		im.End();
 
 		if (model) {
 			glDisable(GL_BLEND);
@@ -4485,20 +4487,46 @@ void Brush_Draw(brush_t *b, bool bSelected) {
 Face_Draw
 ================
 */
-void Face_Draw(face_t *f) {
-	int i;
+void Face_Draw(fhImmediateMode& im, face_t *f, const idVec4& color) {
+  assert(im.getCurrentMode() == GL_TRIANGLES);
 
-	if (f->face_winding == NULL) {
+  if (f->face_winding == NULL ||  f->face_winding->GetNumPoints() < 3) {
 		return;
 	}
 
-  fhImmediateMode im;
-	im.Begin(GL_POLYGON);
-	for (i = 0; i < f->face_winding->GetNumPoints(); i++) {
-		im.Vertex3fv( (*f->face_winding)[i].ToFloatPtr() );
-	}
+  im.Color4fv(color.ToFloatPtr());
 
-	im.End();
+  for (int i = 0; i<f->face_winding->GetNumPoints(); ++i) {
+    if (i>0 && i % 3 == 0) {
+      im.Vertex3fv( (*f->face_winding)[0].ToFloatPtr() );
+      im.Vertex3fv( (*f->face_winding)[i-1].ToFloatPtr() );
+    }
+
+    im.Vertex3fv( (*f->face_winding)[i].ToFloatPtr() );
+  }
+}
+
+/*
+================
+Face_DrawOutline
+================
+*/
+void Face_DrawOutline(fhImmediateMode& im, face_t *f, const idVec3& color) {
+  assert(im.getCurrentMode() == GL_LINES);
+
+  if (f->face_winding == NULL || f->face_winding->GetNumPoints() < 2) {
+    return;
+  }
+
+  im.Color3fv(color.ToFloatPtr());
+  im.Vertex3fv((*f->face_winding)[0].ToFloatPtr());
+  for (int i = 1; i < (f->face_winding->GetNumPoints()-1); i++) {
+    im.Vertex3fv((*f->face_winding)[i].ToFloatPtr());
+    im.Vertex3fv((*f->face_winding)[i].ToFloatPtr());
+  }
+  im.Vertex3fv((*f->face_winding)[f->face_winding->GetNumPoints()-1].ToFloatPtr());
+  im.Vertex3fv((*f->face_winding)[f->face_winding->GetNumPoints()-1].ToFloatPtr());
+  im.Vertex3fv((*f->face_winding)[0].ToFloatPtr());
 }
 
 

@@ -30,10 +30,12 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "qe3.h"
+#include "../../renderer/ImmediateMode.h"
 
 #define	MAX_POINTFILE	8192
 static idVec3	s_pointvecs[MAX_POINTFILE];
-static int		s_num_points, s_check_point;
+static int		s_num_points = 0;
+static int    s_check_point = 0;
 
 void Pointfile_Delete (void)
 {
@@ -49,18 +51,18 @@ void Pointfile_Delete (void)
 // advance camera to next point
 void Pointfile_Next (void)
 {
-	idVec3	dir;
-
 	if (s_check_point >= s_num_points-2)
 	{
 		Sys_Status ("End of pointfile", 0);
 		return;
 	}
 	s_check_point++;
-	VectorCopy (s_pointvecs[s_check_point], g_pParentWnd->GetCamera()->Camera().origin);
-	VectorCopy (s_pointvecs[s_check_point], g_pParentWnd->GetXYWnd()->GetOrigin());
-	VectorSubtract (s_pointvecs[s_check_point+1], g_pParentWnd->GetCamera()->Camera().origin, dir);
+  g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
+  g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
+
+  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;	
 	dir.Normalize();
+
 	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
 	g_pParentWnd->GetCamera()->Camera().angles[0] = asin (dir[2])*180/3.14159;
 
@@ -70,18 +72,18 @@ void Pointfile_Next (void)
 // advance camera to previous point
 void Pointfile_Prev (void)
 {
-	idVec3	dir;
-
-	if ( s_check_point == 0)
+	if (s_check_point == 0)
 	{
 		Sys_Status ("Start of pointfile", 0);
 		return;
 	}
 	s_check_point--;
-	VectorCopy (s_pointvecs[s_check_point], g_pParentWnd->GetCamera()->Camera().origin);
-	VectorCopy (s_pointvecs[s_check_point], g_pParentWnd->GetXYWnd()->GetOrigin());
-	VectorSubtract (s_pointvecs[s_check_point+1], g_pParentWnd->GetCamera()->Camera().origin, dir);
+  g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
+  g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
+
+  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;	
 	dir.Normalize();
+
 	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
 	g_pParentWnd->GetCamera()->Camera().angles[0] = asin (dir[2])*180/3.14159;
 
@@ -104,60 +106,43 @@ void WINAPI Pointfile_Check (void)
 
 	common->Printf ("Reading pointfile %s\n", name);
 
-	if (!g_qeglobals.d_pointfile_display_list)
-		g_qeglobals.d_pointfile_display_list = glGenLists(1);
+  s_num_points = 0;
+  do
+  {
+    const int n = fscanf(f, "%f %f %f\n", &v[0], &v[1], &v[2]);
+    if ( n != 3  || s_num_points >= MAX_POINTFILE)
+      break;
+    
+    s_pointvecs[s_num_points] = v;      
+    s_num_points++;
+    
+  } while (1);
 
-	s_num_points = 0;
-  glNewList (g_qeglobals.d_pointfile_display_list,  GL_COMPILE);
-	glColor3f (1, 0, 0);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_1D);
-	glLineWidth (2);
-	glBegin(GL_LINE_STRIP);
-	do
-	{
-		if (fscanf (f, "%f %f %f\n", &v[0], &v[1], &v[2]) != 3)
-			break;
-		if (s_num_points < MAX_POINTFILE)
-		{
-			VectorCopy (v, s_pointvecs[s_num_points]);
-			s_num_points++;
-		}
-		glVertex3fv( v.ToFloatPtr() );
-	} while (1);
-	glEnd();
-	glLineWidth (0.5);
-	glEndList ();
+
 
 	s_check_point = 0;
 	fclose (f);
-	//Pointfile_Next ();
+
 }
 
 void Pointfile_Draw( void )
 {
-	int i;
+  if(s_num_points <= 0)
+    return;
 
-	glColor3f( 1.0F, 0.0F, 0.0F );
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_1D);
-	glLineWidth (2);
-	glBegin(GL_LINE_STRIP);
-	for ( i = 0; i < s_num_points; i++ )
-	{
-		glVertex3fv( s_pointvecs[i].ToFloatPtr() );
-	}
-	glEnd();
-	glLineWidth( 0.5 );
+  glLineWidth (2);
+  fhImmediateMode im;
+  im.Color3f(1,0,0);
+  im.Begin(GL_LINE_STRIP);
+  for ( int i = 0; i < s_num_points; i++ ) {
+    im.Vertex3fv( s_pointvecs[i].ToFloatPtr() );
+  }
+  im.End();
 }
 
 void Pointfile_Clear (void)
 {
-	if (!g_qeglobals.d_pointfile_display_list)
-		return;
-
-	glDeleteLists (g_qeglobals.d_pointfile_display_list, 1);
-	g_qeglobals.d_pointfile_display_list = 0;
-	Sys_UpdateWindows (W_ALL);
+  s_num_points = 0;
 }
+
 

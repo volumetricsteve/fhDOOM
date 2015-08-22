@@ -32,6 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "qe3.h"
 #include "Radiant.h"
 #include "GLWidget.h"
+#include "../../renderer/ImmediateMode.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -253,19 +254,21 @@ void idGLDrawable::draw(int x, int y, int w, int h) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth(0.5);
-	glColor3f(1, 1, 1);
-	globalImages->BindNull();
-	glBegin(GL_LINE_LOOP);
-	glColor3f(1, 0, 0);
-	glVertex2f(x + 3, y + 3);
-	glColor3f(0, 1, 0);
-	glVertex2f(x + 3, h - 3);
-	glColor3f(0, 0, 1);
-	glVertex2f(w - 3, h - 3);
-	glColor3f(1, 1, 1);
-	glVertex2f(w - 3, y + 3);
-	glEnd();
 
+  globalImages->BindNull();
+  fhImmediateMode im;
+	im.Color3f(1, 1, 1);
+	
+	im.Begin(GL_LINE_LOOP);
+	im.Color3f(1, 0, 0);
+	im.Vertex2f(x + 3, y + 3);
+	im.Color3f(0, 1, 0);
+	im.Vertex2f(x + 3, h - 3);
+	im.Color3f(0, 0, 1);
+	im.Vertex2f(w - 3, h - 3);
+	im.Color3f(1, 1, 1);
+	im.Vertex2f(w - 3, y + 3);
+	im.End();
 }
 
 static int viewAngle = -98;

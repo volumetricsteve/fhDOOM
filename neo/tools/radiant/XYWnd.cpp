@@ -3374,9 +3374,7 @@ void CXYWnd::XY_Draw() {
 	DrawPathLines();
 
 	// draw pointfile
-	if (g_qeglobals.d_pointfile_display_list) {
-		glCallList(g_qeglobals.d_pointfile_display_list);
-	}
+  Pointfile_Draw();
 
 	if (!(m_nViewType == XY)) {
     GL_ProjectionMatrix.Pop();
