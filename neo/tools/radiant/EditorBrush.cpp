@@ -38,6 +38,7 @@ If you have questions concerning this license or the applicable additional terms
 
 void	Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset);
 void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam );
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
 
 // globals
 int		g_nBrushId = 0;
@@ -54,58 +55,34 @@ DrawRenderModel
 ================
 */
 void DrawRenderModel( idRenderModel *model, idVec3 &origin, idMat3 &axis, bool cameraView, const idVec3& color ) {
+  const int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
+
 	for ( int i = 0; i < model->NumSurfaces(); i++ ) {
 		const modelSurface_t *surf = model->Surface( i );
-		const idMaterial *material = surf->shader;
+		const idMaterial *material = surf->shader;		
 
-		int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
+    fhImmediateMode im;
 
-    if(!r_glslEnabled.GetBool() || false) {
-
-      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
-        material->GetEditorImage()->Bind();
-      }
-
-      glColor3fv(color.ToFloatPtr());
-		  glBegin( GL_TRIANGLES );
-
-		  const srfTriangles_t	*tri = surf->geometry;
-		  for ( int j = 0; j < tri->numIndexes; j += 3 ) {
-			  for ( int k = 0; k < 3; k++ ) {
-				  int		index = tri->indexes[j + k];
-				  idVec3	v;
-
-				  v = tri->verts[index].xyz * axis + origin;
-				  glTexCoord2f( tri->verts[index].st.x, tri->verts[index].st.y );
-				  glVertex3fv( v.ToFloatPtr() );
-			  }
-		  }
-
-		  glEnd();
-    } else {
-      fhImmediateMode im;
-
-      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
-        im.SetTexture(material->GetEditorImage());
-      }
-      
-      im.Begin(GL_TRIANGLES);
-      im.Color3fv(color.ToFloatPtr());
-
-      const srfTriangles_t	*tri = surf->geometry;
-      for (int j = 0; j < tri->numIndexes; j += 3) {
-        for (int k = 0; k < 3; k++) {
-          int		index = tri->indexes[j + k];
-          idVec3	v;
-
-          v = tri->verts[index].xyz * axis + origin;
-          im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
-          im.Vertex3fv(v.ToFloatPtr());
-        }
-      }     
-      
-      im.End();
+    if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
+      im.SetTexture(material->GetEditorImage());
     }
+      
+    im.Begin(GL_TRIANGLES);
+    im.Color3fv(color.ToFloatPtr());
+
+    const srfTriangles_t	*tri = surf->geometry;
+    for (int j = 0; j < tri->numIndexes; j += 3) {
+      for (int k = 0; k < 3; k++) {
+        int		index = tri->indexes[j + k];
+        idVec3	v;
+
+        v = tri->verts[index].xyz * axis + origin;
+        im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
+        im.Vertex3fv(v.ToFloatPtr());
+      }
+    }     
+      
+    im.End();    
 	}
 }
 
@@ -612,7 +589,7 @@ void Brush_MakeFacePlanes(brush_t *b) {
 DrawBrushEntityName
 ================
 */
-void DrawBrushEntityName(brush_t *b) {
+void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 	const char	*name;
 
 	// float a, s, c; vec3_t mid; int i;
@@ -630,6 +607,7 @@ void DrawBrushEntityName(brush_t *b) {
 
 	if (!(g_qeglobals.d_savedinfo.exclude & EXCLUDE_ANGLES)) {
 		// draw the angle pointer
+    //FIXME(johl): Where do those lines show up? do we need them?
 		float a = FloatForKey(b->owner, "angle");
 		if (a) {
 			float s = sin( DEG2RAD( a ) );
@@ -637,34 +615,39 @@ void DrawBrushEntityName(brush_t *b) {
 
 			idVec3 mid = (b->mins + b->maxs) / 2.0f;
 
-			glBegin(GL_LINE_STRIP);
-			glVertex3fv(mid.ToFloatPtr());
+      fhImmediateMode im;
+      im.Color3fv(color.ToFloatPtr());
+			im.Begin(GL_LINES);
+			im.Vertex3fv(mid.ToFloatPtr());
 			mid[0] += c * 8;
 			mid[1] += s * 8;
 			mid[2] += s * 8;
-			glVertex3fv(mid.ToFloatPtr());
+			im.Vertex3fv(mid.ToFloatPtr());
+      im.Vertex3fv(mid.ToFloatPtr());
 			mid[0] -= c * 4;
 			mid[1] -= s * 4;
 			mid[2] -= s * 4;
 			mid[0] -= s * 4;
 			mid[1] += c * 4;
 			mid[2] += c * 4;
-			glVertex3fv(mid.ToFloatPtr());
+			im.Vertex3fv(mid.ToFloatPtr());
+      im.Vertex3fv(mid.ToFloatPtr());
 			mid[0] += c * 4;
 			mid[1] += s * 4;
 			mid[2] += s * 4;
 			mid[0] += s * 4;
 			mid[1] -= c * 4;
 			mid[2] -= c * 4;
-			glVertex3fv(mid.ToFloatPtr());
+			im.Vertex3fv(mid.ToFloatPtr());
+      im.Vertex3fv(mid.ToFloatPtr());
 			mid[0] -= c * 4;
 			mid[1] -= s * 4;
 			mid[2] -= s * 4;
 			mid[0] += s * 4;
 			mid[1] -= c * 4;
 			mid[2] -= c * 4;
-			glVertex3fv(mid.ToFloatPtr());
-			glEnd();
+			im.Vertex3fv(mid.ToFloatPtr());
+			im.End();
 		}
 	}
 
@@ -698,8 +681,8 @@ void DrawBrushEntityName(brush_t *b) {
 				origin.z += halfHeight;
 				break;
 			}
-			glRasterPos3fv( origin.ToFloatPtr() );
-			glCallLists(nameLen, GL_UNSIGNED_BYTE, name);
+
+      drawText(name, 1.0f, origin, color, viewType);
 		}
 	}
 }
@@ -3581,15 +3564,11 @@ static void FacingVectors(entity_t *e, idVec3 &forward, idVec3 &right, idVec3 &u
 Brush_DrawFacingAngle
 ================
 */
-void Brush_DrawFacingAngle( brush_t *b, entity_t *e, bool particle ) {
+void Brush_DrawFacingAngle( brush_t *b, entity_t *e, bool particle) {
 	idVec3	forward, right, up;
 	idVec3	endpoint, tip1, tip2;
-	idVec3	start;
-	float	dist;
-
-	VectorAdd(e->brushes.onext->mins, e->brushes.onext->maxs, start);
-	VectorScale(start, 0.5f, start);
-	dist = (b->maxs[0] - start[0]) * 2.5f;
+	idVec3	start = (e->brushes.onext->mins + e->brushes.onext->maxs) * 0.5f;
+	float dist = (b->maxs[0] - start[0]) * 2.5f;
 
 	FacingVectors(e, forward, right, up);
 	VectorMA(start, dist, ( particle ) ? up : forward, endpoint);
@@ -3599,17 +3578,17 @@ void Brush_DrawFacingAngle( brush_t *b, entity_t *e, bool particle ) {
 	VectorMA(tip1, -dist, ( particle ) ? forward : up, tip1);
 	VectorMA(tip1, 2 * dist, ( particle ) ? forward : up, tip2);
 	globalImages->BindNull();
-	glColor4f(1, 1, 1, 1);
-	glLineWidth(2);
-	glBegin(GL_LINES);
-	glVertex3fv(start.ToFloatPtr());
-	glVertex3fv(endpoint.ToFloatPtr());
-	glVertex3fv(endpoint.ToFloatPtr());
-	glVertex3fv(tip1.ToFloatPtr());
-	glVertex3fv(endpoint.ToFloatPtr());
-	glVertex3fv(tip2.ToFloatPtr());
-	glEnd();
-	glLineWidth(0.5f);
+  glLineWidth(2);
+  fhImmediateMode im;
+	im.Color4f(1, 1, 1, 1);	
+	im.Begin(GL_LINES);
+	im.Vertex3fv(start.ToFloatPtr());
+	im.Vertex3fv(endpoint.ToFloatPtr());
+	im.Vertex3fv(endpoint.ToFloatPtr());
+	im.Vertex3fv(tip1.ToFloatPtr());
+	im.Vertex3fv(endpoint.ToFloatPtr());
+	im.Vertex3fv(tip2.ToFloatPtr());
+	im.End();
 }
 
 /*
@@ -4000,41 +3979,25 @@ void Brush_DrawModel( brush_t *b, bool camera, bool bSelected ) {
 
 		Entity_GetRotationMatrixAngles( b->owner, axis, angles );
 
-		idVec4	colorSave;
-		glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
-
+    idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_STATICMODEL];
     if (bSelected) {
-      glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+      color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
     }
 
-    DrawRenderModel(model, b->owner->origin, axis, camera, bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : colorSave.ToVec3());
+    DrawRenderModel(model, b->owner->origin, axis, camera, color);
 
-		glColor4fv( colorSave.ToFloatPtr() );
+    if ( bSelected && camera )
+    {
+      //draw white triangle outlines
+      globalImages->BindNull();
 
-        if ( bSelected && camera )
-        {
-            //draw selection tints
-			/*
-            if ( camera && g_PrefsDlg.m_nEntityShowState != ENTITY_WIREFRAME ) {
-                glPolygonMode ( GL_FRONT_AND_BACK , GL_FILL );
-                glColor3fv ( g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr () );
-                glEnable ( GL_BLEND );
-                glBlendFunc ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );                
-                DrawRenderModel( model, b->owner->origin, axis, camera );
-            }
-			*/
-
-            //draw white triangle outlines
-			globalImages->BindNull();
-
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-            glDisable( GL_BLEND );
-			glDisable( GL_DEPTH_TEST );
-      glColor3f(1.0f, 1.0f, 1.0f);
+      glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+      glDisable( GL_BLEND );
+      glDisable( GL_DEPTH_TEST );
       glPolygonOffset(1.0f, 3.0f);
-      DrawRenderModel(model, b->owner->origin, axis, false, idVec3(1,1,1));
-			glEnable( GL_DEPTH_TEST );
-        }
+      DrawRenderModel(model, b->owner->origin, axis, false, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES]);
+      glEnable( GL_DEPTH_TEST );
+    }
 
 		if ( model2 ) {
 			delete model2;
@@ -4050,6 +4013,9 @@ void Brush_DrawModel( brush_t *b, bool camera, bool bSelected ) {
 	}
 
 	if ( g_bPatchShowBounds ) {
+    fhImmediateMode im;
+    im.Begin(GL_LINES);
+    
 		for ( face_t *face = b->brush_faces; face; face = face->next ) {
 			// only draw polygons facing in a direction we care about
 			idWinding *w = face->face_winding;
@@ -4061,12 +4027,16 @@ void Brush_DrawModel( brush_t *b, bool camera, bool bSelected ) {
 			// if (b->alphaBrush && !(face->texdef.flags & SURF_ALPHA)) continue;
 			// draw the polygon
 			//
-			glBegin(GL_LINE_LOOP);
-			for (int i = 0; i < w->GetNumPoints(); i++) {
-				glVertex3fv( (*w)[i].ToFloatPtr() );
+			for (int i = 0; i < (w->GetNumPoints() - 1); i++) {
+				im.Vertex3fv( (*w)[i].ToFloatPtr() );
+        im.Vertex3fv( (*w)[i+1].ToFloatPtr() );
 			}
-			glEnd();
+      im.Vertex3fv((*w)[w->GetNumPoints() - 1].ToFloatPtr());
+      im.Vertex3fv((*w)[0].ToFloatPtr());
+
 		}
+
+    im.End();
 	}
 }
 
@@ -4429,11 +4399,12 @@ void Brush_Draw(brush_t *b, bool bSelected) {
 
 
 	if (!(b->owner && (b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN))) {
-		glColor4f( 1.0f, 0.0f, 0.0f, 0.8f );
-		glPointSize(4);
-		glBegin(GL_POINTS);
-		glVertex3fv(b->owner->origin.ToFloatPtr());
-		glEnd();
+    glPointSize(4);
+    fhImmediateMode im;
+		im.Color4f( 1.0f, 0.0f, 0.0f, 0.8f );		
+		im.Begin(GL_POINTS);
+		im.Vertex3fv(b->owner->origin.ToFloatPtr());
+		im.End();
 	}
 
 	if ( b->owner->eclass->entityModel ) {
@@ -4521,12 +4492,13 @@ void Face_Draw(face_t *f) {
 		return;
 	}
 
-	glBegin(GL_POLYGON);
+  fhImmediateMode im;
+	im.Begin(GL_POLYGON);
 	for (i = 0; i < f->face_winding->GetNumPoints(); i++) {
-		glVertex3fv( (*f->face_winding)[i].ToFloatPtr() );
+		im.Vertex3fv( (*f->face_winding)[i].ToFloatPtr() );
 	}
 
-	glEnd();
+	im.End();
 }
 
 
@@ -4633,9 +4605,6 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 		return;
 	}	
 
-  idVec4	colorSave;
-  glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
-
 	if (!(b->owner && (b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN))) {
     glPointSize(4);
     fhImmediateMode im;
@@ -4646,9 +4615,6 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 	}
 
 	Brush_DrawCurve( b, bSelected, false );
-
-	glColor3fv(colorSave.ToFloatPtr());
-
 
 	if (b->pPatch) {
 		Patch_DrawXY(b->pPatch);
@@ -4680,33 +4646,34 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 			vCorners[3][1] = b->mins[1];
 			vCorners[3][2] = fMid;
 
-			idVec3	vTop, vBottom;
-
+			idVec3 vTop;
 			vTop[0] = b->mins[0] + ((b->maxs[0] - b->mins[0]) / 2);
 			vTop[1] = b->mins[1] + ((b->maxs[1] - b->mins[1]) / 2);
 			vTop[2] = b->maxs[2];
 
-			VectorCopy(vTop, vBottom);
+			idVec3 vBottom = vTop;
 			vBottom[2] = b->mins[2];
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glBegin(GL_TRIANGLE_FAN);
-			glVertex3fv(vTop.ToFloatPtr());
-			glVertex3fv(vCorners[0].ToFloatPtr());
-			glVertex3fv(vCorners[1].ToFloatPtr());
-			glVertex3fv(vCorners[2].ToFloatPtr());
-			glVertex3fv(vCorners[3].ToFloatPtr());
-			glVertex3fv(vCorners[0].ToFloatPtr());
-			glEnd();
-			glBegin(GL_TRIANGLE_FAN);
-			glVertex3fv(vBottom.ToFloatPtr());
-			glVertex3fv(vCorners[0].ToFloatPtr());
-			glVertex3fv(vCorners[3].ToFloatPtr());
-			glVertex3fv(vCorners[2].ToFloatPtr());
-			glVertex3fv(vCorners[1].ToFloatPtr());
-			glVertex3fv(vCorners[0].ToFloatPtr());
-			glEnd();
-			DrawBrushEntityName(b);
+      fhImmediateMode im;
+      im.Color3fv(color.ToFloatPtr());
+			im.Begin(GL_TRIANGLE_FAN);
+			im.Vertex3fv(vTop.ToFloatPtr());
+			im.Vertex3fv(vCorners[0].ToFloatPtr());
+			im.Vertex3fv(vCorners[1].ToFloatPtr());
+			im.Vertex3fv(vCorners[2].ToFloatPtr());
+			im.Vertex3fv(vCorners[3].ToFloatPtr());
+			im.Vertex3fv(vCorners[0].ToFloatPtr());
+			im.End();
+			im.Begin(GL_TRIANGLE_FAN);
+			im.Vertex3fv(vBottom.ToFloatPtr());
+			im.Vertex3fv(vCorners[0].ToFloatPtr());
+			im.Vertex3fv(vCorners[3].ToFloatPtr());
+			im.Vertex3fv(vCorners[2].ToFloatPtr());
+			im.Vertex3fv(vCorners[1].ToFloatPtr());
+			im.Vertex3fv(vCorners[0].ToFloatPtr());
+			im.End();
+			DrawBrushEntityName(b, color);
 			DrawProjectedLight(b, bSelected, false);
 			return;
 		} else if (b->owner->eclass->nShowFlags & ECLASS_MISCMODEL) {
@@ -4719,19 +4686,15 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 
 		if (b->owner->eclass->entityModel) {
 			Brush_DrawModel( b, false, bSelected );
-			DrawBrushEntityName(b);
-			glColor3fv(colorSave.ToFloatPtr());
-            return;
+			DrawBrushEntityName(b, color);
+      return;
 		}
 
 	}
 
-	glColor3fv(colorSave.ToFloatPtr());
-
 	if (b->modelHandle > 0) {
 		Brush_DrawEmitter( b, bSelected, false );
 		Brush_DrawModel(b, false, bSelected);
-		glColor3fv(colorSave.ToFloatPtr());
 		return;
 	}
 
@@ -4778,7 +4741,7 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 	}
   im.End();
 
-	DrawBrushEntityName(b);
+	DrawBrushEntityName(b, color);
 }
 
 /*

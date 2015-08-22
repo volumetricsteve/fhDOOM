@@ -1063,6 +1063,8 @@ void MFCCreate( HINSTANCE hInstance )
 		g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][1] = 0.0;
 		g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][2] = 0.75;
 
+    g_qeglobals.d_savedinfo.colors[COLOR_STATICMODEL] = idVec3(0.7f, 0.7f, 1.0f);
+
 
 		// old size was smaller, reload original prefs
 		if (nOldSize > 0 && nOldSize < sizeof(g_qeglobals.d_savedinfo)) {

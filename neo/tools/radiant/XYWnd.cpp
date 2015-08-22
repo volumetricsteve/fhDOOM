@@ -50,10 +50,13 @@ void drawText(const char* text, float scale, const idVec3& pos, const idVec4& co
 {
   static const idMat3 xyRotation = idAngles(90, 90, 0).ToMat3();
   static const idMat3 xzRotation = idAngles(0, 90, 0).ToMat3();
+  static const idMat3 yzRotation = idAngles(180, 0, 180).ToMat3();
 
   idMat3 rotation = xyRotation;
-  if(viewType == XZ)
+  if (viewType == XZ)
     rotation = xzRotation;
+  else if (viewType == YZ)
+    rotation = yzRotation;
 
   RB_DrawText(text, pos, 0.4f * scale, color, rotation, 0);
 }
@@ -2718,8 +2721,6 @@ void CXYWnd::XY_DrawBlockGrid() {
       drawText(text, 1.0/m_fScale, idVec3(x + 512, y + 512, 0), color); 
 		}
 	}
-
-	glColor4f(0, 0, 0, 0);
 }
 
 /*
@@ -3276,9 +3277,6 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 	}
 }
 
-/* XY_Draw */
-extern void DrawBrushEntityName(brush_t *b);
-
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -3455,28 +3453,30 @@ void CXYWnd::XY_Draw() {
 	// edge / vertex flags
 	if (g_qeglobals.d_select_mode == sel_vertex) {
 		glPointSize(4);
-		glColor3f(0, 1, 0);
-		glBegin(GL_POINTS);
+    fhImmediateMode im;
+		im.Color3f(0, 1, 0);
+		im.Begin(GL_POINTS);
 		for (i = 0; i < g_qeglobals.d_numpoints; i++) {
-			glVertex3fv(g_qeglobals.d_points[i].ToFloatPtr());
+			im.Vertex3fv(g_qeglobals.d_points[i].ToFloatPtr());
 		}
 
-		glEnd();
+		im.End();
 		glPointSize(1);
 	}
 	else if (g_qeglobals.d_select_mode == sel_edge) {
 		float	*v1, *v2;
 
 		glPointSize(4);
-		glColor3f(0, 0, 1);
-		glBegin(GL_POINTS);
+    fhImmediateMode im;
+		im.Color3f(0, 0, 1);
+		im.Begin(GL_POINTS);
 		for (i = 0; i < g_qeglobals.d_numedges; i++) {
 			v1 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p1].ToFloatPtr();
 			v2 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p2].ToFloatPtr();
-			glVertex3f((v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5);
+			im.Vertex3f((v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5);
 		}
 
-		glEnd();
+		im.End();
 		glPointSize(1);
 	}
 
@@ -3485,24 +3485,25 @@ void CXYWnd::XY_Draw() {
 	if (g_pParentWnd->GetNurbMode() && g_pParentWnd->GetNurb()->GetNumValues()) {
 		int maxage = g_pParentWnd->GetNurb()->GetNumValues();
 		int time = 0;
-		glColor3f(0, 0, 1);
+    fhImmediateMode im;
+		im.Color3f(0, 0, 1);
 		glPointSize(1);
-		glBegin(GL_POINTS);
+		im.Begin(GL_POINTS);
 		g_pParentWnd->GetNurb()->SetOrder(3);
 		for (i = 0; i < 100; i++) {
 			idVec2 v = g_pParentWnd->GetNurb()->GetCurrentValue(time);
-			glVertex3f(v.x, v.y, 0.0f);
+			im.Vertex3f(v.x, v.y, 0.0f);
 			time += 10;
 		}
-		glEnd();
+		im.End();
 		glPointSize(4);
-		glColor3f(0, 0, 1);
-		glBegin(GL_POINTS);
+		im.Color3f(0, 0, 1);
+		im.Begin(GL_POINTS);
 		for (i = 0; i < maxage; i++) {
 			idVec2 v = g_pParentWnd->GetNurb()->GetValue(i);
-			glVertex3f(v.x, v.y, 0.0f);
+			im.Vertex3f(v.x, v.y, 0.0f);
 		}
-		glEnd();
+		im.End();
 		glPointSize(1);
 	}
 
@@ -3516,27 +3517,37 @@ void CXYWnd::XY_Draw() {
 	// area selection hack
 	if (g_qeglobals.d_select_mode == sel_area) {
 		glEnable(GL_BLEND);
-        glPolygonMode ( GL_FRONT_AND_BACK , GL_FILL );
+    glPolygonMode ( GL_FRONT_AND_BACK , GL_FILL );
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.0, 0.0, 1.0, 0.25);
-		glRectf
-		(
-			g_qeglobals.d_vAreaTL[nDim1],
-			g_qeglobals.d_vAreaTL[nDim2],
-			g_qeglobals.d_vAreaBR[nDim1],
-			g_qeglobals.d_vAreaBR[nDim2]
-		);
-		glDisable(GL_BLEND);
-        glPolygonMode ( GL_FRONT_AND_BACK , GL_LINE );
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glRectf
-		(
-			g_qeglobals.d_vAreaTL[nDim1],
-			g_qeglobals.d_vAreaTL[nDim2],
-			g_qeglobals.d_vAreaBR[nDim1],
-			g_qeglobals.d_vAreaBR[nDim2]
-		);
 
+    const idVec3 size = g_qeglobals.d_vAreaTL - g_qeglobals.d_vAreaBR;
+    const idVec3 tl = g_qeglobals.d_vAreaTL;
+    const idVec3 tr = tl - idVec3(size.x, 0, 0);
+    const idVec3 br = g_qeglobals.d_vAreaBR;
+    const idVec3 bl = br + idVec3(size.x, 0, 0);
+
+    fhImmediateMode im;
+		im.Color4f(0.0, 0.0, 1.0, 0.25);
+    im.Begin(GL_TRIANGLES);
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.Vertex3fv(tr.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(bl.ToFloatPtr());
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.End();
+    
+    im.Color3f(1,1,1);
+    im.Begin(GL_LINES);
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.Vertex3fv(tr.ToFloatPtr());
+    im.Vertex3fv(tr.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(bl.ToFloatPtr());
+    im.Vertex3fv(bl.ToFloatPtr());
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.End();
 	}
 
 	// now draw camera point
@@ -4249,35 +4260,34 @@ void CXYWnd::DrawPrecisionCrosshair( void )
 	/// Set up OpenGL states (for drawing smooth-shaded plain-colored lines)
 	glEnable( GL_BLEND );
 	glDisable( GL_TEXTURE_2D );
-	glShadeModel( GL_SMOOTH );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	
 	/// Draw a fullscreen-sized crosshair over the cursor
-	glBegin( GL_LINES );
-	{
-		/// Draw the horizontal precision line (in two pieces)
-		glColor4fv( crossEndColor.ToFloatPtr() );
-		glVertex2f( m_mcLeft, y );
-		glColor4fv( crossMidColor.ToFloatPtr() );
-		glVertex2f( x, y );
-		glColor4fv( crossMidColor.ToFloatPtr() );
-		glVertex2f( x, y );
-		glColor4fv( crossEndColor.ToFloatPtr() );
-		glVertex2f( m_mcRight, y );
+  fhImmediateMode im;
+	im.Begin( GL_LINES );
+
+	/// Draw the horizontal precision line (in two pieces)
+	im.Color4fv( crossEndColor.ToFloatPtr() );
+	im.Vertex2f( m_mcLeft, y );
+	im.Color4fv( crossMidColor.ToFloatPtr() );
+	im.Vertex2f( x, y );
+	im.Color4fv( crossMidColor.ToFloatPtr() );
+	im.Vertex2f( x, y );
+	im.Color4fv( crossEndColor.ToFloatPtr() );
+	im.Vertex2f( m_mcRight, y );
 		
-		/// Draw the vertical precision line (in two pieces)
-		glColor4fv( crossEndColor.ToFloatPtr() );
-		glVertex2f( x, m_mcTop );
-		glColor4fv( crossMidColor.ToFloatPtr() );
-		glVertex2f( x, y );
-		glColor4fv( crossMidColor.ToFloatPtr() );
-		glVertex2f( x, y );
-		glColor4fv( crossEndColor.ToFloatPtr() );
-		glVertex2f( x, m_mcBottom );
-	}
-	glEnd(); // GL_LINES
+	/// Draw the vertical precision line (in two pieces)
+	im.Color4fv( crossEndColor.ToFloatPtr() );
+	im.Vertex2f( x, m_mcTop );
+	im.Color4fv( crossMidColor.ToFloatPtr() );
+	im.Vertex2f( x, y );
+	im.Color4fv( crossMidColor.ToFloatPtr() );
+	im.Vertex2f( x, y );
+	im.Color4fv( crossEndColor.ToFloatPtr() );
+	im.Vertex2f( x, m_mcBottom );
+	
+	im.End(); // GL_LINES
 	
 	// Radiant was in opaque, flat-shaded mode by default; restore this to prevent possible slowdown
-	glShadeModel( GL_FLAT );
 	glDisable( GL_BLEND );
 }
