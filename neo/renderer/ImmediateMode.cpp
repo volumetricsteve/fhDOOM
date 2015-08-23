@@ -23,6 +23,8 @@ namespace {
 
 }
 
+int fhImmediateMode::drawCallCount = 0;
+int fhImmediateMode::drawCallVertexSize = 0;
 
 void fhImmediateMode::Init()
 {
@@ -30,6 +32,8 @@ void fhImmediateMode::Init()
   {
     lineIndices[i] = i;
   }
+
+  ResetStats();
 /*
   const size_t vertexSize = sizeof(drawVerts);
   const size_t indexSize = drawVertsCapacity * 2 * sizeof(lineIndices[0]);
@@ -48,6 +52,21 @@ void fhImmediateMode::Init()
 
   delete[] linesIndices;
 */
+}
+
+void fhImmediateMode::ResetStats()
+{
+  drawCallCount = 0;
+  drawCallVertexSize = 0;
+}
+int fhImmediateMode::DrawCallCount()
+{
+  return drawCallCount;
+}
+
+int fhImmediateMode::DrawCallVertexSize()
+{
+  return drawCallVertexSize;
 }
 
 
@@ -88,6 +107,7 @@ void fhImmediateMode::End()
   if(r_glslEnabled.GetBool())
   {
     auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(idDrawVert));
+    drawCallVertexSize += drawVertsUsed * sizeof(idDrawVert);
     int offset = vertexCache.Bind(vert);
 
     if(!geometryOnly) {
@@ -124,6 +144,8 @@ void fhImmediateMode::End()
       drawVertsUsed,
       GL_UNSIGNED_SHORT,
       lineIndices);
+
+    drawCallCount++;    
 
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);

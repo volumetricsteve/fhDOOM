@@ -30,6 +30,9 @@ public:
   static void AddTrianglesFromPolygon(fhImmediateMode& im, const idVec3* xyz, int num);
 
   static void Init();
+  static void ResetStats();
+  static int DrawCallCount();
+  static int DrawCallVertexSize();
 private:  
   bool geometryOnly;
   float currentTexCoord[2];
@@ -38,6 +41,9 @@ private:
   idImage* currentTexture;
 
   int drawVertsUsed;
+
+  static int drawCallCount;
+  static int drawCallVertexSize;
 };
 
 class fhQuadStrip

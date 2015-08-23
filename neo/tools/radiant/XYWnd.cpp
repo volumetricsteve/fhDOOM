@@ -1404,6 +1404,7 @@ void CXYWnd::SetPointMode(bool b) {
  =======================================================================================================================
  */
 void CXYWnd::OnPaint() {
+  fhImmediateMode::ResetStats();
 	CPaintDC	dc(this);					// device context for painting
 	bool		bPaint = true;
 	if (!wglMakeCurrent(dc.m_hDC, win32.hGLRC)) {
@@ -1513,6 +1514,8 @@ void CXYWnd::OnPaint() {
 		if (m_nViewType != XY) {
       GL_ModelViewMatrix.Pop();
 		}
+
+    common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
 
 		wglSwapBuffers(dc.m_hDC);
 		TRACE("XY Paint\n");
