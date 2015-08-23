@@ -94,7 +94,10 @@ void fhImmediateMode::End()
       if(currentTexture) {
         GL_SelectTexture(1);
         currentTexture->Bind();
-        GL_UseProgram(defaultProgram);
+        if(currentTexture->type == TT_CUBIC)
+          GL_UseProgram(skyboxProgram);
+        else
+          GL_UseProgram(defaultProgram);
         GL_SelectTexture(0);
       } else {
         GL_UseProgram(vertexColorProgram);
@@ -114,7 +117,7 @@ void fhImmediateMode::End()
 
     GLenum mode = currentMode;
     
-    if(mode == GL_QUADS || mode == GL_POLYGON) //quads and polygons are replaced by triangles in GLSL mode
+    if(mode == GL_QUADS || mode == GL_POLYGON || mode == GL_QUAD_STRIP) //quads and polygons are replaced by triangles in GLSL mode
       mode = GL_TRIANGLES;
 
     glDrawElements(mode,
@@ -205,14 +208,28 @@ void fhImmediateMode::Vertex3f(float x, float y, float z)
   //we don't want to draw deprecated quads/polygons... correct them by re-adding
   // previous vertices, so we render triangles instead of quads/polygons
   // NOTE: this only works for convex polygons (just as GL_POLYGON)
-  if (backEnd.glslEnabled && 
-    (currentMode == GL_POLYGON || currentMode == GL_QUADS) &&
-    drawVertsUsed >= 3 &&
-    drawVertsUsed + 3 < drawVertsCapacity)
+  if (backEnd.glslEnabled)
   {
-    drawVerts[drawVertsUsed] = drawVerts[0];
-    drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
-    drawVertsUsed += 2;
+    if( (currentMode == GL_POLYGON || currentMode == GL_QUADS) &&
+      drawVertsUsed >= 3 &&
+      drawVertsUsed + 3 < drawVertsCapacity)
+    {
+      drawVerts[drawVertsUsed] = drawVerts[0];
+      drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
+      drawVertsUsed += 2;
+    }
+
+    if ( currentMode == GL_QUAD_STRIP && drawVertsUsed >= 3 && drawVertsUsed+3 < drawVertsCapacity)
+    { 
+      if(drawVertsUsed % 6 == 0) {
+        drawVerts[drawVertsUsed] = drawVerts[drawVertsUsed - 3];
+        drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
+      } else if(drawVertsUsed % 3 == 0) {
+        drawVerts[drawVertsUsed] = drawVerts[drawVertsUsed-1];
+        drawVerts[drawVertsUsed+1] = drawVerts[drawVertsUsed-2];        
+      }
+      drawVertsUsed += 2;
+    }
   }
 
   idDrawVert& vertex = drawVerts[drawVertsUsed++];

@@ -240,9 +240,6 @@ typedef struct {
 	brush_t *	pSymbiot;
 	bool		bSelected;
 	bool		bOverlay;
-	int			nListID;
-	int			nListIDCam;
-	int			nListSelected;
 
 	idDict *	epairs;
 	// cast this one to an IPluginTexdef if you are using it
@@ -330,16 +327,6 @@ typedef struct brush_s
 	idDict	epairs;
 
 } brush_t;
-
-
-#define	MAX_FLAGS	8
-
-
-typedef struct trimodel_t
-{
-  idVec3 v[3];
-  float  st[3][2];
-} trimodel;
 
 
 // eclass show flags

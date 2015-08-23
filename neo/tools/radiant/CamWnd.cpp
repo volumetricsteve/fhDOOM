@@ -973,8 +973,6 @@ void CCamWnd::Cam_Draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
-	glDisable(GL_LIGHTING);	
-
 	SetProjectionMatrix();
 
   GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
@@ -1002,19 +1000,16 @@ void CCamWnd::Cam_Draw() {
 		}
 
 		setGLMode(m_Camera.draw_mode);
-		Brush_Draw(brush);
+		Brush_Draw(brush, false);
 	}
 
-  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0],g_qeglobals.d_select_translate[1],g_qeglobals.d_select_translate[2]);
+//  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0],g_qeglobals.d_select_translate[1],g_qeglobals.d_select_translate[2]);
 
 	brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
 
 	if (!renderMode) {
 		// draw normally
 		for (brush = pList->next; brush != pList; brush = brush->next) {
-			if (brush->pPatch) {
-				continue;
-			}
 			setGLMode(m_Camera.draw_mode);
 			Brush_Draw(brush, true);
 		}
@@ -1022,21 +1017,23 @@ void CCamWnd::Cam_Draw() {
 
 	// blend on top
 
+  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2], 0.25f );
+
 	setGLMode(m_Camera.draw_mode);
-	glDisable(GL_LIGHTING);
 	
 	glEnable(GL_BLEND);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	globalImages->BindNull();
+	globalImages->BindNull();  
 
-  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2], 0.25f );
-
-  for (brush = pList->next; brush != pList; brush = brush->next) {
-    if (brush->pPatch || brush->modelHandle > 0) {
-      Brush_Draw(brush, true);
+  if(renderMode) {
+    for (brush = pList->next; brush != pList; brush = brush->next) {
+      if (brush->pPatch /*|| brush->modelHandle > 0*/) {
+        DrawPatchMeshWireframe(brush->pPatch, true, idVec3(1,1,1));
+      }
     }
   }
+
 
   glEnable(GL_BLEND);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  

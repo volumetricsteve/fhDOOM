@@ -30,6 +30,11 @@ If you have questions concerning this license or the applicable additional terms
 patchMesh_t* MakeNewPatch(int width, int height);
 brush_t* AddBrushForPatch(patchMesh_t *pm, bool bLinkToWorld = true);
 brush_t* Patch_GenericMesh(int nWidth, int nHeight, int nOrientation = 2, bool bDeleteSource = true, bool bOverride = false, patchMesh_t *parent = NULL);
+
+void DrawPatchMeshWireframe(patchMesh_t *pm, bool bShade, const idVec3& color);
+void DrawPatchMeshSolid(patchMesh_t *pm, bool bShade, const idMaterial* material);
+void DrawPatchMeshSolid(patchMesh_t *pm, const idVec4& color);
+void DrawPatchMeshHandles(patchMesh_t *pm);
 void Patch_ReadFile (char *name);
 void Patch_WriteFile (char *name); 
 void Patch_BuildPoints (brush_t *b);

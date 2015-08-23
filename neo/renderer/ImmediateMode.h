@@ -40,3 +40,7 @@ private:
   int drawVertsUsed;
 };
 
+class fhQuadStrip
+{
+
+};

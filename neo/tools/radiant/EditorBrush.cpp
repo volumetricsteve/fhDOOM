@@ -37,7 +37,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/ImmediateMode.h"
 
 void	Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset);
-void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam );
+void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam );
 void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
 
 // globals
@@ -3564,7 +3564,7 @@ static void FacingVectors(entity_t *e, idVec3 &forward, idVec3 &right, idVec3 &u
 Brush_DrawFacingAngle
 ================
 */
-void Brush_DrawFacingAngle( brush_t *b, entity_t *e, bool particle) {
+void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle) {
 	idVec3	forward, right, up;
 	idVec3	endpoint, tip1, tip2;
 	idVec3	start = (e->brushes.onext->mins + e->brushes.onext->maxs) * 0.5f;
@@ -3596,7 +3596,7 @@ void Brush_DrawFacingAngle( brush_t *b, entity_t *e, bool particle) {
 DrawProjectedLight
 ================
 */
-void DrawProjectedLight(brush_t *b, bool bSelected, bool texture) {
+void DrawProjectedLight(const brush_t *b, bool bSelected, bool texture) {
 	idVec3	v1, v2, cross, vieworg, edge[8][2], v[4];
 	idVec3	target, start;
 
@@ -3746,7 +3746,7 @@ static void GLCircle(float x, float y, float z, float r, const idVec4& color)
 DrawSpeaker
 ================
 */
-void DrawSpeaker(brush_t *b, bool bSelected, bool twoD) {
+void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 
 	if (!(g_qeglobals.d_savedinfo.showSoundAlways || (g_qeglobals.d_savedinfo.showSoundWhenSelected && bSelected))) {
 		return;
@@ -3832,7 +3832,7 @@ void DrawSpeaker(brush_t *b, bool bSelected, bool twoD) {
 DrawLight
 ================
 */
-void DrawLight(brush_t *b, bool bSelected) {
+void DrawLight(const brush_t *b, bool bSelected) {
 	idVec3	vTriColor;
 	bool	bTriPaint = false;
 
@@ -3909,7 +3909,7 @@ void DrawLight(brush_t *b, bool bSelected) {
 Brush_DrawModel
 ================
 */
-void Brush_DrawModel( brush_t *b, bool camera, bool bSelected ) {
+void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	idMat3 axis;
 	idAngles angles;
 	int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
@@ -4103,7 +4103,7 @@ void GLTransformedCircle(int type, idVec3 origin, float r, idMat3 mat, float poi
 Brush_DrawAxis
 ================
 */
-void Brush_DrawAxis(brush_t *b) {
+void Brush_DrawAxis(const brush_t *b) {
 	if ( g_pParentWnd->ActiveXY()->RotateMode() && b->modelHandle ) {
 		bool matrix = false;
 		idMat3 mat;
@@ -4182,7 +4182,7 @@ void Brush_DrawAxis(brush_t *b) {
 Brush_DrawModelInfo
 ================
 */
-void Brush_DrawModelInfo(brush_t *b, bool selected) {
+void Brush_DrawModelInfo(const brush_t *b, bool selected) {
 	if (b->modelHandle > 0) {
 		GLfloat color[4];
 		glGetFloatv(GL_CURRENT_COLOR, &color[0]);
@@ -4208,7 +4208,7 @@ void Brush_DrawModelInfo(brush_t *b, bool selected) {
 Brush_DrawEmitter
 ================
 */
-void Brush_DrawEmitter(brush_t *b, bool bSelected, bool cam) {
+void Brush_DrawEmitter(const brush_t *b, bool bSelected, bool cam) {
 	if ( !( b->owner->eclass->nShowFlags & ECLASS_PARTICLE ) ) {
 		return;
 	}
@@ -4229,7 +4229,7 @@ void Brush_DrawEmitter(brush_t *b, bool bSelected, bool cam) {
 Brush_DrawEnv
 ================
 */
-void Brush_DrawEnv( brush_t *b, bool cameraView, bool bSelected ) {
+void Brush_DrawEnv( const brush_t *b, bool cameraView, bool bSelected ) {
 	idVec3 origin, newOrigin;
 	idMat3 axis, newAxis;
 	idAngles newAngles;
@@ -4278,7 +4278,7 @@ void Brush_DrawEnv( brush_t *b, bool cameraView, bool bSelected ) {
 Brush_DrawCombatNode
 ================
 */
-void Brush_DrawCombatNode( brush_t *b, bool cameraView, bool bSelected ) {
+void Brush_DrawCombatNode( const brush_t *b, bool cameraView, bool bSelected ) {
 	float min_dist = b->owner->epairs.GetFloat( "min" );
 	float max_dist = b->owner->epairs.GetFloat( "max" );
 	float fov = b->owner->epairs.GetFloat( "fov", "60" );
@@ -4350,10 +4350,9 @@ void Brush_DrawCombatNode( brush_t *b, bool cameraView, bool bSelected ) {
 Brush_Draw
 ================
 */
-void Brush_Draw(brush_t *b, bool bSelected) {
+void Brush_Draw(const brush_t *b, bool bSelected) {
 	face_t		*face;
 	int			i, order;
-	const idMaterial	*prev = NULL;
 	idWinding	*w;
 	bool model = false;
 
@@ -4421,7 +4420,6 @@ void Brush_Draw(brush_t *b, bool bSelected) {
 	}
 
 	// guarantee the texture will be set first
-	prev = NULL;
 	for (face = b->brush_faces, order = 0; face; face = face->next, order++) {
 		w = face->face_winding;
 		if (!w) {
@@ -4446,13 +4444,11 @@ void Brush_Draw(brush_t *b, bool bSelected) {
 			}
 		}
 
-		if ( (nDrawMode == cd_texture || nDrawMode == cd_light) && face->d_texture != prev && !b->forceWireFrame ) {
-			// set the texture for this face
-			prev = face->d_texture;
-			face->d_texture->GetEditorImage()->Bind();
-		}
-
     fhImmediateMode im;
+
+		if ( (nDrawMode == cd_texture || nDrawMode == cd_light) && !b->forceWireFrame && face->d_texture ) {
+      im.SetTexture(face->d_texture->GetEditorImage());
+		}    
 
 		if (model) {
 			glEnable(GL_BLEND);
@@ -4567,7 +4563,7 @@ idSurface_SweptSpline *SplineToSweptSpline( idCurve<idVec3> *curve ) {
 Brush_DrawCurve
 ================
 */
-void Brush_DrawCurve( brush_t *b, bool bSelected, bool cam ) { 
+void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) { 
 	if ( b == NULL || b->owner->curve == NULL ) {
 		return;
 	}
