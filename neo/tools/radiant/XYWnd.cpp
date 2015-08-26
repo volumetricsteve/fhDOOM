@@ -3285,14 +3285,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
  =======================================================================================================================
  =======================================================================================================================
  */
-void CXYWnd::XY_Draw() {
-	brush_t		*brush;
-	float		w, h;
-	entity_t	*e;
-	idVec3		mins, maxs;
-	int			drawn, culled;
-	int			i;
-
+void CXYWnd::XY_Draw() {	
 	if (!active_brushes.next) {
 		return; // not valid yet
 	}
@@ -3317,11 +3310,12 @@ void CXYWnd::XY_Draw() {
 
 	// set up viewpoint
 
-	w = m_nWidth / 2 / m_fScale;
-	h = m_nHeight / 2 / m_fScale;
+	const float w = m_nWidth / 2 / m_fScale;
+	const float h = m_nHeight / 2 / m_fScale;
 
-	int nDim1 = (m_nViewType == YZ) ? 1 : 0;
-	int nDim2 = (m_nViewType == XY) ? 1 : 2;
+	const int nDim1 = (m_nViewType == YZ) ? 1 : 0;
+	const int nDim2 = (m_nViewType == XY) ? 1 : 2;
+  idVec3		mins, maxs;
 	mins[0] = m_vOrigin[nDim1] - w;
 	maxs[0] = m_vOrigin[nDim1] + w;
 	mins[1] = m_vOrigin[nDim2] - h;
@@ -3340,7 +3334,8 @@ void CXYWnd::XY_Draw() {
 	XY_DrawGrid();
 	glLineWidth(0.5);
 
-	drawn = culled = 0;
+	int drawn = 0;
+  int culled = 0;
 
 	if (m_nViewType != XY) {
     GL_ProjectionMatrix.Push();
@@ -3352,9 +3347,9 @@ void CXYWnd::XY_Draw() {
     GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
 	}
 
-	e = world_entity;
+	entity_t* e = world_entity;
   
-	for ( brush = active_brushes.next; brush != &active_brushes; brush = brush->next ) {
+	for ( brush_t* brush = active_brushes.next; brush != &active_brushes; brush = brush->next ) {
 		if ( brush->forceVisibile || ( brush->owner->eclass->nShowFlags & ( ECLASS_LIGHT | ECLASS_PROJECTEDLIGHT ) ) ) {
 		} else if (	brush->mins[nDim1] > maxs[0] ||	brush->mins[nDim2] > maxs[1] ||	brush->maxs[nDim1] < mins[0] || brush->maxs[nDim2] < mins[1] ) {
 			culled++;
@@ -3425,7 +3420,7 @@ void CXYWnd::XY_Draw() {
 	int		nSaveDrawn = drawn;
 	bool	bFixedSize = false;
 
-	for (brush = selected_brushes.next; brush != &selected_brushes; brush = brush->next) {
+	for (brush_t* brush = selected_brushes.next; brush != &selected_brushes; brush = brush->next) {
 		drawn++;
 		Brush_DrawXY(brush, m_nViewType, true, brushColor);
 
@@ -3435,7 +3430,7 @@ void CXYWnd::XY_Draw() {
 			}
 
 			if (g_PrefsDlg.m_bSizePaint) {
-				for (i = 0; i < 3; i++) {
+				for (int i = 0; i < 3; i++) {
 					if (brush->mins[i] < vMinBounds[i]) {
 						vMinBounds[i] = brush->mins[i];
 					}
@@ -3460,7 +3455,7 @@ void CXYWnd::XY_Draw() {
     fhImmediateMode im;
 		im.Color3f(0, 1, 0);
 		im.Begin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_numpoints; i++) {
+		for (int i = 0; i < g_qeglobals.d_numpoints; i++) {
 			im.Vertex3fv(g_qeglobals.d_points[i].ToFloatPtr());
 		}
 
@@ -3474,7 +3469,7 @@ void CXYWnd::XY_Draw() {
     fhImmediateMode im;
 		im.Color3f(0, 0, 1);
 		im.Begin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_numedges; i++) {
+		for (int i = 0; i < g_qeglobals.d_numedges; i++) {
 			v1 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p1].ToFloatPtr();
 			v2 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p2].ToFloatPtr();
 			im.Vertex3f((v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5);
@@ -3494,7 +3489,7 @@ void CXYWnd::XY_Draw() {
 		glPointSize(1);
 		im.Begin(GL_POINTS);
 		g_pParentWnd->GetNurb()->SetOrder(3);
-		for (i = 0; i < 100; i++) {
+		for (int i = 0; i < 100; i++) {
 			idVec2 v = g_pParentWnd->GetNurb()->GetCurrentValue(time);
 			im.Vertex3f(v.x, v.y, 0.0f);
 			time += 10;
@@ -3503,7 +3498,7 @@ void CXYWnd::XY_Draw() {
 		glPointSize(4);
 		im.Color3f(0, 0, 1);
 		im.Begin(GL_POINTS);
-		for (i = 0; i < maxage; i++) {
+		for (int i = 0; i < maxage; i++) {
 			idVec2 v = g_pParentWnd->GetNurb()->GetValue(i);
 			im.Vertex3f(v.x, v.y, 0.0f);
 		}
@@ -3577,9 +3572,6 @@ void CXYWnd::XY_Draw() {
  =======================================================================================================================
  */
 void CXYWnd::fhXY_Draw() {
-	brush_t		*brush;
-	float		w, h;
-	entity_t	*e;
 	idVec3		mins, maxs;
 	int			drawn, culled;
 	int			i;
@@ -3608,11 +3600,11 @@ void CXYWnd::fhXY_Draw() {
 
 	// set up viewpoint
 
-	w = m_nWidth / 2 / m_fScale;
-	h = m_nHeight / 2 / m_fScale;
+	const float w = m_nWidth / 2 / m_fScale;
+	const float h = m_nHeight / 2 / m_fScale;
 
-	int nDim1 = (m_nViewType == YZ) ? 1 : 0;
-	int nDim2 = (m_nViewType == XY) ? 1 : 2;
+	const int nDim1 = (m_nViewType == YZ) ? 1 : 0;
+	const int nDim2 = (m_nViewType == XY) ? 1 : 2;
 	mins[0] = m_vOrigin[nDim1] - w;
 	maxs[0] = m_vOrigin[nDim1] + w;
 	mins[1] = m_vOrigin[nDim2] - h;
@@ -3643,7 +3635,7 @@ void CXYWnd::fhXY_Draw() {
     GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
 	}
 
-	e = world_entity;
+	entity_t* e = world_entity;
 
   fhImmediateMode im;
   im.Begin(GL_LINES);
