@@ -90,7 +90,7 @@ void Pointfile_Prev (void)
 	Sys_UpdateWindows (W_ALL);
 }
 
-void WINAPI Pointfile_Check (void)
+void Pointfile_Check (void)
 {
 	char	name[1024];
 	FILE	*f;

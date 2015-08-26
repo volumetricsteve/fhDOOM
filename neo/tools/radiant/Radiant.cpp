@@ -187,7 +187,6 @@ void RadiantRun( void ) {
 /////////////////////////////////////////////////////////////////////////////
 // CRadiantApp initialization
 
-HINSTANCE g_hOpenGL32 = NULL;
 HINSTANCE g_hOpenGL = NULL;
 bool g_bBuildList = false;
 

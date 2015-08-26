@@ -158,8 +158,6 @@ typedef struct
 	
 	SavedInfo_t  d_savedinfo;
 	
-	int          d_workcount;
-	
 	// connect entities uses the last two brushes selected
 	int			 d_select_count;
 	brush_t		*d_select_order[MAX_MAP_ENTITIES];
@@ -207,12 +205,11 @@ typedef struct
 
 
 void Pointfile_Delete (void);
-void WINAPI Pointfile_Check (void);
+void Pointfile_Check (void);
 void Pointfile_Next (void);
 void Pointfile_Prev (void);
 void Pointfile_Clear (void);
 void Pointfile_Draw( void );
-void Pointfile_Load( void );
 
 //
 // drag.c
@@ -239,18 +236,6 @@ void SelectEdgeByRay (idVec3 org, idVec3 dir);
 void SelectVertexByRay (idVec3 org, idVec3 dir);
 
 void ConnectEntities (void);
-
-extern	int	update_bits;
-
-extern	int	screen_width;
-extern	int	screen_height;
-
-extern	HANDLE	bsp_process;
-extern HANDLE g_hBSPOutput;
-extern HANDLE g_hBSPInput;
-
-
-char	*TranslateString (char *buf);
 
 void ProjectDialog (void);
 
@@ -418,20 +403,15 @@ extern void DLLBuildDone();
 extern void CleanUpEntities();
 extern void QE_CountBrushesAndUpdateStatusBar();
 extern void	QE_CheckAutoSave();
-extern qtexture_t	*notexture;
-extern qtexture_t	*current_texture;
 extern bool SaveWindowState(HWND hWnd, const char *pszName);
 extern void Map_Snapshot();
 extern void WXY_Print();
-extern void AddProp( void );
-extern int inspector_mode;
 extern bool g_bRotateMode;
 extern bool g_bClipMode;
 extern bool g_bScaleMode;
 extern int g_nScaleHow;
 extern bool g_bPathMode;
 extern void RunScript(char* pBuffer);
-extern HINSTANCE g_hOpenGL32;
 
 extern void FindReplaceTextures(const char* pFind, const char* pReplace, bool bSelected, bool bForce);
 extern void DoProjectSettings();
@@ -452,7 +432,6 @@ extern SCommandInfo g_Commands[];
 extern int g_nCommandCount;
 extern SKeyInfo g_Keys[];
 extern int g_nKeyCount;
-extern int inspector_mode;
 extern const char	*bsp_commands[256];
 extern void HandlePopup(CWnd* pWindow, unsigned int uId);
 extern z_t z;

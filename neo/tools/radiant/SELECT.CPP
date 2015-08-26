@@ -432,7 +432,6 @@ void Select_Deselect(bool bDeselectFaces) {
 
 	g_pParentWnd->ActiveXY()->UndoClear();
 
-	g_qeglobals.d_workcount++;
 	g_qeglobals.d_select_count = 0;
 	g_qeglobals.d_num_move_points = 0;
 	b = selected_brushes.next;

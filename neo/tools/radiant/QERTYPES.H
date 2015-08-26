@@ -28,8 +28,6 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef _QERTYPE_H
 #define _QERTYPE_H
 
-#define	MAXPOINTS	16
-
 class texdef_t
 {
 public:
@@ -174,11 +172,6 @@ typedef struct face_s
 
 	// Timo new brush primit texdef
 	brushprimit_texdef_t	brushprimit_texdef;
-
-	// cast this one to an IPluginTexdef if you are using it
-	// NOTE: casting can be done with a GETPLUGINTEXDEF defined in isurfaceplugin.h
-	// TODO: if the __ISURFACEPLUGIN_H_ header is used, use a union { void *pData; IPluginTexdef *pPluginTexdef } kind of thing ?
-	void					*pData;
 } face_t;
 
 typedef struct {

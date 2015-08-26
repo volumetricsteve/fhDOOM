@@ -32,14 +32,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "qe3.h"
 #include "mru.h"
 
-extern CEdit				*g_pEdit;
-
-int		screen_width;
-int		screen_height;
-bool	have_quit;
-
-int		update_bits;
-
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -112,32 +104,6 @@ void Sys_SetCursorPos(int x, int y) {
  */
 void Sys_Beep(void) {
 	MessageBeep(MB_ICONASTERISK);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-char *TranslateString(char *buf) {
-	static char buf2[32768];
-	int			i, l;
-	char		*out;
-
-	l = strlen(buf);
-	out = buf2;
-	for (i = 0; i < l; i++) {
-		if (buf[i] == '\n') {
-			*out++ = '\r';
-			*out++ = '\n';
-		}
-		else {
-			*out++ = buf[i];
-		}
-	}
-
-	*out++ = 0;
-
-	return buf2;
 }
 
 /*
