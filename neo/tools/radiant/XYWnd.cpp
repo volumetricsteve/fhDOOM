@@ -681,67 +681,6 @@ static void WXY_InitPixelFormat(PIXELFORMATDESCRIPTOR *pPFD) {
 	pPFD->iLayerType = PFD_MAIN_PLANE;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void WXY_Print(void) {
-	DOCINFO		di;
-
-	PRINTDLG	pd;
-
-	/* initialize the PRINTDLG struct and execute it */
-	memset(&pd, 0, sizeof(pd));
-	pd.lStructSize = sizeof(pd);
-	pd.hwndOwner = g_pParentWnd->GetXYWnd()->GetSafeHwnd();
-	pd.Flags = PD_RETURNDC;
-	pd.hInstance = 0;
-	if (!PrintDlg(&pd) || !pd.hDC) {
-		g_pParentWnd->MessageBox("Could not PrintDlg()", "QE4 Print Error", MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	/* StartDoc */
-	memset(&di, 0, sizeof(di));
-	di.cbSize = sizeof(di);
-	di.lpszDocName = "QE4";
-	if (StartDoc(pd.hDC, &di) <= 0) {
-		g_pParentWnd->MessageBox("Could not StartDoc()", "QE4 Print Error", MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	/* StartPage */
-	if (StartPage(pd.hDC) <= 0) {
-		g_pParentWnd->MessageBox("Could not StartPage()", "QE4 Print Error", MB_OK | MB_ICONERROR);
-		return;
-	} { /* read pixels from the XY window */
-		int		bmwidth = 320, bmheight = 320;
-		int		pwidth, pheight;
-
-		RECT	r;
-
-		GetWindowRect(g_pParentWnd->GetXYWnd()->GetSafeHwnd(), &r);
-
-		bmwidth = r.right - r.left;
-		bmheight = r.bottom - r.top;
-
-		pwidth = GetDeviceCaps(pd.hDC, PHYSICALWIDTH) - GetDeviceCaps(pd.hDC, PHYSICALOFFSETX);
-		pheight = GetDeviceCaps(pd.hDC, PHYSICALHEIGHT) - GetDeviceCaps(pd.hDC, PHYSICALOFFSETY);
-
-		StretchBlt(pd.hDC, 0, 0, pwidth, pheight, s_hdcXY, 0, 0, bmwidth, bmheight, SRCCOPY);
-	}
-
-	/* EndPage and EndDoc */
-	if (EndPage(pd.hDC) <= 0) {
-		g_pParentWnd->MessageBox("QE4 Print Error", "Could not EndPage()", MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	if (EndDoc(pd.hDC) <= 0) {
-		g_pParentWnd->MessageBox("QE4 Print Error", "Could not EndDoc()", MB_OK | MB_ICONERROR);
-		return;
-	}
-}
 
 /*
  =======================================================================================================================

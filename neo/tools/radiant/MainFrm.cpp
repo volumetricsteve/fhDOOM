@@ -2626,7 +2626,7 @@ void CMainFrame::OnMiscPreviousleakspot() {
  =======================================================================================================================
  */
 void CMainFrame::OnMiscPrintxy() {
-	WXY_Print();
+	common->Warning("Printing was removed");
 }
 
 /*

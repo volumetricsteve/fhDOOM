@@ -468,7 +468,6 @@ entity_t *Entity_New() {
 	ent->entityId = g_entityId++;
 	ent->origin.Zero();
 	ent->eclass = NULL;
-	ent->md3Class = NULL;
 	ent->lightOrigin.Zero();
 	ent->lightRotation.Identity();
 	ent->trackLightOrigin = false;
@@ -1285,39 +1284,6 @@ entity_t *Entity_Clone(entity_t *e) {
 	n->epairs  = e->epairs;
 
 	return n;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-int GetUniqueTargetId(int iHint) {
-	int			iMin, iMax, i;
-	BOOL		fFound;
-	entity_t	*pe;
-
-	fFound = FALSE;
-	pe = entities.next;
-	iMin = 0;
-	iMax = 0;
-
-	for (; pe != NULL && pe != &entities; pe = pe->next) {
-		i = IntForKey(pe, "target");
-		if (i) {
-			iMin = Min(i, iMin);
-			iMax = Max(i, iMax);
-			if (i == iHint) {
-				fFound = TRUE;
-			}
-		}
-	}
-
-	if (fFound) {
-		return iMax + 1;
-	}
-	else {
-		return iHint;
-	}
 }
 
 /*

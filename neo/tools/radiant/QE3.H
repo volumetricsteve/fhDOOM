@@ -399,13 +399,11 @@ extern idCVar radiant_entityMode;
 
 // externs
 extern void AddSlash(CString&);
-extern void DLLBuildDone();
 extern void CleanUpEntities();
 extern void QE_CountBrushesAndUpdateStatusBar();
 extern void	QE_CheckAutoSave();
 extern bool SaveWindowState(HWND hWnd, const char *pszName);
 extern void Map_Snapshot();
-extern void WXY_Print();
 extern bool g_bRotateMode;
 extern bool g_bClipMode;
 extern bool g_bScaleMode;
