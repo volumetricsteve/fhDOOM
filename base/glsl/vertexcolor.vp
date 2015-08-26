@@ -15,7 +15,7 @@ out vs_output
 void main(void)
 {
   gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);  
-  result.color = (vertex_color / 255.0);// * rpColorModulate + rpColorAdd;
+  result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;// * rpColorModulate + rpColorAdd;
 }
 
 

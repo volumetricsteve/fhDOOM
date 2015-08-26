@@ -32,7 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 
 
-static const int	FRAME_MEMORY_BYTES = 0x200000;
+static const int	FRAME_MEMORY_BYTES = 8 * 1024 * 1024;
 static const int	EXPAND_HEADERS = 1024;
 
 idCVar idVertexCache::r_showVertexCache( "r_showVertexCache", "0", CVAR_INTEGER|CVAR_RENDERER, "" );

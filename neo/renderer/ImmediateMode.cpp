@@ -7,11 +7,19 @@
 namespace {
   const int drawVertsCapacity = (1 << 14);
 
-  //TODO: we could use a special fhSimpleVertex with just xyz, color and texcoord
-  //      this would reduce the memory footprint and buffer updates might be 
-  //      faster due to less memory... probably not that important for debug
-  //      stuff!?
-  idDrawVert drawVerts[drawVertsCapacity];
+  struct fhSimpleVert {    
+    idVec3 xyz;
+    idVec2 st;
+    byte color[4];
+
+    static const int xyzOffset = 0;
+    static const int texcoordOffset = 12;
+    static const int colorOffset = 20;
+  };
+
+  static_assert(sizeof(fhSimpleVert) == 24, "unexpected size of simple vertex, due to padding?");
+
+  fhSimpleVert drawVerts[drawVertsCapacity];
   unsigned short lineIndices[drawVertsCapacity * 2];
   unsigned short sphereIndices[drawVertsCapacity * 2];
 
@@ -106,8 +114,8 @@ void fhImmediateMode::End()
 
   if(r_glslEnabled.GetBool())
   {
-    auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(idDrawVert));
-    drawCallVertexSize += drawVertsUsed * sizeof(idDrawVert);
+    auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(fhSimpleVert));
+    drawCallVertexSize += drawVertsUsed * sizeof(fhSimpleVert);
     int offset = vertexCache.Bind(vert);
 
     if(!geometryOnly) {
@@ -126,14 +134,16 @@ void fhImmediateMode::End()
       glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
       glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
       glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+      glUniform4f(glslProgramDef_t::uniform_color_add, 0,0,0,0);
+      glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
     }
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
 
     GLenum mode = currentMode;
     
@@ -162,7 +172,7 @@ void fhImmediateMode::End()
     glBegin(currentMode);
 
     for (int i = 0; i < drawVertsUsed; ++i) {
-      const idDrawVert& vertex = drawVerts[i];
+      const fhSimpleVert& vertex = drawVerts[i];
       glColor4ubv(&vertex.color[0]);
       glTexCoord2fv(vertex.st.ToFloatPtr());
       glVertex3fv(vertex.xyz.ToFloatPtr());
@@ -254,7 +264,7 @@ void fhImmediateMode::Vertex3f(float x, float y, float z)
     }
   }
 
-  idDrawVert& vertex = drawVerts[drawVertsUsed++];
+  fhSimpleVert& vertex = drawVerts[drawVertsUsed++];
   vertex.xyz.Set(x, y, z);
   vertex.st.Set(currentTexCoord[0], currentTexCoord[1]);
   vertex.color[0] = currentColor[0];
@@ -343,7 +353,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   
   GL_UseProgram(vertexColorProgram);  
 
-  auto vert = vertexCache.AllocFrameTemp(drawVerts, vertexNum * sizeof(idDrawVert));
+  auto vert = vertexCache.AllocFrameTemp(drawVerts, vertexNum * sizeof(fhSimpleVert));
   int offset = vertexCache.Bind(vert);
 
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
@@ -353,9 +363,9 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
 
   glDrawElements(GL_TRIANGLES,
     indexNum,

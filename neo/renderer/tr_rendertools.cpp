@@ -1714,8 +1714,8 @@ void RB_ShowLights( void ) {
 
   if(backEnd.glslEnabled) {
     GL_UseProgram(defaultProgram);
-    glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
-    glUniform4f(glslProgramDef_t::uniform_color_add, 1, 1, 1, 1);
+    glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+    glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
     GL_SelectTexture(1);
     globalImages->whiteImage->Bind();
     GL_SelectTexture(0);

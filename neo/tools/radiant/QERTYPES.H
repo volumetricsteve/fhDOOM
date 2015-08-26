@@ -245,7 +245,7 @@ typedef struct {
 	// cast this one to an IPluginTexdef if you are using it
 	// NOTE: casting can be done with a GETPLUGINTEXDEF defined in isurfaceplugin.h
 	// TODO: if the __ISURFACEPLUGIN_H_ header is used, use a union { void *pData; IPluginTexdef *pPluginTexdef } kind of thing ?
-	void *		pData;
+
 	ID_INLINE idDrawVert &ctrl( int col, int row ) {
 		if ( col < 0 || col >= width || row < 0 || row >= height ) {
 			common->Warning( "patchMesh_t::ctrl: control point out of range" );
@@ -312,14 +312,7 @@ typedef struct brush_s
 	int redoId;						//redo ID
 	int ownerId;					//entityId of the owner entity for undo
 
-	// TTimo: HTREEITEM is MFC, some plugins really don't like it
-#ifdef QERTYPES_USE_MFC
 	int numberId;         // brush number
-	HTREEITEM itemOwner;  // owner for grouping
-#else
-	int numberId;
-	DWORD itemOwner;
-#endif
 
 	idRenderModel	*modelHandle;
 

@@ -54,36 +54,81 @@ const int POINTS_PER_KNOT = 50;
 DrawRenderModel
 ================
 */
-void DrawRenderModel( idRenderModel *model, idVec3 &origin, idMat3 &axis, bool cameraView, const idVec3& color ) {
-  const int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
+void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &axis, bool cameraView, const idVec3& color ) {
+  const int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;  
+  const idMat4 modelView = idMat4(axis, origin).Transpose();
+
+  GL_ModelViewMatrix.Push();
+  GL_ModelViewMatrix.Load(modelView.ToFloatPtr());
 
 	for ( int i = 0; i < model->NumSurfaces(); i++ ) {
 		const modelSurface_t *surf = model->Surface( i );
 		const idMaterial *material = surf->shader;		
 
-    fhImmediateMode im;
+    if ( R_CreateAmbientCache(surf->geometry, true) ) {
+      assert(surf->geometry->ambientCache);
 
-    if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
-      im.SetTexture(material->GetEditorImage());
-    }
-      
-    im.Begin(GL_TRIANGLES);
-    im.Color3fv(color.ToFloatPtr());
+      int offset = vertexCache.Bind(surf->geometry->ambientCache);
 
-    const srfTriangles_t	*tri = surf->geometry;
-    for (int j = 0; j < tri->numIndexes; j += 3) {
-      for (int k = 0; k < 3; k++) {
-        int		index = tri->indexes[j + k];
-        idVec3	v;
+      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light) && material) {
+        GL_UseProgram(defaultProgram);   
+        GL_SelectTexture(1);
+        material->GetEditorImage()->Bind();
+        GL_SelectTexture(0);
 
-        v = tri->verts[index].xyz * axis + origin;
-        im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
-        im.Vertex3fv(v.ToFloatPtr());
+        idVec3 colorAdd = color * 0.25;
+
+        glUniform4f(glslProgramDef_t::uniform_color_add, colorAdd.x, colorAdd.y, color.z, 0);
+        glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+      } else {
+        GL_UseProgram(vertexColorProgram);      
+        glUniform4f(glslProgramDef_t::uniform_color_add, color.x, color.y, color.z, 1);
+        glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
       }
-    }     
+
+      glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+      glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+      glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+
+      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
       
-    im.End();    
+      glDrawElements(GL_TRIANGLES, surf->geometry->numIndexes,  GL_INDEX_TYPE, surf->geometry->indexes);
+
+      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+      GL_UseProgram(nullptr);
+
+      
+    } else {
+      fhImmediateMode im;
+
+      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
+        im.SetTexture(material->GetEditorImage());
+      }
+      
+      im.Begin(GL_TRIANGLES);
+      im.Color3fv(color.ToFloatPtr());
+
+      const srfTriangles_t	*tri = surf->geometry;
+      for (int j = 0; j < tri->numIndexes; j += 3) {
+        for (int k = 0; k < 3; k++) {
+          const int		index = tri->indexes[j + k];
+          im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
+          im.Vertex3fv(tri->verts[index].xyz.ToFloatPtr());
+        }
+      }     
+      
+      im.End();    
+    }
 	}
+
+  GL_ModelViewMatrix.Pop();
 }
 
 /*
@@ -150,7 +195,6 @@ brush_t *Brush_Alloc( void ) {
 	b->redoId = 0;
 	b->ownerId = 0;
 	b->numberId = 0;
-	b->itemOwner = 0;
 	b->bModelFailed = false;
 	b->modelHandle = NULL;
 	b->forceVisibile = false;
@@ -3995,7 +4039,7 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
       glDisable( GL_BLEND );
       glDisable( GL_DEPTH_TEST );
       glPolygonOffset(1.0f, 3.0f);
-      DrawRenderModel(model, b->owner->origin, axis, false, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES]);
+      DrawRenderModel(model, b->owner->origin, axis, false, idVec3(1,1,1));
       glEnable( GL_DEPTH_TEST );
     }
 
@@ -5163,4 +5207,54 @@ void Brush_GetBounds( brush_t *b, idBounds &bo ) {
 		}
 	} 
 
+}
+
+
+
+
+void Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_t* end, int viewType) {
+  for (; brush != end; brush = brush->next) {
+    if (brush->hiddenBrush) {
+      continue;
+    }
+
+    if (FilterBrush(brush)) {
+      continue;
+    }
+
+    for (const face_t* face = brush->brush_faces; face; face = face->next) {
+      // only draw polygons facing in a direction we care about
+      if (viewType == XY) {
+        if (face->plane[2] <= 0) {
+          continue;
+        }
+      }
+      else {
+        if (viewType == XZ) {
+          if (face->plane[1] <= 0) {
+            continue;
+          }
+        }
+        else {
+          if (face->plane[0] <= 0) {
+            continue;
+          }
+        }
+      }
+
+      const idWinding* w = face->face_winding;
+      if (!w || w->GetNumPoints() < 2) {
+        continue;
+      }
+
+      im.Vertex3fv((*w)[0].ToFloatPtr());
+      for (int i = 1; i < (w->GetNumPoints() - 1); i++) {
+        im.Vertex3fv((*w)[i].ToFloatPtr());
+        im.Vertex3fv((*w)[i].ToFloatPtr());
+      }
+      im.Vertex3fv((*w)[w->GetNumPoints() - 1].ToFloatPtr());
+      im.Vertex3fv((*w)[w->GetNumPoints() - 1].ToFloatPtr());
+      im.Vertex3fv((*w)[0].ToFloatPtr());
+    }
+  }
 }

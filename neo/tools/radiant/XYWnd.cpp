@@ -1516,8 +1516,9 @@ void CXYWnd::OnPaint() {
 		}
 
     common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
-
+    
 		wglSwapBuffers(dc.m_hDC);
+    vertexCache.EndFrame();
 		TRACE("XY Paint\n");
 	}
 }
@@ -2881,7 +2882,7 @@ void CXYWnd::DrawZIcon(void) {
     FilterBrush
  =======================================================================================================================
  */
-bool FilterBrush(brush_t *pb) {
+bool FilterBrush(const brush_t *pb) {
 	
 	if (!pb->owner) {
 		return false;	// during construction
@@ -3352,7 +3353,7 @@ void CXYWnd::XY_Draw() {
 	}
 
 	e = world_entity;
-
+  
 	for ( brush = active_brushes.next; brush != &active_brushes; brush = brush->next ) {
 		if ( brush->forceVisibile || ( brush->owner->eclass->nShowFlags & ( ECLASS_LIGHT | ECLASS_PROJECTEDLIGHT ) ) ) {
 		} else if (	brush->mins[nDim1] > maxs[0] ||	brush->mins[nDim2] > maxs[1] ||	brush->maxs[nDim1] < mins[0] || brush->maxs[nDim2] < mins[1] ) {
@@ -3373,6 +3374,7 @@ void CXYWnd::XY_Draw() {
 
 		Brush_DrawXY( brush, m_nViewType, false, brushColor );
 	}
+
 
 	DrawPathLines();
 
@@ -3422,6 +3424,7 @@ void CXYWnd::XY_Draw() {
 
 	int		nSaveDrawn = drawn;
 	bool	bFixedSize = false;
+
 	for (brush = selected_brushes.next; brush != &selected_brushes; brush = brush->next) {
 		drawn++;
 		Brush_DrawXY(brush, m_nViewType, true, brushColor);
@@ -3445,6 +3448,284 @@ void CXYWnd::XY_Draw() {
 		}
 	}
   
+	glLineWidth(0.5);
+
+	if (!bFixedSize && !RotateMode() && !ScaleMode() && drawn - nSaveDrawn > 0 && g_PrefsDlg.m_bSizePaint) {
+		PaintSizeInfo(nDim1, nDim2, vMinBounds, vMaxBounds);
+	}
+
+	// edge / vertex flags
+	if (g_qeglobals.d_select_mode == sel_vertex) {
+		glPointSize(4);
+    fhImmediateMode im;
+		im.Color3f(0, 1, 0);
+		im.Begin(GL_POINTS);
+		for (i = 0; i < g_qeglobals.d_numpoints; i++) {
+			im.Vertex3fv(g_qeglobals.d_points[i].ToFloatPtr());
+		}
+
+		im.End();
+		glPointSize(1);
+	}
+	else if (g_qeglobals.d_select_mode == sel_edge) {
+		float	*v1, *v2;
+
+		glPointSize(4);
+    fhImmediateMode im;
+		im.Color3f(0, 0, 1);
+		im.Begin(GL_POINTS);
+		for (i = 0; i < g_qeglobals.d_numedges; i++) {
+			v1 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p1].ToFloatPtr();
+			v2 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p2].ToFloatPtr();
+			im.Vertex3f((v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5);
+		}
+
+		im.End();
+		glPointSize(1);
+	}
+
+	g_splineList->draw (static_cast<bool>(g_qeglobals.d_select_mode == sel_editpoint || g_qeglobals.d_select_mode == sel_addpoint));
+
+	if (g_pParentWnd->GetNurbMode() && g_pParentWnd->GetNurb()->GetNumValues()) {
+		int maxage = g_pParentWnd->GetNurb()->GetNumValues();
+		int time = 0;
+    fhImmediateMode im;
+		im.Color3f(0, 0, 1);
+		glPointSize(1);
+		im.Begin(GL_POINTS);
+		g_pParentWnd->GetNurb()->SetOrder(3);
+		for (i = 0; i < 100; i++) {
+			idVec2 v = g_pParentWnd->GetNurb()->GetCurrentValue(time);
+			im.Vertex3f(v.x, v.y, 0.0f);
+			time += 10;
+		}
+		im.End();
+		glPointSize(4);
+		im.Color3f(0, 0, 1);
+		im.Begin(GL_POINTS);
+		for (i = 0; i < maxage; i++) {
+			idVec2 v = g_pParentWnd->GetNurb()->GetValue(i);
+			im.Vertex3f(v.x, v.y, 0.0f);
+		}
+		im.End();
+		glPointSize(1);
+	}
+
+  GL_ProjectionMatrix.Pop();
+  GL_ProjectionMatrix.Translate(-g_qeglobals.d_select_translate[0], -g_qeglobals.d_select_translate[1], -g_qeglobals.d_select_translate[2]);
+
+	if (!(m_nViewType == XY)) {
+    GL_ProjectionMatrix.Pop();
+	}
+
+	// area selection hack
+	if (g_qeglobals.d_select_mode == sel_area) {
+		glEnable(GL_BLEND);
+    glPolygonMode ( GL_FRONT_AND_BACK , GL_FILL );
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    const idVec3 size = g_qeglobals.d_vAreaTL - g_qeglobals.d_vAreaBR;
+    const idVec3 tl = g_qeglobals.d_vAreaTL;
+    const idVec3 tr = tl - idVec3(size.x, 0, 0);
+    const idVec3 br = g_qeglobals.d_vAreaBR;
+    const idVec3 bl = br + idVec3(size.x, 0, 0);
+
+    fhImmediateMode im;
+		im.Color4f(0.0, 0.0, 1.0, 0.25);
+    im.Begin(GL_TRIANGLES);
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.Vertex3fv(tr.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(bl.ToFloatPtr());
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.End();
+    
+    im.Color3f(1,1,1);
+    im.Begin(GL_LINES);
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.Vertex3fv(tr.ToFloatPtr());
+    im.Vertex3fv(tr.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(br.ToFloatPtr());
+    im.Vertex3fv(bl.ToFloatPtr());
+    im.Vertex3fv(bl.ToFloatPtr());
+    im.Vertex3fv(tl.ToFloatPtr());
+    im.End();
+	}
+
+	// now draw camera point
+	DrawCameraIcon();
+	DrawZIcon();
+
+	if (RotateMode()) {
+		DrawRotateIcon();
+	}
+
+	/// Draw a "precision crosshair" if enabled 
+	if( m_precisionCrosshairMode != PRECISION_CROSSHAIR_NONE )
+		DrawPrecisionCrosshair();
+
+	glFlush();
+
+	// QE_CheckOpenGLForErrors();
+}
+
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void CXYWnd::fhXY_Draw() {
+	brush_t		*brush;
+	float		w, h;
+	entity_t	*e;
+	idVec3		mins, maxs;
+	int			drawn, culled;
+	int			i;
+
+	if (!active_brushes.next) {
+		return; // not valid yet
+	}
+
+	// clear
+	m_bDirty = false;
+
+	GL_State( GLS_DEFAULT );
+	glViewport(0, 0, m_nWidth, m_nHeight);
+	glScissor(0, 0, m_nWidth, m_nHeight);
+	glClearColor
+	(
+		g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][0],
+		g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][1],
+		g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][2],
+		0
+	);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// set up viewpoint
+
+	w = m_nWidth / 2 / m_fScale;
+	h = m_nHeight / 2 / m_fScale;
+
+	int nDim1 = (m_nViewType == YZ) ? 1 : 0;
+	int nDim2 = (m_nViewType == XY) ? 1 : 2;
+	mins[0] = m_vOrigin[nDim1] - w;
+	maxs[0] = m_vOrigin[nDim1] + w;
+	mins[1] = m_vOrigin[nDim2] - h;
+	maxs[1] = m_vOrigin[nDim2] + h;
+
+	idBounds viewBounds( mins, maxs );
+	viewBounds[0].z = -99999;
+	viewBounds[1].z = 99999;
+
+  GL_ProjectionMatrix.LoadIdentity();
+  GL_ProjectionMatrix.Ortho(mins[0], maxs[0], mins[1], maxs[1], MIN_WORLD_COORD, MAX_WORLD_COORD);
+
+	// draw stuff
+	globalImages->BindNull();
+	// now draw the grid	
+	XY_DrawGrid();
+	glLineWidth(0.5);
+
+	drawn = culled = 0;
+
+	if (m_nViewType != XY) {
+    GL_ProjectionMatrix.Push();
+		if (m_nViewType == YZ) {
+      GL_ProjectionMatrix.Rotate(-90.0f, 0.0f, 1.0f, 0.0f);
+		}
+
+		// else
+    GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
+	}
+
+	e = world_entity;
+
+  fhImmediateMode im;
+  im.Begin(GL_LINES);
+  im.Color3fv(g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES].ToFloatPtr());
+  Brush_AddBrushLines(im, active_brushes.next, &active_brushes, m_nViewType); 
+  im.Color3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+  Brush_AddBrushLines(im, selected_brushes.next, &selected_brushes, m_nViewType); 
+  im.End();
+
+
+	DrawPathLines();
+
+	// draw pointfile
+  Pointfile_Draw();
+
+	if (!(m_nViewType == XY)) {
+    GL_ProjectionMatrix.Pop();
+	}
+
+	// draw block grid
+	if (g_qeglobals.show_blocks) {
+		XY_DrawBlockGrid();
+	}
+
+	// now draw selected brushes
+	if (m_nViewType != XY) {
+    GL_ProjectionMatrix.Push();
+		if (m_nViewType == YZ) {
+      GL_ProjectionMatrix.Rotate(-90.0f, 0.0f, 1.0f, 0.0f);
+		}
+
+		// else
+    GL_ProjectionMatrix.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
+	}
+
+  GL_ProjectionMatrix.Push();
+  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0], g_qeglobals.d_select_translate[1], g_qeglobals.d_select_translate[2]);
+
+  idVec3 brushColor;
+	if (RotateMode()) {
+		brushColor.Set( 0.8f, 0.1f, 0.9f );
+	}
+	else if (ScaleMode()) {
+		brushColor.Set( 0.1f, 0.8f, 0.1f );
+	}
+	else {
+    brushColor = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
+	}
+
+	glLineWidth(1);
+
+	idVec3	vMinBounds;
+	idVec3	vMaxBounds;
+	vMinBounds[0] = vMinBounds[1] = vMinBounds[2] = 999999.9f;
+	vMaxBounds[0] = vMaxBounds[1] = vMaxBounds[2] = -999999.9f;
+
+	int		nSaveDrawn = drawn;
+	bool	bFixedSize = false;
+/*
+	for (brush = selected_brushes.next; brush != &selected_brushes; brush = brush->next) {
+		drawn++;
+		Brush_DrawXY(brush, m_nViewType, true, brushColor);
+
+		if (!bFixedSize) {
+			if (brush->owner->eclass->fixedsize) {
+				bFixedSize = true;
+			}
+
+			if (g_PrefsDlg.m_bSizePaint) {
+				for (i = 0; i < 3; i++) {
+					if (brush->mins[i] < vMinBounds[i]) {
+						vMinBounds[i] = brush->mins[i];
+					}
+
+					if (brush->maxs[i] > vMaxBounds[i]) {
+						vMaxBounds[i] = brush->maxs[i];
+					}
+				}
+			}
+		}
+	}
+*/  
 	glLineWidth(0.5);
 
 	if (!bFixedSize && !RotateMode() && !ScaleMode() && drawn - nSaveDrawn > 0 && g_PrefsDlg.m_bSizePaint) {

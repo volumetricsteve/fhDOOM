@@ -44,7 +44,7 @@ const int SCALE_X = 0x01;
 const int SCALE_Y = 0x02;
 const int SCALE_Z = 0x04;
 
-bool FilterBrush(brush_t *pb);
+bool FilterBrush(const brush_t *pb);
 
 // as i didn't really encapsulate anything this
 // should really be a struct..
@@ -108,6 +108,7 @@ public:
 	void SetOrigin(idVec3 org);		// PGM
 	void XY_Init();
   void XY_Draw();
+  void fhXY_Draw();
   void DrawZIcon();
   void DrawRotateIcon();
   void DrawCameraIcon();
