@@ -297,7 +297,6 @@ typedef struct brush_s
 
 	face_t  *brush_faces;
 
-	bool bModelFailed;
 	//
 	// curve brush extensions
 	// all are derived from brush_faces

@@ -195,7 +195,6 @@ brush_t *Brush_Alloc( void ) {
 	b->redoId = 0;
 	b->ownerId = 0;
 	b->numberId = 0;
-	b->bModelFailed = false;
 	b->modelHandle = NULL;
 	b->forceVisibile = false;
 	b->forceWireFrame = false;
@@ -3511,50 +3510,6 @@ void Brush_Resize( brush_t *b, idVec3 vMin, idVec3 vMax ) {
 	}
 
 	Brush_Build( b, true );
-}
-
-/*
-================
-HasModel
-================
-*/
-eclass_t *HasModel(brush_t *b) {
-	idVec3	vMin, vMax;
-	vMin[0] = vMin[1] = vMin[2] = 999999;
-	vMax[0] = vMax[1] = vMax[2] = -999999;
-
-	if (b->owner->md3Class != NULL) {
-		return b->owner->md3Class;
-	}
-
-	if (b->owner->eclass->modelHandle > 0) {
-		return b->owner->eclass;
-	}
-
-	eclass_t	*e = NULL;
-
-	// FIXME: entity needs to track whether a cache hit failed and not ask again
-	if (b->owner->eclass->nShowFlags & ECLASS_MISCMODEL) {
-		const char	*pModel = ValueForKey(b->owner, "model");
-		if (pModel != NULL && strlen(pModel) > 0) {
-			e = GetCachedModel(b->owner, pModel, vMin, vMax);
-			if (e != NULL) {
-				//
-				// we need to scale the brush to the proper size based on the model load recreate
-				// brush just like in load/save
-				//
-				VectorAdd(vMin, b->owner->origin, vMin);
-				VectorAdd(vMax, b->owner->origin, vMax);
-				Brush_Resize(b, vMin, vMax);
-				b->bModelFailed = false;
-			}
-			else {
-				b->bModelFailed = true;
-			}
-		}
-	}
-
-	return e;
 }
 
 /*
