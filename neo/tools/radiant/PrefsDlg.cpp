@@ -86,13 +86,10 @@ static char THIS_FILE[] = __FILE__;
 #define CHASEMOUSE_KEY			"radiant_ChaseMouse"
 #define ENTITYSHOW_KEY			"radiant_EntityShow"
 #define TEXTURESCALE_KEY		"radiant_TextureScale"
-#define TEXTURESCROLLBAR_KEY	"radiant_TextureScrollbar"
 #define NORMALIZECOLORS_KEY		"radiant_NormalizeColors"
 #define SHADERS_KEY				"radiant_UseShaders"
 #define SWITCHCLIP_KEY			"radiant_SwitchClipKey"
-#define SELWHOLEENTS_KEY		"radiant_SelectWholeEntitiesKey"
 #define TEXTURESUBSET_KEY		"radiant_UseTextureSubsetLoading"
-#define TEXTUREQUALITY_KEY		"radiant_TextureQuality"
 #define SHOWSHADERS_KEY			"radiant_ShowShaders"
 #define SHADERTEST_KEY			"radiant_ShaderTest"
 #define GLLIGHTING_KEY			"radiant_UseGLLighting"
@@ -121,15 +118,12 @@ CPrefsDlg::CPrefsDlg(CWnd* pParent /*=NULL*/)
 	m_bNewApplyHandling = FALSE;
 	m_strAutoSave = _T("5");
 	m_bLoadLastMap = FALSE;
-	m_bTextureWindow = FALSE;
 	m_bSnapShots = FALSE;
 	m_fTinySize = 0.5;
 	m_bCleanTiny = FALSE;
 	m_nStatusSize = 10;
-	m_bCamXYUpdate = FALSE;
 	m_bNewLightDraw = FALSE;
 	m_bALTEdge = FALSE;
-	m_bQE4Painting = TRUE;
 	m_bSnapTToGrid = FALSE;
 	m_bXZVis = FALSE;
 	m_bYZVis = FALSE;
@@ -139,7 +133,6 @@ CPrefsDlg::CPrefsDlg(CWnd* pParent /*=NULL*/)
 	m_nRotation = 0;
 	m_bHiColorTextures = TRUE;
 	m_bChaseMouse = FALSE;
-	m_bTextureScrollbar = TRUE;
 	m_bNoStipple = FALSE;
 	m_strMaps = _T("");
 	m_strModels = _T("");
@@ -152,8 +145,6 @@ CPrefsDlg::CPrefsDlg(CWnd* pParent /*=NULL*/)
 	m_nEntityShowState = 0;
 	m_nTextureScale = 2;
 	m_bSwitchClip = FALSE;
-	m_bSelectWholeEntities = TRUE;
-	m_nTextureQuality = 3;
 	m_bGLLighting = FALSE;
 	m_nUndoLevels = 63;
 }
@@ -164,28 +155,23 @@ void CPrefsDlg::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(CPrefsDlg)
 	DDX_Control(pDX, IDC_SPIN_UNDO, m_wndUndoSpin);
 	DDX_Control(pDX, IDC_SPIN_POINTSIZE, m_wndFontSpin);
-	DDX_Control(pDX, IDC_SLIDER_TEXTUREQUALITY, m_wndTexturequality);
 	DDX_Control(pDX, IDC_SLIDER_CAMSPEED, m_wndCamSpeed);
 	DDX_Control(pDX, IDC_SPIN_AUTOSAVE, m_wndSpin);
 	DDX_Check(pDX, IDC_CHECK_LOADLAST, m_bLoadLast);
 	DDX_Check(pDX, IDC_CHECK_AUTOSAVE, m_bAutoSave);
 	DDX_Text(pDX, IDC_EDIT_AUTOSAVE, m_strAutoSave);
 	DDX_Check(pDX, IDC_CHECK_LOADLASTMAP, m_bLoadLastMap);
-	DDX_Check(pDX, IDC_CHECK_TEXTUREWINDOW, m_bTextureWindow);
 	DDX_Check(pDX, IDC_CHECK_SNAPSHOTS, m_bSnapShots);
 	DDX_Text(pDX, IDC_EDIT_STATUSPOINTSIZE, m_nStatusSize);
 	DDV_MinMaxInt(pDX, m_nStatusSize, 2, 14);
-	DDX_Check(pDX, IDC_CHECK_CAMXYUPDATE, m_bCamXYUpdate);
 	DDX_Check(pDX, IDC_CHECK_LIGHTDRAW, m_bNewLightDraw);
 	DDX_Check(pDX, IDC_CHECK_ALTDRAG, m_bALTEdge);
-	DDX_Check(pDX, IDC_CHECK_QE4PAINTING, m_bQE4Painting);
 	DDX_Check(pDX, IDC_CHECK_SNAPT, m_bSnapTToGrid);
 	DDX_Check(pDX, IDC_CHECK_SIZEPAINT, m_bSizePaint);
 	DDX_Check(pDX, IDC_CHECK_NOCLAMP, m_bNoClamp);
 	DDX_Text(pDX, IDC_EDIT_ROTATION, m_nRotation);
 	DDX_Check(pDX, IDC_CHECK_HICOLOR, m_bHiColorTextures);
 	DDX_Check(pDX, IDC_CHECK_MOUSECHASE, m_bChaseMouse);
-	DDX_Check(pDX, IDC_CHECK_TEXTURESCROLLBAR, m_bTextureScrollbar);
 	DDX_Text(pDX, IDC_EDIT_UNDOLEVELS, m_nUndoLevels);
 	DDV_MinMaxInt(pDX, m_nUndoLevels, 1, 64);
 	DDX_Text(pDX, IDC_EDIT_MAPS, m_strMaps);
@@ -208,10 +194,7 @@ BOOL CPrefsDlg::OnInitDialog()
 	m_wndSpin.SetRange(1,60);
 	m_wndCamSpeed.SetRange(10, 5000);
 	m_wndCamSpeed.SetPos(m_nMoveSpeed);
-
-	this->m_wndTexturequality.SetRange(0, 3);
-	this->m_wndTexturequality.SetPos(m_nTextureQuality);
-
+	
 	m_wndFontSpin.SetRange(4,24);
 	m_wndUndoSpin.SetRange(1,64);
 
@@ -228,7 +211,6 @@ void CPrefsDlg::OnOK()
 {
 	m_nMoveSpeed = m_wndCamSpeed.GetPos();
 	m_nAngleSpeed = (float)m_nMoveSpeed * 0.50;
-	this->m_nTextureQuality = m_wndTexturequality.GetPos();
 	SavePrefs();
 
 	if ( g_pParentWnd ) {
@@ -327,7 +309,6 @@ void CPrefsDlg::LoadPrefs() {
 	m_bNewApplyHandling = GetCvarInt( NEWAPPLY_KEY, 0 );
 	m_bLoadLastMap = GetCvarInt( LOADLASTMAP_KEY, 0 );
 	m_bGatewayHack = GetCvarInt( HACK_KEY, 0 );
-	m_bTextureWindow = GetCvarInt( TEXTURE_KEY, 0 );
 	m_bCleanTiny = GetCvarInt( TINYBRUSH_KEY, 0 );
 	strBuff = GetCvarString( TINYSIZE_KEY, "0.5" );
 	m_fTinySize = atof(strBuff );
@@ -338,12 +319,10 @@ void CPrefsDlg::LoadPrefs() {
 	m_nStatusSize = GetCvarInt( STATUS_KEY, 10 );
 	m_nMoveSpeed = GetCvarInt( MOVESPEED_KEY, 400 );
 	m_nAngleSpeed = GetCvarInt( ANGLESPEED_KEY, 300 );
-	m_bCamXYUpdate = GetCvarInt( CAMXYUPDATE_KEY, 1 );
 	m_bNewLightDraw = GetCvarInt( LIGHTDRAW_KEY, 1 );
 	m_bCubicClipping = ( GetCvarInt( CUBICCLIP_KEY, 1) != 0  );
 	m_nCubicScale = GetCvarInt( CUBICSCALE_KEY, 13 );
 	m_bALTEdge = GetCvarInt( ALTEDGE_KEY, 0 );
-	m_bQE4Painting = GetCvarInt( QE4PAINT_KEY, 1 );
 	m_bSnapTToGrid = GetCvarInt( SNAPT_KEY, 0 );
 	m_bXZVis = GetCvarInt( XZVIS_KEY, 0 );
 	m_bYZVis = GetCvarInt( YZVIS_KEY, 0 );
@@ -355,10 +334,7 @@ void CPrefsDlg::LoadPrefs() {
 	m_bChaseMouse = GetCvarInt( CHASEMOUSE_KEY, 1 );
 	m_nEntityShowState = GetCvarInt( ENTITYSHOW_KEY, 0 );
 	m_nTextureScale = GetCvarInt( TEXTURESCALE_KEY, 50 );
-	m_bTextureScrollbar = GetCvarInt( TEXTURESCROLLBAR_KEY, TRUE );
 	m_bSwitchClip = GetCvarInt( SWITCHCLIP_KEY, TRUE );
-	m_bSelectWholeEntities = GetCvarInt( SELWHOLEENTS_KEY, TRUE );
-	m_nTextureQuality = GetCvarInt( TEXTUREQUALITY_KEY, 6 );
 	m_bGLLighting = GetCvarInt( GLLIGHTING_KEY, FALSE );
 	m_bNoStipple = GetCvarInt( NOSTIPPLE_KEY, 0 );
 	m_nUndoLevels = GetCvarInt( UNDOLEVELS_KEY, 63 );
@@ -387,19 +363,16 @@ void CPrefsDlg::SavePrefs() {
 	SetCvarInt( VERTEX_KEY, m_bVertex );
 	SetCvarInt( AUTOSAVE_KEY, m_bAutoSave );
 	SetCvarInt( LOADLASTMAP_KEY, m_bLoadLastMap );
-	SetCvarInt( TEXTURE_KEY, m_bTextureWindow );
 	m_nAutoSave = atoi( m_strAutoSave );
 	SetCvarInt( AUTOSAVETIME_KEY, m_nAutoSave );
 	SetCvarInt( SNAPSHOT_KEY, m_bSnapShots );
 	SetCvarInt( STATUS_KEY, m_nStatusSize );
-	SetCvarInt( CAMXYUPDATE_KEY, m_bCamXYUpdate );
 	SetCvarInt( LIGHTDRAW_KEY, m_bNewLightDraw );
 	SetCvarInt( MOVESPEED_KEY, m_nMoveSpeed );
 	SetCvarInt( ANGLESPEED_KEY, m_nAngleSpeed );
 	SetCvarInt( CUBICCLIP_KEY, m_bCubicClipping );
 	SetCvarInt( CUBICSCALE_KEY, m_nCubicScale );
 	SetCvarInt( ALTEDGE_KEY, m_bALTEdge );
-	SetCvarInt( QE4PAINT_KEY, m_bQE4Painting );
 	SetCvarInt( SNAPT_KEY, m_bSnapTToGrid );
 	SetCvarInt( XZVIS_KEY, m_bXZVis );
 	SetCvarInt( YZVIS_KEY, m_bYZVis );
@@ -411,10 +384,7 @@ void CPrefsDlg::SavePrefs() {
 	SetCvarInt( CHASEMOUSE_KEY, m_bChaseMouse );
 	SetCvarInt( ENTITYSHOW_KEY, m_nEntityShowState );
 	SetCvarInt( TEXTURESCALE_KEY, m_nTextureScale );
-	SetCvarInt( TEXTURESCROLLBAR_KEY, m_bTextureScrollbar );
 	SetCvarInt( SWITCHCLIP_KEY, m_bSwitchClip );
-	SetCvarInt( SELWHOLEENTS_KEY, m_bSelectWholeEntities );
-	SetCvarInt( TEXTUREQUALITY_KEY, m_nTextureQuality );
 	SetCvarInt( GLLIGHTING_KEY, m_bGLLighting );
 	SetCvarInt( NOSTIPPLE_KEY, m_bNoStipple );
 	SetCvarInt( UNDOLEVELS_KEY, m_nUndoLevels );

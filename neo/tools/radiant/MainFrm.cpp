@@ -73,7 +73,6 @@ CString			g_strAppPath;						// holds the full path of the executable
 CMainFrame		*g_pParentWnd = NULL;				// used to precast to CMainFrame
 CPrefsDlg		g_Preferences;						// global prefs instance
 CPrefsDlg		&g_PrefsDlg = g_Preferences;		// reference used throughout
-int				g_nUpdateBits = 0;					// window update flags
 bool			g_bScreenUpdates = true;			// whether window painting is active, used in a few places
 
 //
@@ -1353,12 +1352,6 @@ void CMainFrame::RoutineProcessing() {
 		// run time dependant behavior
 		if (m_pCamWnd) {
 			m_pCamWnd->Cam_MouseControl(delta);
-		}
-
-		if (g_PrefsDlg.m_bQE4Painting && g_nUpdateBits) {
-			int nBits = g_nUpdateBits;	// this is done to keep this routine from being
-			g_nUpdateBits = 0;			// re-entered due to the paint process.. only
-			UpdateWindows(nBits);		// happens in rare cases but causes a stack overflow
 		}
 	}
 }
@@ -3655,9 +3648,7 @@ void CMainFrame::OnCameraAngleup() {
  */
 void CMainFrame::OnCameraBack() {
 	VectorMA(m_pCamWnd->Camera().origin, -SPEED_MOVE, m_pCamWnd->Camera().forward, m_pCamWnd->Camera().origin);
-
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3675,9 +3666,7 @@ void CMainFrame::OnCameraDown() {
  */
 void CMainFrame::OnCameraForward() {
 	VectorMA(m_pCamWnd->Camera().origin, SPEED_MOVE, m_pCamWnd->Camera().forward, m_pCamWnd->Camera().origin);
-
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3686,9 +3675,7 @@ void CMainFrame::OnCameraForward() {
  */
 void CMainFrame::OnCameraLeft() {
 	m_pCamWnd->Camera().angles[1] += SPEED_TURN;
-
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+  Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3697,9 +3684,7 @@ void CMainFrame::OnCameraLeft() {
  */
 void CMainFrame::OnCameraRight() {
 	m_pCamWnd->Camera().angles[1] -= SPEED_TURN;
-
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3708,9 +3693,7 @@ void CMainFrame::OnCameraRight() {
  */
 void CMainFrame::OnCameraStrafeleft() {
 	VectorMA(m_pCamWnd->Camera().origin, -SPEED_MOVE, m_pCamWnd->Camera().right, m_pCamWnd->Camera().origin);
-
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3719,9 +3702,7 @@ void CMainFrame::OnCameraStrafeleft() {
  */
 void CMainFrame::OnCameraStraferight() {
 	VectorMA(m_pCamWnd->Camera().origin, SPEED_MOVE, m_pCamWnd->Camera().right, m_pCamWnd->Camera().origin);
-
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3952,11 +3933,8 @@ void CMainFrame::UpdateWindows(int nBits) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void WINAPI Sys_UpdateWindows(int nBits) {
-	if (g_PrefsDlg.m_bQE4Painting) {
-		g_nUpdateBits |= nBits;
-	}
-	else if ( g_pParentWnd ) {
+void WINAPI Sys_UpdateWindows(int nBits) {  
+  if (g_pParentWnd) {
 		g_pParentWnd->UpdateWindows(nBits);
 	}
 }

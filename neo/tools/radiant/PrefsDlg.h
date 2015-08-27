@@ -54,7 +54,6 @@ public:
 
 	CSpinButtonCtrl		m_wndUndoSpin;
 	CSpinButtonCtrl		m_wndFontSpin;
-	CSliderCtrl			m_wndTexturequality;
 	CSliderCtrl			m_wndCamSpeed;
 	CSpinButtonCtrl		m_wndSpin;
 	BOOL				m_bTextureLock;
@@ -68,15 +67,12 @@ public:
 	CString				m_strAutoSave;
 	BOOL				m_bLoadLastMap;
 	BOOL				m_bGatewayHack;
-	BOOL				m_bTextureWindow;
 	BOOL				m_bSnapShots;
 	float				m_fTinySize;
 	BOOL				m_bCleanTiny;
 	int					m_nStatusSize;
-	BOOL				m_bCamXYUpdate;
 	BOOL				m_bNewLightDraw;
 	BOOL				m_bALTEdge;
-	BOOL				m_bQE4Painting;
 	BOOL				m_bSnapTToGrid;
 	BOOL				m_bXZVis;
 	BOOL				m_bYZVis;
@@ -87,7 +83,6 @@ public:
 	int					m_nRotation;
 	BOOL				m_bHiColorTextures;
 	BOOL				m_bChaseMouse;
-	BOOL				m_bTextureScrollbar;
 	BOOL				m_bNoStipple;
 	int					m_nUndoLevels;
 	CString				m_strMaps;
@@ -105,10 +100,7 @@ public:
 	BOOL				m_selectByBoundingBrush;
 	int					m_nEntityShowState;
 	int					m_nTextureScale;
-	BOOL				m_bNormalizeColors;
 	BOOL				m_bSwitchClip;
-	BOOL				m_bSelectWholeEntities;
-	int					m_nTextureQuality;
 	BOOL				m_bGLLighting;
 
 	// ClassWizard generated virtual function overrides

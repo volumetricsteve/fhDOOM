@@ -1030,18 +1030,11 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Q3Radiant Preferences"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    CONTROL         "Slider1",IDC_SLIDER_CAMSPEED,"msctls_trackbar32",WS_TABSTOP,128,23,92,11
-    CONTROL         "Update XY views during\nmouse drags",IDC_CHECK_CAMXYUPDATE,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,130,48,91,18
-    CONTROL         "QE4 update model",IDC_CHECK_QE4PAINTING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,68,75,10
-    CONTROL         "Slider1",IDC_SLIDER_TEXTUREQUALITY,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,237,34,127,11
-    CONTROL         "Texture toolbar",IDC_CHECK_TEXTURETOOLBAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,236,60,63,10
-    CONTROL         "Texture scrollbar",IDC_CHECK_TEXTURESCROLLBAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,236,71,68,10
-    CONTROL         "Texture subset",IDC_CHECK_TEXTUREWINDOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,308,60,63,10
+    CONTROL         "Slider1",IDC_SLIDER_CAMSPEED,"msctls_trackbar32",WS_TABSTOP,19,29,92,11
     EDITTEXT        IDC_EDIT_ROTATION,58,127,24,12,ES_AUTOHSCROLL
-    CONTROL         "ALT + multi-drag",IDC_CHECK_ALTDRAG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,103,68,10
-    CONTROL         "Snap T to Grid",IDC_CHECK_SNAPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,115,62,10
-    CONTROL         "Mouse chaser",IDC_CHECK_MOUSECHASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,126,68,10
+    CONTROL         "Press ALT for multi-drag",IDC_CHECK_ALTDRAG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,103,99,10
+    CONTROL         "Snap Texture to Grid",IDC_CHECK_SNAPT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,115,81,10
+    CONTROL         "Mouse chaser",IDC_CHECK_MOUSECHASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,126,68,10
     CONTROL         "Light drawing",IDC_CHECK_LIGHTDRAW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,115,58,10
     CONTROL         "Paint sizing info",IDC_CHECK_SIZEPAINT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,126,65,10
     CONTROL         "Hi Color Textures",IDC_CHECK_HICOLOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,281,103,70,10
@@ -1067,14 +1060,9 @@ BEGIN
     LTEXT           "minutes",IDC_STATIC,213,194,25,8
     GROUPBOX        "Views / Rendering",IDC_STATIC,7,4,372,86
     GROUPBOX        "Tool settings / Stuff that wouldn't fit anywhere else",IDC_STATIC,7,145,372,83
-    LTEXT           "slow",IDC_STATIC,131,35,15,8
-    LTEXT           "fast",IDC_STATIC,204,35,12,8
-    GROUPBOX        "Camera ",IDC_STATIC,126,13,100,72
+    LTEXT           "slow",IDC_STATIC,17,39,15,8
+    LTEXT           "fast",IDC_STATIC,99,40,12,8
     LTEXT           "Rotation inc:",IDC_STATIC,15,129,41,8
-    GROUPBOX        "Texturing",IDC_STATIC,231,13,141,72
-    LTEXT           "Quality",IDC_STATIC,237,23,22,8
-    LTEXT           "Low",IDC_STATIC,239,47,14,8
-    LTEXT           "High",IDC_STATIC,347,48,16,8
     LTEXT           "Map Path:",IDC_STATIC,13,215,34,8
     EDITTEXT        IDC_EDIT_MAPS,49,212,90,12,ES_AUTOHSCROLL
     CONTROL         "Use new map format",IDC_CHECK_NEWMAPFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,194,81,10
@@ -2527,8 +2515,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
-
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

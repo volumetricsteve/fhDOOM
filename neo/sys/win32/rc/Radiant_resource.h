@@ -125,11 +125,8 @@
 #define IDC_LIST_COMMANDS               10237
 #define IDC_CHECK_FACE                  10238
 #define IDC_CHECK_RIGHTCLICK            10239
-#define IDC_CHECK_TEXTUREWINDOW         10240
-#define IDC_CHECK_TEXTURETOOLBAR        10241
 #define IDC_CHECK_LIGHTDRAW             10242
 #define IDC_CHECK_SNAPT                 10243
-#define IDC_CHECK_TEXTURESCROLLBAR      10244
 #define IDC_CHECK_RUNQUAKE              10245
 #define IDC_CHECK_SETGAME               10246
 #define IDC_CHECK_DISPLAYLISTS          10247
@@ -260,7 +257,6 @@
 #define IDC_CMD_LIST                    10372
 #define IDC_CHECK_DLLENTITIES           10373
 #define IDC_PRJBASEPATH                 10374
-#define IDC_CHECK_WIDETOOLBAR           10375
 #define IDC_CMDCOMMAND                  10376
 #define IDC_CHECK_BUGGYICD              10377
 #define IDC_CMDMENUTEXT                 10378
@@ -292,7 +288,6 @@
 #define IDC_BTN_AXIAL                   10404
 #define IDC_BTN_ASSIGNMODEL             10405
 #define IDC_BTN_FACEFIT                 10406
-#define IDC_SLIDER_TEXTUREQUALITY       10407
 #define IDC_LIST1                       10408
 #define IDC_BTN_BRUSHFIT                10409
 #define IDC_LIST_EVENTS                 10410

@@ -603,8 +603,7 @@ void CCamWnd::Cam_MouseControl(float dtime) {
 	}
 
 	Cam_BuildMatrix();
-	int nUpdate = (g_PrefsDlg.m_bCamXYUpdate) ? (W_CAMERA | W_XY) : (W_CAMERA);
-	Sys_UpdateWindows(nUpdate);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 	g_pParentWnd->PostMessage(WM_TIMER, 0, 0);
 }
 

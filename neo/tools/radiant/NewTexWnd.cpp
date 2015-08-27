@@ -130,7 +130,7 @@ int CNewTexWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 		return -1;
 	}
 
-	ShowScrollBar(SB_VERT, g_PrefsDlg.m_bTextureScrollbar);
+	ShowScrollBar(SB_VERT, true);
 	m_bNeedRange = true;
 
 	hdcTexture = GetDC();
@@ -165,7 +165,7 @@ void CNewTexWnd::OnParentNotify(UINT message, LPARAM lParam) {
  =======================================================================================================================
  */
 void CNewTexWnd::UpdatePrefs() {
-	ShowScrollBar(SB_VERT, g_PrefsDlg.m_bTextureScrollbar);
+	ShowScrollBar(SB_VERT, true);
 	m_bNeedRange = true;
 	Invalidate();
 	UpdateWindow();
@@ -364,7 +364,7 @@ void CNewTexWnd::OnPaint() {
 		TRACE("Texture Paint\n");
 	}
 
-	if (g_PrefsDlg.m_bTextureScrollbar && (m_bNeedRange || g_qeglobals.d_texturewin.m_nTotalHeight != nOld)) {
+	if (m_bNeedRange || g_qeglobals.d_texturewin.m_nTotalHeight != nOld) {
 		m_bNeedRange = false;
 		SetScrollRange(SB_VERT, 0, g_qeglobals.d_texturewin.m_nTotalHeight, TRUE);
 	}
@@ -600,10 +600,8 @@ void CNewTexWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				CPoint screen = cursor;
 				ClientToScreen(&screen);
 				SetCursorPos(screen.x, screen.y);
-				if (g_PrefsDlg.m_bTextureScrollbar) {
-					SetScrollPos(SB_VERT, abs(origin.y));
-				}
-
+  			SetScrollPos(SB_VERT, abs(origin.y));
+	
 				InvalidateRect(NULL, false);
 				UpdateWindow();
 			}
