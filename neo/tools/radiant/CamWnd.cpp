@@ -331,57 +331,7 @@ int CCamWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 	HDC hDC = pDC->GetSafeHdc();
 
 	QEW_SetupPixelFormat(hDC, true);
-/*
-	HFONT hfont = CreateFont(
-				12,	// logical height of font 
-				0,	// logical average character width 
-				0,	// angle of escapement 
-				0,	// base-line orientation angle 
-				0,	// font weight 
-				0,	// italic attribute flag 
-				0,	// underline attribute flag 
-				0,	// strikeout attribute flag 
-				0,	// character set identifier 
-				0,	// output precision 
-				0,	// clipping precision 
-				0,	// output quality 
-				FIXED_PITCH | FF_MODERN,	// pitch and family 
-				"Lucida Console" 	// pointer to typeface name string 
-				);
 
-	if (!hfont) {
-		Error("couldn't create font");
-	}
-
-	HFONT hOldFont = (HFONT)SelectObject(hDC, hfont);
-
-	wglMakeCurrent (hDC, win32.hGLRC);
-
-	if ((g_qeglobals.d_font_list = glGenLists(256)) == 0) {
-		common->Warning( "couldn't create font dlists" );
-	}
-
-	// create the bitmap display lists we're making images of glyphs 0 thru 255
-	if ( !wglUseFontBitmaps(hDC, 0, 255, g_qeglobals.d_font_list) ) {
-		common->Warning( "wglUseFontBitmaps failed (%d).  Trying again.", GetLastError() );
-
-		// FIXME: This is really wacky, sometimes the first call fails, but calling it again makes it work
-		//		This probably indicates there's something wrong somewhere else in the code, but I'm not sure what
-		if ( !wglUseFontBitmaps(hDC, 0, 255, g_qeglobals.d_font_list) ) {
-			common->Warning( "wglUseFontBitmaps failed again (%d).  Trying outlines.", GetLastError() );
-
-			if (!wglUseFontOutlines(hDC, 0, 255, g_qeglobals.d_font_list, 0.0f, 0.1f, WGL_FONT_LINES, NULL)) {
-				common->Warning( "wglUseFontOutlines also failed (%d), no coordinate text will be visible.", GetLastError() );
-			}
-		}
-	}
-
-	SelectObject(hDC, hOldFont);
-	ReleaseDC(pDC);
-
-	// indicate start of glyph display lists
-	glListBase(g_qeglobals.d_font_list);
-*/
 	// report OpenGL information
 	common->Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	common->Printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
