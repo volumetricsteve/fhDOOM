@@ -353,6 +353,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CLOSE()
 	ON_WM_KEYDOWN()
 	ON_WM_SIZE()
+  ON_WM_ERASEBKGND()
 	ON_COMMAND(ID_VIEW_CAMERATOGGLE, ToggleCamera)
 	ON_COMMAND(ID_FILE_CLOSE, OnFileClose)
 	ON_COMMAND(ID_FILE_EXIT, OnFileExit)
@@ -710,6 +711,26 @@ static UINT indicators[] = {
  */
 void CMainFrame::OnDisplayChange(UINT wParam, long lParam) {
 	int n = wParam;
+}
+
+BOOL CMainFrame::OnEraseBkgnd(CDC* pDC) {
+  // Set brush to desired background color
+  int r = static_cast<int>(g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][0] * 255.0f);
+  int g = static_cast<int>(g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][1] * 255.0f);
+  int b = static_cast<int>(g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][2] * 255.0f);
+
+  CBrush backBrush(RGB(r, g, b));
+
+  // Save old brush
+  CBrush* pOldBrush = pDC->SelectObject(&backBrush);
+
+  CRect rect;
+  pDC->GetClipBox(&rect);     // Erase the area needed
+
+  pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+    PATCOPY);
+  pDC->SelectObject(pOldBrush);
+  return TRUE;
 }
 
 /*
@@ -4112,6 +4133,7 @@ void CMainFrame::OnColorSetoriginal() {
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][i] = 0.75f;
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][i] = 0.5f;
 		g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][i] = 0.25f;
+    g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][i] = 1.0f;
 	}
 
 	g_qeglobals.d_savedinfo.colors[COLOR_GRIDBLOCK][0] = 0.0f;
@@ -4156,6 +4178,7 @@ void CMainFrame::OnColorSetqer() {
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][i] = 1.0f;
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][i] = 0.5f;
 		g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][i] = 0.25f;
+    g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][i] = 1.0f;
 	}
 
 	g_qeglobals.d_savedinfo.colors[COLOR_GRIDBLOCK][0] = 0.0f;
@@ -4193,30 +4216,32 @@ void CMainFrame::OnColorSetqer() {
 void CMainFrame::OnColorSetSuperMal() {
 	OnColorSetqer();
 	g_qeglobals.d_savedinfo.colors[COLOR_TEXTUREBACK][0] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_TEXTUREBACK][1] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_TEXTUREBACK][2] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][0] = 0.35f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][1] = 0.35f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][2] = 0.35f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][0] = 0.5f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][1] = 0.5f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][2] = 0.5f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][0] = 0.39f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][1] = 0.39f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][2] = 0.39f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT][0] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT][1] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT][2] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES][0] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES][1] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES][2] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0] = 1.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1] = 0.90f;
-	g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2] = 0.90f;
-	g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][0] = 0.5f;
-	g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][1] = 0.0f;
-	g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][2] = 0.74f;
-
+  g_qeglobals.d_savedinfo.colors[COLOR_TEXTUREBACK][1] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_TEXTUREBACK][2] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][0] = 0.45f;
+  g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][1] = 0.45f;
+  g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][2] = 0.45f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][0] = 0.35f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][1] = 0.35f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][2] = 0.35f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][0] = 0.5f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][1] = 0.5f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][2] = 0.5f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][0] = 0.39f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][1] = 0.39f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][2] = 0.39f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT][0] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT][1] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_GRIDTEXT][2] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES][0] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES][1] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES][2] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0] = 1.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1] = 0.90f;
+  g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2] = 0.90f;
+  g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][0] = 0.5f;
+  g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][1] = 0.0f;
+  g_qeglobals.d_savedinfo.colors[COLOR_VIEWNAME][2] = 0.74f;
 
 	Sys_UpdateWindows(W_ALL);
 }
@@ -4231,6 +4256,7 @@ void CMainFrame::OnColorSetblack() {
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDBACK][i] = 0.0f;
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][i] = 0.0f;
 		g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][i] = 0.25f;
+    g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][i] = 0.0f;
 	}
 
 	g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][0] = 0.3f;
@@ -4275,6 +4301,7 @@ void CMainFrame::OnColorSetMax() {
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMINOR][i] = 0.83f;
 		g_qeglobals.d_savedinfo.colors[COLOR_GRIDMAJOR][i] = 0.89f;
 		g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][i] = 0.25f;
+    g_qeglobals.d_savedinfo.colors[COLOR_WINBACK][i] = 0.8f;
 	}
 	
 	g_qeglobals.d_savedinfo.colors[COLOR_GRIDBLOCK][0] = 1.0f;
