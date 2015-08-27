@@ -107,7 +107,6 @@ public:
 	void UpdateWindows(int nBits);
 	void SetStatusText(int nPane, const char* pText);
 	void UpdateStatusText();
-	void SetWindowStyle(int nStyle);
 	bool GetNurbMode() {
 		return nurbMode;
 	}

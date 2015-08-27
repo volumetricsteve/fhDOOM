@@ -417,7 +417,6 @@ extern bool region_active;
 extern void	Texture_ShowDirectory (char* pPath, bool Linked = false);
 extern void Map_ImportFile (char *filename);
 extern void Map_SaveSelected(char* pFilename);
-extern bool g_bNewFace;
 extern bool g_bSwitch;
 extern brush_t g_brFrontSplits;
 extern brush_t g_brBackSplits;

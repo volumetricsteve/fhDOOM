@@ -62,8 +62,6 @@ public:
 	BOOL				m_bRunBefore;
 	CString				m_strLastProject;
 	CString				m_strLastMap;
-	BOOL				m_bFace;
-	BOOL				m_bRightClick;
 	BOOL				m_bVertex;
 	BOOL				m_bAutoSave;
 	BOOL				m_bNewApplyHandling;
@@ -85,13 +83,11 @@ public:
 	BOOL				m_bZVis;
 	BOOL				m_bSizePaint;
 	BOOL				m_bRotateLock;
-	BOOL				m_bWideToolbar;
 	BOOL				m_bNoClamp;
 	int					m_nRotation;
 	BOOL				m_bHiColorTextures;
 	BOOL				m_bChaseMouse;
 	BOOL				m_bTextureScrollbar;
-	BOOL				m_bDisplayLists;
 	BOOL				m_bNoStipple;
 	int					m_nUndoLevels;
 	CString				m_strMaps;

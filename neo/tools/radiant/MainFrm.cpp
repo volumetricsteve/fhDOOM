@@ -1091,10 +1091,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 		return -1;
 	}
 
-	UINT	nID = (g_PrefsDlg.m_bWideToolbar) ? IDR_TOOLBAR_ADVANCED : IDR_TOOLBAR1;
+	//UINT	nID = (g_PrefsDlg.m_bWideToolbar) ? IDR_TOOLBAR_ADVANCED : IDR_TOOLBAR1;
 
 	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) || !m_wndToolBar.LoadToolBar(nID)) {
+		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) || !m_wndToolBar.LoadToolBar(IDR_TOOLBAR_ADVANCED)) {
 		TRACE0("Failed to create toolbar\n");
 		return -1;	// fail to create
 	}
@@ -3747,13 +3747,8 @@ void CMainFrame::OnGridToggle() {
  =======================================================================================================================
  */
 void CMainFrame::OnPrefs() {
-	BOOL	bToolbar = g_PrefsDlg.m_bWideToolbar;
 	g_PrefsDlg.LoadPrefs();
 	if (g_PrefsDlg.DoModal() == IDOK) {
-		if (g_PrefsDlg.m_bWideToolbar != bToolbar) {
-			MessageBox("You need to restart Q3Radiant for the view changes to take place.");
-		}
-
 		g_Inspectors->texWnd.UpdatePrefs();
 
 		CMenu	*pMenu = GetMenu();
@@ -3761,14 +3756,6 @@ void CMainFrame::OnPrefs() {
 			pMenu->CheckMenuItem(ID_SNAPTOGRID, MF_BYCOMMAND | (!g_PrefsDlg.m_bNoClamp) ? MF_CHECKED : MF_UNCHECKED);
 		}
 	}
-}
-
-//
-// =======================================================================================================================
-//    0 = radiant styel 1 = qe4 style
-// =======================================================================================================================
-//
-void CMainFrame::SetWindowStyle(int nStyle) {
 }
 
 /*

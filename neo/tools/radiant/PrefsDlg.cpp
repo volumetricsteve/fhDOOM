@@ -46,9 +46,7 @@ static char THIS_FILE[] = __FILE__;
 #define LASTPROJ_KEY			"radiant_LastProject"
 #define LASTMAP_KEY				"radiant_LastMap"
 #define RUN_KEY					"radiant_RunBefore"
-#define FACE_KEY				"radiant_NewFaceGrab"
 #define BSP_KEY					"radiant_InternalBSP"
-#define RCLICK_KEY				"radiant_NewRightClick"
 #define VERTEX_KEY				"radiant_NewVertex"
 #define AUTOSAVE_KEY			"radiant_Autosave"
 #define AUTOSAVETIME_KEY		"radiant_AutosaveMinutes"
@@ -78,7 +76,6 @@ static char THIS_FILE[] = __FILE__;
 #define ZVIS_KEY				"radiant_ZVIS"
 #define SIZEPAINT_KEY			"radiant_SizePainting"
 #define DLLENTITIES_KEY			"radiant_DLLEntities"
-#define WIDETOOLBAR_KEY			"radiant_WideToolBar"
 #define NOCLAMP_KEY				"radiant_NoClamp"
 #define PREFAB_KEY				"radiant_PrefabPath"
 #define USERINI_KEY				"radiant_UserINIPath"
@@ -90,7 +87,6 @@ static char THIS_FILE[] = __FILE__;
 #define ENTITYSHOW_KEY			"radiant_EntityShow"
 #define TEXTURESCALE_KEY		"radiant_TextureScale"
 #define TEXTURESCROLLBAR_KEY	"radiant_TextureScrollbar"
-#define DISPLAYLISTS_KEY		"radiant_UseDisplayLists"
 #define NORMALIZECOLORS_KEY		"radiant_NormalizeColors"
 #define SHADERS_KEY				"radiant_UseShaders"
 #define SWITCHCLIP_KEY			"radiant_SwitchClipKey"
@@ -120,8 +116,6 @@ CPrefsDlg::CPrefsDlg(CWnd* pParent /*=NULL*/)
 {
 	//{{AFX_DATA_INIT(CPrefsDlg)
 	m_bLoadLast = FALSE;
-	m_bFace = FALSE;
-	m_bRightClick = FALSE;
 	m_bVertex = FALSE;
 	m_bAutoSave = TRUE;
 	m_bNewApplyHandling = FALSE;
@@ -141,13 +135,11 @@ CPrefsDlg::CPrefsDlg(CWnd* pParent /*=NULL*/)
 	m_bYZVis = FALSE;
 	m_bZVis = FALSE;
 	m_bSizePaint = FALSE;
-	m_bWideToolbar = TRUE;
 	m_bNoClamp = FALSE;
 	m_nRotation = 0;
 	m_bHiColorTextures = TRUE;
 	m_bChaseMouse = FALSE;
 	m_bTextureScrollbar = TRUE;
-	m_bDisplayLists = TRUE;
 	m_bNoStipple = FALSE;
 	m_strMaps = _T("");
 	m_strModels = _T("");
@@ -176,8 +168,6 @@ void CPrefsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_CAMSPEED, m_wndCamSpeed);
 	DDX_Control(pDX, IDC_SPIN_AUTOSAVE, m_wndSpin);
 	DDX_Check(pDX, IDC_CHECK_LOADLAST, m_bLoadLast);
-	DDX_Check(pDX, IDC_CHECK_FACE, m_bFace);
-	DDX_Check(pDX, IDC_CHECK_RIGHTCLICK, m_bRightClick);
 	DDX_Check(pDX, IDC_CHECK_AUTOSAVE, m_bAutoSave);
 	DDX_Text(pDX, IDC_EDIT_AUTOSAVE, m_strAutoSave);
 	DDX_Check(pDX, IDC_CHECK_LOADLASTMAP, m_bLoadLastMap);
@@ -191,14 +181,11 @@ void CPrefsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK_QE4PAINTING, m_bQE4Painting);
 	DDX_Check(pDX, IDC_CHECK_SNAPT, m_bSnapTToGrid);
 	DDX_Check(pDX, IDC_CHECK_SIZEPAINT, m_bSizePaint);
-	DDX_Check(pDX, IDC_CHECK_WIDETOOLBAR, m_bWideToolbar);
 	DDX_Check(pDX, IDC_CHECK_NOCLAMP, m_bNoClamp);
 	DDX_Text(pDX, IDC_EDIT_ROTATION, m_nRotation);
 	DDX_Check(pDX, IDC_CHECK_HICOLOR, m_bHiColorTextures);
 	DDX_Check(pDX, IDC_CHECK_MOUSECHASE, m_bChaseMouse);
 	DDX_Check(pDX, IDC_CHECK_TEXTURESCROLLBAR, m_bTextureScrollbar);
-	DDX_Check(pDX, IDC_CHECK_DISPLAYLISTS, m_bDisplayLists);
-	DDX_Check(pDX, IDC_CHECK_NOSTIPPLE, m_bNoStipple);
 	DDX_Text(pDX, IDC_EDIT_UNDOLEVELS, m_nUndoLevels);
 	DDV_MinMaxInt(pDX, m_nUndoLevels, 1, 64);
 	DDX_Text(pDX, IDC_EDIT_MAPS, m_strMaps);
@@ -335,8 +322,6 @@ void CPrefsDlg::LoadPrefs() {
 	m_strLastMap = GetCvarString( LASTMAP_KEY, "" );
 	m_bLoadLast = GetCvarInt( LOADLAST_KEY, LOADLAST_DEF );
 	m_bRunBefore = GetCvarInt( RUN_KEY, RUN_DEF );
-	m_bFace = GetCvarInt( FACE_KEY, 1 );
-	m_bRightClick = GetCvarInt( RCLICK_KEY, 1 );
 	m_bVertex = GetCvarInt( VERTEX_KEY, 1 );
 	m_bAutoSave = GetCvarInt( AUTOSAVE_KEY, 1 );
 	m_bNewApplyHandling = GetCvarInt( NEWAPPLY_KEY, 0 );
@@ -364,7 +349,6 @@ void CPrefsDlg::LoadPrefs() {
 	m_bYZVis = GetCvarInt( YZVIS_KEY, 0 );
 	m_bZVis = GetCvarInt( ZVIS_KEY, 1 );
 	m_bSizePaint = GetCvarInt( SIZEPAINT_KEY, 0 );
-	m_bWideToolbar = GetCvarInt( WIDETOOLBAR_KEY, 1 );
 	m_bNoClamp = GetCvarInt( NOCLAMP_KEY, 0 );
 	m_nRotation = GetCvarInt( ROTATION_KEY, 45 );
 	m_bHiColorTextures = GetCvarInt( HICOLOR_KEY, 1 );
@@ -372,7 +356,6 @@ void CPrefsDlg::LoadPrefs() {
 	m_nEntityShowState = GetCvarInt( ENTITYSHOW_KEY, 0 );
 	m_nTextureScale = GetCvarInt( TEXTURESCALE_KEY, 50 );
 	m_bTextureScrollbar = GetCvarInt( TEXTURESCROLLBAR_KEY, TRUE );
-	m_bDisplayLists = GetCvarInt( DISPLAYLISTS_KEY, TRUE );
 	m_bSwitchClip = GetCvarInt( SWITCHCLIP_KEY, TRUE );
 	m_bSelectWholeEntities = GetCvarInt( SELWHOLEENTS_KEY, TRUE );
 	m_nTextureQuality = GetCvarInt( TEXTUREQUALITY_KEY, 6 );
@@ -401,8 +384,6 @@ void CPrefsDlg::SavePrefs() {
 	SetCvarString( LASTPROJ_KEY, m_strLastProject );
 	SetCvarString( LASTMAP_KEY, m_strLastMap );
 	SetCvarInt( RUN_KEY, m_bRunBefore );
-	SetCvarInt( FACE_KEY, m_bFace );
-	SetCvarInt( RCLICK_KEY, m_bRightClick );
 	SetCvarInt( VERTEX_KEY, m_bVertex );
 	SetCvarInt( AUTOSAVE_KEY, m_bAutoSave );
 	SetCvarInt( LOADLASTMAP_KEY, m_bLoadLastMap );
@@ -424,7 +405,6 @@ void CPrefsDlg::SavePrefs() {
 	SetCvarInt( YZVIS_KEY, m_bYZVis );
 	SetCvarInt( ZVIS_KEY, m_bZVis );
 	SetCvarInt( SIZEPAINT_KEY, m_bSizePaint );
-	SetCvarInt( WIDETOOLBAR_KEY, m_bWideToolbar );
 	SetCvarInt( NOCLAMP_KEY, m_bNoClamp );
 	SetCvarInt( ROTATION_KEY, m_nRotation );
 	SetCvarInt( HICOLOR_KEY, m_bHiColorTextures );
@@ -432,7 +412,6 @@ void CPrefsDlg::SavePrefs() {
 	SetCvarInt( ENTITYSHOW_KEY, m_nEntityShowState );
 	SetCvarInt( TEXTURESCALE_KEY, m_nTextureScale );
 	SetCvarInt( TEXTURESCROLLBAR_KEY, m_bTextureScrollbar );
-	SetCvarInt( DISPLAYLISTS_KEY, m_bDisplayLists );
 	SetCvarInt( SWITCHCLIP_KEY, m_bSwitchClip );
 	SetCvarInt( SELWHOLEENTS_KEY, m_bSelectWholeEntities );
 	SetCvarInt( TEXTUREQUALITY_KEY, m_nTextureQuality );
@@ -447,6 +426,5 @@ void CPrefsDlg::SavePrefs() {
 
 void CPrefsDlg::SetGamePrefs() {
 	m_bHiColorTextures = TRUE;
-	m_bWideToolbar = TRUE;
 	SavePrefs();
 }

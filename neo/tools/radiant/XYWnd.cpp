@@ -1827,10 +1827,6 @@ bool MergeMenu(CMenu * pMenuDestination, const CMenu * pMenuAdd, bool bTopLevel 
  =======================================================================================================================
  */
 void CXYWnd::HandleDrop() {
-	if (g_PrefsDlg.m_bRightClick == false) {
-		return;
-	}
-
 	if (!m_mnuDrop.GetSafeHmenu()) {		// first time, load it up
 		m_mnuDrop.CreatePopupMenu();
 		
