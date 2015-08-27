@@ -35,12 +35,16 @@ If you have questions concerning this license or the applicable additional terms
 #include "io.h"
 
 #include "../../renderer/tr_local.h"
+#include "../../renderer/ImmediateMode.h"
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
 
 #ifdef _DEBUG
 	#define new DEBUG_NEW
 	#undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+static const int labelHeight = FONT_HEIGHT + 2;
 
 /*
  =======================================================================================================================
@@ -225,7 +229,7 @@ const idMaterial *CNewTexWnd::NextPos() {
 	if (current.x + width > rectClient.Width() - 8 && currentRow) {
 		// go to the next row unless the texture is the first on the row
 		current.x = 8;
-		current.y -= currentRow + FONT_HEIGHT + 4;
+		current.y -= currentRow + labelHeight + 4;
 		currentRow = 0;
 	}
 
@@ -268,11 +272,13 @@ void CNewTexWnd::OnPaint() {
 		glViewport(0, 0, rectClient.Width(), rectClient.Height());
 		glScissor(0, 0, rectClient.Width(), rectClient.Height());
     GL_ProjectionMatrix.LoadIdentity();
-    GL_ProjectionMatrix.Ortho(0, rectClient.Width(), origin.y - rectClient.Height(), origin.y, -100, 100);
+    GL_ProjectionMatrix.Ortho(0, rectClient.Width(), origin.y - rectClient.Height(), origin.y, -100, 100);    
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_BLEND);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    globalImages->BindNull();
 
 		// init stuff
 		current.x = 8;
@@ -289,55 +295,53 @@ void CNewTexWnd::OnPaint() {
 			int height = mat->GetEditorImage()->uploadHeight * ((float)g_PrefsDlg.m_nTextureScale / 100);
 
 			// Is this texture visible?
-			if ((draw.y - height - FONT_HEIGHT < origin.y) && (draw.y > origin.y - rectClient.Height())) {
+			if ((draw.y - height - labelHeight < origin.y) && (draw.y > origin.y - rectClient.Height())) {
 				// if in use, draw a background
 				glLineWidth(1);
-				glColor3f(1, 1, 1);
-				globalImages->BindNull();
-				glBegin(GL_LINE_LOOP);
-				glVertex2f(draw.x - 1, draw.y + 1 - FONT_HEIGHT);
-				glVertex2f(draw.x - 1, draw.y - height - 1 - FONT_HEIGHT);
-				glVertex2f(draw.x + 1 + width, draw.y - height - 1 - FONT_HEIGHT);
-				glVertex2f(draw.x + 1 + width, draw.y + 1 - FONT_HEIGHT);
-				glEnd();
+        fhImmediateMode im;
+				im.Color3f(1, 1, 1);				
+				im.Begin(GL_LINE_LOOP);
+				im.Vertex2f(draw.x - 1, draw.y + 1 - labelHeight);
+				im.Vertex2f(draw.x - 1, draw.y - height - 1 - labelHeight);
+				im.Vertex2f(draw.x + 1 + width, draw.y - height - 1 - labelHeight);
+				im.Vertex2f(draw.x + 1 + width, draw.y + 1 - labelHeight);
+				im.End();
 
 				// Draw the texture
-				float	fScale = (g_PrefsDlg.m_bHiColorTextures == TRUE) ? ((float)g_PrefsDlg.m_nTextureScale / 100) : 1.0;
-
-				mat->GetEditorImage()->Bind();
-				QE_CheckOpenGLForErrors();
-				glColor3f(1, 1, 1);
-				glBegin(GL_QUADS);
-				glTexCoord2f(0, 0);
-				glVertex2f(draw.x, draw.y - FONT_HEIGHT);
-				glTexCoord2f(1, 0);
-				glVertex2f(draw.x + width, draw.y - FONT_HEIGHT);
-				glTexCoord2f(1, 1);
-				glVertex2f(draw.x + width, draw.y - FONT_HEIGHT - height);
-				glTexCoord2f(0, 1);
-				glVertex2f(draw.x, draw.y - FONT_HEIGHT - height);
-				glEnd();
+				im.Begin(GL_QUADS);
+        im.SetTexture(mat->GetEditorImage());
+				im.TexCoord2f(0, 0);
+				im.Vertex2f(draw.x, draw.y - labelHeight);
+				im.TexCoord2f(1, 0);
+				im.Vertex2f(draw.x + width, draw.y - labelHeight);
+				im.TexCoord2f(1, 1);
+				im.Vertex2f(draw.x + width, draw.y - labelHeight - height);
+				im.TexCoord2f(0, 1);
+				im.Vertex2f(draw.x, draw.y - labelHeight - height);
+				im.End();
 
 				// draw the selection border
 				if ( !idStr::Icmp(g_qeglobals.d_texturewin.texdef.name, mat->GetName()) ) {
 					glLineWidth(3);
-					glColor3f(1, 0, 0);
+          im.SetTexture(nullptr);
+					im.Color3f(1, 0, 0);
 					globalImages->BindNull();
 
-					glBegin(GL_LINE_LOOP);
-					glVertex2f(draw.x - 4, draw.y - FONT_HEIGHT + 4);
-					glVertex2f(draw.x - 4, draw.y - FONT_HEIGHT - height - 4);
-					glVertex2f(draw.x + 4 + width, draw.y - FONT_HEIGHT - height - 4);
-					glVertex2f(draw.x + 4 + width, draw.y - FONT_HEIGHT + 4);
-					glEnd();
+					im.Begin(GL_LINE_LOOP);
+					im.Vertex2f(draw.x - 4, draw.y - labelHeight + 4);
+					im.Vertex2f(draw.x - 4, draw.y - labelHeight - height - 4);
+					im.Vertex2f(draw.x + 4 + width, draw.y - labelHeight - height - 4);
+					im.Vertex2f(draw.x + 4 + width, draw.y - labelHeight + 4);
+					im.End();
 
 					glLineWidth(1);
 				}
 
+  
 				// draw the texture name
-				globalImages->BindNull();
-				glColor3f(1, 1, 1);
-				glRasterPos2f(draw.x, draw.y - FONT_HEIGHT + 2);
+				//globalImages->BindNull();
+				//glColor3f(1, 1, 1);
+				//glRasterPos2f(draw.x, draw.y - labelHeight + 2);
 
 				// don't draw the directory name
 				for (name = mat->GetName(); *name && *name != '/' && *name != '\\'; name++) {
@@ -350,8 +354,9 @@ void CNewTexWnd::OnPaint() {
 				else {
 					name++;
 				}
-				glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
-				//glCallLists(va("%s -- %d, %d" strlen(name), GL_UNSIGNED_BYTE, name);
+        drawText(name, 0.8f, idVec3(draw.x, draw.y - labelHeight + 2, 0), idVec3(1,1,1), XY);
+				//glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
+	
 			} 
 		}
 
@@ -468,8 +473,8 @@ const idMaterial *CNewTexWnd::getMaterialAtPoint(CPoint point) {
 
 		int width = mat->GetEditorImage()->uploadWidth * ((float)g_PrefsDlg.m_nTextureScale / 100);
 		int height = mat->GetEditorImage()->uploadHeight * ((float)g_PrefsDlg.m_nTextureScale / 100);
-		//if (point.x > draw.x && point.x - draw.x < width && my < draw.y && my + draw.y < height + FONT_HEIGHT) {
-		if (point.x > draw.x && point.x - draw.x < width && my < draw.y &&  draw.y - my < height + FONT_HEIGHT) {
+		//if (point.x > draw.x && point.x - draw.x < width && my < draw.y && my + draw.y < height + labelHeight) {
+		if (point.x > draw.x && point.x - draw.x < width && my < draw.y &&  draw.y - my < height + labelHeight) {
 			return mat;
 		}
 	
@@ -839,8 +844,8 @@ void CNewTexWnd::EnsureTextureIsVisible(const char *name) {
 				return;
 			}
 
-			if (current.y - height - 2 * FONT_HEIGHT < origin.y - rectClient.Height()) {
-				origin.y = current.y - height - 2 * FONT_HEIGHT + rectClient.Height();
+			if (current.y - height - 2 * labelHeight < origin.y - rectClient.Height()) {
+				origin.y = current.y - height - 2 * labelHeight + rectClient.Height();
 				Sys_UpdateWindows(W_TEXTURE);
 				return;
 			}
