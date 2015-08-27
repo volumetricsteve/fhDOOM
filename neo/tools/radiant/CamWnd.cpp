@@ -331,7 +331,7 @@ int CCamWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 	HDC hDC = pDC->GetSafeHdc();
 
 	QEW_SetupPixelFormat(hDC, true);
-
+/*
 	HFONT hfont = CreateFont(
 				12,	// logical height of font 
 				0,	// logical average character width 
@@ -381,7 +381,7 @@ int CCamWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 
 	// indicate start of glyph display lists
 	glListBase(g_qeglobals.d_font_list);
-
+*/
 	// report OpenGL information
 	common->Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	common->Printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));

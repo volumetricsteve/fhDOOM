@@ -165,8 +165,6 @@ typedef struct
 	select_t     d_select_mode;
 	idPointListInterface *selectObject;	// 
 	
-	int		     d_font_list;
-	
 	int          d_parsed_brushes;
 	
 	bool	show_blocks;
