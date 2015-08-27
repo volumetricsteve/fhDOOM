@@ -32,6 +32,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "splines.h"
 #include "../../renderer/ImmediateMode.h"
 
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
+
 idCameraDef splineList;
 idCameraDef *g_splineList = &splineList;
 
@@ -41,17 +43,20 @@ glLabeledPoint
 ================
 */
 void glLabeledPoint(idVec4 &color, idVec3 &point, float size, const char *label) {
-	glColor3fv( color.ToFloatPtr() );
+  fhImmediateMode im;
+	im.Color3fv( color.ToFloatPtr() );
 	glPointSize( size );
-	glBegin( GL_POINTS );
-	glVertex3fv( point.ToFloatPtr() );
-	glEnd();
+	im.Begin( GL_POINTS );
+	im.Vertex3fv( point.ToFloatPtr() );
+	im.End();
 	idVec3 v = point;
 	v.x += 1;
 	v.y += 1;
 	v.z += 1;
-	glRasterPos3fv( v.ToFloatPtr() );
-	glCallLists( strlen(label), GL_UNSIGNED_BYTE, label );
+
+  drawText(label, 1.0f, v, color.ToVec3(), 2);
+//	glRasterPos3fv( v.ToFloatPtr() );
+//	glCallLists( strlen(label), GL_UNSIGNED_BYTE, label );
 }
 
 /*

@@ -827,12 +827,13 @@ void DrawAxial(face_t *selFace) {
 		VectorMA (points[3], 4, selFace->plane, points[2]);
 		glLabeledPoint(idVec4(1, 0, 0, 1), points[1], 3, "Anchor");
 		glLabeledPoint(idVec4(1, 1, 0, 1), points[2], 3, "Dest");
-		glBegin (GL_LINE_STRIP);
-		glVertex3fv( points[0].ToFloatPtr() );
-		glVertex3fv( points[1].ToFloatPtr() );
-		glVertex3fv( points[2].ToFloatPtr() );
-		glVertex3fv( points[3].ToFloatPtr() );
-		glEnd();
+    fhImmediateMode im;
+		im.Begin (GL_LINE_STRIP);
+		im.Vertex3fv( points[0].ToFloatPtr() );
+		im.Vertex3fv( points[1].ToFloatPtr() );
+		im.Vertex3fv( points[2].ToFloatPtr() );
+		im.Vertex3fv( points[3].ToFloatPtr() );
+		im.End();
 	}
 }
 

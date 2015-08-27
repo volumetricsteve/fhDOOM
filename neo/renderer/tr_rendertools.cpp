@@ -677,64 +677,41 @@ void RB_ShowSilhouette( void ) {
 
 				const srfTriangles_t	*tri = surf->geo;
 
-        if(backEnd.glslEnabled) {
-          static const int maxIndices = 2048;
-          static unsigned short indices[maxIndices];
-          unsigned indicesUsed = 0;
+        static const int maxIndices = 2048;
+        static unsigned short indices[maxIndices];
+        unsigned indicesUsed = 0;
 
-          for (int j = 0; j < tri->numIndexes && (indicesUsed+2) < maxIndices; j += 3) {
-            int		i1 = tri->indexes[j + 0];
-            int		i2 = tri->indexes[j + 1];
-            int		i3 = tri->indexes[j + 2];
+        for (int j = 0; j < tri->numIndexes && (indicesUsed+2) < maxIndices; j += 3) {
+          int		i1 = tri->indexes[j + 0];
+          int		i2 = tri->indexes[j + 1];
+          int		i3 = tri->indexes[j + 2];
 
-            if ((i1 & 1) + (i2 & 1) + (i3 & 1) == 1) {
-              if ((i1 & 1) + (i2 & 1) == 0) {
-                indices[indicesUsed++] = (unsigned short)i1;
-                indices[indicesUsed++] = (unsigned short)i2;
-              }
-              else if ((i1 & 1) + (i3 & 1) == 0) {
-                indices[indicesUsed++] = (unsigned short)i1;
-                indices[indicesUsed++] = (unsigned short)i3;
-              }
+          if ((i1 & 1) + (i2 & 1) + (i3 & 1) == 1) {
+            if ((i1 & 1) + (i2 & 1) == 0) {
+              indices[indicesUsed++] = (unsigned short)i1;
+              indices[indicesUsed++] = (unsigned short)i2;
+            }
+            else if ((i1 & 1) + (i3 & 1) == 0) {
+              indices[indicesUsed++] = (unsigned short)i1;
+              indices[indicesUsed++] = (unsigned short)i3;
             }
           }
-
-          glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-          glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-          glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.5f, 0.0f, 0.0f, 1.0f);
-
-          const int offset = vertexCache.Bind(tri->shadowCache);
-          glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-          glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), GL_AttributeOffset(offset, 0));
-
-          glDrawElements(GL_LINES,
-            indicesUsed,
-            GL_UNSIGNED_SHORT,
-            indices);
-
-          glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);          
-        } else {
-          glColor3f( 0.5, 0, 0 );
-				  glVertexPointer( 3, GL_FLOAT, sizeof( shadowCache_t ), vertexCache.Position( tri->shadowCache ) );
-				  glBegin( GL_LINES );
-
-				  for ( int j = 0 ; j < tri->numIndexes ; j+=3 ) {
-					  int		i1 = tri->indexes[j+0];
-					  int		i2 = tri->indexes[j+1];
-					  int		i3 = tri->indexes[j+2];
-
-					  if ( (i1 & 1) + (i2 & 1) + (i3 & 1) == 1 ) {
-						  if ( (i1 & 1) + (i2 & 1) == 0 ) {
-							  glArrayElement( i1 );
-							  glArrayElement( i2 );
-						  } else if ( (i1 & 1 ) + (i3 & 1) == 0 ) {
-							  glArrayElement( i1 );
-							  glArrayElement( i3 );
-						  }
-					  }
-				  }
-				  glEnd();
         }
+
+        glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+        glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+        glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.5f, 0.0f, 0.0f, 1.0f);
+
+        const int offset = vertexCache.Bind(tri->shadowCache);
+        glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+        glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), GL_AttributeOffset(offset, 0));
+
+        glDrawElements(GL_LINES,
+          indicesUsed,
+          GL_UNSIGNED_SHORT,
+          indices);
+
+        glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 			}
 		}
 	}
