@@ -68,7 +68,6 @@ public:
 // Implementation
 public:
 	void EnsureTextureIsVisible(const char *name);
-	void LoadMaterials();
 	virtual ~CNewTexWnd();
 	BOOL OnToolTipNotify( UINT id, NMHDR * pNMHDR, LRESULT * pResult );
 	int CNewTexWnd::OnToolHitTest(CPoint point, TOOLINFO * pTI);

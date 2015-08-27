@@ -613,13 +613,6 @@ void CNewTexWnd::OnMouseMove(UINT nFlags, CPoint point) {
 	}
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CNewTexWnd::LoadMaterials() {
-}
-
 
 void Texture_SetTexture(texdef_t *texdef, brushprimit_texdef_t	*brushprimit_texdef, bool bFitScale, bool bSetSelection) {
 	
