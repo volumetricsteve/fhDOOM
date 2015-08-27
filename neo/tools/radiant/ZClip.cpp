@@ -34,6 +34,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "zclip.h"
 
+#include "../../renderer/ImmediateMode.h"
+
 
 CZClip::CZClip()
 {	
@@ -136,7 +138,8 @@ void CZClip::Paint(void)
 	float	x, y;
 	int	xCam = z.width/4;	// hmmm, a rather unpleasant and obscure global name, but it was already called that so...
 
-	glColor3f (ZCLIP_COLOUR);//1.0, 0.0, 1.0);
+  fhImmediateMode im;
+	im.Color3f (ZCLIP_COLOUR);//1.0, 0.0, 1.0);
 
 	// draw TOP marker...
 	//
@@ -144,53 +147,53 @@ void CZClip::Paint(void)
 	y = m_iZClipTop;
 
 	if (m_bEnabled)	
-		glBegin(GL_QUADS);
+		im.Begin(GL_QUADS);
 	else
-		glBegin(GL_LINE_LOOP);
+		im.Begin(GL_LINE_LOOP);
 
-	glVertex3f (x-xCam,y,0);
-	glVertex3f (x-xCam,y+ZCLIP_BAR_THICKNESS,0);
-	glVertex3f (x+xCam,y+ZCLIP_BAR_THICKNESS,0);
-	glVertex3f (x+xCam,y,0);
-	glEnd ();
+	im.Vertex3f (x-xCam,y,0);
+	im.Vertex3f (x-xCam,y+ZCLIP_BAR_THICKNESS,0);
+	im.Vertex3f (x+xCam,y+ZCLIP_BAR_THICKNESS,0);
+	im.Vertex3f (x+xCam,y,0);
+	im.End ();
 
-	glColor3f (ZCLIP_COLOUR_DIM);//0.8, 0.0, 0.8);
+	im.Color3f (ZCLIP_COLOUR_DIM);//0.8, 0.0, 0.8);
 
 	if (m_bEnabled)
-		glBegin(GL_TRIANGLES);
+		im.Begin(GL_TRIANGLES);
 	else
-		glBegin(GL_LINE_LOOP);	
-	glVertex3f (x,(y+ZCLIP_BAR_THICKNESS),0);
-	glVertex3f (x-xCam,(y+ZCLIP_BAR_THICKNESS)+(ZCLIP_ARROWHEIGHT/2),0);
-	glVertex3f (x+xCam,(y+ZCLIP_BAR_THICKNESS)+(ZCLIP_ARROWHEIGHT/2),0);
-	glEnd ();
+		im.Begin(GL_LINE_LOOP);	
+	im.Vertex3f (x,(y+ZCLIP_BAR_THICKNESS),0);
+	im.Vertex3f (x-xCam,(y+ZCLIP_BAR_THICKNESS)+(ZCLIP_ARROWHEIGHT/2),0);
+	im.Vertex3f (x+xCam,(y+ZCLIP_BAR_THICKNESS)+(ZCLIP_ARROWHEIGHT/2),0);
+	im.End ();
 
 	// draw bottom marker...
 	//
-	glColor3f (ZCLIP_COLOUR);//1.0, 0.0, 1.0);
+	im.Color3f (ZCLIP_COLOUR);//1.0, 0.0, 1.0);
 	x = 0;
 	y = m_iZClipBottom;
 
 	if (m_bEnabled)	
-		glBegin(GL_QUADS);
+		im.Begin(GL_QUADS);
 	else
-		glBegin(GL_LINE_LOOP);
-	glVertex3f (x-xCam,y,0);
-	glVertex3f (x-xCam,y-ZCLIP_BAR_THICKNESS,0);
-	glVertex3f (x+xCam,y-ZCLIP_BAR_THICKNESS,0);
-	glVertex3f (x+xCam,y,0);
-	glEnd ();
+		im.Begin(GL_LINE_LOOP);
+	im.Vertex3f (x-xCam,y,0);
+	im.Vertex3f (x-xCam,y-ZCLIP_BAR_THICKNESS,0);
+	im.Vertex3f (x+xCam,y-ZCLIP_BAR_THICKNESS,0);
+	im.Vertex3f (x+xCam,y,0);
+	im.End ();
 
-	glColor3f (ZCLIP_COLOUR_DIM);//0.8, 0.0, 0.8);
+	im.Color3f (ZCLIP_COLOUR_DIM);//0.8, 0.0, 0.8);
 
 	if (m_bEnabled)
-		glBegin(GL_TRIANGLES);
+		im.Begin(GL_TRIANGLES);
 	else
-		glBegin(GL_LINE_LOOP);	
-	glVertex3f (x,(y-ZCLIP_BAR_THICKNESS),0);
-	glVertex3f (x-xCam,(y-ZCLIP_BAR_THICKNESS)-(ZCLIP_ARROWHEIGHT/2),0);
-	glVertex3f (x+xCam,(y-ZCLIP_BAR_THICKNESS)-(ZCLIP_ARROWHEIGHT/2),0);
-	glEnd ();
+		im.Begin(GL_LINE_LOOP);	
+	im.Vertex3f (x,(y-ZCLIP_BAR_THICKNESS),0);
+	im.Vertex3f (x-xCam,(y-ZCLIP_BAR_THICKNESS)-(ZCLIP_ARROWHEIGHT/2),0);
+	im.Vertex3f (x+xCam,(y-ZCLIP_BAR_THICKNESS)-(ZCLIP_ARROWHEIGHT/2),0);
+	im.End ();
 }
 
 
