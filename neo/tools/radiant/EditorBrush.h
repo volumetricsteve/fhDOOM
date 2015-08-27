@@ -63,7 +63,6 @@ void		Brush_Print(brush_t* b);
 void		Brush_FitTexture( brush_t *b, float height, float width );
 void		Brush_SetEpair(brush_t *b, const char *pKey, const char *pValue);
 const char *Brush_GetKeyValue(brush_t *b, const char *pKey);
-const char *Brush_Name(brush_t *b);
 void		Brush_RebuildBrush(brush_t *b, idVec3 vMins, idVec3 vMaxs, bool patch = true);
 void		Brush_GetBounds( brush_t *b, idBounds &bo );
 

@@ -120,7 +120,6 @@ void Select_Hide(bool invert = false);
 void Select_ShowAllHidden();
 void Select_WireFrame( bool wireFrame );
 void Select_ForceVisible( bool visible );
-void Select_Name(const char *pName);
 void Select_AddProjectedLight();
 void Select_GetMid (idVec3 &mid);
 void Select_SetDefaultTexture(const idMaterial *mat, bool fitScale, bool setTexture);
