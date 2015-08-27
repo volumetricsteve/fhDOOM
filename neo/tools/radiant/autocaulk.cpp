@@ -46,18 +46,16 @@ If you have questions concerning this license or the applicable additional terms
 #undef strnicmp
 #define strnicmp		idStr::Icmpn
 
-#if 1
-
 
 //extern void ClearBounds (idVec3 mins, idVec3 maxs);
 //extern void AddPointToBounds (const idVec3 v, idVec3 mins, idVec3 maxs);
-void ClearBounds (idVec3 &mins, idVec3 &maxs)
+static void ClearBounds (idVec3 &mins, idVec3 &maxs)
 {
 	mins[0] = mins[1] = mins[2] = 99999;
 	maxs[0] = maxs[1] = maxs[2] = -99999;
 }
 
-void AddPointToBounds( const idVec3 &v, idVec3 &mins, idVec3 &maxs ) 
+static void AddPointToBounds( const idVec3 &v, idVec3 &mins, idVec3 &maxs ) 
 {
 	int		i;
 	float	val;
@@ -82,22 +80,17 @@ static void FloorBounds(idVec3 &mins, idVec3 &maxs)
 	}
 }
 
-
-static LPCSTR vtos(idVec3 &v3)
-{
-	return va("%.3ff,%.3f,%.3f",v3[0],v3[1],v3[2]);
-}
 struct PairBrushFace_t
 {
 	face_t*		pFace;
 	brush_t*	pBrush;
 };
-idList < PairBrushFace_t > FacesToCaulk;
+
 void Select_AutoCaulk()
 {
 	/*Sys_Printf*/common->Printf("Caulking...\n");	
 
-	FacesToCaulk.Clear();
+  idList < PairBrushFace_t > FacesToCaulk;	
 
 	int iSystemBrushesSkipped = 0;
 	face_t *pSelectedFace;
@@ -288,7 +281,7 @@ void Select_AutoCaulk()
 	int iFacesCaulked = 0;
 	if (FacesToCaulk.Num())
 	{
-		LPCSTR psCaulkName = "textures/common/caulk";
+		const char* psCaulkName = "textures/common/caulk";
 		const idMaterial *pCaulk = Texture_ForName(psCaulkName);
 
 		if (pCaulk)
@@ -337,4 +330,3 @@ void Select_AutoCaulk()
 
 	Sys_UpdateWindows (W_ALL);
 }
-#endif
