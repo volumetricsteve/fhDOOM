@@ -69,7 +69,6 @@ void		Entity_Free (entity_t *e);
 void		Entity_FreeEpairs(entity_t *e);
 int			Entity_MemorySize(entity_t *e);
 entity_t *	Entity_Parse (bool onlypairs, brush_t* pList = NULL);
-void		Entity_Write (entity_t *e, FILE *f, bool use_region);
 void		Entity_WriteSelected(entity_t *e, FILE *f);
 void		Entity_WriteSelected(entity_t *e, CMemFile*);
 entity_t *	Entity_Create (eclass_t *c, bool forceFixed = false);
