@@ -49,7 +49,8 @@ void RB_SetDefaultGLState( void ) {
 	RB_LogComment( "--- R_SetDefaultGLState ---\n" );
 
 	glClearDepth( 1.0f );
-	glColor4f (1,1,1,1);
+  if(!r_glCoreProfile.GetBool())
+    glColor4f(1,1,1,1);
 
 	// the vertex array is always enabled when rendering with ARB2 path.
   // GLSL path uses user defined vertex attributes, so we disable all build-in 
@@ -58,10 +59,15 @@ void RB_SetDefaultGLState( void ) {
 	  glEnableClientState( GL_VERTEX_ARRAY );
 	  glEnableClientState( GL_TEXTURE_COORD_ARRAY );
   } else {
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    if(!r_glCoreProfile.GetBool()) {
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
   }
-	glDisableClientState( GL_COLOR_ARRAY );
+
+  if(!r_glCoreProfile.GetBool()) {
+	  glDisableClientState( GL_COLOR_ARRAY );
+  }
 
 	//
 	// make sure our GL state vector is set correctly
@@ -75,8 +81,6 @@ void RB_SetDefaultGLState( void ) {
 	glEnable( GL_BLEND );
 	glEnable( GL_SCISSOR_TEST );
 	glEnable( GL_CULL_FACE );
-	glDisable( GL_LIGHTING );
-	glDisable( GL_LINE_STIPPLE );
 	glDisable( GL_STENCIL_TEST );
 
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
@@ -84,30 +88,31 @@ void RB_SetDefaultGLState( void ) {
 	glDepthFunc( GL_ALWAYS );
  
 	glCullFace( GL_FRONT_AND_BACK );
-	glShadeModel( GL_SMOOTH );
 
 	if ( r_useScissor.GetBool() ) {
 		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	}
 
-	for ( i = glConfig.maxTextureUnits - 1 ; i >= 0 ; i-- ) {
-		GL_SelectTexture( i );
+  if(!backEnd.glslEnabled) {
+	  for ( i = glConfig.maxTextureUnits - 1 ; i >= 0 ; i-- ) {
+		  GL_SelectTexture( i );
 
-		// object linear texgen is our default
-		glTexGenf( GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-		glTexGenf( GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-		glTexGenf( GL_R, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-		glTexGenf( GL_Q, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+		  // object linear texgen is our default
+		  glTexGenf( GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+		  glTexGenf( GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+		  glTexGenf( GL_R, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+		  glTexGenf( GL_Q, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
 
-		GL_TexEnv( GL_MODULATE );
-		glDisable( GL_TEXTURE_2D );
-		if ( glConfig.texture3DAvailable ) {
-			glDisable( GL_TEXTURE_3D );
-		}
-		if ( glConfig.cubeMapAvailable ) {
-			glDisable( GL_TEXTURE_CUBE_MAP_EXT );
-		}
-	}
+		  GL_TexEnv( GL_MODULATE );
+		  glDisable( GL_TEXTURE_2D );
+		  if ( glConfig.texture3DAvailable ) {
+			  glDisable( GL_TEXTURE_3D );
+		  }
+		  if ( glConfig.cubeMapAvailable ) {
+			  glDisable( GL_TEXTURE_CUBE_MAP );
+		  }
+	  }
+  }
 }
 
 
@@ -150,8 +155,9 @@ void GL_SelectTexture( int unit ) {
 	}
 
 	glActiveTextureARB( GL_TEXTURE0_ARB + unit );
-	glClientActiveTextureARB( GL_TEXTURE0_ARB + unit );
-	RB_LogComment( "glActiveTextureARB( %i );\nglClientActiveTextureARB( %i );\n", unit, unit );
+  if(!r_glCoreProfile.GetBool())
+	  glClientActiveTextureARB( GL_TEXTURE0_ARB + unit );
+	RB_LogComment( "glActiveTextureARB( %i );\n", unit, unit );
 
 	backEnd.glState.currenttmu = unit;
 }
@@ -383,43 +389,44 @@ void GL_State( int stateBits ) {
 	//
 	// alpha test
 	//
-	if ( diff & GLS_ATEST_BITS ) {
-		switch ( stateBits & GLS_ATEST_BITS ) {
-		case 0:
-			glDisable( GL_ALPHA_TEST );
-			break;
-		case GLS_ATEST_EQ_255:
-			glEnable( GL_ALPHA_TEST );
-			glAlphaFunc( GL_EQUAL, 1 );
-			break;
-		case GLS_ATEST_LT_128:
-			glEnable( GL_ALPHA_TEST );
-			glAlphaFunc( GL_LESS, 0.5 );
-			break;
-		case GLS_ATEST_GE_128:
-			glEnable( GL_ALPHA_TEST );
-			glAlphaFunc( GL_GEQUAL, 0.5 );
-			break;
-		default:
-			assert( 0 );
-			break;
-		}
-	}
-
+	if(!backEnd.glslEnabled) {
+	  if ( diff & GLS_ATEST_BITS ) {
+		  switch ( stateBits & GLS_ATEST_BITS ) {
+		  case 0:
+			  glDisable( GL_ALPHA_TEST );
+			  break;
+		  case GLS_ATEST_EQ_255:
+			  glEnable( GL_ALPHA_TEST );
+			  glAlphaFunc( GL_EQUAL, 1 );
+			  break;
+		  case GLS_ATEST_LT_128:
+			  glEnable( GL_ALPHA_TEST );
+			  glAlphaFunc( GL_LESS, 0.5 );
+			  break;
+		  case GLS_ATEST_GE_128:
+			  glEnable( GL_ALPHA_TEST );
+			  glAlphaFunc( GL_GEQUAL, 0.5 );
+			  break;
+		  default:
+			  assert( 0 );
+			  break;
+		  }
+	  }
+  }
 	backEnd.glState.glStateBits = stateBits;
 }
 
 void  GL_UseProgram( const glslProgramDef_t* program ) {
   if(program && program->ident) {
     glUseProgram(program->ident);
-    glUniform1i(glslProgramDef_t::uniform_texture0, 0);
-    glUniform1i(glslProgramDef_t::uniform_texture1, 1);
-    glUniform1i(glslProgramDef_t::uniform_texture2, 2);
-    glUniform1i(glslProgramDef_t::uniform_texture3, 3);
-    glUniform1i(glslProgramDef_t::uniform_texture4, 4);
-    glUniform1i(glslProgramDef_t::uniform_texture5, 5);
-    glUniform1i(glslProgramDef_t::uniform_texture6, 6);
-    glUniform1i(glslProgramDef_t::uniform_texture7, 7);
+
+    const byte usedTextureUnits = program->usedTextureUnits;
+    
+    for(int i=0; i<8; ++i) {
+      if (usedTextureUnits & (1 << i)) {
+        glUniform1i(glslProgramDef_t::uniform_texture0 + i, i);
+      }
+    }
   } else {
     glUseProgram(0);
   }
@@ -553,8 +560,10 @@ void joGLMatrixStack::Get(float* dst) const {
 }
 
 void joGLMatrixStack::Upload() const {
-  glMatrixMode(matrixmode);
-  glLoadMatrixf(Data(size));
+  if(!r_glCoreProfile.GetBool()) {
+    glMatrixMode(matrixmode);
+    glLoadMatrixf(Data(size));
+  }
 }
 
 float* joGLMatrixStack::Data(int StackIndex) {

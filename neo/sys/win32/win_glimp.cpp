@@ -299,21 +299,89 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 	//
 	// startup the OpenGL subsystem by creating a context and making it current
 	//
-	common->Printf( "...creating GL context: " );
-	if ( ( win32.hGLRC = wglCreateContext( win32.hDC ) ) == 0 ) {
-		common->Printf( "^3failed^0\n" );
-		return false;
-	}
-	common->Printf( "succeeded\n" );
+	// 
+  common->Printf( "...creating GL legacy context: " );
+  win32.hGLRC = wglCreateContext( win32.hDC );
+  if(win32.hGLRC == 0) {
+    common->Printf("^3failed^0\n");
+    return false;
+  }
+  common->Printf( "succeeded\n" );
 
-	common->Printf( "...making context current: " );
-	if ( !wglMakeCurrent( win32.hDC, win32.hGLRC ) ) {
-		wglDeleteContext( win32.hGLRC );
-		win32.hGLRC = NULL;
-		common->Printf( "^3failed^0\n" );
-		return false;
-	}
-	common->Printf( "succeeded\n" );
+
+  common->Printf("...making legacy context current: ");
+  if (!wglMakeCurrent(win32.hDC, win32.hGLRC)) {
+    wglDeleteContext(win32.hGLRC);
+    win32.hGLRC = NULL;
+    common->Printf("^3failed^0\n");
+    return false;
+  }
+  common->Printf("succeeded\n");
+
+
+  common->Printf( "...initializing GL extensions (GLEW): " );
+  glewExperimental = GL_TRUE;
+  GLenum err = glewInit();
+  if (GLEW_OK != err)
+  {
+    common->Error("Failed to initialize GLEW: %s", glewGetErrorString(err));
+    common->Printf("^3failed^0\n");
+    return false;
+  }
+  common->Printf( "succeeded\n" );
+
+  if(parms.glCoreProfile) {
+    int flags = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+    int attribs[] = {
+      WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+      WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+      WGL_CONTEXT_FLAGS_ARB, flags,
+      0 };
+
+    common->Printf("...creating GL core profile context: ");
+    const HGLRC coreContext = wglCreateContextAttribsARB(win32.hDC, 0, attribs);
+    if (coreContext == 0) {
+      common->Printf("^3failed^0\n");
+
+      wglMakeCurrent(win32.hDC, 0);
+      wglDeleteContext(win32.hGLRC);
+      win32.hGLRC = NULL;
+
+      return false;
+    }
+    common->Printf("succeeded\n");
+
+    common->Printf("...making core profile context current: ");
+    if (!wglMakeCurrent(win32.hDC, coreContext)) {
+      common->Printf("^3failed^0\n");
+      wglDeleteContext(coreContext);
+
+      wglMakeCurrent(win32.hDC, 0);
+      wglDeleteContext(win32.hGLRC);
+      win32.hGLRC = NULL;
+      
+      return false;
+    }
+    common->Printf("succeeded\n");
+
+    common->Printf("...deleting old GL legacy context");
+    wglDeleteContext(win32.hGLRC);
+    win32.hGLRC = coreContext;
+
+    common->Printf( "...initializing GL extensions (GLEW): " );
+    if (GLEW_OK != glewInit())
+    {
+      common->Error("Failed to initialize GLEW: %s", glewGetErrorString(err));
+      common->Printf("^3failed^0\n");
+
+      wglMakeCurrent(win32.hDC, 0);
+      wglDeleteContext(win32.hGLRC);
+      win32.hGLRC = NULL;
+
+      return false;
+    }
+    common->Printf("succeeded\n");
+  }
 
 	return true;
 }

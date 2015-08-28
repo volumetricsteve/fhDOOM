@@ -333,7 +333,7 @@ void rvGEWorkspace::Render ( HDC hdc )
 
 	// Prepare the viewport for drawing selections, etc.
 	GL_State( GLS_DEFAULT );
-	glDisable( GL_TEXTURE_CUBE_MAP_EXT );
+	glDisable( GL_TEXTURE_CUBE_MAP );
 //	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
 	
@@ -351,7 +351,7 @@ void rvGEWorkspace::Render ( HDC hdc )
 	glFinish ( );
 	wglSwapBuffers(hdc);
 
-	glEnable( GL_TEXTURE_CUBE_MAP_EXT );
+	glEnable( GL_TEXTURE_CUBE_MAP );
 	glEnable( GL_CULL_FACE);
 }
 

@@ -112,7 +112,7 @@ void fhImmediateMode::End()
   if(!drawVertsUsed)
     return;
 
-  if(r_glslEnabled.GetBool())
+  if(r_glslEnabled.GetBool() || r_glCoreProfile.GetBool())
   {
     auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(fhSimpleVert));
     drawCallVertexSize += drawVertsUsed * sizeof(fhSimpleVert);

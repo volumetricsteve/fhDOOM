@@ -982,7 +982,7 @@ static filterName_t textureFilters[] = {
 			texEnum = GL_TEXTURE_3D;
 			break;
 		case TT_CUBIC:
-			texEnum = GL_TEXTURE_CUBE_MAP_EXT;
+			texEnum = GL_TEXTURE_CUBE_MAP;
 			break;
 		}
 
@@ -1952,20 +1952,23 @@ void idImageManager::Init() {
 	// create built in images
 	defaultImage = ImageFromFunction( "_default", R_DefaultImage );
 	whiteImage = ImageFromFunction( "_white", R_WhiteImage );
-	blackImage = ImageFromFunction( "_black", R_BlackImage );
-	borderClampImage = ImageFromFunction( "_borderClamp", R_BorderClampImage );
+	blackImage = ImageFromFunction( "_black", R_BlackImage );	
 	flatNormalMap = ImageFromFunction( "_flat", R_FlatNormalImage );
 	ambientNormalMap = ImageFromFunction( "_ambient", R_AmbientNormalImage );
-	specularTableImage = ImageFromFunction( "_specularTable", R_SpecularTableImage );
-	specular2DTableImage = ImageFromFunction( "_specular2DTable", R_Specular2DTableImage );
-	rampImage = ImageFromFunction( "_ramp", R_RampImage );
-	alphaRampImage = ImageFromFunction( "_alphaRamp", R_RampImage );
 	alphaNotchImage = ImageFromFunction( "_alphaNotch", R_AlphaNotchImage );
 	fogImage = ImageFromFunction( "_fog", R_FogImage );
 	fogEnterImage = ImageFromFunction( "_fogEnter", R_FogEnterImage );
-	normalCubeMapImage = ImageFromFunction( "_normalCubeMap", makeNormalizeVectorCubeMap );
-	noFalloffImage = ImageFromFunction( "_noFalloff", R_CreateNoFalloffImage );
 	ImageFromFunction( "_quadratic", R_QuadraticImage );
+
+  if(!r_glCoreProfile.GetBool()) {
+    borderClampImage = ImageFromFunction( "_borderClamp", R_BorderClampImage ); //MegaTexture
+    specularTableImage = ImageFromFunction( "_specularTable", R_SpecularTableImage );
+    specular2DTableImage = ImageFromFunction( "_specular2DTable", R_Specular2DTableImage );
+    rampImage = ImageFromFunction( "_ramp", R_RampImage );
+    alphaRampImage = ImageFromFunction( "_alphaRamp", R_RampImage );
+    normalCubeMapImage = ImageFromFunction( "_normalCubeMap", makeNormalizeVectorCubeMap );
+    noFalloffImage = ImageFromFunction( "_noFalloff", R_CreateNoFalloffImage );
+  }
 
 	// cinematicImage is used for cinematic drawing
 	// scratchImage is used for screen wipes/doublevision etc..

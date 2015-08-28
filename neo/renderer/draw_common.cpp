@@ -267,12 +267,11 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			if ( r_skipNewAmbient.GetBool() )
 				continue;	
 
-      glslShaderStage_t *glslStage = pStage->glslStage;
-      if (backEnd.glslEnabled && backEnd.glslReplaceArb2 && glslStage && glslStage->program && !r_skipGlsl.GetBool()) {
-        RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
-      } else {
+      if ( backEnd.glslEnabled && pStage->glslStage && pStage->glslStage->program && backEnd.glslReplaceArb2 && !r_skipGlsl.GetBool()) {
+        RB_GLSL_RenderSpecialShaderStage(regs, pStage, pStage->glslStage, tri);
+      } else if ( !backEnd.glslEnabled || (r_glslEnableArb2.GetBool() && !r_glCoreProfile.GetBool()) ) {
         RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
-      }
+      }      
     }
     else if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
 
@@ -370,7 +369,8 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	}  
 
 	GL_Cull( CT_FRONT_SIDED );
-	glColor3f( 1, 1, 1 );
+  if(!r_glCoreProfile.GetBool())
+    glColor3f(1,1,1);
 
 	return i;
 }

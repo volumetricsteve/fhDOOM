@@ -1085,6 +1085,24 @@ static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
     return;
   }
 
+
+  int numUni = -1;
+  glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUni);
+  programDef.usedTextureUnits = 0;
+  for(int i=0; i<numUni; ++i) {
+    char name[128] = {'\0'};
+    int nameLen = 0;
+    int size = 0;
+    GLenum type = GL_INVALID_ENUM;
+    
+    glGetActiveUniform(program, i, sizeof(name)-1, &nameLen, &size, &type, name);
+    
+    if(type == GL_SAMPLER_2D || type == GL_SAMPLER_CUBE) {
+      GLuint location = glGetUniformLocation( program, name );
+      programDef.usedTextureUnits |= (1 << (location - glslProgramDef_t::uniform_texture0));
+    }
+  }
+
   if (programDef.ident)
     glDeleteProgram(programDef.ident);
 

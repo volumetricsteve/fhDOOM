@@ -807,8 +807,6 @@ extern glconfig_t			glConfig;		// outside of TR since it shouldn't be cleared du
 //
 // cvars
 //
-extern idCVar r_ext_vertex_array_range;
-
 extern idCVar r_glDebugOutput;  // opengl debug output
 extern idCVar r_mode;					// video mode number
 extern idCVar r_displayRefresh;			// optional display refresh rate option for vid mode
@@ -973,7 +971,9 @@ extern idCVar r_materialOverride;		// override all materials
 extern idCVar r_debugRenderToTexture;
 
 extern idCVar r_glslEnabled;
+extern idCVar r_glslEnableArb2;
 extern idCVar r_glslReplaceArb2;
+extern idCVar r_glCoreProfile;
 
 
 /*
@@ -1100,9 +1100,6 @@ void R_SetColorMappings( void );
 void R_ScreenShot_f( const idCmdArgs &args );
 void R_StencilShot( void );
 
-bool R_CheckExtension( char *name );
-
-
 /*
 ====================================================================
 
@@ -1118,6 +1115,7 @@ typedef struct {
 	bool		stereo;
 	int			displayHz;
 	int			multiSamples;
+  bool    glCoreProfile;
 } glimpParms_t;
 
 bool		GLimp_Init( glimpParms_t parms );

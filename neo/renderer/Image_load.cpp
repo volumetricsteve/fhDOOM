@@ -337,7 +337,10 @@ GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, in
 		if ( minimumDepth != TD_HIGH_QUALITY && glConfig.textureCompressionAvailable ) {
 			return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;	// one byte
 		}
-		return GL_INTENSITY8;	// single byte for all channels
+    if(r_glCoreProfile.GetBool())
+      return GL_RGBA8;
+    else
+      return GL_INTENSITY8;	// single byte for all channels
 	}
 
 #if 0
@@ -886,10 +889,6 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 		return;
 	}
 
-	if ( ! glConfig.cubeMapAvailable ) {
-		return;
-	}
-
 	width = height = size;
 
 	// generate the texture number
@@ -908,22 +907,22 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	Bind();
 
 	// no other clamp mode makes sense
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// set the minimize / maximize filtering
 	switch( filter ) {
 	case TF_DEFAULT:
-		glTexParameterf(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
-		glTexParameterf(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
 		break;
 	case TF_LINEAR:
-		glTexParameterf(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 		break;
 	case TF_NEAREST:
-		glTexParameterf(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		glTexParameterf(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 		break;
 	default:
 		common->FatalError( "R_CreateImage: bad texture filter" );
@@ -932,7 +931,7 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	// upload the base level
 	// FIXME: support GL_COLOR_INDEX8_EXT?
 	for ( i = 0 ; i < 6 ; i++ ) {
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT+i, 0, internalFormat, scaled_width, scaled_height, 0, 
+		glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, internalFormat, scaled_width, scaled_height, 0, 
 			GL_RGBA, GL_UNSIGNED_BYTE, pic[i] );
 	}
 
@@ -950,7 +949,7 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 		for ( i = 0 ; i < 6 ; i++ ) {
 			byte	*shrunken;
 
-			glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT+i, miplevel, internalFormat, 
+			glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, miplevel, internalFormat, 
 				scaled_width / 2, scaled_height / 2, 0, 
 				GL_RGBA, GL_UNSIGNED_BYTE, shrunk[i] );
 
@@ -1735,25 +1734,27 @@ void idImage::Bind() {
 
 	tmu_t			*tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
 
-	// enable or disable apropriate texture modes
-	if ( tmu->textureType != type && ( backEnd.glState.currenttmu <	glConfig.maxTextureUnits ) ) {
-		if ( tmu->textureType == TT_CUBIC ) {
-			glDisable( GL_TEXTURE_CUBE_MAP_EXT );
-		} else if ( tmu->textureType == TT_3D ) {
-			glDisable( GL_TEXTURE_3D );
-		} else if ( tmu->textureType == TT_2D ) {
-			glDisable( GL_TEXTURE_2D );
-		}
+  if(!r_glCoreProfile.GetBool()) {
+	  // enable or disable apropriate texture modes
+	  if ( tmu->textureType != type && ( backEnd.glState.currenttmu <	glConfig.maxTextureUnits ) ) {
+		  if ( tmu->textureType == TT_CUBIC ) {
+			  glDisable( GL_TEXTURE_CUBE_MAP );
+		  } else if ( tmu->textureType == TT_3D ) {
+			  glDisable( GL_TEXTURE_3D );
+		  } else if ( tmu->textureType == TT_2D ) {
+			  glDisable( GL_TEXTURE_2D );
+		  }
 
-		if ( type == TT_CUBIC ) {
-			glEnable( GL_TEXTURE_CUBE_MAP_EXT );
-		} else if ( type == TT_3D ) {
-			glEnable( GL_TEXTURE_3D );
-		} else if ( type == TT_2D ) {
-			glEnable( GL_TEXTURE_2D );
-		}
-		tmu->textureType = type;
-	}
+		  if ( type == TT_CUBIC ) {
+			  glEnable( GL_TEXTURE_CUBE_MAP );
+		  } else if ( type == TT_3D ) {
+			  glEnable( GL_TEXTURE_3D );
+		  } else if ( type == TT_2D ) {
+			  glEnable( GL_TEXTURE_2D );
+		  }
+		  tmu->textureType = type;
+	  }
+  }
 
 	// bind the texture
 	if ( type == TT_2D ) {
@@ -1764,7 +1765,7 @@ void idImage::Bind() {
 	} else if ( type == TT_CUBIC ) {
 		if ( tmu->currentCubeMap != texnum ) {
 			tmu->currentCubeMap = texnum;
-			glBindTexture( GL_TEXTURE_CUBE_MAP_EXT, texnum );
+			glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
 		}
 	} else if ( type == TT_3D ) {
 		if ( tmu->current3DMap != texnum ) {
@@ -1933,8 +1934,8 @@ void idImage::UploadScratch( const byte *data, int cols, int rows ) {
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 		// no other clamp mode makes sense
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	} else {
 		// otherwise, it is a 2D image
 		if ( type != TT_2D ) {

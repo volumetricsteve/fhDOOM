@@ -260,6 +260,7 @@ typedef struct {
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
   GLuint ident;
+  byte   usedTextureUnits;
 } glslProgramDef_t;
 
 extern const glslProgramDef_t* shadowProgram;

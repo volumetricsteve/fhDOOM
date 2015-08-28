@@ -109,7 +109,9 @@ idCVar r_skipROQ( "r_skipROQ", "0", CVAR_RENDERER | CVAR_BOOL, "skip ROQ decodin
 
 
 idCVar r_glslEnabled( "r_glslEnabled", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "use GLSL shaders for rendering" );
+idCVar r_glslEnableArb2( "r_glslEnableArb2", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "enable ARB2 shaders in GLSL mode" );
 idCVar r_glslReplaceArb2( "r_glslReplaceArb2", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "replace ARB2 shaders by GLSL shaders if possible" );
+idCVar r_glCoreProfile( "r_glCoreProfile", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "use OpenGL core profile" );
 
 idCVar r_ignore( "r_ignore", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
 idCVar r_ignore2( "r_ignore2", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
@@ -215,19 +217,6 @@ idCVar r_materialOverride( "r_materialOverride", "", CVAR_RENDERER, "overrides a
 idCVar r_debugRenderToTexture( "r_debugRenderToTexture", "0", CVAR_RENDERER | CVAR_INTEGER, "" );
 
 /*
-=================
-R_CheckExtension
-=================
-*/
-bool R_CheckExtension( char *name ) {
-	if ( !strstr( glConfig.extensions_string, name ) ) {		
-		return false;
-	}
-
-	return true;
-}
-
-/*
 ==================
 R_CheckPortableExtensions
 
@@ -235,7 +224,19 @@ R_CheckPortableExtensions
 */
 static bool R_DoubleCheckExtension(char* name)
 {
-  bool customCheck = R_CheckExtension(name);
+  //ext check via glew does not always work!? Do it manually...
+  int ext_cnt = 0;
+  glGetIntegerv(GL_NUM_EXTENSIONS, &ext_cnt);
+  for (int i = 0; i < ext_cnt; ++i) {
+    const char* current = (const char*)glGetStringi(GL_EXTENSIONS, i);
+    if (stricmp(current, name) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+
+#if 0
   bool glewCheck = glewIsSupported(name) == GL_TRUE;
 
   static const char* status[] = { 
@@ -245,10 +246,8 @@ static bool R_DoubleCheckExtension(char* name)
 
   common->Printf("%s %s\n", status[glewCheck ? 1 : 0], name);
 
-  if(glewCheck != customCheck)
-    common->Warning("availibilty mismatch for extension %s\n", name);
-
   return glewCheck;
+#endif
 }
 
 static void R_CheckPortableExtensions( void ) {
@@ -268,9 +267,6 @@ static void R_CheckPortableExtensions( void ) {
     glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS_ARB, (GLint *)&glConfig.maxTextureImageUnits );
   }
 
-  // GL_ARB_texture_env_combine
-  glConfig.textureEnvCombineAvailable = R_DoubleCheckExtension( "GL_ARB_texture_env_combine" );
-
   // GL_ARB_texture_cube_map
   glConfig.cubeMapAvailable = R_DoubleCheckExtension( "GL_ARB_texture_cube_map" );
 
@@ -283,12 +279,16 @@ static void R_CheckPortableExtensions( void ) {
   // GL_ARB_texture_non_power_of_two
   glConfig.textureNonPowerOfTwoAvailable = R_DoubleCheckExtension( "GL_ARB_texture_non_power_of_two" );
 
+
+
   // GL_ARB_texture_compression + GL_S3_s3tc
   // DRI drivers may have GL_ARB_texture_compression but no GL_EXT_texture_compression_s3tc
-  glConfig.textureCompressionAvailable = R_DoubleCheckExtension( "GL_ARB_texture_compression" ) && R_DoubleCheckExtension( "GL_EXT_texture_compression_s3tc" );
+  bool arb_texture_compression = R_DoubleCheckExtension( "GL_ARB_texture_compression" );
+  bool ext_texture_compression_s3tc = R_DoubleCheckExtension( "GL_EXT_texture_compression_s3tc" ); //should be available!
+  glConfig.textureCompressionAvailable = arb_texture_compression && ext_texture_compression_s3tc;
 
   // GL_EXT_texture_filter_anisotropic
-  glConfig.anisotropicAvailable = R_DoubleCheckExtension( "GL_EXT_texture_filter_anisotropic" );
+  glConfig.anisotropicAvailable = R_DoubleCheckExtension( "GL_EXT_texture_filter_anisotropic" );  //should be available!
   if ( glConfig.anisotropicAvailable ) {
     glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureAnisotropy );
     common->Printf( "   maxTextureAnisotropy: %f\n", glConfig.maxTextureAnisotropy );
@@ -299,6 +299,7 @@ static void R_CheckPortableExtensions( void ) {
   // GL_EXT_texture_lod_bias
   // The actual extension is broken as specificed, storing the state in the texture unit instead
   // of the texture object.  The behavior in GL 1.4 is the behavior we use.
+  /*
   if ( glConfig.glVersion >= 1.4 || R_DoubleCheckExtension( "GL_EXT_texture_lod" ) ) {
     common->Printf( "...using %s\n", "GL_1.4_texture_lod_bias" );
     glConfig.textureLODBiasAvailable = true;
@@ -306,6 +307,8 @@ static void R_CheckPortableExtensions( void ) {
     common->Printf( "X..%s not found\n", "GL_1.4_texture_lod_bias" );
     glConfig.textureLODBiasAvailable = false;
   }
+  */
+  glConfig.textureLODBiasAvailable = true; //just assume to available, core since GL 2.0
 
   // GL_EXT_shared_texture_palette
   glConfig.sharedTexturePaletteAvailable = R_DoubleCheckExtension( "GL_EXT_shared_texture_palette" );
@@ -313,17 +316,12 @@ static void R_CheckPortableExtensions( void ) {
   // GL_EXT_texture3D (not currently used for anything)
   glConfig.texture3DAvailable = R_DoubleCheckExtension( "GL_EXT_texture3D" );
 
-  // EXT_stencil_wrap
+  // EXT_stencil_wrap, should always be available with modern drivers
   // This isn't very important, but some pathological case might cause a clamp error and give a shadow bug.
   // Nvidia also believes that future hardware may be able to run faster with this enabled to avoid the
   // serialization of clamping.
-  if ( R_DoubleCheckExtension( "GL_EXT_stencil_wrap" ) ) {
-    tr.stencilIncr = GL_INCR_WRAP_EXT;
-    tr.stencilDecr = GL_DECR_WRAP_EXT;
-  } else {
-    tr.stencilIncr = GL_INCR;
-    tr.stencilDecr = GL_DECR;
-  }
+  tr.stencilIncr = GL_INCR_WRAP;
+  tr.stencilDecr = GL_DECR_WRAP; 
 
   // ARB_vertex_buffer_object
   glConfig.ARBVertexBufferObjectAvailable = R_DoubleCheckExtension( "GL_ARB_vertex_buffer_object" );
@@ -339,7 +337,7 @@ static void R_CheckPortableExtensions( void ) {
   }
 
   // check for minimum set
-  if ( !glConfig.multitextureAvailable || !glConfig.textureEnvCombineAvailable || !glConfig.cubeMapAvailable
+  if ( !glConfig.multitextureAvailable || !glConfig.cubeMapAvailable
     || !glConfig.envDot3Available ) {
       common->Error( common->GetLanguageDict()->GetString( "#str_06780" ) );
   }
@@ -518,11 +516,7 @@ all renderSystem functions will still operate properly, notably the material
 and model information functions.
 ==================
 */
-void R_InitOpenGL( void ) {
-	GLint			temp;
-	glimpParms_t	parms;
-	int				i;
-
+void R_InitOpenGL( void ) {	
 	common->Printf( "----- R_InitOpenGL -----\n" );
 
 	if ( glConfig.isInitialized ) {
@@ -536,15 +530,17 @@ void R_InitOpenGL( void ) {
 	//
 	// initialize OS specific portions of the renderSystem
 	//
-	for ( i = 0 ; i < 2 ; i++ ) {
+	for ( int i = 0 ; i < 2 ; i++ ) {
 		// set the parameters we are trying
 		R_GetModeInfo( glConfig.vidWidth, glConfig.vidHeight, glConfig.vidAspectRatio, r_mode.GetInteger() );
 
+    glimpParms_t	parms;
 		parms.width = glConfig.vidWidth;
 		parms.height = glConfig.vidHeight;
 		parms.fullScreen = r_fullscreen.GetBool();
 		parms.displayHz = r_displayRefresh.GetInteger();
 		parms.multiSamples = r_multiSamples.GetInteger();
+    parms.glCoreProfile = r_glCoreProfile.GetBool();
 		parms.stereo = false;
 
 		if ( GLimp_Init( parms ) ) {
@@ -562,14 +558,8 @@ void R_InitOpenGL( void ) {
 		r_fullscreen.SetInteger( 1 );
 		r_displayRefresh.SetInteger( 0 );
 		r_multiSamples.SetInteger( 0 );
+    r_glCoreProfile.SetBool(false);
 	}
-
-  glewExperimental = GL_TRUE;
-  GLenum err = glewInit();
-  if (GLEW_OK != err)
-  {
-    common->Error("Failed to initialize GLEW: %s", glewGetErrorString(err));
-  }
 
 	// input and sound systems need to be tied to the new window
 	Sys_InitInput();
@@ -582,8 +572,7 @@ void R_InitOpenGL( void ) {
 	glConfig.extensions_string = (const char *)glGetString(GL_EXTENSIONS);
 
 	// OpenGL driver constants
-	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &temp );
-	glConfig.maxTextureSize = temp;
+	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 
 	// stubbed or broken drivers may have reported 0...
 	if ( glConfig.maxTextureSize <= 0 ) {
@@ -608,19 +597,27 @@ void R_InitOpenGL( void ) {
     glDebugMessageCallback(R_GLDebugOutput, NULL);
   }
 
+  if(r_glCoreProfile.GetBool()) {
+    GLuint VaoID;
+    glGenVertexArrays(1, &VaoID);
+    glBindVertexArray(VaoID);
+  }
+
+  // allocate the vertex array range or vertex objects
+  vertexCache.Init();
+
+  cmdSystem->AddCommand( "reloadARBprograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB programs" );
+  cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
+
 	// parse our vertex and fragment programs, possibly disably support for
 	// one of the paths if there was an error
-	R_ARB2_Init();
-  R_GLSL_Init();
+	if(!r_glCoreProfile.GetBool()) {
+	  R_ARB2_Init();
+    R_ReloadARBPrograms_f( idCmdArgs() );
+  }
 
-	cmdSystem->AddCommand( "reloadARBprograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB programs" );
-	R_ReloadARBPrograms_f( idCmdArgs() );
-
-  cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
+  R_GLSL_Init();  
   R_ReloadGlslPrograms_f( idCmdArgs() );
-
-	// allocate the vertex array range or vertex objects
-	vertexCache.Init();
 
 	// allocate the frame data, which may be more if smp is enabled
 	R_InitFrameData();
@@ -628,10 +625,10 @@ void R_InitOpenGL( void ) {
 	// Reset our gamma
 	R_SetColorMappings();
 
-
-  glDisable(GL_VERTEX_PROGRAM_ARB);
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-
+  if(!r_glCoreProfile.GetBool()) {
+    glDisable(GL_VERTEX_PROGRAM_ARB);
+    glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  }
 
 #ifdef _WIN32
 	static bool glCheck = false;
@@ -1713,7 +1710,7 @@ void GfxInfo_f( const idCmdArgs &args ) {
 	common->Printf( "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	common->Printf( "GL_RENDERER: %s\n", glConfig.renderer_string );
 	common->Printf( "GL_VERSION: %s\n", glConfig.version_string );
-	common->Printf( "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
+//	common->Printf( "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
 	if ( glConfig.wgl_extensions_string ) {
 		common->Printf( "WGL_EXTENSIONS: %s\n", glConfig.wgl_extensions_string );
 	}
