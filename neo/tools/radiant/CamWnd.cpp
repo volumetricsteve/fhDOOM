@@ -336,7 +336,7 @@ int CCamWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 	common->Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	common->Printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
 	common->Printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
-	common->Printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
+	//common->Printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
 
 	return 0;
 }
@@ -772,7 +772,8 @@ void setGLMode(int mode) {
 			globalImages->BindNull();
 			glDisable(GL_BLEND);
 			glDisable(GL_DEPTH_TEST);
-			glColor3f( 1.0f, 1.0f, 1.0f );
+      if(!r_glCoreProfile.GetBool())
+			  glColor3f( 1.0f, 1.0f, 1.0f );
 			break;
 
 		case cd_solid:

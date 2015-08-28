@@ -1964,11 +1964,12 @@ void idImageManager::Init() {
     borderClampImage = ImageFromFunction( "_borderClamp", R_BorderClampImage ); //MegaTexture
     specularTableImage = ImageFromFunction( "_specularTable", R_SpecularTableImage );
     specular2DTableImage = ImageFromFunction( "_specular2DTable", R_Specular2DTableImage );
-    rampImage = ImageFromFunction( "_ramp", R_RampImage );
-    alphaRampImage = ImageFromFunction( "_alphaRamp", R_RampImage );
-    normalCubeMapImage = ImageFromFunction( "_normalCubeMap", makeNormalizeVectorCubeMap );
-    noFalloffImage = ImageFromFunction( "_noFalloff", R_CreateNoFalloffImage );
+    normalCubeMapImage = ImageFromFunction("_normalCubeMap", makeNormalizeVectorCubeMap);
   }
+
+  rampImage = ImageFromFunction("_ramp", R_RampImage);
+  alphaRampImage = ImageFromFunction("_alphaRamp", R_RampImage);  
+  noFalloffImage = ImageFromFunction("_noFalloff", R_CreateNoFalloffImage);
 
 	// cinematicImage is used for cinematic drawing
 	// scratchImage is used for screen wipes/doublevision etc..

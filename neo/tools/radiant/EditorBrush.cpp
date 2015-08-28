@@ -4237,21 +4237,26 @@ void Brush_DrawEnv( const brush_t *b, bool cameraView, bool bSelected ) {
 		}
 
 		idVec4	colorSave;
-		glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
+    if(!r_glCoreProfile.GetBool()) {
+		  glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
 
-    if (bSelected) {
-      glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+      if (bSelected) {
+        glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
+      }
+      else {
+        glColor3f(1.f, 1.f, 1.f);
+      }
     }
-    else {
-      glColor3f(1.f, 1.f, 1.f);
-    }
+
     DrawRenderModel(model, origin, axis, true, bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : idVec3(1,1,1));
 
 		globalImages->BindNull();
 		delete model;
 		model = NULL;
 
-		glColor4fv( colorSave.ToFloatPtr() );
+    if(!r_glCoreProfile.GetBool()) {
+		  glColor4fv( colorSave.ToFloatPtr() );
+    }
 	}
 }
 
