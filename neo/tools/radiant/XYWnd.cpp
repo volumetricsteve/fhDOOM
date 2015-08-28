@@ -3498,7 +3498,7 @@ void CXYWnd::XY_Draw() {
 
 	glFlush();
 
-	// QE_CheckOpenGLForErrors();
+  R_ToggleSmpFrame();
 }
 
 
