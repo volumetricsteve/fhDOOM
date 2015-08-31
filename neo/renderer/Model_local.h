@@ -143,8 +143,8 @@ public:
 								~idMD5Mesh();
 
  	void						ParseMesh( idLexer &parser, int numJoints, const idJointMat *joints );
-	void						UpdateSurface( const struct renderEntity_s *ent, const idJointMat *joints, modelSurface_t *surf );
-	idBounds					CalcBounds( const idJointMat *joints );
+	void						UpdateSurface( const struct renderEntity_s *ent, const idJointMat *joints, modelSurface_t *surf ) const;
+	idBounds					CalcBounds( const idJointMat *joints ) const;
 	int							NearestJoint( int a, int b, int c ) const;
 	int							NumVerts( void ) const;
 	int							NumTris( void ) const;
@@ -160,8 +160,8 @@ private:
 	struct deformInfo_s *		deformInfo;			// used to create srfTriangles_t from base frames and new vertexes
 	int							surfaceNum;			// number of the static surface created for this mesh
 
-	void						TransformVerts( idDrawVert *verts, const idJointMat *joints );
-	void						TransformScaledVerts( idDrawVert *verts, const idJointMat *joints, float scale );
+	void						TransformVerts( idDrawVert *verts, const idJointMat *joints ) const;
+	void						TransformScaledVerts( idDrawVert *verts, const idJointMat *joints, float scale ) const;
 };
 
 class idRenderModelMD5 : public idRenderModelStatic {

@@ -250,7 +250,7 @@ void idMD5Mesh::ParseMesh( idLexer &parser, int numJoints, const idJointMat *joi
 idMD5Mesh::TransformVerts
 ====================
 */
-void idMD5Mesh::TransformVerts( idDrawVert *verts, const idJointMat *entJoints ) {
+void idMD5Mesh::TransformVerts( idDrawVert *verts, const idJointMat *entJoints ) const {
 	SIMDProcessor->TransformVerts( verts, texCoords.Num(), entJoints, scaledWeights, weightIndex, numWeights );
 }
 
@@ -261,7 +261,7 @@ idMD5Mesh::TransformScaledVerts
 Special transform to make the mesh seem fat or skinny.  May be used for zombie deaths
 ====================
 */
-void idMD5Mesh::TransformScaledVerts( idDrawVert *verts, const idJointMat *entJoints, float scale ) {
+void idMD5Mesh::TransformScaledVerts( idDrawVert *verts, const idJointMat *entJoints, float scale ) const {
 	idVec4 *scaledWeights = (idVec4 *) _alloca16( numWeights * sizeof( scaledWeights[0] ) );
 	SIMDProcessor->Mul( scaledWeights[0].ToFloatPtr(), scale, scaledWeights[0].ToFloatPtr(), numWeights * 4 );
 	SIMDProcessor->TransformVerts( verts, texCoords.Num(), entJoints, scaledWeights, weightIndex, numWeights );
@@ -272,7 +272,7 @@ void idMD5Mesh::TransformScaledVerts( idDrawVert *verts, const idJointMat *entJo
 idMD5Mesh::UpdateSurface
 ====================
 */
-void idMD5Mesh::UpdateSurface( const struct renderEntity_s *ent, const idJointMat *entJoints, modelSurface_t *surf ) {
+void idMD5Mesh::UpdateSurface( const struct renderEntity_s *ent, const idJointMat *entJoints, modelSurface_t *surf ) const {
 	int i, base;
 	srfTriangles_t *tri;
 
@@ -351,7 +351,7 @@ void idMD5Mesh::UpdateSurface( const struct renderEntity_s *ent, const idJointMa
 idMD5Mesh::CalcBounds
 ====================
 */
-idBounds idMD5Mesh::CalcBounds( const idJointMat *entJoints ) {
+idBounds idMD5Mesh::CalcBounds( const idJointMat *entJoints ) const {
 	idBounds	bounds;
 	idDrawVert *verts = (idDrawVert *) _alloca16( texCoords.Num() * sizeof( idDrawVert ) );
 
