@@ -411,6 +411,13 @@ Version 2
 }
 // entity 1
 {
+"anim" "idle"
+"classname" "monster_zombie_fat"
+"name" "monster_zombie_fat_1"
+"origin" "-304 160 0"
+}
+// entity 2
+{
 "classname" "light"
 "name" "light_8"
 "origin" "-304 -232 168"
@@ -423,13 +430,13 @@ Version 2
 "light_up" "0 -128 0"
 "light_right" "-128 0 0"
 }
-// entity 2
+// entity 3
 {
 "classname" "env_ragdoll_imp"
 "name" "env_ragdoll_imp_1"
 "origin" "-208 16 8"
 }
-// entity 3
+// entity 4
 {
 "classname" "func_fracture"
 "name" "func_fracture_1"
@@ -450,20 +457,20 @@ Version 2
  }
 }
 }
-// entity 4
+// entity 5
 {
 "classname" "light"
 "name" "light_5"
-"origin" "64 64 -520"
-"noshadows" "1"
-"nospecular" "1"
+"origin" "-8 -16 -472"
+"noshadows" "0"
+"nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0.000000"
-"texture" "fogs/glare"
+"falloff" "0"
+"texture" "fogs/basicfog"
 "_color" "0.35 1 0"
-"light_radius" "200 200 200"
+"light_radius" "500 500 400"
 }
-// entity 5
+// entity 6
 {
 "classname" "light"
 "name" "light_6"
@@ -476,13 +483,13 @@ Version 2
 "light_radius" "284 244 400"
 "light_center" "0 0 220"
 }
-// entity 6
+// entity 7
 {
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "-128 -168 0"
 }
-// entity 7
+// entity 8
 {
 "classname" "light"
 "name" "light_2"
@@ -494,7 +501,7 @@ Version 2
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }
-// entity 8
+// entity 9
 {
 "classname" "light"
 "name" "light_3"
@@ -506,7 +513,7 @@ Version 2
 "_color" "1 0.58 0.38"
 "light_radius" "300 300 300"
 }
-// entity 9
+// entity 10
 {
 "classname" "light"
 "name" "light_4"
@@ -519,7 +526,7 @@ Version 2
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }
-// entity 10
+// entity 11
 {
 "classname" "func_fracture"
 "name" "func_fracture_2"
@@ -540,7 +547,7 @@ Version 2
  }
 }
 }
-// entity 11
+// entity 12
 {
 "origin" "-48 -168 69.25"
 "classname" "speaker"
@@ -562,17 +569,4 @@ Version 2
 "random" "0.000000"
 "s_unclamped" "0"
 "s_justVolume" "1"
-}
-// entity 12
-{
-"classname" "light"
-"name" "light_9"
-"origin" "48 56 -568"
-"noshadows" "0"
-"nospecular" "0"
-"nodiffuse" "0"
-"falloff" "0.000000"
-"_color" "0.85 0.92 0.65"
-"light_radius" "284 244 400"
-"light_center" "0 0 220"
 }

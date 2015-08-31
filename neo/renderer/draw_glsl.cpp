@@ -14,6 +14,7 @@ const glslProgramDef_t* defaultProgram = nullptr;
 const glslProgramDef_t* skyboxProgram = nullptr;
 const glslProgramDef_t* bumpyEnvProgram = nullptr;
 const glslProgramDef_t* fogProgram = nullptr;
+const glslProgramDef_t* blendLightProgram = nullptr;
 const glslProgramDef_t* vertexColorProgram = nullptr;
 const glslProgramDef_t* flatColorProgram = nullptr;
 const glslProgramDef_t* intensityProgram = nullptr;
@@ -40,6 +41,136 @@ template<typename T>
 static const void* attributeOffset(T offset, const void* attributeOffset)
 {
   return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
+}
+
+/*
+=====================
+RB_GLSL_BlendLight
+
+=====================
+*/
+static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
+  const srfTriangles_t *tri;
+
+  tri = surf->geo;
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+
+  if (backEnd.currentSpace != surf->space) {
+    idPlane	lightProject[4];
+    int		i;
+
+    for (i = 0; i < 4; i++) {
+      R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i]);
+    }
+
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, lightProject[0].ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, lightProject[1].ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_specularMatrixS, 1, lightProject[2].ToFloatPtr());
+    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, lightProject[3].ToFloatPtr());
+/*
+    GL_SelectTexture(0);
+    glTexGenfv(GL_S, GL_OBJECT_PLANE, lightProject[0].ToFloatPtr());
+    glTexGenfv(GL_T, GL_OBJECT_PLANE, lightProject[1].ToFloatPtr());
+    glTexGenfv(GL_Q, GL_OBJECT_PLANE, lightProject[2].ToFloatPtr());
+
+    GL_SelectTexture(1);
+    glTexGenfv(GL_S, GL_OBJECT_PLANE, lightProject[3].ToFloatPtr());
+*/
+  }
+
+  // this gets used for both blend lights and shadow draws
+  if (tri->ambientCache) {
+    //idDrawVert	*ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
+    //glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
+    //     
+    int offset = vertexCache.Bind(tri->ambientCache);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+  }
+  else if (tri->shadowCache) {
+    //shadowCache_t	*sc = (shadowCache_t *)vertexCache.Position(tri->shadowCache);
+    //glVertexPointer(3, GL_FLOAT, sizeof(shadowCache_t), sc->xyz.ToFloatPtr());
+    int offset = vertexCache.Bind(tri->shadowCache);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 3, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
+  }
+
+  RB_DrawElementsWithCounters(tri);
+
+  if (tri->ambientCache) {   
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  }
+  else if (tri->shadowCache) {
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
+  }
+}
+
+
+/*
+=====================
+RB_GLSL_BlendLight
+
+Dual texture together the falloff and projection texture with a blend
+mode to the framebuffer, instead of interacting with the surface texture
+=====================
+*/
+void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
+  const idMaterial	*lightShader;
+  const shaderStage_t	*stage;
+  int					i;
+  const float	*regs;
+
+  if (!drawSurfs) {
+    return;
+  }
+  if (r_skipBlendLights.GetBool()) {
+    return;
+  }
+  RB_LogComment("---------- RB_GLSL_BlendLight ----------\n");
+
+  GL_UseProgram(blendLightProgram);
+
+  lightShader = backEnd.vLight->lightShader;
+  regs = backEnd.vLight->shaderRegisters;
+
+  // texture 1 will get the falloff texture
+  GL_SelectTexture(1);  
+  backEnd.vLight->falloffImage->Bind();
+
+  for (i = 0; i < lightShader->GetNumStages(); i++) {
+    stage = lightShader->GetStage(i);
+
+    if (!regs[stage->conditionRegister]) {
+      continue;
+    }
+
+    GL_State(GLS_DEPTHMASK | stage->drawStateBits | GLS_DEPTHFUNC_EQUAL);
+
+    // texture 0 will get the projected texture
+    GL_SelectTexture(0);
+    stage->texture.image->Bind();
+
+    if (stage->texture.hasMatrix) {
+      RB_LoadShaderTextureMatrix(regs, &stage->texture);
+    }
+
+    // get the modulate values from the light, including alpha, unlike normal lights
+    backEnd.lightColor[0] = regs[stage->color.registers[0]];
+    backEnd.lightColor[1] = regs[stage->color.registers[1]];
+    backEnd.lightColor[2] = regs[stage->color.registers[2]];
+    backEnd.lightColor[3] = regs[stage->color.registers[3]];
+    glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, backEnd.lightColor);
+
+    RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BlendLight);
+    RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BlendLight);
+
+    if (stage->texture.hasMatrix) {
+      GL_SelectTexture(0);
+      GL_TextureMatrix.LoadIdentity();
+    }
+  }
 }
 
 
@@ -178,6 +309,7 @@ Load default shaders.
 void	R_GLSL_Init( void )
 {
   fogProgram = R_FindGlslProgram("fog.vp", "fog.fp");  
+  blendLightProgram = R_FindGlslProgram("blendLight.vp", "blendLight.fp");  
   shadowProgram = R_FindGlslProgram("shadow.vp", "shadow.fp");
   depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");  
   defaultProgram = R_FindGlslProgram("default.vp", "default.fp");

@@ -1344,6 +1344,7 @@ void  RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
 void  RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const srfTriangles_t	*tri);
 void  RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage);
 void  RB_GLSL_FogPass( const drawSurf_t *drawSurfs,  const drawSurf_t *drawSurfs2 );
+void  RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2);
 
 typedef enum {
 	PROG_INVALID,
