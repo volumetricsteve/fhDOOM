@@ -13,7 +13,7 @@ const glslProgramDef_t* depthProgram = nullptr;
 const glslProgramDef_t* defaultProgram = nullptr;
 const glslProgramDef_t* skyboxProgram = nullptr;
 const glslProgramDef_t* bumpyEnvProgram = nullptr;
-const glslProgramDef_t* fogProgram = nullptr;
+const glslProgramDef_t* fogLightProgram = nullptr;
 const glslProgramDef_t* blendLightProgram = nullptr;
 const glslProgramDef_t* vertexColorProgram = nullptr;
 const glslProgramDef_t* flatColorProgram = nullptr;
@@ -308,7 +308,7 @@ Load default shaders.
 */
 void	R_GLSL_Init( void )
 {
-  fogProgram = R_FindGlslProgram("fog.vp", "fog.fp");  
+  fogLightProgram = R_FindGlslProgram("fogLight.vp", "fogLight.fp");  
   blendLightProgram = R_FindGlslProgram("blendLight.vp", "blendLight.fp");  
   shadowProgram = R_FindGlslProgram("shadow.vp", "shadow.fp");
   depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");  
@@ -330,11 +330,11 @@ RB_GLSL_FogPass
 ==================
 */
 void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
-  assert(fogProgram);
+  assert(fogLightProgram);
 
   RB_LogComment("---------- RB_GLSL_FogPass ----------\n");  
 
-  GL_UseProgram(fogProgram);
+  GL_UseProgram(fogLightProgram);
 
   // create a surface for the light frustom triangles, which are oriented drawn side out
   const srfTriangles_t* frustumTris = backEnd.vLight->frustumTris;

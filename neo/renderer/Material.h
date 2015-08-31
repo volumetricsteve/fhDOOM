@@ -269,7 +269,7 @@ extern const glslProgramDef_t* depthProgram;
 extern const glslProgramDef_t* defaultProgram;
 extern const glslProgramDef_t* skyboxProgram;
 extern const glslProgramDef_t* bumpyEnvProgram;
-extern const glslProgramDef_t* fogProgram;
+extern const glslProgramDef_t* fogLightProgram;
 extern const glslProgramDef_t* vertexColorProgram;
 extern const glslProgramDef_t* flatColorProgram;
 extern const glslProgramDef_t* intensityProgram;
