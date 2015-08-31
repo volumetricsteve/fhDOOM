@@ -64,29 +64,10 @@ bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting ) {
     return false;
   }
 
-	vertexCache.Alloc( tri->verts, tri->numVerts * sizeof( tri->verts[0] ), &tri->ambientCache );
+	tri->ambientCache = vertexCache.Alloc( tri->verts, tri->numVerts * sizeof( tri->verts[0] ), false );
 	if ( !tri->ambientCache ) {
 		return false;
 	}
-	return true;
-}
-
-/*
-==================
-R_CreateLightingCache
-
-Returns false if the cache couldn't be allocated, in which case the surface should be skipped.
-==================
-*/
-bool R_CreateLightingCache( const idRenderEntityLocal *ent, const idRenderLightLocal *light, srfTriangles_t *tri ) {
-	idVec3		localLightOrigin;
-
-	// fogs and blends don't need light vectors
-	if ( light->lightShader->IsFogLight() || light->lightShader->IsBlendLight() ) {
-		return true;
-	}
-
-	// not needed if we have vertex programs
 	return true;
 }
 
@@ -102,7 +83,7 @@ void R_CreatePrivateShadowCache( srfTriangles_t *tri ) {
 		return;
 	}
 
-	vertexCache.Alloc( tri->shadowVertexes, tri->numVerts * sizeof( *tri->shadowVertexes ), &tri->shadowCache );
+	tri->shadowCache = vertexCache.Alloc( tri->shadowVertexes, tri->numVerts * sizeof( *tri->shadowVertexes ), false );
 }
 
 /*
@@ -142,7 +123,7 @@ void R_CreateVertexProgramShadowCache( srfTriangles_t *tri ) {
 
 #endif
 
-	vertexCache.Alloc( temp, tri->numVerts * 2 * sizeof( shadowCache_t ), &tri->shadowCache );
+	tri->shadowCache = vertexCache.Alloc( temp, tri->numVerts * 2 * sizeof( shadowCache_t ), false );
 }
 
 /*
@@ -990,7 +971,7 @@ void R_AddLightSurfaces( void ) {
 			vertexCache.Touch( tri->shadowCache );
 
 			if ( !tri->indexCache && r_useIndexBuffers.GetBool() ) {
-				vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), &tri->indexCache, true );
+        tri->indexCache = vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), true );				
 			}
 			if ( tri->indexCache ) {
 				vertexCache.Touch( tri->indexCache );
@@ -1362,7 +1343,7 @@ static void R_AddAmbientDrawsurfs( viewEntity_t *vEntity ) {
 			vertexCache.Touch( tri->ambientCache );
 
 			if ( r_useIndexBuffers.GetBool() && !tri->indexCache ) {
-				vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), &tri->indexCache, true );
+        tri->indexCache = vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), true );
 			}
 			if ( tri->indexCache ) {
 				vertexCache.Touch( tri->indexCache );
@@ -1408,18 +1389,14 @@ shadows are generated, since dynamic models will typically be lit by
 two or more lights.
 ===================
 */
-void R_AddModelSurfaces( void ) {
-	viewEntity_t		*vEntity;
-	idInteraction		*inter, *next;
-	idRenderModel		*model;
-
+void R_AddModelSurfaces( void ) {	
 	// clear the ambient surface list
 	tr.viewDef->numDrawSurfs = 0;
 	tr.viewDef->maxDrawSurfs = 0;	// will be set to INITIAL_DRAWSURFS on R_AddDrawSurf
 
 	// go through each entity that is either visible to the view, or to
 	// any light that intersects the view (for shadows)
-	for ( vEntity = tr.viewDef->viewEntitys; vEntity; vEntity = vEntity->next ) {
+	for ( viewEntity_t* vEntity = tr.viewDef->viewEntitys; vEntity; vEntity = vEntity->next ) {
 
 		if ( r_useEntityScissors.GetBool() ) {
 			// calculate the screen area covered by the entity
@@ -1461,7 +1438,7 @@ void R_AddModelSurfaces( void ) {
 
 		// add the ambient surface if it has a visible rectangle
 		if ( !vEntity->scissorRect.IsEmpty() ) {
-			model = R_EntityDefDynamicModel( vEntity->entityDef );
+			idRenderModel* model = R_EntityDefDynamicModel( vEntity->entityDef );
 			if ( model == NULL || model->NumSurfaces() <= 0 ) {
 				if ( vEntity->entityDef->parms.timeGroup ) {
 					tr.viewDef->floatTime = oldFloatTime;
@@ -1481,7 +1458,8 @@ void R_AddModelSurfaces( void ) {
 		//
 		if ( tr.viewDef->isXraySubview ) {
 			if ( vEntity->entityDef->parms.xrayIndex == 2 ) {
-				for ( inter = vEntity->entityDef->firstInteraction; inter != NULL && !inter->IsEmpty(); inter = next ) {
+        idInteraction* next;
+				for ( idInteraction* inter = vEntity->entityDef->firstInteraction; inter != NULL && !inter->IsEmpty(); inter = next ) {
 					next = inter->entityNext;
 					if ( inter->lightDef->viewCount != tr.viewCount ) {
 						continue;
@@ -1492,7 +1470,8 @@ void R_AddModelSurfaces( void ) {
 		} else {
 			// all empty interactions are at the end of the list so once the
 			// first is encountered all the remaining interactions are empty
-			for ( inter = vEntity->entityDef->firstInteraction; inter != NULL && !inter->IsEmpty(); inter = next ) {
+			idInteraction* next;
+			for ( idInteraction* inter = vEntity->entityDef->firstInteraction; inter != NULL && !inter->IsEmpty(); inter = next ) {
 				next = inter->entityNext;
 
 				// skip any lights that aren't currently visible

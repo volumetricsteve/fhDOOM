@@ -57,13 +57,13 @@ void idVertexCache::ActuallyFree( vertCache_t *block ) {
 	if (!block) {
 		common->Error( "idVertexCache Free: NULL pointer" );
 	}
-
+#if 0
 	if ( block->user ) {
 		// let the owner know we have purged it
 		*block->user = NULL;
 		block->user = NULL;
 	}
-
+#endif
 	// temp blocks are in a shared space that won't be freed
 	if ( block->tag != TAG_TEMP ) {
 		staticAllocTotal -= block->size;
@@ -109,7 +109,7 @@ ARB_vertex_buffer_object
 The ARB_vertex_buffer_object will be bound
 ==============
 */
-void *idVertexCache::Position( vertCache_t *buffer ) {
+const void *idVertexCache::Position( const vertCache_t *buffer ) {
 	if ( !buffer || buffer->tag == TAG_FREE ) {
 		common->FatalError( "idVertexCache::Position: bad vertCache_t" );
 	}
@@ -129,7 +129,8 @@ void *idVertexCache::Position( vertCache_t *buffer ) {
 		glBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer->vbo );
 	}
 
-	return (void *)buffer->offset;
+  assert(buffer->offset >= 0);
+	return reinterpret_cast<const void *>(buffer->offset);
 }
 
 /*
@@ -198,7 +199,7 @@ void idVertexCache::Init() {
 	byte	*junk = (byte *)Mem_Alloc( frameBytes );
 	for ( int i = 0 ; i < NUM_VERTEX_FRAMES ; i++ ) {
 		allocatingTempBuffer = true;	// force the alloc to use GL_STREAM_DRAW_ARB
-		Alloc( junk, frameBytes, &tempBuffers[i] );
+		tempBuffers[i] = Alloc( junk, frameBytes, false );
 		allocatingTempBuffer = false;
 		tempBuffers[i]->tag = TAG_FIXED;
 		// unlink these from the static list, so they won't ever get purged
@@ -240,16 +241,14 @@ void idVertexCache::Shutdown() {
 idVertexCache::Alloc
 ===========
 */
-void idVertexCache::Alloc( void *data, int size, vertCache_t **buffer, bool indexBuffer ) {
+vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
+  vertCache_t* buffer = NULL; // if we can't find anything, it will be NULL
 	vertCache_t	*block;
 
 	if ( size <= 0 ) {
 		common->Error( "idVertexCache::Alloc: size = %i\n", size );
 	}
-
-	// if we can't find anything, it will be NULL
-	*buffer = NULL;
-
+	
 	// if we don't have any remaining unused headers, allocate some more
 	if ( freeStaticHeaders.next == &freeStaticHeaders ) {
 
@@ -284,8 +283,8 @@ void idVertexCache::Alloc( void *data, int size, vertCache_t **buffer, bool inde
 	staticAllocTotal += block->size;
 
 	// this will be set to zero when it is purged
-	block->user = buffer;
-	*buffer = block;
+//	block->user = buffer;
+	buffer = block;
 
 	// allocation doesn't imply used-for-drawing, because at level
 	// load time lots of things may be created, but they aren't
@@ -308,6 +307,8 @@ void idVertexCache::Alloc( void *data, int size, vertCache_t **buffer, bool inde
 			glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
 		}
 	}	
+
+  return buffer;
 }
 
 /*
@@ -358,7 +359,7 @@ void idVertexCache::Free( vertCache_t *block ) {
 
 	// this block still can't be purged until the frame count has expired,
 	// but it won't need to clear a user pointer when it is
-	block->user = NULL;
+	//block->user = NULL;
 
 	block->next->prev = block->prev;
 	block->prev->next = block->next;
@@ -389,7 +390,7 @@ vertCache_t	*idVertexCache::AllocFrameTemp( void *data, int size ) {
 		// if we don't have enough room in the temp block, allocate a static block,
 		// but immediately free it so it will get freed at the next frame
 		tempOverflow = true;
-		Alloc( data, size, &block );
+		block = Alloc( data, size, false );
 		Free( block);
 		return block;
 	}
@@ -423,7 +424,7 @@ vertCache_t	*idVertexCache::AllocFrameTemp( void *data, int size ) {
 	block->offset = dynamicAllocThisFrame;
 	dynamicAllocThisFrame += block->size;
 	dynamicCountThisFrame++;
-	block->user = NULL;
+	//block->user = NULL;
 	block->frameUsed = 0;
 
 	// copy the data

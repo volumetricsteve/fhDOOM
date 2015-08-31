@@ -1129,21 +1129,8 @@ void idInteraction::AddActiveInteraction( void ) {
 					// touch the ambient surface so it won't get purged
 					vertexCache.Touch( lightTris->ambientCache );
 
-					// regenerate the lighting cache (for non-vertex program cards) if it has been purged
-					if ( !lightTris->lightingCache ) {
-						if ( !R_CreateLightingCache( entityDef, lightDef, lightTris ) ) {
-							// skip if we are out of vertex memory
-							continue;
-						}
-					}
-					// touch the light surface so it won't get purged
-					// (vertex program cards won't have a light cache at all)
-					if ( lightTris->lightingCache ) {
-						vertexCache.Touch( lightTris->lightingCache );
-					}
-
 					if ( !lightTris->indexCache && r_useIndexBuffers.GetBool() ) {
-						vertexCache.Alloc( lightTris->indexes, lightTris->numIndexes * sizeof( lightTris->indexes[0] ), &lightTris->indexCache, true );
+            lightTris->indexCache = vertexCache.Alloc( lightTris->indexes, lightTris->numIndexes * sizeof( lightTris->indexes[0] ), true );
 					}
 					if ( lightTris->indexCache ) {
 						vertexCache.Touch( lightTris->indexCache );
@@ -1225,7 +1212,7 @@ void idInteraction::AddActiveInteraction( void ) {
 			vertexCache.Touch( shadowTris->shadowCache );
 
 			if ( !shadowTris->indexCache && r_useIndexBuffers.GetBool() ) {
-				vertexCache.Alloc( shadowTris->indexes, shadowTris->numIndexes * sizeof( shadowTris->indexes[0] ), &shadowTris->indexCache, true );
+        shadowTris->indexCache = vertexCache.Alloc( shadowTris->indexes, shadowTris->numIndexes * sizeof( shadowTris->indexes[0] ), true );
 				vertexCache.Touch( shadowTris->indexCache );
 			}
 
