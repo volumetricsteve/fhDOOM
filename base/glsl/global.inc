@@ -39,6 +39,10 @@ layout(location = 100) uniform int rpAlphaTestEnabled;
 layout(location = 101) uniform float rpAlphaTestThreshold;
 layout(location = 102) uniform vec4 rpCurrentRenderSize;
 
+layout(location = 103) uniform vec2 rpClipRange;
+layout(location = 104) uniform int rpDepthBlendMode;
+layout(location = 105) uniform float rpDepthBlendRange;
+
 #define TEXTURE_UNIT_0 24
 #define TEXTURE_UNIT_1 25
 #define TEXTURE_UNIT_2 26

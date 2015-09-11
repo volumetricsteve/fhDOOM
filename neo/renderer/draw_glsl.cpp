@@ -11,6 +11,7 @@ const glslProgramDef_t* shadowProgram = nullptr;
 const glslProgramDef_t* interactionProgram = nullptr;
 const glslProgramDef_t* depthProgram = nullptr;
 const glslProgramDef_t* defaultProgram = nullptr;
+const glslProgramDef_t* depthblendProgram = nullptr;
 const glslProgramDef_t* skyboxProgram = nullptr;
 const glslProgramDef_t* bumpyEnvProgram = nullptr;
 const glslProgramDef_t* fogLightProgram = nullptr;
@@ -313,6 +314,7 @@ void	R_GLSL_Init( void )
   shadowProgram = R_FindGlslProgram("shadow.vp", "shadow.fp");
   depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");  
   defaultProgram = R_FindGlslProgram("default.vp", "default.fp");
+  depthblendProgram = R_FindGlslProgram("depthblend.vp", "depthblend.fp");
   skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
   bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");  
   interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
@@ -1418,7 +1420,30 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
   }
   else {
-    GL_UseProgram(defaultProgram);
+    depthBlendMode_t depthBlendMode = pStage->depthBlendMode;
+    if (depthBlendMode == DBM_AUTO) {
+      if (pStage->drawStateBits & (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE))
+        depthBlendMode = DBM_COLORALPHA_ZERO;
+      else if (pStage->drawStateBits & (GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO))
+        depthBlendMode = DBM_COLORALPHA_ONE;
+      else
+        depthBlendMode = DBM_OFF;
+    }
+
+    if(depthBlendMode != DBM_OFF && pStage->depthBlendRange > 0.0f) {
+      GL_UseProgram(depthblendProgram);
+      GL_SelectTexture(7);
+      globalImages->currentDepthImage->Bind();
+
+      glUniform1f(glslProgramDef_t::uniform_depthBlendRange, pStage->depthBlendRange);
+      glUniform1i(glslProgramDef_t::uniform_depthBlendMode, static_cast<int>(depthBlendMode));
+
+      float clipRange[] = { backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance() };
+      glUniform2fv(glslProgramDef_t::uniform_clipRange, 1, clipRange);
+    }
+    else {
+      GL_UseProgram(defaultProgram);
+    }
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);

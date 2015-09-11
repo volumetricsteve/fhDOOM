@@ -1861,36 +1861,25 @@ This should just be part of copyFramebuffer once we have a proper image type fie
 ====================
 */
 void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
-	Bind();
+  Bind();
 
-	// if the size isn't a power of 2, the image must be increased in size
-	int	potWidth, potHeight;
+  glReadBuffer(GL_BACK);
 
-	potWidth = MakePowerOfTwo( imageWidth );
-	potHeight = MakePowerOfTwo( imageHeight );
+  if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
+    uploadWidth = imageWidth;
+    uploadHeight = imageHeight;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);    
 
-	if ( uploadWidth != potWidth || uploadHeight != potHeight ) {
-		uploadWidth = potWidth;
-		uploadHeight = potHeight;
-		if ( potWidth == imageWidth && potHeight == imageHeight ) {
-			glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
-		} else {
-			// we need to create a dummy image with power of two dimensions,
-			// then do a glCopyTexSubImage2D of the data we want
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, potWidth, potHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-			glCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, x, y, imageWidth, imageHeight );
-		}
-	} else {
-		// otherwise, just subimage upload it so that drivers can tell we are going to be changing
-		// it and don't try and do a texture compression or some other silliness
-		glCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, x, y, imageWidth, imageHeight );
-	}
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-//	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-//	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
 
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
+
+  backEnd.c_copyFrameBuffer++;
 }
 
 /*

@@ -888,6 +888,48 @@ void idMaterial::ParseBlend( idLexer &src, shaderStage_t *stage ) {
 	stage->drawStateBits = srcBlend | dstBlend;
 }
 
+void idMaterial::ParseDepthBlendMode( idLexer &src, shaderStage_t *stage )
+{
+  idToken token;
+
+  if (!src.ReadToken(&token)) {
+    return;
+  }
+
+  if(!token.Icmp("Off")) {
+    stage->depthBlendMode = DBM_OFF;
+    return;
+  }
+
+  if (!token.Icmp("Auto")) {
+    stage->depthBlendMode = DBM_AUTO;
+    return;
+  }
+
+  if (!token.Icmp("ColorAlphaZero")) {
+    stage->depthBlendMode = DBM_COLORALPHA_ZERO;
+    return;
+  }
+
+  if (!token.Icmp("ColorAlphaOne")) {
+    stage->depthBlendMode = DBM_COLORALPHA_ONE;
+    return;
+  }
+
+  if (!token.Icmp("AlphaZero")) {
+    stage->depthBlendMode = DBM_ALPHA_ZERO;
+    return;
+  }
+
+  if (!token.Icmp("AlphaOne")) {
+    stage->depthBlendMode = DBM_ALPHA_ONE;
+    return;
+  }
+
+  common->Warning("bad depth blend mode\n");
+  stage->depthBlendMode = DBM_OFF;
+}
+
 /*
 ================
 idMaterial::ParseVertexParm
@@ -1313,6 +1355,14 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	ts = &ss->texture;
 
 	ClearStage( ss );
+/*
+  idStr name = GetName();
+  if(name.Find("textures/particles/") == 0) {
+    ss->depthBlendMode = DBM_AUTO;
+  }
+
+  ss->depthBlendRange = 32.0f;
+*/
 
 	while ( 1 ) {
 		if ( TestMaterialFlag( MF_DEFAULTED ) ) {	// we have a parse error
@@ -1339,6 +1389,16 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			ParseBlend( src, ss );
 			continue;
 		}
+
+    if (!token.Icmp("depthBlendMode")) {
+      ParseDepthBlendMode( src, ss );
+      continue;
+    }
+
+    if (!token.Icmp("depthBlendRange")) {
+      ss->depthBlendRange = src.ParseFloat();
+      continue;
+    }
 
 		if (  !token.Icmp( "map" ) ) {
 			str = R_ParsePastImageProgram( src );
@@ -2476,7 +2536,7 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 		}
     if (pStage->glslStage) {
       for (int j = 0; j < pStage->glslStage->numShaderMaps; j++) {
-        if (pStage->glslStage->shaderMap[j] == globalImages->currentRenderImage) {
+        if (pStage->glslStage->shaderMap[j] == globalImages->currentRenderImage || pStage->glslStage->shaderMap[j] == globalImages->currentDepthImage ) {
           if (sort != SS_PORTAL_SKY) {
             sort = SS_POST_PROCESS;
             coverage = MC_TRANSLUCENT;

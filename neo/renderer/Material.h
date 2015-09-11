@@ -184,6 +184,15 @@ typedef enum {
 	SVC_INVERSE_MODULATE
 } stageVertexColor_t;
 
+typedef enum {
+  DBM_OFF,
+  DBM_AUTO,             //try to choose one of the following modes based on current blend mode (if that fails, mode defaults to Off)
+  DBM_COLORALPHA_ZERO,  //blend color and alpha to zero (fade-out for 'blend add')
+  DBM_COLORALPHA_ONE,   //blend color and alpha to one  (fade-out for 'blend filter|modulate')
+  DBM_ALPHA_ONE,        //?
+  DBM_ALPHA_ZERO        //blend alpha to zero  (fade-out for 'blend blend')
+} depthBlendMode_t;
+
 static const int	MAX_FRAGMENT_IMAGES = 8;
 static const int	MAX_VERTEX_PARMS = 4;
 
@@ -257,6 +266,10 @@ typedef struct {
   static const int uniform_alphaTestThreshold = 101;
   static const int uniform_currentRenderSize  = 102;  
 
+  static const int uniform_clipRange = 103;
+  static const int uniform_depthBlendMode = 104;
+  static const int uniform_depthBlendRange = 105;
+
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
   GLuint ident;
@@ -298,6 +311,8 @@ typedef struct {
 	bool				ignoreAlphaTest;	// this stage should act as translucent, even
 											// if the surface is alpha tested
 	float				privatePolygonOffset;	// a per-stage polygon offset
+  depthBlendMode_t depthBlendMode;
+  float            depthBlendRange;
 
 	newShaderStage_t	*newStage;			// vertex / fragment program based stage
   glslShaderStage_t *glslStage;
@@ -681,6 +696,7 @@ private:
 	bool				MatchToken( idLexer &src, const char *match );
 	void				ParseSort( idLexer &src );
 	void				ParseBlend( idLexer &src, shaderStage_t *stage );
+  void        ParseDepthBlendMode( idLexer &src, shaderStage_t *stage );
 	void				ParseVertexParm( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage );
   void				ParseShaderParm( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage );

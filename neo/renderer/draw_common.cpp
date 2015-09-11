@@ -657,13 +657,18 @@ void	RB_STD_DrawView( void ) {
   else
 	  RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
 
+  if (backEnd.viewDef->viewEntitys) {
+    globalImages->currentDepthImage->CopyDepthbuffer(backEnd.viewDef->viewport.x1,
+      backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+      backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1);
+  }
+
 	// main light renderer
   
   if (backEnd.glslEnabled)
     RB_GLSL_DrawInteractions();
   else
     RB_ARB2_DrawInteractions();    
-
 
 	// disable stencil shadow test
 	glStencilFunc( GL_ALWAYS, 128, 255 );

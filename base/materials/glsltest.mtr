@@ -13,6 +13,25 @@ textures/glsltest/heathaze_arb
     }
 }
 
+textures/particles/glslSmoke
+{
+    qer_editorimage textures/particles/smokepuff.tga
+    translucent
+    noShadows
+    sort        10    
+
+    {
+        depthblendmode auto
+        depthblendrange 32
+
+        blend add
+        map textures/particles/smokepuff.tga
+        vertexColor
+        //colored
+    }
+}
+
+
 textures/glsltest/heathaze
 {        
     deform sprite

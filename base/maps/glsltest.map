@@ -483,12 +483,18 @@ Version 2
 }
 // entity 1
 {
-"anim" "idle"
-"classname" "monster_zombie_fat"
-"name" "monster_zombie_fat_1"
-"origin" "-304 160 0"
+"classname" "func_emitter"
+"name" "func_emitter_1"
+"origin" "-8 -184 48"
+"model" "al3_jumbopipesteam.prt"
 }
 // entity 2
+{
+"classname" "light"
+"name" "light_9"
+"origin" "96 136 192"
+}
+// entity 3
 {
 "classname" "light"
 "name" "light_8"
@@ -502,13 +508,13 @@ Version 2
 "light_up" "0 -128 0"
 "light_right" "-128 0 0"
 }
-// entity 3
+// entity 4
 {
 "classname" "env_ragdoll_imp"
 "name" "env_ragdoll_imp_1"
 "origin" "-208 16 8"
 }
-// entity 4
+// entity 5
 {
 "classname" "func_fracture"
 "name" "func_fracture_1"
@@ -529,7 +535,7 @@ Version 2
  }
 }
 }
-// entity 5
+// entity 6
 {
 "classname" "light"
 "name" "light_5"
@@ -542,7 +548,7 @@ Version 2
 "_color" "0.35 1 0"
 "light_radius" "500 500 400"
 }
-// entity 6
+// entity 7
 {
 "classname" "light"
 "name" "light_6"
@@ -555,13 +561,13 @@ Version 2
 "light_radius" "284 244 400"
 "light_center" "0 0 220"
 }
-// entity 7
+// entity 8
 {
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "-128 -168 0"
 }
-// entity 8
+// entity 9
 {
 "classname" "light"
 "name" "light_2"
@@ -573,7 +579,7 @@ Version 2
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }
-// entity 9
+// entity 10
 {
 "classname" "light"
 "name" "light_3"
@@ -585,7 +591,7 @@ Version 2
 "_color" "1 0.58 0.38"
 "light_radius" "300 300 300"
 }
-// entity 10
+// entity 11
 {
 "classname" "light"
 "name" "light_4"
@@ -598,7 +604,7 @@ Version 2
 "_color" "0.91 0.97 1"
 "light_radius" "300 300 300"
 }
-// entity 11
+// entity 12
 {
 "classname" "func_fracture"
 "name" "func_fracture_2"
@@ -619,7 +625,7 @@ Version 2
  }
 }
 }
-// entity 12
+// entity 13
 {
 "origin" "-48 -168 69.25"
 "classname" "speaker"
@@ -641,4 +647,18 @@ Version 2
 "random" "0.000000"
 "s_unclamped" "0"
 "s_justVolume" "1"
+}
+// entity 14
+{
+"classname" "func_emitter"
+"name" "func_emitter_2"
+"origin" "-360 -288 8"
+"model" "al3_jumbopipesteam.prt"
+}
+// entity 15
+{
+"classname" "func_emitter"
+"name" "func_emitter_3"
+"origin" "-224 144 48"
+"model" "glsl_softsmoke.prt"
 }
