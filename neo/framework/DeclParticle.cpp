@@ -208,6 +208,7 @@ void idDeclParticle::ParseParametric( idLexer &src, idParticleParm *parm ) {
 
 }
 
+
 /*
 ================
 idDeclParticle::ParseParticleStage
@@ -234,6 +235,10 @@ idParticleStage *idDeclParticle::ParseParticleStage( idLexer &src ) {
 			stage->material = declManager->FindMaterial( token.c_str() );
 			continue;
 		}
+    if (!token.Icmp("softness")) {
+      stage->softness = src.ParseFloat();
+      continue;
+    }
 		if ( !token.Icmp( "count" ) ) {
 			stage->totalParticles = src.ParseInt();
 			continue;
@@ -533,6 +538,7 @@ void idDeclParticle::WriteStage( idFile *f, idParticleStage *stage ) {
 	f->WriteFloatString( "\t{\n" );
 	f->WriteFloatString( "\t\tcount\t\t\t\t%i\n", stage->totalParticles );
 	f->WriteFloatString( "\t\tmaterial\t\t\t%s\n", stage->material->GetName() );
+  f->WriteFloatString( "\t\tsoftness\t\t\t%f\n", stage->softness );
 	if ( stage->animationFrames ) {
 		f->WriteFloatString( "\t\tanimationFrames \t%i\n", stage->animationFrames );
 	}
@@ -693,6 +699,7 @@ idParticleStage::idParticleStage
 */
 idParticleStage::idParticleStage( void ) {
 	material = NULL;
+  softness = -1.0f;
 	totalParticles = 0;
 	cycles = 0.0f;
 	cycleMsec = 0;
@@ -740,6 +747,7 @@ Sets the stage to a default state
 */
 void idParticleStage::Default() {
 	material = declManager->FindMaterial( "_default" );
+  softness = -1.0f;
 	totalParticles = 100;
 	spawnBunching = 1.0f;
 	particleLife = 1.5f;

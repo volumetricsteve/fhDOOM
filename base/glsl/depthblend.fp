@@ -49,17 +49,19 @@ void main(void)
   switch(rpDepthBlendMode)
   {
   case 0:
-    break;
+  case 1:
   case 2:
-    result *= ColorAlphaZero();
     break;
   case 3:
-    result *= ColorAlphaOne();    
+    result *= ColorAlphaZero();
     break;
   case 4:
+    result *= ColorAlphaOne();    
+    break;
+  case 5:
     result.a *= ColorAlphaOne();        
     break;    
-  case 5:
+  case 6:
     result.a *= ColorAlphaZero();        
     break;        
   default:

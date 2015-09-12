@@ -95,6 +95,9 @@ typedef struct srfTriangles_s {
 	bool						deformedSurface;		// if true, indexes, silIndexes, mirrorVerts, and silEdges are
 														// pointers into the original surface, and should not be freed
 
+  depthBlendMode_t depthBlendMode;
+  float            depthBlendRange;
+
 	int							numVerts;				// number of vertices
 	idDrawVert *				verts;					// vertices, allocated with special allocator
 

@@ -126,7 +126,7 @@ public:
 	//------------------------------
 
 	const idMaterial *		material;
-
+  float         softness;
 	int						totalParticles;		// total number of particles, although some may be invisible at a given time
 	float					cycles;				// allows things to oneShot ( 1 cycle ) or run for a set number of cycles
 												// on a per stage basis
@@ -137,7 +137,7 @@ public:
 	float					particleLife;		// total seconds of life for each particle
 	float					timeOffset;			// time offset from system start for the first particle to spawn
 	float					deadTime;			// time after particleLife before respawning
-	
+  	
 	//-------------------------------	// standard path parms
 		
 	prtDistribution_t		distributionType;
@@ -211,6 +211,7 @@ private:
 	idParticleStage *		ParseParticleStage( idLexer &src );
 	void					ParseParms( idLexer &src, float *parms, int maxParms );
 	void					ParseParametric( idLexer &src, idParticleParm *parm );
+  void          ParseDepthBlendMode(idLexer &src, idParticleStage* stage);
 	void					WriteStage( idFile *f, idParticleStage *stage );
 	void					WriteParticleParm( idFile *f, idParticleParm *parm, const char *name );
 };

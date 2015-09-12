@@ -23,3 +23,7 @@ build2
 /base/editor.cfg
 /base/maps/*.cm
 /base/maps/*.proc
+*.aas48
+/base/doom.qe4
+*.proc
+/base/savegames/*.save

@@ -185,6 +185,7 @@ typedef enum {
 } stageVertexColor_t;
 
 typedef enum {
+  DBM_UNDEFINED,
   DBM_OFF,
   DBM_AUTO,             //try to choose one of the following modes based on current blend mode (if that fails, mode defaults to Off)
   DBM_COLORALPHA_ZERO,  //blend color and alpha to zero (fade-out for 'blend add')

@@ -231,6 +231,25 @@ idRenderModel *idRenderModelPrt::InstantiateDynamicModel( const struct renderEnt
 			numIndexes += 6;
 		}
 
+    surf->geometry->depthBlendMode = DBM_OFF;
+    surf->geometry->depthBlendRange = 0.0f;
+
+    if(r_softParticles.GetBool()) {
+      const float defaultSoftness = r_defaultParticleSoftness.GetFloat();
+      static const float threshhold = 0.01f;
+
+      if(stage->softness > threshhold) {
+        //use explicitly configured softness
+        surf->geometry->depthBlendMode = DBM_AUTO;
+        surf->geometry->depthBlendRange = stage->softness;
+      } 
+      else if( defaultSoftness > threshhold && stage->softness < -threshhold) {
+        //calculate softness/range based on maximum particle size
+        surf->geometry->depthBlendMode = DBM_AUTO;
+        surf->geometry->depthBlendRange = max(stage->size.to, stage->size.from) * defaultSoftness;
+      }
+    } 
+
 		surf->geometry->tangentsCalculated = false;
 		surf->geometry->facePlanesCalculated = false;
 		surf->geometry->numVerts = numVerts;

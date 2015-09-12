@@ -1419,8 +1419,20 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrixST[1].ToFloatPtr());
 
   }
-  else {
+  else {    
+
+    //prefer depth blend settings from material. If material does not define a 
+    // depth blend mode, look at the geometry for depth blend settings (usually
+    // set by particle systems for soft particles)
+
     depthBlendMode_t depthBlendMode = pStage->depthBlendMode;
+    float depthBlendRange = pStage->depthBlendRange;
+
+    if(depthBlendMode == DBM_UNDEFINED) {
+      depthBlendMode = surf->geo->depthBlendMode;
+      depthBlendRange = surf->geo->depthBlendRange;
+    }      
+    
     if (depthBlendMode == DBM_AUTO) {
       if (pStage->drawStateBits & (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE))
         depthBlendMode = DBM_COLORALPHA_ZERO;
@@ -1430,12 +1442,12 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
         depthBlendMode = DBM_OFF;
     }
 
-    if(depthBlendMode != DBM_OFF && pStage->depthBlendRange > 0.0f) {
+    if(depthBlendMode != DBM_OFF && depthBlendRange > 0.0f) {
       GL_UseProgram(depthblendProgram);
       GL_SelectTexture(7);
       globalImages->currentDepthImage->Bind();
 
-      glUniform1f(glslProgramDef_t::uniform_depthBlendRange, pStage->depthBlendRange);
+      glUniform1f(glslProgramDef_t::uniform_depthBlendRange, depthBlendRange);
       glUniform1i(glslProgramDef_t::uniform_depthBlendMode, static_cast<int>(depthBlendMode));
 
       float clipRange[] = { backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance() };

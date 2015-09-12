@@ -975,6 +975,8 @@ extern idCVar r_glslEnableArb2;
 extern idCVar r_glslReplaceArb2;
 extern idCVar r_glCoreProfile;
 
+extern idCVar r_softParticles;
+extern idCVar r_defaultParticleSoftness;
 
 /*
 ====================================================================
