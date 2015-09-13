@@ -243,7 +243,7 @@ idRenderModel *idRenderModelPrt::InstantiateDynamicModel( const struct renderEnt
         surf->geometry->depthBlendMode = DBM_AUTO;
         surf->geometry->depthBlendRange = stage->softness;
       } 
-      else if( defaultSoftness > threshhold && stage->softness < -threshhold) {
+      else if( defaultSoftness > threshhold && stage->softness < -threshhold && stage->orientation == POR_VIEW ) {
         //calculate softness/range based on maximum particle size
         surf->geometry->depthBlendMode = DBM_AUTO;
         surf->geometry->depthBlendRange = max(stage->size.to, stage->size.from) * defaultSoftness;

@@ -765,6 +765,8 @@ idMaterial::ClearStage
 void idMaterial::ClearStage( shaderStage_t *ss ) {
 	ss->drawStateBits = 0;
 	ss->conditionRegister = GetExpressionConstant( 1 );
+  ss->depthBlendMode = DBM_UNDEFINED;
+  ss->depthBlendRange = 0.0f;
 	ss->color.registers[0] =
 	ss->color.registers[1] =
 	ss->color.registers[2] =
