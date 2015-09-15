@@ -794,26 +794,25 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
 
       // bind the texture
       pStage->texture.image->Bind();
+      
+      glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
+      glUniform1f(glslProgramDef_t::uniform_alphaTestThreshold, regs[pStage->alphaTestRegister]);
+      glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
 
-      //RB_PrepareStageTexturing(pStage, surf, ac);
-      {
-        glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
-        glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
+      // set texture matrix and texGens      
 
-        // set texture matrix and texGens      
-
-        if (pStage->privatePolygonOffset && !surf->material->TestMaterialFlag(MF_POLYGONOFFSET)) {
-          glEnable(GL_POLYGON_OFFSET_FILL);
-          glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset);
-        }
-
-        if (pStage->texture.hasMatrix) {
-          idVec4 textureMatrix[2];
-          RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-          glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-          glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
-        }
+      if (pStage->privatePolygonOffset && !surf->material->TestMaterialFlag(MF_POLYGONOFFSET)) {
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset);
       }
+
+      if (pStage->texture.hasMatrix) {
+        idVec4 textureMatrix[2];
+        RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
+        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+      }
+      
 
       // draw it
       RB_DrawElementsWithCounters(tri);
@@ -1123,7 +1122,7 @@ static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
 
   GLint success = 0;
   glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &success);
-  if(success = GL_FALSE) {
+  if(success == GL_FALSE) {
     char buffer[1024];
     GLsizei length;
     glGetShaderInfoLog(shaderObject, sizeof(buffer)-1, &length, &buffer[0]);
