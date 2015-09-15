@@ -42,6 +42,10 @@ layout(location = 102) uniform vec4 rpCurrentRenderSize;
 layout(location = 103) uniform vec2 rpClipRange;
 layout(location = 104) uniform int rpDepthBlendMode;
 layout(location = 105) uniform float rpDepthBlendRange;
+layout(location = 106) uniform float rpPomMaxHeight;
+layout(location = 107) uniform int rpShading;
+layout(location = 108) uniform float rpSpecularExp;
+layout(location = 109) uniform float rpSpecularScale;
 
 #define TEXTURE_UNIT_0 24
 #define TEXTURE_UNIT_1 25

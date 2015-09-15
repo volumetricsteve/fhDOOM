@@ -4,6 +4,12 @@
 #include "tr_local.h"
 #include "ImmediateMode.h"
 
+idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
+idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
+idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong?), 1 = Phong");
+idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
+idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
+
 #define MAX_GLPROGS 128
 static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
 
@@ -1647,6 +1653,11 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+
+  glUniform1f(glslProgramDef_t::uniform_pomMaxHeight, r_pomEnabled.GetBool() ? r_pomMaxHeight.GetFloat() : -1);
+  glUniform1i(glslProgramDef_t::uniform_shading, r_shading.GetInteger());
+  glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
+  glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());
 
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes

@@ -978,6 +978,9 @@ extern idCVar r_glCoreProfile;
 extern idCVar r_softParticles;
 extern idCVar r_defaultParticleSoftness;
 
+extern idCVar r_pomMaxHeight;
+extern idCVar r_pomEnabled;
+
 /*
 ====================================================================
 

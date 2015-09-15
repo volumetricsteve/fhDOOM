@@ -270,6 +270,10 @@ typedef struct {
   static const int uniform_clipRange = 103;
   static const int uniform_depthBlendMode = 104;
   static const int uniform_depthBlendRange = 105;
+  static const int uniform_pomMaxHeight = 106;
+  static const int uniform_shading = 107;
+  static const int uniform_specularExp = 108;
+  static const int uniform_specularScale = 109;
 
   char   vertexShaderName[64];
   char   fragmentShaderName[64];

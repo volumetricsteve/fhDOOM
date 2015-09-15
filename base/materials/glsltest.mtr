@@ -21,9 +21,6 @@ textures/particles/glslSmoke
     sort        10    
 
     {
-        depthblendmode auto
-        depthblendrange 32
-
         blend add
         map textures/particles/smokepuff.tga
         vertexColor
@@ -51,6 +48,14 @@ textures/glsltest/heathaze
         shaderMap 0        _currentRender
         shaderMap 1        textures/sfx/vp1.tga   // the normal map for distortion
     }
+}
+
+textures/glsltest/pom
+{        
+    qer_editorimage textures/glsltest/rockfloor
+    bumpmap         textures/glsltest/rockfloor_local
+    diffusemap      textures/glsltest/rockfloor
+    specularmap     textures/glsltest/rockfloor_s
 }
 
 textures/glsltest/breakyglass3_arb
