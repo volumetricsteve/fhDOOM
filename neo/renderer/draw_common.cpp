@@ -270,6 +270,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
       if ( backEnd.glslEnabled && pStage->glslStage && pStage->glslStage->program && backEnd.glslReplaceArb2 && !r_skipGlsl.GetBool()) {
         RB_GLSL_RenderSpecialShaderStage(regs, pStage, pStage->glslStage, tri);
       } else if ( !backEnd.glslEnabled || (r_glslEnableArb2.GetBool() && !r_glCoreProfile.GetBool()) ) {
+        GL_UseProgram(nullptr);
         RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
       }      
     }
