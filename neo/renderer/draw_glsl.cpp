@@ -423,12 +423,10 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
 
   // the light frustum bounding planes aren't in the depth buffer, so use depthfunc_less instead
   // of depthfunc_equal
-  if (!r_ignore2.GetBool()) {
-    GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
-    GL_Cull(CT_BACK_SIDED);
-    RB_RenderDrawSurfChainWithFunction(&ds, RB_GLSL_BasicFog);
-    GL_Cull(CT_FRONT_SIDED);
-  }
+  GL_State(GLS_DEPTHMASK | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_LESS);
+  GL_Cull(CT_BACK_SIDED);
+  RB_RenderDrawSurfChainWithFunction(&ds, RB_GLSL_BasicFog);
+  GL_Cull(CT_FRONT_SIDED);
 
   GL_SelectTexture(1);
   globalImages->BindNull();

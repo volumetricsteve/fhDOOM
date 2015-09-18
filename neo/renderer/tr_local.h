@@ -971,15 +971,11 @@ extern idCVar r_materialOverride;		// override all materials
 extern idCVar r_debugRenderToTexture;
 
 extern idCVar r_glslEnabled;
-extern idCVar r_glslEnableArb2;
 extern idCVar r_glslReplaceArb2;
 extern idCVar r_glCoreProfile;
 
 extern idCVar r_softParticles;
 extern idCVar r_defaultParticleSoftness;
-
-extern idCVar r_pomMaxHeight;
-extern idCVar r_pomEnabled;
 
 /*
 ====================================================================

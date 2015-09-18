@@ -267,9 +267,16 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			if ( r_skipNewAmbient.GetBool() )
 				continue;	
 
-      if ( backEnd.glslEnabled && pStage->glslStage && pStage->glslStage->program && backEnd.glslReplaceArb2 && !r_skipGlsl.GetBool()) {
+      if ( backEnd.glslEnabled ) {
+        if (r_skipGlsl.GetBool())
+          continue;
+
+        if (!pStage->glslStage || !pStage->glslStage->program)
+          continue;
+    
         RB_GLSL_RenderSpecialShaderStage(regs, pStage, pStage->glslStage, tri);
-      } else if ( !backEnd.glslEnabled || (r_glslEnableArb2.GetBool() && !r_glCoreProfile.GetBool()) ) {
+      } 
+      else {
         GL_UseProgram(nullptr);
         RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
       }      
@@ -283,8 +290,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
         continue;
 
       RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
-    }
-    
+    }    
     else {
 
       if(backEnd.glslEnabled)
