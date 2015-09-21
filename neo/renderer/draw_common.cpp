@@ -31,9 +31,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "ImmediateMode.h"
 
-static const char* const shadowVertexShaderName = "shadow.vp";
-static const char* const shadowFragmentShaderName = "shadow.fp";
-
 /*
 =====================
 RB_BakeTextureMatrixIntoTexgen

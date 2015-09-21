@@ -75,6 +75,8 @@ static void replaceBuildinVertexShader(const idStr& name, glslShaderStage_t& gls
     strcpy(glslShaderStage.vertexShaderName, "heathazeWithMask.vp");
   else if (!name.Icmp("heathazeWithMaskAndVertex.vfp"))
     strcpy(glslShaderStage.vertexShaderName, "heathazeWithMask.vp");
+  else if (!name.Icmp("colorProcess.vfp"))
+    strcpy(glslShaderStage.vertexShaderName, "colorProcess.vp");
   else
     common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
 }
@@ -86,6 +88,8 @@ static void replaceBuildinFragmentShader(const idStr& name, glslShaderStage_t& g
     strcpy(glslShaderStage.fragmentShaderName, "heathazeWithMaskAndVertex.fp");
   else if (!name.Icmp("heathazeWithMaskAndVertex.vfp"))
     strcpy(glslShaderStage.fragmentShaderName, "heathazeWithMaskAndVertex.fp");
+  else if (!name.Icmp("colorProcess.vfp"))
+    strcpy(glslShaderStage.fragmentShaderName, "colorProcess.fp");
   else
     common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
 }

@@ -27,3 +27,5 @@ build2
 /base/doom.qe4
 *.proc
 /base/savegames/*.save
+/base/screenshots
+/base/savegames
