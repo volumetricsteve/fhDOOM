@@ -47,9 +47,9 @@ typedef struct entity_s {
 } entity_t;
 
 void		ParseEpair(idDict *dict);
-const char *ValueForKey(entity_t *ent, const char *key);
-int			GetNumKeys(entity_t *ent);
-const char *GetKeyString(entity_t *ent, int iIndex);
+const char *ValueForKey(const entity_t *ent, const char *key);
+int			GetNumKeys(const entity_t *ent);
+const char *GetKeyString(const entity_t *ent, int iIndex);
 void		SetKeyValue (entity_t *ent, const char *key, const char *value, bool trackAngles = true);
 void		DeleteKey (entity_t *ent, const char *key);
 float		FloatForKey (entity_t *ent, const char *key);

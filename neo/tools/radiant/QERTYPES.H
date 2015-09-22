@@ -233,6 +233,8 @@ typedef struct {
 	brush_t *	pSymbiot;
 	bool		bSelected;
 	bool		bOverlay;
+  idVec3* wireframeVerts;
+  int     wireframeVertNum;
 
 	idDict *	epairs;
 	// cast this one to an IPluginTexdef if you are using it

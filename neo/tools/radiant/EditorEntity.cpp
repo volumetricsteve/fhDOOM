@@ -38,7 +38,7 @@ static int g_entityId = 1;
 
 extern void Brush_Resize(brush_t *b, idVec3 vMin, idVec3 vMax);
 
-int	GetNumKeys(entity_t *ent)
+int	GetNumKeys(const entity_t *ent)
 {
 //	int iCount = 0;
 //	for (epair_t* ep=ent->epairs ; ep ; ep=ep->next)
@@ -50,7 +50,7 @@ int	GetNumKeys(entity_t *ent)
 	return iCount;
 }
 
-const char *GetKeyString(entity_t *ent, int iIndex)
+const char *GetKeyString(const entity_t *ent, int iIndex)
 {
 //	for (epair_t* ep=ent->epairs ; ep ; ep=ep->next)
 //	{
@@ -75,7 +75,7 @@ const char *GetKeyString(entity_t *ent, int iIndex)
  =======================================================================================================================
  =======================================================================================================================
  */
-const char *ValueForKey(entity_t *ent, const char *key) {
+const char *ValueForKey(const entity_t *ent, const char *key) {
 	return ent->epairs.GetString(key);
 }
 

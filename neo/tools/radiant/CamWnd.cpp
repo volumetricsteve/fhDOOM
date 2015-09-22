@@ -980,7 +980,7 @@ void CCamWnd::Cam_Draw() {
   if(renderMode) {
     for (brush = pList->next; brush != pList; brush = brush->next) {
       if (brush->pPatch /*|| brush->modelHandle > 0*/) {
-        DrawPatchMeshWireframe(brush->pPatch, true, idVec3(1,1,1));
+        DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
       }
     }
   }

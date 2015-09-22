@@ -632,48 +632,49 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 	}
 
 	if (!(g_qeglobals.d_savedinfo.exclude & EXCLUDE_ANGLES)) {
-		// draw the angle pointer
-    //FIXME(johl): Where do those lines show up? do we need them?
-		float a = FloatForKey(b->owner, "angle");
-		if (a) {
-			float s = sin( DEG2RAD( a ) );
-			float c = cos( DEG2RAD( a ) );
+		// draw the angle pointer (e.g. little arrow o na speaker entity)    
+		float angle = FloatForKey(b->owner, "angle");
+		if (angle) {
+			float s = sin( DEG2RAD( angle ) );
+			float c = cos( DEG2RAD( angle ) );
 
-			idVec3 mid = (b->mins + b->maxs) / 2.0f;
+			const idVec3 delta4 = idVec3(c * 4, s * 4, s * 4);
+      const idVec3 delta8 = idVec3(c * 8, s * 8, s * 8);
 
-      fhImmediateMode im;
-      im.Color3fv(color.ToFloatPtr());
-			im.Begin(GL_LINES);
-			im.Vertex3fv(mid.ToFloatPtr());
-			mid[0] += c * 8;
-			mid[1] += s * 8;
-			mid[2] += s * 8;
-			im.Vertex3fv(mid.ToFloatPtr());
-      im.Vertex3fv(mid.ToFloatPtr());
-			mid[0] -= c * 4;
-			mid[1] -= s * 4;
-			mid[2] -= s * 4;
-			mid[0] -= s * 4;
-			mid[1] += c * 4;
-			mid[2] += c * 4;
-			im.Vertex3fv(mid.ToFloatPtr());
-      im.Vertex3fv(mid.ToFloatPtr());
-			mid[0] += c * 4;
-			mid[1] += s * 4;
-			mid[2] += s * 4;
-			mid[0] += s * 4;
-			mid[1] -= c * 4;
-			mid[2] -= c * 4;
-			im.Vertex3fv(mid.ToFloatPtr());
-      im.Vertex3fv(mid.ToFloatPtr());
-			mid[0] -= c * 4;
-			mid[1] -= s * 4;
-			mid[2] -= s * 4;
-			mid[0] += s * 4;
-			mid[1] -= c * 4;
-			mid[2] -= c * 4;
-			im.Vertex3fv(mid.ToFloatPtr());
-			im.End();
+      idVec3 mid = (b->mins + b->maxs) / 2.0f;     
+
+      idVec3 prev = mid;      
+      mid[0] += c * 8;
+      mid[1] += s * 8;
+      mid[2] += s * 8;      
+      g_qeglobals.lineBuffer.Add(prev,mid,color);      
+      
+      prev = mid;
+      mid[0] -= c * 4;
+      mid[1] -= s * 4;
+      mid[2] -= s * 4;
+      mid[0] -= s * 4;
+      mid[1] += c * 4;
+      mid[2] += c * 4;      
+      g_qeglobals.lineBuffer.Add(prev,mid,color);      
+      
+      prev = mid;
+      mid[0] += c * 4;
+      mid[1] += s * 4;
+      mid[2] += s * 4;
+      mid[0] += s * 4;
+      mid[1] -= c * 4;
+      mid[2] -= c * 4;      
+      g_qeglobals.lineBuffer.Add(prev,mid,color);      
+
+      prev = mid;
+      mid[0] -= c * 4;
+      mid[1] -= s * 4;
+      mid[2] -= s * 4;
+      mid[0] += s * 4;
+      mid[1] -= c * 4;
+      mid[2] -= c * 4;      
+      g_qeglobals.lineBuffer.Add(prev,mid,color);      
 		}
 	}
 
@@ -3961,7 +3962,10 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 
 		Entity_GetRotationMatrixAngles( b->owner, axis, angles );
 
-    idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_STATICMODEL];
+    assert(b);
+    assert(b->owner);
+    assert(b->owner->eclass);
+    idVec3 color =  b->owner->eclass->color; //g_qeglobals.d_savedinfo.colors[COLOR_STATICMODEL];
     if (bSelected) {
       color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
     }
@@ -4606,12 +4610,7 @@ void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) {
 Brush_DrawXY
 ================
 */
-void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color) {
-	face_t		*face;
-	int			order;
-	idWinding	*w;
-	int			i;
-
+void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color) {	
 	if ( b->hiddenBrush ) {
 		return;
 	}	
@@ -4665,25 +4664,19 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 			idVec3 vBottom = vTop;
 			vBottom[2] = b->mins[2];
 
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      fhImmediateMode im;
-      im.Color3fv(color.ToFloatPtr());
-			im.Begin(GL_TRIANGLE_FAN);
-			im.Vertex3fv(vTop.ToFloatPtr());
-			im.Vertex3fv(vCorners[0].ToFloatPtr());
-			im.Vertex3fv(vCorners[1].ToFloatPtr());
-			im.Vertex3fv(vCorners[2].ToFloatPtr());
-			im.Vertex3fv(vCorners[3].ToFloatPtr());
-			im.Vertex3fv(vCorners[0].ToFloatPtr());
-			im.End();
-			im.Begin(GL_TRIANGLE_FAN);
-			im.Vertex3fv(vBottom.ToFloatPtr());
-			im.Vertex3fv(vCorners[0].ToFloatPtr());
-			im.Vertex3fv(vCorners[3].ToFloatPtr());
-			im.Vertex3fv(vCorners[2].ToFloatPtr());
-			im.Vertex3fv(vCorners[1].ToFloatPtr());
-			im.Vertex3fv(vCorners[0].ToFloatPtr());
-			im.End();
+      g_qeglobals.lineBuffer.Add(vTop, vCorners[0], color);
+      g_qeglobals.lineBuffer.Add(vTop, vCorners[1], color);
+      g_qeglobals.lineBuffer.Add(vTop, vCorners[2], color);
+      g_qeglobals.lineBuffer.Add(vTop, vCorners[3], color);
+      g_qeglobals.lineBuffer.Add(vBottom, vCorners[0], color);
+      g_qeglobals.lineBuffer.Add(vBottom, vCorners[1], color);
+      g_qeglobals.lineBuffer.Add(vBottom, vCorners[2], color);
+      g_qeglobals.lineBuffer.Add(vBottom, vCorners[3], color);
+      g_qeglobals.lineBuffer.Add(vCorners[0], vCorners[1], color);
+      g_qeglobals.lineBuffer.Add(vCorners[1], vCorners[2], color);
+      g_qeglobals.lineBuffer.Add(vCorners[2], vCorners[3], color);
+      g_qeglobals.lineBuffer.Add(vCorners[3], vCorners[0], color);
+
 			DrawBrushEntityName(b, color);
 			DrawProjectedLight(b, bSelected, false);
 			return;
@@ -4709,9 +4702,8 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 		return;
 	}
 
-  fhImmediateMode im;
-  im.Color3fv(color.ToFloatPtr());
-  im.Begin(GL_LINES);
+  const face_t* face = nullptr;
+  int order;
 	for (face = b->brush_faces, order = 0; face; face = face->next, order++) {
 		// only draw polygons facing in a direction we care about
 		if (nViewType == XY) {
@@ -4730,7 +4722,7 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 			}
 		}
 
-		w = face->face_winding;
+		const idWinding	*w = face->face_winding;
 		if (!w) {
 			continue;
 		}
@@ -4740,17 +4732,14 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 		// draw the polygon
 		//
 		
-		for (i = 0; i < w->GetNumPoints(); i++) {
-			im.Vertex3fv( (*w)[i].ToFloatPtr() );
-
-      if(i+1 < w->GetNumPoints())
-        im.Vertex3fv( (*w)[i+1].ToFloatPtr() );
+		for (int i = 0; i < w->GetNumPoints(); i++) {            
+      if (i + 1 < w->GetNumPoints())
+        g_qeglobals.lineBuffer.Add( (*w)[i].ToVec3(), (*w)[i + 1].ToVec3(), color);
       else
-        im.Vertex3fv( (*w)[0].ToFloatPtr() );
+        g_qeglobals.lineBuffer.Add( (*w)[i].ToVec3(), (*w)[0].ToVec3(), color);
 		}
 		
 	}
-  im.End();
 
 	DrawBrushEntityName(b, color);
 }

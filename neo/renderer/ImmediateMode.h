@@ -2,6 +2,19 @@
 
 class idDrawVert;
 
+struct fhSimpleVert {
+  idVec3 xyz;
+  idVec2 st;
+  byte color[4];
+
+  static const int xyzOffset = 0;
+  static const int texcoordOffset = 12;
+  static const int colorOffset = 20;
+};
+
+static_assert(sizeof(fhSimpleVert) == 24, "unexpected size of simple vertex, due to padding?");
+
+
 class fhImmediateMode
 {
 public:
@@ -46,7 +59,19 @@ private:
   static int drawCallVertexSize;
 };
 
-class fhQuadStrip
+class fhLineBuffer
 {
+public:
+  fhLineBuffer();
+  ~fhLineBuffer();
 
+  void Add(idVec3 from, idVec3 to, idVec4 color);
+  void Add(idVec3 from, idVec3 to, idVec3 color);
+  void Clear();
+  void Commit();
+
+private:  
+  int verticesAllocated;
+  int verticesUsed;
+  fhSimpleVert* vertices;
 };

@@ -52,6 +52,8 @@ patchMesh_t * MakeNewPatch( int width,int height ) {
 	pm->width = width;
 	pm->height = height;
 	pm->verts = reinterpret_cast< idDrawVert*>(Mem_ClearedAlloc(sizeof(idDrawVert) * width * height));
+  pm->wireframeVerts = nullptr;
+  pm->wireframeVertNum = 0;
 	//pm->ctrl = reinterpret_cast<idDrawVert*>(Mem_ClearedAlloc(sizeof(idDrawVert) * width * height));
 	//pm->ctrl = &pm->verts;
 	return pm;
@@ -780,6 +782,11 @@ void Patch_MeshNormals( patchMesh_t *in ) {
 
 void Patch_MakeDirty( patchMesh_t *p ) {
 	assert(p);
+  if(p->wireframeVerts) {
+    delete[] p->wireframeVerts;
+    p->wireframeVerts = nullptr;
+    p->wireframeVertNum = 0;
+  }
 }
 
 
@@ -934,6 +941,7 @@ brush_t * AddBrushForPatch( patchMesh_t *pm,bool bLinkToWorld ) {
 	pm->pSymbiot = b;
 	pm->bSelected = false;
 	pm->bOverlay = false;
+  Patch_MakeDirty(pm);
 
 	if ( bLinkToWorld ) {
 		Brush_AddToList(b, &active_brushes);
@@ -2341,46 +2349,60 @@ DrawPatchMesh
 =================
 */
 //FIXME: this routine needs to be reorganized.. should be about 1/4 the size and complexity
-void DrawPatchMeshWireframe(patchMesh_t *pm, bool bShade, const idVec3& color) {
-
-  int		nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
-
-  //FIXME: finish consolidating all the patch crap
-  idSurface_Patch	cp(pm->width * 6, pm->height * 6);
-  cp.SetSize(pm->width, pm->height);
-  for (int i = 0; i < pm->width; i++) {
-    for (int j = 0; j < pm->height; j++) {
-      cp[j * cp.GetWidth() + i].xyz = pm->ctrl(i, j).xyz;
-      cp[j * cp.GetWidth() + i].st = pm->ctrl(i, j).st;
+void DrawPatchMeshWireframe(patchMesh_t *pm, const idVec3& color) {
+  if(!pm->wireframeVerts)
+  {
+    //FIXME: finish consolidating all the patch crap
+    idSurface_Patch	cp(pm->width * 6, pm->height * 6);
+    cp.SetSize(pm->width, pm->height);
+    for (int i = 0; i < pm->width; i++) {
+      for (int j = 0; j < pm->height; j++) {
+        cp[j * cp.GetWidth() + i].xyz = pm->ctrl(i, j).xyz;
+        cp[j * cp.GetWidth() + i].st = pm->ctrl(i, j).st;
+      }
     }
-  }
 
-  if (pm->explicitSubdivisions) {
-    cp.SubdivideExplicit(pm->horzSubdivisions, pm->vertSubdivisions, true);
-  }
-  else {
-    cp.Subdivide(DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true);
-  }
-
-  const int	width = cp.GetWidth();
-  const int	height = cp.GetHeight();
-
-  fhImmediateMode im;
-  
-//  glDisable(GL_DEPTH_TEST);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  im.Color3fv(color.ToFloatPtr());
-  for (int i = 0; i < width - 1; i++) {
-    im.Begin(GL_QUAD_STRIP);
-    for (int j = 0; j < height; j++) {
-      const int v1 = j * width + i;
-      const int v2 = v1 + 1;
-      im.Vertex3fv(cp[v2].xyz.ToFloatPtr());
-      im.Vertex3fv(cp[v1].xyz.ToFloatPtr());
+    if (pm->explicitSubdivisions) {
+      cp.SubdivideExplicit(pm->horzSubdivisions, pm->vertSubdivisions, true);
     }
-    im.End();
+    else {
+      cp.Subdivide(DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true);
+    }
+
+    const int	width = cp.GetWidth();
+    const int	height = cp.GetHeight();
+
+    pm->wireframeVerts = new idVec3[width * height * 6];
+
+    int n = 0;
+    for (int i = 0; i < width - 1; i++) {
+      idVec3 p1, p2;
+
+      for (int j = 0; j < height; j++) {
+        const int v1 = j * width + i;
+        const int v2 = v1 + 1;
+
+        pm->wireframeVerts[n++] = cp[v2].xyz;
+        pm->wireframeVerts[n++] = cp[v1].xyz;
+        
+        if (j > 0) {
+          pm->wireframeVerts[n++] = p1;
+          pm->wireframeVerts[n++] = cp[v1].xyz;
+
+          pm->wireframeVerts[n++] = p2;
+          pm->wireframeVerts[n++] = cp[v2].xyz;          
+        }
+
+        p1 = cp[v1].xyz;
+        p2 = cp[v2].xyz;
+      }
+    }
+    pm->wireframeVertNum = n;
   }
-//  glEnable(GL_DEPTH_TEST);  
+
+  for(int i=0; (i+1)<pm->wireframeVertNum; i += 2) {
+    g_qeglobals.lineBuffer.Add(pm->wireframeVerts[i], pm->wireframeVerts[i+1], color);      
+  }
 }
 
 
@@ -2500,7 +2522,7 @@ void Patch_DrawXY( patchMesh_t *pm ) {
 	if ( pm->bSelected )
     color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
 
-	DrawPatchMeshWireframe(pm, false, color);
+	DrawPatchMeshWireframe(pm, color);
   DrawPatchMeshHandles(pm);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	
 }
@@ -2521,7 +2543,7 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
 	if ( g_bPatchWireFrame || nDrawMode == cd_wire ) {
 		glDisable(GL_CULL_FACE);
 		globalImages->BindNull();
-		DrawPatchMeshWireframe(pm, true, color);
+		DrawPatchMeshWireframe(pm, color);
 		glEnable(GL_CULL_FACE);
 	} else {
 		glEnable(GL_CULL_FACE);
@@ -2544,7 +2566,7 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
       glEnable(GL_BLEND);
       DrawPatchMeshSolid(pm, idVec4(color.x, color.y, color.z, 0.25));
       glDisable(GL_BLEND);
-      DrawPatchMeshWireframe(pm, true, idVec3(1,1,1));
+      DrawPatchMeshWireframe(pm, idVec3(1,1,1));
       DrawPatchMeshHandles(pm);
     }
 
@@ -2691,6 +2713,8 @@ Patch_Delete
 ==================
 */
 void Patch_Delete( patchMesh_t *p ) {
+  Patch_MakeDirty(p);
+
 	if ( p->pSymbiot ) {
 		p->pSymbiot->pPatch = NULL;
 	}

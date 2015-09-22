@@ -7,18 +7,6 @@
 namespace {
   const int drawVertsCapacity = (1 << 14);
 
-  struct fhSimpleVert {    
-    idVec3 xyz;
-    idVec2 st;
-    byte color[4];
-
-    static const int xyzOffset = 0;
-    static const int texcoordOffset = 12;
-    static const int colorOffset = 20;
-  };
-
-  static_assert(sizeof(fhSimpleVert) == 24, "unexpected size of simple vertex, due to padding?");
-
   fhSimpleVert drawVerts[drawVertsCapacity];
   unsigned short lineIndices[drawVertsCapacity * 2];
   unsigned short sphereIndices[drawVertsCapacity * 2];
@@ -393,4 +381,103 @@ void fhImmediateMode::AddTrianglesFromPolygon(fhImmediateMode& im, const idVec3*
     }
     im.Vertex3fv(xyz[i].ToFloatPtr());    
   }
+}
+
+
+
+fhLineBuffer::fhLineBuffer()
+: verticesUsed(0)
+, verticesAllocated(4096)
+{
+  vertices = new fhSimpleVert[verticesAllocated];
+}
+
+fhLineBuffer::~fhLineBuffer()
+{
+  delete[] vertices;
+}
+
+void fhLineBuffer::Add(idVec3 from, idVec3 to, idVec3 color)
+{
+  Add(from, to, idVec4(color.x, color.y, color.z, 1.0f));
+}
+
+void fhLineBuffer::Add(idVec3 from, idVec3 to, idVec4 color)
+{
+  if(verticesAllocated - verticesUsed < 2)
+  {
+    fhSimpleVert* n = new fhSimpleVert[verticesUsed * 2];
+    memcpy(n, vertices, sizeof(vertices[0]) * verticesUsed);
+    delete[] vertices;
+    vertices = n;
+    verticesAllocated = verticesUsed * 2;
+  }
+
+  byte colorBytes[4];
+  colorBytes[0] = static_cast<byte>(color.x * 255.0f);
+  colorBytes[1] = static_cast<byte>(color.y * 255.0f);
+  colorBytes[2] = static_cast<byte>(color.z * 255.0f);
+  colorBytes[3] = static_cast<byte>(color.w * 255.0f);
+
+  fhSimpleVert& fromVert = vertices[verticesUsed + 0];
+  fhSimpleVert& toVert = vertices[verticesUsed + 1];
+
+  memcpy(fromVert.color, colorBytes, sizeof(colorBytes));
+  memcpy(toVert.color, colorBytes, sizeof(colorBytes));
+  fromVert.xyz = from;
+  toVert.xyz = to;
+
+  verticesUsed += 2;
+}
+
+void fhLineBuffer::Commit()
+{
+  if(verticesUsed > 0)
+  {
+    GL_UseProgram(vertexColorProgram);
+
+    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+    glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
+    glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+
+    int verticesCommitted = 0;
+    while(verticesCommitted < verticesUsed)
+    {
+      static const int maxVerticesPerCommit = (sizeof(lineIndices)/sizeof(lineIndices[0]))/2;
+
+      int verticesToCommit = min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
+
+      auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
+      int offset = vertexCache.Bind(vert);
+
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
+
+      glDrawElements(GL_LINES,
+        verticesToCommit,
+        GL_UNSIGNED_SHORT,
+        lineIndices);
+
+      verticesCommitted += verticesToCommit;
+    }
+
+
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  }
+
+  verticesUsed = 0;
+}
+
+void fhLineBuffer::Clear()
+{
+  verticesUsed = 0;
 }

@@ -45,6 +45,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "afxres.h"
 #include "../../sys/win32/rc/Radiant_resource.h"       // main symbols
 #include "../../sys/win32/win_local.h"
+#include "../../renderer/ImmediateMode.h"
 
 #include "qedefs.h"
 
@@ -199,6 +200,8 @@ typedef struct
 	// the editor has its own soundWorld and renderWorld, completely distinct from the game
 	idRenderWorld	*rw;
 	idSoundWorld	*sw;
+
+  fhLineBuffer lineBuffer;
 } QEGlobals_t;
 
 
