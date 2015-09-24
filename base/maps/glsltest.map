@@ -525,6 +525,7 @@ Version 2
 "light_target" "0 0 -256"
 "light_up" "0 -128 0"
 "light_right" "-128 0 0"
+"target" "target_setinfluence_1"
 }
 // entity 6
 {

@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "splines.h"
+#include "QE3.H"
 #include "../../renderer/ImmediateMode.h"
 
 void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
@@ -73,7 +74,7 @@ void glBox(idVec4 &color, idVec3 &point, float size) {
 	maxs[0] += size;
 	maxs[1] -= size;
 	maxs[2] += size;
-
+#if 0
   fhImmediateMode im;
   im.Color4fv(color.ToFloatPtr());
   im.Begin(GL_LINE_LOOP);
@@ -99,38 +100,26 @@ void glBox(idVec4 &color, idVec3 &point, float size) {
   im.Vertex3f(maxs[0],maxs[1],maxs[2]);
   im.Vertex3f(maxs[0],maxs[1],mins[2]);
   im.End();
+#else
+  idVec3 points[8];
+  idBounds(mins, maxs).ToPoints(points);
 
-#if 0
-	idVec4	saveColor;
+  g_qeglobals.lineBuffer.Add(points[0], points[1], color);
+  g_qeglobals.lineBuffer.Add(points[1], points[2], color);
+  g_qeglobals.lineBuffer.Add(points[2], points[3], color);
+  g_qeglobals.lineBuffer.Add(points[3], points[0], color);
 
-	glGetFloatv(GL_CURRENT_COLOR, saveColor.ToFloatPtr());
-	glColor3fv( color.ToFloatPtr() );
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(mins[0],mins[1],mins[2]);
-	glVertex3f(maxs[0],mins[1],mins[2]);
-	glVertex3f(maxs[0],maxs[1],mins[2]);
-	glVertex3f(mins[0],maxs[1],mins[2]);
-	glEnd();
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(mins[0],mins[1],maxs[2]);
-	glVertex3f(maxs[0],mins[1],maxs[2]);
-	glVertex3f(maxs[0],maxs[1],maxs[2]);
-	glVertex3f(mins[0],maxs[1],maxs[2]);
-	glEnd();
+  g_qeglobals.lineBuffer.Add(points[4], points[5], color);
+  g_qeglobals.lineBuffer.Add(points[5], points[6], color);
+  g_qeglobals.lineBuffer.Add(points[6], points[7], color);
+  g_qeglobals.lineBuffer.Add(points[7], points[4], color);
 
-	glBegin(GL_LINES);
-  	glVertex3f(mins[0],mins[1],mins[2]);
-	glVertex3f(mins[0],mins[1],maxs[2]);
-	glVertex3f(mins[0],maxs[1],maxs[2]);
-	glVertex3f(mins[0],maxs[1],mins[2]);
-	glVertex3f(maxs[0],mins[1],mins[2]);
-	glVertex3f(maxs[0],mins[1],maxs[2]);
-	glVertex3f(maxs[0],maxs[1],maxs[2]);
-	glVertex3f(maxs[0],maxs[1],mins[2]);
-	glEnd();
-	glColor4fv(saveColor.ToFloatPtr());
+  g_qeglobals.lineBuffer.Add(points[0], points[4], color);
+  g_qeglobals.lineBuffer.Add(points[1], points[5], color);
+  g_qeglobals.lineBuffer.Add(points[2], points[6], color);
+  g_qeglobals.lineBuffer.Add(points[3], points[7], color);
+
 #endif
-
 }
 
 /*

@@ -179,8 +179,10 @@ brush_t *Brush_Alloc( void ) {
 	b->ownerId = 0;
 	b->numberId = 0;
 	b->modelHandle = NULL;
+  b->animSnapshotModel = NULL;
 	b->forceVisibile = false;
 	b->forceWireFrame = false;
+  
 	return b;
 }
 
@@ -2316,6 +2318,11 @@ Brush_Free
 void Brush_Free(brush_t *b, bool bRemoveNode) {
 	face_t	*f, *next;
 
+  if ( b->animSnapshotModel ) {
+    delete b->animSnapshotModel;
+    b->animSnapshotModel = nullptr;
+  }
+
 	// free the patch if it's there
 	if ( b->pPatch ) {
 		Patch_Delete(b->pPatch);
@@ -3887,14 +3894,75 @@ void DrawLight(const brush_t *b, bool bSelected) {
 	DrawProjectedLight(b, bSelected, true);
 }
 
+editorModel_t Brush_GetEditorModel(const brush_t* b) {
+
+  editorModel_t ret;  
+  ret.drawBounds = false;
+  ret.model = b->modelHandle;  
+
+  if (ret.model == NULL) {
+    ret.model = b->owner->eclass->entityModel;
+  } 
+  if (ret.model == NULL) {
+    ret.model = renderModelManager->DefaultModel();
+  }
+  assert(ret.model);
+  ret.bounds = ret.model->Bounds();
+
+  if(ret.model->IsDynamicModel() != DM_STATIC) {    
+    ret.drawBounds = true;
+
+    if (dynamic_cast<idRenderModelMD5 *>(ret.model)) {
+      if (!b->animSnapshotModel) {
+        const char *classname = ValueForKey(b->owner, "classname");
+        if (stricmp(classname, "func_static") == 0) {
+          classname = ValueForKey(b->owner, "animclass");
+        }
+        const char *anim = ValueForKey(b->owner, "anim");
+        int frame = IntForKey(b->owner, "frame") + 1;
+        if (frame < 1) {
+          frame = 1;
+        }
+        if (!anim || !anim[0]) {
+          anim = "idle";
+        }
+        //common->Printf("instantiate dynamic model '%s'\n", classname);
+        b->animSnapshotModel = gameEdit->ANIM_CreateMeshForAnim(ret.model, classname, anim, frame, false);
+        if(!b->animSnapshotModel) {
+          common->Warning("Unknown animation '%s' for classname '%s' (entity %s)", anim, classname, ValueForKey(b->owner, "name"));
+
+          idStr stubName = classname;
+          stubName.Append("_");
+          stubName.Append(anim);
+
+          idRenderModelStatic *stub = new idRenderModelStatic;
+          stub->InitEmpty(stubName);
+          stub->MakeDefaultModel();
+          stub->SetLevelLoadReferenced(true);
+          b->animSnapshotModel = stub;
+        }
+      }
+      
+      assert(ret.model);      
+      ret.model = b->animSnapshotModel;
+      ret.drawBounds = false;
+    }
+    else if (dynamic_cast<idRenderModelPrt*>(ret.model) || dynamic_cast<idRenderModelLiquid*>(ret.model)) {
+      ret.bounds.Zero();
+      ret.bounds.ExpandSelf(12.0f);
+    }
+  }
+
+  assert(ret.model);
+  return ret;
+}
+
 /*
 ================
 Brush_DrawModel
 ================
 */
 void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
-	idMat3 axis;
-	idAngles angles;
 	int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
 	if ( camera && g_PrefsDlg.m_nEntityShowState != ENTITY_WIREFRAME && nDrawMode != cd_wire ) {
@@ -3903,6 +3971,9 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	else {
 		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 	}
+#if 0
+  idMat3 axis;
+  idAngles angles;
 
 	idRenderModel *model = b->modelHandle;
 	if ( model == NULL ) {
@@ -3928,7 +3999,11 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 				if ( !anim || !anim[ 0 ] ) {
 					anim = "idle";
 				}
+        common->Printf("instantiate dynamic model '%s'\n", classname);
 				model2 = gameEdit->ANIM_CreateMeshForAnim( model, classname, anim, frame, false );
+        if(!model2) {
+          int foo = 0;
+        }
 			} else if ( dynamic_cast<idRenderModelPrt*>( model ) || dynamic_cast<idRenderModelLiquid*>( model ) ) {
 				fixedBounds = true;
 			}
@@ -3990,6 +4065,40 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 			model2 = NULL;
 		}
 	}
+  else {
+    common->Printf("no model!?\n");
+  }
+#else
+  editorModel_t editorModel = Brush_GetEditorModel(b);
+  assert(editorModel.model);
+
+  const idVec3 color = bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : b->owner->eclass->color;
+
+  if(editorModel.drawBounds) {
+    idVec3 center = editorModel.bounds.GetCenter();
+    glBox(idVec4(color.x, color.y, color.z, 1.0f), b->owner->origin + center, editorModel.bounds.GetRadius(center));
+  }
+  
+  idMat3 axis;
+  idAngles angles;
+  Entity_GetRotationMatrixAngles( b->owner, axis, angles );
+  DrawRenderModel(editorModel.model, b->owner->origin, axis, camera, color);
+
+  if (bSelected && camera)
+  {
+    //draw white triangle outlines
+    globalImages->BindNull();
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glPolygonOffset(1.0f, 3.0f);
+    DrawRenderModel(editorModel.model, b->owner->origin, axis, false, idVec3(1, 1, 1));
+    glEnable(GL_DEPTH_TEST);
+  }
+
+
+#endif
 
 	if ( bSelected && camera ) {
 		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );

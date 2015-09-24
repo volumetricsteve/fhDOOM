@@ -28,6 +28,12 @@ If you have questions concerning this license or the applicable additional terms
 
 // brush.h
 
+struct editorModel_t {
+  idRenderModel* model;
+  idBounds bounds;
+  bool drawBounds;
+};
+
 brush_t *	Brush_Alloc();
 void		Brush_Free (brush_t *b, bool bRemoveNode = true);
 int			Brush_MemorySize(brush_t *b);
@@ -65,6 +71,7 @@ void		Brush_SetEpair(brush_t *b, const char *pKey, const char *pValue);
 const char *Brush_GetKeyValue(brush_t *b, const char *pKey);
 void		Brush_RebuildBrush(brush_t *b, idVec3 vMins, idVec3 vMaxs, bool patch = true);
 void		Brush_GetBounds( brush_t *b, idBounds &bo );
+editorModel_t Brush_GetEditorModel(const brush_t* b);
 
 face_t *	Face_Alloc( void );
 void		Face_Free( face_t *f );

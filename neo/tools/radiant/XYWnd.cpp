@@ -164,6 +164,26 @@ CPtrArray			dragPoints;
 static CDragPoint	*activeDrag = NULL;
 static bool			activeDragging = false;
 
+static bool CullBrush(const brush_t* brush, const idBounds& viewBounds) {
+  if (brush->forceVisibile)
+    return false;
+
+  if (brush->owner->eclass->nShowFlags & (ECLASS_LIGHT | ECLASS_PROJECTEDLIGHT))
+    return false;
+
+  if (idBounds(brush->mins, brush->maxs).IntersectsBounds(viewBounds))
+    return false;
+
+  editorModel_t model = Brush_GetEditorModel(brush);
+  if ( model.bounds.Translate(brush->owner->origin).IntersectsBounds(viewBounds) )
+    return false;
+
+  if ( model.model->Bounds().Translate(brush->owner->origin).IntersectsBounds(viewBounds) )
+    return false;
+
+  return true;
+}
+
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -3268,11 +3288,10 @@ void CXYWnd::XY_Draw() {
 	entity_t* e = world_entity;
   
 	for ( brush_t* brush = active_brushes.next; brush != &active_brushes; brush = brush->next ) {
-		if ( brush->forceVisibile || ( brush->owner->eclass->nShowFlags & ( ECLASS_LIGHT | ECLASS_PROJECTEDLIGHT ) ) ) {
-      //?
-		} else if (	brush->mins[nDim1] > maxs[0] ||	brush->mins[nDim2] > maxs[1] ||	brush->maxs[nDim1] < mins[0] || brush->maxs[nDim2] < mins[1] ) {
+
+    if( CullBrush(brush, viewBounds) ) {
 			culled++;
-			continue;				// off screen
+			continue;
 		}
 
 		if ( FilterBrush(brush) ) {

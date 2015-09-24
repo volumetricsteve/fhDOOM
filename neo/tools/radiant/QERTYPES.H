@@ -309,6 +309,7 @@ typedef struct brush_s
 	int numberId;         // brush number
 
 	idRenderModel	*modelHandle;
+  mutable idRenderModel *animSnapshotModel;
 
 	// brush primitive only
 	idDict	epairs;

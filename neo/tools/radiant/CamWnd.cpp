@@ -77,8 +77,6 @@ IMPLEMENT_DYNCREATE(CCamWnd, CWnd);
 CCamWnd::CCamWnd() {
 	m_pXYFriend = NULL;
 	memset(&m_Camera, 0, sizeof(camera_t));
-	m_pSide_select = NULL;
-	m_bClipMode = false;
 	worldDirty = true;
 	worldModel = NULL;
 	renderMode = false;
@@ -388,12 +386,9 @@ void CCamWnd::Cam_Init() {
  =======================================================================================================================
  */
 void CCamWnd::Cam_BuildMatrix() {
-	float	xa, ya;
-	float	matrix[4][4];
-	int		i;
 
-	xa = ((renderMode) ? -m_Camera.angles[PITCH] : m_Camera.angles[PITCH]) * idMath::M_DEG2RAD;
-	ya = m_Camera.angles[YAW] * idMath::M_DEG2RAD;
+	const float xa = ((renderMode) ? -m_Camera.angles[PITCH] : m_Camera.angles[PITCH]) * idMath::M_DEG2RAD;
+	const float ya = m_Camera.angles[YAW] * idMath::M_DEG2RAD;
 
 	// the movement matrix is kept 2d
 	m_Camera.forward[0] = cos(ya);
@@ -401,10 +396,10 @@ void CCamWnd::Cam_BuildMatrix() {
 	m_Camera.right[0] = m_Camera.forward[1];
 	m_Camera.right[1] = -m_Camera.forward[0];
 
+  float	matrix[4][4];
   GL_ProjectionMatrix.Get(&matrix[0][0]);
-//	glGetFloatv(GL_PROJECTION_MATRIX, &matrix[0][0]);
 
-	for (i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		m_Camera.vright[i] = matrix[i][0];
 		m_Camera.vup[i] = matrix[i][1];
 		m_Camera.vpn[i] = matrix[i][2];
@@ -925,6 +920,7 @@ void CCamWnd::Cam_Draw() {
 	}
 
 	SetProjectionMatrix();
+  g_qeglobals.lineBuffer.Clear();
 
   GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
   GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
@@ -964,11 +960,11 @@ void CCamWnd::Cam_Draw() {
 			setGLMode(m_Camera.draw_mode);
 			Brush_Draw(brush, true);
 		}
-	}
+	}  
 
 	// blend on top
 
-  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][0],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][1],g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES][2], 0.25f );
+  const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
 
 	setGLMode(m_Camera.draw_mode);
 	
@@ -1024,6 +1020,8 @@ void CCamWnd::Cam_Draw() {
       DrawAxial(selFace);
     }
   }
+
+  g_qeglobals.lineBuffer.Commit();
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);
@@ -1090,6 +1088,7 @@ void CCamWnd::Cam_Draw() {
 	DrawPathLines();
   Pointfile_Draw();
 	
+  g_qeglobals.lineBuffer.Commit();
 
 	//
 	// bind back to the default texture so that we don't have problems elsewhere
@@ -1460,8 +1459,6 @@ int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 	return ret;
 }
 
-
-#define	MAX_TRI_SURFACES	16384
 int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, bool bmodel) {
 	int i, j;
 	srfTriangles_t	*tri;
