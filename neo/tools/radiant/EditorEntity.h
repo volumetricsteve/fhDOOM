@@ -29,6 +29,8 @@ If you have questions concerning this license or the applicable additional terms
 void		Eclass_InitForSourceDirectory( const char *path );
 eclass_t *	Eclass_ForName( const char *name, bool has_brushes );
 
+//TODO(johl): rename to 'EditorEntity', change from struct to class, add all
+//            those Entity_* functions as proper member functions
 typedef struct entity_s {
 	struct entity_s	*prev, *next;
 	brush_t		brushes;					// head/tail of list

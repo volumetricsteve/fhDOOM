@@ -686,49 +686,45 @@ void CCamWnd::InitCull() {
  =======================================================================================================================
  */
 bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
-	int		i;
 	idVec3	point;
-	float	d;
 
 	if ( b->forceVisibile ) {
 		return false;
 	}
 
+  idBounds bounds = idBounds(b->mins, b->maxs);
+  editorModel_t editorModel = Brush_GetEditorModel(b);
+  bounds.AddBounds(editorModel.bounds);
+  bounds.AddBounds(editorModel.model->Bounds());
+
 	if (g_PrefsDlg.m_bCubicClipping) {
 		
-		float distance = g_PrefsDlg.m_nCubicScale * 64;
+		const float maxDistance = g_PrefsDlg.m_nCubicScale * 64;
 
-		idVec3 mid;
-		for (int i = 0; i < 3; i++) {
-			mid[i] = (b->mins[i] + ((b->maxs[i] - b->mins[i]) / 2));
-		}
+    idVec3 distance = bounds.GetCenter() - m_Camera.origin; 
 
-		point = mid - m_Camera.origin;
-		if (point.Length() > distance) {
+		if (distance.Length() > maxDistance) {
 			return true;
 		}
-
 	}
 
 	if (cubicOnly) {
 		return false;
 	}
 
-	for (i = 0; i < 3; i++) {
-		point[i] = b->mins[m_nCullv1[i]] - m_Camera.origin[i];
+	for (int i = 0; i < 3; i++) {
+		point[i] = bounds[0][m_nCullv1[i]] - m_Camera.origin[i];
 	}
 
-	d = DotProduct(point, m_vCull1);
-	if (d < -1) {
+	if (DotProduct(point, m_vCull1) < -1) {
 		return true;
 	}
 
-	for (i = 0; i < 3; i++) {
-		point[i] = b->mins[m_nCullv2[i]] - m_Camera.origin[i];
+	for (int i = 0; i < 3; i++) {
+		point[i] = bounds[0][m_nCullv2[i]] - m_Camera.origin[i];
 	}
 
-	d = DotProduct(point, m_vCull2);
-	if (d < -1) {
+	if (DotProduct(point, m_vCull2) < -1) {
 		return true;
 	}
 

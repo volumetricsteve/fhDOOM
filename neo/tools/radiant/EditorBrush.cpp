@@ -2548,6 +2548,8 @@ Brush_ModelIntersect
 */
 
 bool Brush_ModelIntersect(brush_t *b, idVec3 origin, idVec3 dir,float &scale) {
+
+#if 0
 	idRenderModel *model = b->modelHandle;
 	idRenderModel *md5;
    
@@ -2629,10 +2631,65 @@ bool Brush_ModelIntersect(brush_t *b, idVec3 origin, idVec3 dir,float &scale) {
 	}
 
 	return false;
+#else
+  editorModel_t editorModel = Brush_GetEditorModel(b);
+  idRenderModel* model = editorModel.model;
+
+  bool matrix = false;
+  idMat3 mat;
+  float a, s, c;
+  if (GetMatrixForKey(b->owner, "rotation", mat)) {
+    matrix = true;
+  }
+  else {
+    a = FloatForKey(b->owner, "angle");
+    if (a) {
+      s = sin(DEG2RAD(a));
+      c = cos(DEG2RAD(a));
+    }
+    else {
+      s = c = 0;
+    }
+  }
+
+  for (int i = 0; i < model->NumSurfaces(); i++) {
+    const modelSurface_t	*surf = model->Surface(i);
+    srfTriangles_t	*tri = surf->geometry;
+    for (int j = 0; j < tri->numIndexes; j += 3) {
+      idVec3	v1, v2, v3;
+      v1 = tri->verts[tri->indexes[j]].xyz;
+      v2 = tri->verts[tri->indexes[j + 1]].xyz;
+      v3 = tri->verts[tri->indexes[j + 2]].xyz;
+
+      if (matrix) {
+        v1 *= b->owner->rotation;
+        v1 += b->owner->origin;
+        v2 *= b->owner->rotation;
+        v2 += b->owner->origin;
+        v3 *= b->owner->rotation;
+        v3 += b->owner->origin;
+      }
+      else {
+        v1 += b->owner->origin;
+        v2 += b->owner->origin;
+        v3 += b->owner->origin;
+        RotateVector(v1, b->owner->origin, a, c, s);
+        RotateVector(v2, b->owner->origin, a, c, s);
+        RotateVector(v3, b->owner->origin, a, c, s);
+      }
+
+      if (RayIntersectsTri(origin, dir, v1, v2, v3, scale)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+#endif
 }
 
 face_t *Brush_Ray(idVec3 origin, idVec3 dir, brush_t *b, float *dist, bool testPrimitive) {
-	face_t	*f, *firstface = NULL;
+	face_t *firstface = NULL;
 	idVec3	p1, p2;
 	float	frac, d1, d2;
 	int		i;
@@ -2642,7 +2699,7 @@ face_t *Brush_Ray(idVec3 origin, idVec3 dir, brush_t *b, float *dist, bool testP
 		p2[i] = p1[i] + dir[i] * HUGE_DISTANCE * 2;
 	}
 
-	for (f = b->brush_faces; f; f = f->next) {
+	for (face_t* f = b->brush_faces; f; f = f->next) {
 		d1 = DotProduct(p1, f->plane) + f->plane[3];
 		d2 = DotProduct(p2, f->plane) + f->plane[3];
 		if (d1 >= 0 && d2 >= 0) {

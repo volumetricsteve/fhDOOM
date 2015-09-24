@@ -122,35 +122,6 @@ public:
 #define QER_TRANS     0x00000001
 #define QER_NOCARVE   0x00000002
 
-typedef struct qtexture_s
-{
-	struct	qtexture_s *next;
-	char	name[64];		// includes partial directory and extension
-	int		width,  height;
-	int		contents;
-	int		flags;
-	int		value;
-	int		texture_number;	// gl bind number
-  
-	// name of the .shader file
-  char  shadername[1024]; // old shader stuff
-  bool bFromShader;   // created from a shader
-  float fTrans;           // amount of transparency
-  int   nShaderFlags;     // qer_ shader flags
-	idVec3	color;			    // for flat shade mode
-	bool	inuse;		    // true = is present on the level
-
-	// cast this one to an IPluginQTexture if you are using it
-	// NOTE: casting can be done with a GETPLUGINQTEXTURE defined in isurfaceplugin.h
-	// TODO: if the __ISURFACEPLUGIN_H_ header is used, use a union { void *pData; IPluginQTexture *pPluginQTexture } kind of thing ?
-	void					*pData;
-
-	//++timo FIXME: this is the actual filename of the texture
-	// this will be removed after shader code cleanup
-	char filename[64];
-
-} qtexture_t;
-
 //++timo texdef and brushprimit_texdef are static
 // TODO : do dynamic ?
 typedef struct face_s

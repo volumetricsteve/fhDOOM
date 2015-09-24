@@ -1557,8 +1557,6 @@ void CMainFrame::OnDestroy() {
 		pEntity = pNextEntity;
 	}
 
-	Texture_Cleanup();
-
 	if (world_entity) {
 		Entity_Free(world_entity);
 	}

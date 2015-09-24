@@ -122,18 +122,11 @@ idVec3			g_vRotateOrigin;
 idVec3			g_vRotation;
 
 bool			g_bPathMode;
-CClipPoint		g_PathPoints[256];
-CClipPoint		*g_pMovingPath;
-int				g_nPathCount;
-int				g_nPathLimit;
-
-bool			g_bSmartGo;
 
 bool			g_bPointMode;
 CClipPoint		g_PointPoints[512];
 CClipPoint		*g_pMovingPoint;
 int				g_nPointCount;
-int				g_nPointLimit;
 
 void	Select_Ungroup();
 
@@ -157,8 +150,6 @@ float fDiff(float f1, float f2) {
 		return f2 - f1;
 	}
 }
-
-#define MAX_DRAG_POINTS 128
 
 CPtrArray			dragPoints;
 static CDragPoint	*activeDrag = NULL;
@@ -562,7 +553,6 @@ CXYWnd::CXYWnd() {
 	g_bRogueClipMode = false;
 	g_bSwitch = true;
 	g_pMovingClip = NULL;
-	g_pMovingPath = NULL;
 	g_brFrontSplits.next = &g_brFrontSplits;
 	g_brBackSplits.next = &g_brBackSplits;
 	m_bActive = false;
@@ -570,8 +560,6 @@ CXYWnd::CXYWnd() {
 	m_bRButtonDown = false;
 	m_nUpdateBits = W_XY;
 	g_bPathMode = false;
-	g_nPathCount = 0;
-	g_nPathLimit = 0;
 	m_nTimerID = -1;
 	m_nButtonstate = 0;
   m_sViewName = "?";
@@ -1641,10 +1629,7 @@ int		g_nSmartY;
  =======================================================================================================================
  */
 void CXYWnd::KillPathMode() {
-	g_bSmartGo = false;
 	g_bPathMode = false;
-
-	g_nPathCount = 0;	
 	Sys_UpdateWindows(W_ALL);
 }
 

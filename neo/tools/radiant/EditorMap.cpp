@@ -226,7 +226,6 @@ void Map_Free(void) {
 	g_qeglobals.rw->InitFromMap( NULL );
 	g_qeglobals.sw->ClearAllSoundEmitters();
 
-	Texture_ClearInuse();
 	Pointfile_Clear();
 	strcpy(currentmap, "unnamed.map");
 	Sys_SetTitle(currentmap);

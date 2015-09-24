@@ -664,10 +664,6 @@ const idMaterial *Texture_LoadLight(const char *name) {
 	return declManager->FindMaterial(name);
 }
 
-
-void Texture_ClearInuse(void) {
-}
-
 void Texture_ShowAll(void) {
 	int count = declManager->GetNumDecls( DECL_MATERIAL );
 	for (int i = 0; i < count; i++) {
@@ -731,10 +727,6 @@ void Texture_ShowInuse(void) {
 	g_Inspectors->SetWindowText("Textures (in use)");
 }
 
-void Texture_Cleanup(CStringList *pList) {
-}
-
-int				texture_mode = GL_LINEAR_MIPMAP_LINEAR;
 bool texture_showinuse = true;
 
 
@@ -795,7 +787,7 @@ void Texture_SetMode(int iMenu) {
 	CheckMenuItem(hMenu, iMenu, MF_BYCOMMAND | MF_CHECKED);
 
 	g_qeglobals.d_savedinfo.iTexMenu = iMenu;
-	texture_mode = iMode;
+
 
 	if (!texturing && iMenu == ID_TEXTURES_WIREFRAME) {
 		g_pParentWnd->GetCamera()->Camera().draw_mode = cd_wire;

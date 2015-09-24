@@ -151,8 +151,6 @@ typedef struct
 	int			d_num_move_planes;
 	idPlane		*d_move_planes[MAX_MOVE_PLANES];
 	
-	qtexture_t	*d_qtextures;
-	
 	texturewin_t d_texturewin;	
 	
 	LPMRUMENU    d_lpMruMenu;
@@ -415,7 +413,6 @@ extern void RunScript(char* pBuffer);
 extern void FindReplaceTextures(const char* pFind, const char* pReplace, bool bSelected, bool bForce);
 extern void DoProjectSettings();
 extern bool region_active;
-extern void	Texture_ShowDirectory (char* pPath, bool Linked = false);
 extern void Map_ImportFile (char *filename);
 extern void Map_SaveSelected(char* pFilename);
 extern bool g_bSwitch;
@@ -424,7 +421,6 @@ extern brush_t g_brBackSplits;
 extern CClipPoint g_Clip1;
 extern CClipPoint g_Clip2;
 extern brush_t* g_pSplitList;
-extern CClipPoint g_PathPoints[256];
 extern bool g_bScreenUpdates;
 extern SCommandInfo g_Commands[];
 extern int g_nCommandCount;
