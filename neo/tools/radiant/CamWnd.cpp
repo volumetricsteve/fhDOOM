@@ -193,16 +193,21 @@ brush_t *g_pSplitList = NULL;
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::OnPaint() {
+void CCamWnd::OnPaint() {  
 	CPaintDC	dc(this);	// device context for painting
-	bool		bPaint = true;
+	bool		bPaint = true;  
 
 	if (!wglMakeCurrent(dc.m_hDC, win32.hGLRC)) {
 		common->Printf("ERROR: wglMakeCurrent failed..\n ");
 		common->Printf("Please restart " EDITOR_WINDOWTEXT " if the camera view is not working\n");
 	}
 	else {
+    fhImmediateMode::ResetStats();
+    idTimer timer;
+    timer.Start();
+
 		QE_CheckOpenGLForErrors();
+
 		g_pSplitList = NULL;
 		if (g_bClipMode) {
 			if (g_Clip1.Set() && g_Clip2.Set()) {
@@ -212,6 +217,9 @@ void CCamWnd::OnPaint() {
 
 		Cam_Draw();
 		QE_CheckOpenGLForErrors();
+
+    timer.Stop();
+    common->Printf("CamWnd: count=%d, data=%d, milliseconds=%f\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize(), timer.Milliseconds());
 		wglSwapBuffers(dc.m_hDC);
 	}
 }

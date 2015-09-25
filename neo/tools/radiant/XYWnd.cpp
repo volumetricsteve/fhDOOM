@@ -3023,10 +3023,14 @@ void DrawPathLines(void) {
 			float len = dir.Normalize();
 
       idVec3 s1, s2;
-			s1[0] = -dir[1] * 8 + dir[0] * 8;
-			s2[0] = dir[1] * 8 + dir[0] * 8;
-			s1[1] = dir[0] * 8 + dir[1] * 8;
-			s2[1] = -dir[0] * 8 + dir[1] * 8;
+
+			s1.x = -dir.y * 8 + dir.x * 8;			
+			s1.y = dir.x * 8 + dir.y * 8;      
+      s1.z = dir.z * 8;
+
+      s2.x = dir.y * 8 + dir.x * 8;
+      s2.y = -dir.x * 8 + dir.y * 8;
+      s2.z = dir.z * 8;
 
       g_qeglobals.lineBuffer.Add(mid, mid1, se->eclass->color);
 
@@ -3065,6 +3069,7 @@ void CXYWnd::DrawDimension(const idVec3& position, float value, const char* labe
   DrawOrientedText(text, position, color);
 }
 
+//FIXME(johl): complexity is way higher than needed, this needs to be completely rewritten.
 void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxBounds) {
 	const idVec3 vSize = vMaxBounds - vMinBounds;	
   const idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] * 0.65f;
@@ -3238,15 +3243,48 @@ void CXYWnd::XY_Draw() {
 
 	const int nDim1 = (m_nViewType == YZ) ? 1 : 0;
 	const int nDim2 = (m_nViewType == XY) ? 1 : 2;
-  idVec3		mins, maxs;
-	mins[0] = m_vOrigin[nDim1] - w;
-	maxs[0] = m_vOrigin[nDim1] + w;
-	mins[1] = m_vOrigin[nDim2] - h;
-	maxs[1] = m_vOrigin[nDim2] + h;
+  
+  idVec2		mins, maxs; //2D view port mins/max
+  idBounds viewBounds; //3D world space bounds	
+  if(m_nViewType == XY) {
+    viewBounds[0].x = m_vOrigin.x - w;
+    viewBounds[1].x = m_vOrigin.x + w;
+    viewBounds[0].y = m_vOrigin.y - h;
+    viewBounds[1].y = m_vOrigin.y + h;
+    viewBounds[0].z = MIN_WORLD_COORD;
+    viewBounds[1].z = MAX_WORLD_COORD;
 
-	idBounds viewBounds( mins, maxs );
-	viewBounds[0].z = -99999;
-	viewBounds[1].z = 99999;
+    mins.x = m_vOrigin.x - w;
+    mins.y = m_vOrigin.y - h;
+    maxs.x = m_vOrigin.x + w;
+    maxs.y = m_vOrigin.y + h;
+  } 
+  else if(m_nViewType == XZ) {
+    viewBounds[0].x = m_vOrigin.x - w;
+    viewBounds[1].x = m_vOrigin.x + w;
+    viewBounds[0].y = MIN_WORLD_COORD;
+    viewBounds[1].y = MAX_WORLD_COORD;
+    viewBounds[0].z = m_vOrigin.z - h;
+    viewBounds[1].z = m_vOrigin.z + h;
+
+    mins.x = m_vOrigin.x - w;
+    mins.y = m_vOrigin.z - h;
+    maxs.x = m_vOrigin.x + w;
+    maxs.y = m_vOrigin.z + h;
+  }
+  else if(m_nViewType == YZ) {
+    viewBounds[0].x = MIN_WORLD_COORD;
+    viewBounds[1].x = MAX_WORLD_COORD;
+    viewBounds[0].y = m_vOrigin.y - h;
+    viewBounds[1].y = m_vOrigin.y + h;
+    viewBounds[0].z = m_vOrigin.z - h;
+    viewBounds[1].z = m_vOrigin.z + h;
+
+    mins.x = m_vOrigin.y - w;
+    mins.y = m_vOrigin.z - h;
+    maxs.x = m_vOrigin.y + w;
+    maxs.y = m_vOrigin.z + h;
+  }
 
   GL_ProjectionMatrix.LoadIdentity();
   GL_ProjectionMatrix.Ortho(mins[0], maxs[0], mins[1], maxs[1], MIN_WORLD_COORD, MAX_WORLD_COORD);
