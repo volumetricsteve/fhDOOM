@@ -854,6 +854,8 @@ IF(ID_ALLOW_TOOLS)
     tools/radiant/ZClip.h
     tools/radiant/ZWnd.cpp
     tools/radiant/ZWnd.h
+    tools/radiant/rendertools.h
+    tools/radiant/rendertools.cpp
 
     tools/script/DialogScriptEditor.cpp
     tools/script/DialogScriptEditor.h

@@ -934,6 +934,7 @@ void CCamWnd::Cam_Draw() {
 
 	Cam_BuildMatrix();
    
+  g_qeglobals.surfaceBuffer.Clear();
 	for (brush = active_brushes.next; brush != &active_brushes; brush = brush->next) {
 
 		if ( CullBrush(brush, false) ) {
@@ -953,6 +954,7 @@ void CCamWnd::Cam_Draw() {
 		setGLMode(m_Camera.draw_mode);
 		Brush_Draw(brush, false);
 	}
+  g_qeglobals.surfaceBuffer.Commit();
 
 //  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0],g_qeglobals.d_select_translate[1],g_qeglobals.d_select_translate[2]);
 
@@ -986,7 +988,7 @@ void CCamWnd::Cam_Draw() {
   }
 
 
-  glEnable(GL_BLEND);
+  //glEnable(GL_BLEND);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  
   globalImages->BindNull();
 
@@ -1026,6 +1028,7 @@ void CCamWnd::Cam_Draw() {
   }
 
   g_qeglobals.lineBuffer.Commit();
+  g_qeglobals.surfaceBuffer.Commit(idVec4(1,1,1,1), idVec4(0.6f, 0.0f, 0.0f, 0));
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);

@@ -19,6 +19,18 @@ namespace {
 
 }
 
+void fhSimpleVert::SetColor(const idVec3& v) {
+  SetColor(idVec4(v, 1.0f));
+}
+
+void fhSimpleVert::SetColor(const idVec4& v) {
+  color[0] = static_cast<byte>(v.x * 255.0f);
+  color[1] = static_cast<byte>(v.y * 255.0f);
+  color[2] = static_cast<byte>(v.z * 255.0f);
+  color[3] = static_cast<byte>(v.w * 255.0f);
+
+}
+
 int fhImmediateMode::drawCallCount = 0;
 int fhImmediateMode::drawCallVertexSize = 0;
 

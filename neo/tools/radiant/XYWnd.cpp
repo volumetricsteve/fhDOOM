@@ -3529,6 +3529,7 @@ void CXYWnd::XY_Draw() {
 	if( m_precisionCrosshairMode != PRECISION_CROSSHAIR_NONE )
 		DrawPrecisionCrosshair();
 
+  g_qeglobals.pointBuffer.Commit();
 	glFlush();
 
   R_ToggleSmpFrame();

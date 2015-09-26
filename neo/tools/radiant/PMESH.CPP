@@ -42,7 +42,116 @@ void _Write3DMatrix( CMemFile *f,int y,int x,int z,float *m );
 extern void SamplePatch( float ctrl[3][3][5],int baseCol,int baseRow,int width,int horzSub,int vertSub,idDrawVert *outVerts,idDrawVert *drawVerts );
 patchMesh_t *Patch_GenerateGeneric( int width,int height,int orientation,const idVec3 &mins,const idVec3 &maxs );
 
+static void UpdatePatchGeometry( patchMesh_t* pm ) {
+  if(pm->wireframeVerts && pm->triangleVerts)
+    return;
 
+  if(pm->wireframeVerts) {
+    delete[] pm->wireframeVerts;
+    pm->wireframeVerts = nullptr;
+    pm->wireframeVertNum = 0;
+  }
+
+  if (pm->triangleVerts) {
+    delete[] pm->triangleVerts;
+    pm->triangleVerts = nullptr;
+    pm->triangleVertsNum = 0;
+  }
+
+  //FIXME: finish consolidating all the patch crap
+  idSurface_Patch	cp(pm->width * 6, pm->height * 6);
+  cp.SetSize(pm->width, pm->height);
+  for (int i = 0; i < pm->width; i++) {
+    for (int j = 0; j < pm->height; j++) {
+      cp[j * cp.GetWidth() + i].xyz = pm->ctrl(i, j).xyz;
+      cp[j * cp.GetWidth() + i].st = pm->ctrl(i, j).st;
+    }
+  }
+
+  if (pm->explicitSubdivisions) {
+    cp.SubdivideExplicit(pm->horzSubdivisions, pm->vertSubdivisions, true);
+  }
+  else {
+    cp.Subdivide(DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true);
+  }
+
+  const int	width = cp.GetWidth();
+  const int	height = cp.GetHeight();
+
+  pm->wireframeVerts = new idVec3[width * height * 6];
+  int n = 0;
+  for (int i = 0; i < width - 1; i++) {
+    idVec3 p1, p2;
+
+    for (int j = 0; j < height; j++) {
+      const int v1 = j * width + i;
+      const int v2 = v1 + 1;
+
+      pm->wireframeVerts[n++] = cp[v2].xyz;
+      pm->wireframeVerts[n++] = cp[v1].xyz;
+
+      if (j > 0) {
+        pm->wireframeVerts[n++] = p1;
+        pm->wireframeVerts[n++] = cp[v1].xyz;
+
+        pm->wireframeVerts[n++] = p2;
+        pm->wireframeVerts[n++] = cp[v2].xyz;
+      }
+
+      p1 = cp[v1].xyz;
+      p2 = cp[v2].xyz;
+    }
+  }
+  pm->wireframeVertNum = n;
+
+
+  pm->triangleVerts = new fhSimpleVert[width * height * 6];
+  n = 0;
+  for (int i = 0; i < width - 1; i++) {
+    fhSimpleVert prev[2];
+    for (int j = 0; j < height; j++) {
+      // v1-v2-v3-v4 makes a quad						
+      const int v1 = j * width + i;
+      const int v2 = v1 + 1;
+
+      fhSimpleVert verts[2];
+      verts[0].xyz = cp[v2].xyz;
+      verts[1].xyz = cp[v1].xyz;
+
+      verts[0].st = cp[v2].st;
+      verts[1].st = cp[v1].st;
+/*
+      if (bShade) {
+        float f = ShadeForNormal(cp[v2].normal);
+        verts[0].SetColor(idVec3(f, f, f));
+
+        f = ShadeForNormal(cp[v1].normal);
+        verts[1].SetColor(idVec3(f, f, f));
+      }
+      else */
+      {
+        verts[0].SetColor(idVec3(1, 1, 1));
+        verts[1].SetColor(idVec3(1, 1, 1));
+      }
+
+      if (j > 0) {
+        pm->triangleVerts[n + 0] = prev[1];
+        pm->triangleVerts[n + 1] = verts[0];
+        pm->triangleVerts[n + 2] = prev[0];
+
+        pm->triangleVerts[n + 3] = prev[1];
+        pm->triangleVerts[n + 4] = verts[1];
+        pm->triangleVerts[n + 5] = verts[0];
+
+        n += 6;
+      }
+
+      prev[0] = verts[0];
+      prev[1] = verts[1];
+    }
+  }
+  pm->triangleVertsNum = n;
+}
 
 patchMesh_t * MakeNewPatch( int width,int height ) {
 	patchMesh_t	*pm	= reinterpret_cast< patchMesh_t*>(Mem_ClearedAlloc(sizeof(patchMesh_t)));
@@ -54,6 +163,8 @@ patchMesh_t * MakeNewPatch( int width,int height ) {
 	pm->verts = reinterpret_cast< idDrawVert*>(Mem_ClearedAlloc(sizeof(idDrawVert) * width * height));
   pm->wireframeVerts = nullptr;
   pm->wireframeVertNum = 0;
+  pm->triangleVerts = nullptr;
+  pm->triangleVertsNum = 0;
 	//pm->ctrl = reinterpret_cast<idDrawVert*>(Mem_ClearedAlloc(sizeof(idDrawVert) * width * height));
 	//pm->ctrl = &pm->verts;
 	return pm;
@@ -786,6 +897,12 @@ void Patch_MakeDirty( patchMesh_t *p ) {
     delete[] p->wireframeVerts;
     p->wireframeVerts = nullptr;
     p->wireframeVertNum = 0;
+  }
+
+  if(p->triangleVerts) {
+    delete[] p->triangleVerts;
+    p->triangleVerts = nullptr;
+    p->triangleVertsNum = 0;
   }
 }
 
@@ -2350,61 +2467,12 @@ DrawPatchMesh
 */
 //FIXME: this routine needs to be reorganized.. should be about 1/4 the size and complexity
 void DrawPatchMeshWireframe(patchMesh_t *pm, const idVec3& color) {
-  if(!pm->wireframeVerts)
-  {
-    //FIXME: finish consolidating all the patch crap
-    idSurface_Patch	cp(pm->width * 6, pm->height * 6);
-    cp.SetSize(pm->width, pm->height);
-    for (int i = 0; i < pm->width; i++) {
-      for (int j = 0; j < pm->height; j++) {
-        cp[j * cp.GetWidth() + i].xyz = pm->ctrl(i, j).xyz;
-        cp[j * cp.GetWidth() + i].st = pm->ctrl(i, j).st;
-      }
-    }
-
-    if (pm->explicitSubdivisions) {
-      cp.SubdivideExplicit(pm->horzSubdivisions, pm->vertSubdivisions, true);
-    }
-    else {
-      cp.Subdivide(DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true);
-    }
-
-    const int	width = cp.GetWidth();
-    const int	height = cp.GetHeight();
-
-    pm->wireframeVerts = new idVec3[width * height * 6];
-
-    int n = 0;
-    for (int i = 0; i < width - 1; i++) {
-      idVec3 p1, p2;
-
-      for (int j = 0; j < height; j++) {
-        const int v1 = j * width + i;
-        const int v2 = v1 + 1;
-
-        pm->wireframeVerts[n++] = cp[v2].xyz;
-        pm->wireframeVerts[n++] = cp[v1].xyz;
-        
-        if (j > 0) {
-          pm->wireframeVerts[n++] = p1;
-          pm->wireframeVerts[n++] = cp[v1].xyz;
-
-          pm->wireframeVerts[n++] = p2;
-          pm->wireframeVerts[n++] = cp[v2].xyz;          
-        }
-
-        p1 = cp[v1].xyz;
-        p2 = cp[v2].xyz;
-      }
-    }
-    pm->wireframeVertNum = n;
-  }
+  UpdatePatchGeometry(pm);
 
   for(int i=0; (i+1)<pm->wireframeVertNum; i += 2) {
     g_qeglobals.lineBuffer.Add(pm->wireframeVerts[i], pm->wireframeVerts[i+1], color);      
   }
 }
-
 
 /*
 =================
@@ -2413,60 +2481,18 @@ DrawPatchMeshSolid
 */
 //FIXME: this routine needs to be reorganized.. should be about 1/4 the size and complexity
 void DrawPatchMeshSolid(patchMesh_t *pm, bool bShade, const idMaterial* material) {
+  UpdatePatchGeometry(pm);
 
-  int		nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
-
-  //FIXME: finish consolidating all the patch crap
-  idSurface_Patch	cp(pm->width * 6, pm->height * 6);
-  cp.SetSize(pm->width, pm->height);
-  for (int i = 0; i < pm->width; i++) {
-    for (int j = 0; j < pm->height; j++) {
-      cp[j * cp.GetWidth() + i].xyz = pm->ctrl(i, j).xyz;
-      cp[j * cp.GetWidth() + i].st = pm->ctrl(i, j).st;
-    }
-  }
-
-  if (pm->explicitSubdivisions) {
-    cp.SubdivideExplicit(pm->horzSubdivisions, pm->vertSubdivisions, true);
-  }
-  else {
-    cp.Subdivide(DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true);
-  }
-
-  const int	width = cp.GetWidth();
-  const int	height = cp.GetHeight();
-
-  fhImmediateMode im;
-  if (material)
-    im.SetTexture(material->GetEditorImage());
-
-  for (int i = 0; i < width - 1; i++) {
-    im.Begin(GL_QUAD_STRIP);
-    for (int j = 0; j < height; j++) {
-      // v1-v2-v3-v4 makes a quad						
-      const int v1 = j * width + i;
-      const int v2 = v1 + 1;
-
-      if (bShade) {
-        const float f = ShadeForNormal(cp[v2].normal);
-        im.Color3f(f, f, f);
-      }
-      im.TexCoord2fv(cp[v2].st.ToFloatPtr());
-      im.Vertex3fv(cp[v2].xyz.ToFloatPtr());
-
-      if (bShade) {
-        const float f = ShadeForNormal(cp[v1].normal);
-        im.Color3f(f, f, f);
-      }
-      im.TexCoord2fv(cp[v1].st.ToFloatPtr());
-      im.Vertex3fv(cp[v1].xyz.ToFloatPtr());
-    }
-    im.End();
-  }  
+  fhTrisBuffer* buffer = g_qeglobals.surfaceBuffer.GetMaterialBuffer(material);
+  buffer->Add(pm->triangleVerts, pm->triangleVertsNum);
 }
 
 void DrawPatchMeshSolid(patchMesh_t *pm, const idVec4& color) {
+  UpdatePatchGeometry(pm);
 
+  fhTrisBuffer* buffer = g_qeglobals.surfaceBuffer.GetColorBuffer();
+  buffer->Add(pm->triangleVerts, pm->triangleVertsNum);
+/*
   int		nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
   //FIXME: finish consolidating all the patch crap
@@ -2504,6 +2530,7 @@ void DrawPatchMeshSolid(patchMesh_t *pm, const idVec4& color) {
     }
     im.End();
   }
+ */
 }
 
 
@@ -2563,9 +2590,10 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
 		DrawPatchMeshSolid(pm, true, material);
 
     if(selected) {
-      glEnable(GL_BLEND);
-      DrawPatchMeshSolid(pm, idVec4(color.x, color.y, color.z, 0.25));
-      glDisable(GL_BLEND);
+      //glEnable(GL_BLEND);
+      //DrawPatchMeshSolid(pm, idVec4(color.x, color.y, color.z, 0.25));
+      DrawPatchMeshSolid(pm, true, material);
+      //glDisable(GL_BLEND);
       DrawPatchMeshWireframe(pm, idVec3(1,1,1));
       DrawPatchMeshHandles(pm);
     }

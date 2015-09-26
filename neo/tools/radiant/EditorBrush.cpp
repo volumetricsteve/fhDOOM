@@ -3925,28 +3925,19 @@ void DrawLight(const brush_t *b, bool bSelected) {
 	idVec3 vBottom = vTop;
 	vBottom[2] = b->mins[2];
 
-  fhImmediateMode im;
-  im.Begin(GL_TRIANGLES);    
+  fhTrisBuffer* trisBuffer = g_qeglobals.surfaceBuffer.GetColorBuffer();
 
-  idVec3 shadedColor = vTriColor;  
-  for (int i = 0; i <= 3; i++) {         
-    im.Color3fv(shadedColor.ToFloatPtr());
-    im.Vertex3fv(vTop.ToFloatPtr());
-    im.Vertex3fv(vCorners[i].ToFloatPtr());
-    im.Vertex3fv(vCorners[(i<3) ? i+1 : 0].ToFloatPtr());
+  idVec4 shadedColor = idVec4(vTriColor,1);
+  for (int i = 0; i <= 3; i++) {
+    trisBuffer->Add(vTop, vCorners[i], vCorners[(i<3) ? i + 1 : 0], shadedColor);
     shadedColor *= 0.95f;
   }
 
-  shadedColor = vTriColor;   
-  for (int i = 3; i >= 0; i--) {      
-    im.Color3fv(shadedColor.ToFloatPtr());      
-    im.Vertex3fv(vBottom.ToFloatPtr());
-    im.Vertex3fv(vCorners[i].ToFloatPtr());      
-    im.Vertex3fv(vCorners[(i > 0) ? i - 1 : 3].ToFloatPtr());
+  shadedColor = idVec4(vTriColor,1);
+  for (int i = 3; i >= 0; i--) {
+    trisBuffer->Add(vBottom, vCorners[i], vCorners[(i>0) ? i - 1 : 3], shadedColor);
     shadedColor *= 0.95f;
   }
-
-  im.End();      
 
 	DrawProjectedLight(b, bSelected, true);
 }
@@ -4555,12 +4546,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 
 
 	if (!(b->owner && (b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN))) {
-    glPointSize(4);
-    fhImmediateMode im;
-		im.Color4f( 1.0f, 0.0f, 0.0f, 0.8f );		
-		im.Begin(GL_POINTS);
-		im.Vertex3fv(b->owner->origin.ToFloatPtr());
-		im.End();
+    g_qeglobals.pointBuffer.Add(b->owner->origin, idVec4(1,0,0,1), 4);
 	}
 
 	if ( b->owner->eclass->entityModel ) {
@@ -4600,7 +4586,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 				continue;
 			}
 		}
-
+#if 0
     fhImmediateMode im;
 
 		if ( (nDrawMode == cd_texture || nDrawMode == cd_light) && !b->forceWireFrame && face->d_texture ) {
@@ -4630,6 +4616,42 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 		if (model) {
 			glDisable(GL_BLEND);
 		}
+#else
+    const idMaterial* material = nullptr;
+    if ((nDrawMode == cd_texture || nDrawMode == cd_light) && !b->forceWireFrame && face->d_texture) {
+      material = face->d_texture;
+    }
+
+    fhTrisBuffer* trisBuffer = g_qeglobals.surfaceBuffer.GetMaterialBuffer(material);
+
+    fhSimpleVert firstVert;
+    fhSimpleVert prevVert;
+    fhSimpleVert currentVert;
+
+    currentVert.SetColor(idVec4(face->d_color, face->d_texture->GetEditorAlpha()));
+
+    for (i = 0; i < w->GetNumPoints(); i++) {
+      const idVec5& v = (*w)[i];
+
+      currentVert.xyz.x = v[0];
+      currentVert.xyz.y = v[1];
+      currentVert.xyz.z = v[2];
+      currentVert.st.x = v[3];
+      currentVert.st.y = v[4];
+
+      if(i == 0) {
+        firstVert = currentVert;        
+      }
+
+      if(i > 1) {
+        trisBuffer->Add(firstVert, prevVert, currentVert);
+      }
+
+      prevVert = currentVert;
+    }
+#endif
+
+
 	}
 
 	globalImages->BindNull();

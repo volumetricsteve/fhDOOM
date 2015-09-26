@@ -192,6 +192,8 @@ typedef struct {
 struct brush_s;
 typedef struct brush_s brush_t;
 
+struct fhSimpleVert;
+
 typedef struct {
 	int			width, height;		// in control points, not patches
 	int			horzSubdivisions;
@@ -206,6 +208,8 @@ typedef struct {
 	bool		bOverlay;
   idVec3* wireframeVerts;
   int     wireframeVertNum;
+  fhSimpleVert* triangleVerts;
+  int triangleVertsNum;
 
 	idDict *	epairs;
 	// cast this one to an IPluginTexdef if you are using it

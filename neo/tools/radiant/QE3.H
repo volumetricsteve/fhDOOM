@@ -75,6 +75,8 @@ const float	HUGE_DISTANCE = 100000;
 #include "undo.h"
 #include "PMESH.H"
 
+#include "rendertools.h"
+
 // the dec offsetof macro doesn't work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
 
@@ -200,6 +202,8 @@ typedef struct
 	idSoundWorld	*sw;
 
   fhLineBuffer lineBuffer;
+  fhSurfaceBuffer surfaceBuffer;
+  fhPointBuffer pointBuffer;
 } QEGlobals_t;
 
 

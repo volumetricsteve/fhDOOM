@@ -7,6 +7,9 @@ struct fhSimpleVert {
   idVec2 st;
   byte color[4];
 
+  void SetColor(const idVec3& v);
+  void SetColor(const idVec4& v);
+
   static const int xyzOffset = 0;
   static const int texcoordOffset = 12;
   static const int colorOffset = 20;
