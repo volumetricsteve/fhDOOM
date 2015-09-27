@@ -70,7 +70,7 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 
       int offset = vertexCache.Bind(surf->geometry->ambientCache);
 
-      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light) && material) {
+      if (cameraView && (nDrawMode == cd_texture) && material) {
         GL_UseProgram(defaultProgram);   
         GL_SelectTexture(1);
         material->GetEditorImage()->Bind();
@@ -108,7 +108,7 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
     } else {
       fhImmediateMode im;
 
-      if (cameraView && (nDrawMode == cd_texture || nDrawMode == cd_light)) {
+      if (cameraView && nDrawMode == cd_texture) {
         im.SetTexture(material->GetEditorImage());
       }
       
@@ -4618,7 +4618,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 		}
 #else
     const idMaterial* material = nullptr;
-    if ((nDrawMode == cd_texture || nDrawMode == cd_light) && !b->forceWireFrame && face->d_texture) {
+    if (nDrawMode == cd_texture && !b->forceWireFrame && face->d_texture) {
       material = face->d_texture;
     }
 

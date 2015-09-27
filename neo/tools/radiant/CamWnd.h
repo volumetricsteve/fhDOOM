@@ -36,9 +36,7 @@ typedef enum
 {
 	cd_wire,
 	cd_solid,
-	cd_texture,
-	cd_light,
-	cd_blend
+	cd_texture
 } camera_draw_mode;
 
 typedef struct

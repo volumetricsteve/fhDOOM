@@ -2577,7 +2577,7 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
 		glCullFace(GL_FRONT);
 
     const idMaterial* material = nullptr;
-		if ( nDrawMode == cd_texture || nDrawMode == cd_light ) {
+		if ( nDrawMode == cd_texture ) {
       material = pm->d_texture;
 		}
     /*
