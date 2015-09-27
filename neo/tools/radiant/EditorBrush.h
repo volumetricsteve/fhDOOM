@@ -79,8 +79,8 @@ face_t *	Face_Clone (face_t *f);
 void		Face_MakePlane (face_t *f);
 
 class fhImmediateMode;
-void		Face_Draw( fhImmediateMode& im, face_t *face, const idVec4& color );
-void		Face_DrawOutline( fhImmediateMode& im, face_t *face, const idVec3& color );
+void		Face_Draw( const face_t *face, const idVec4& color );
+void		Face_DrawOutline( const face_t *face, const idVec3& color );
 void    Brush_AddBrushLines(fhImmediateMode& im, const brush_t* brush, const brush_t* end, int viewType);
 
 void		Face_TextureVectors (face_t *f, float STfromXYZ[2][4]);

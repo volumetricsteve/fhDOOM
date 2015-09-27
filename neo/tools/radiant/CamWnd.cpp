@@ -795,17 +795,9 @@ void setGLMode(int mode) {
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LEQUAL);
 			break;
-/*
-		case cd_blend:
-			glCullFace(GL_FRONT);
-			glEnable(GL_CULL_FACE);
-			glShadeModel(GL_FLAT);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			glDisable(GL_DEPTH_TEST);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-*/
+
+    default:
+      assert(false && "unknown GL mode!?");
 	}
 }
 
@@ -925,7 +917,9 @@ void CCamWnd::Cam_Draw() {
 	}
 
 	SetProjectionMatrix();
+  g_qeglobals.surfaceBuffer.Clear();
   g_qeglobals.lineBuffer.Clear();
+  g_qeglobals.pointBuffer.Clear();
 
   GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
   GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
@@ -934,6 +928,8 @@ void CCamWnd::Cam_Draw() {
   GL_ProjectionMatrix.Translate(-m_Camera.origin[0], -m_Camera.origin[1], -m_Camera.origin[2]);
 
 	Cam_BuildMatrix();
+
+  brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
    
   g_qeglobals.surfaceBuffer.Clear();
 	for (brush = active_brushes.next; brush != &active_brushes; brush = brush->next) {
@@ -953,28 +949,31 @@ void CCamWnd::Cam_Draw() {
 		}
 
 		setGLMode(m_Camera.draw_mode);
-		Brush_Draw(brush, false);
+    Brush_Draw(brush, false);
 	}
-  g_qeglobals.surfaceBuffer.Commit();
 
-//  GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0],g_qeglobals.d_select_translate[1],g_qeglobals.d_select_translate[2]);
+  if (!renderMode) {
+    // draw normally
+    for (brush = pList->next; brush != pList; brush = brush->next) {
+      setGLMode(m_Camera.draw_mode);
+      Brush_Draw(brush, true);
+    }
+  }
 
-	brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
+  g_qeglobals.surfaceBuffer.Commit();	
+  g_qeglobals.lineBuffer.Commit();	
+  g_qeglobals.pointBuffer.Commit();	
 
-	if (!renderMode) {
-		// draw normally
-		for (brush = pList->next; brush != pList; brush = brush->next) {
-			setGLMode(m_Camera.draw_mode);
-			Brush_Draw(brush, true);
-		}
-	}  
+  g_qeglobals.surfaceBuffer.Clear();
+  g_qeglobals.lineBuffer.Clear();
+  g_qeglobals.pointBuffer.Clear();
 
-	// blend on top
 
   const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
 
 	setGLMode(m_Camera.draw_mode);
-	
+   
+
 	glEnable(GL_BLEND);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -982,22 +981,22 @@ void CCamWnd::Cam_Draw() {
 
   if(renderMode) {
     for (brush = pList->next; brush != pList; brush = brush->next) {
-      if (brush->pPatch /*|| brush->modelHandle > 0*/) {
+      if (brush->pPatch /*|| brush->modelHandle > 0*/) {        
         DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
       }
     }
   }
 
-
-  //glEnable(GL_BLEND);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  
-  globalImages->BindNull();
-
-  fhImmediateMode im;  
-  im.Begin(GL_TRIANGLES);  
-
 	for (brush = pList->next; brush != pList; brush = brush->next) {
-		if (brush->pPatch || brush->modelHandle > 0) {
+
+    if(brush->pPatch) {
+      DrawPatchMeshSolid(brush->pPatch, color);
+      DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+      DrawPatchMeshHandles(brush->pPatch);
+      continue;
+    }
+
+		if ( brush->modelHandle > 0) {
       continue;
 		}
 
@@ -1006,7 +1005,7 @@ void CCamWnd::Cam_Draw() {
     }
     
 		for (face = brush->brush_faces; face; face = face->next) {      
-			Face_Draw(im, face, color);      
+			Face_Draw(face, color);      
 		}
 	} 
 
@@ -1015,32 +1014,30 @@ void CCamWnd::Cam_Draw() {
 	if (!renderMode) {
 		for (int i = 0; i < nCount; i++) {
 			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
-			Face_Draw(im, selFace, color);
+			Face_Draw(selFace, color);
 		}
 	} 
 
-  im.End();
+  g_qeglobals.surfaceBuffer.Commit();
+  g_qeglobals.surfaceBuffer.Clear();
 
   if (!renderMode) {
-    for (int i = 0; i < nCount; i++) {
+    for (int i = 0; i < g_ptrSelectedFaces.GetSize(); i++) {
       face_t	*selFace = reinterpret_cast <face_t *> (g_ptrSelectedFaces.GetAt(i));   
       DrawAxial(selFace);
     }
   }
 
   g_qeglobals.lineBuffer.Commit();
-  g_qeglobals.surfaceBuffer.Commit(idVec4(1,1,1,1), idVec4(0.6f, 0.0f, 0.0f, 0));
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
-
-
-  im.Begin(GL_LINES);
+  
 	if (renderMode) {		
-		for (int i = 0; i < nCount; i++) {
+		for (int i = 0; i < g_ptrSelectedFaces.GetSize(); i++) {
 			face_t	*selFace = reinterpret_cast < face_t * > (g_ptrSelectedFaces.GetAt(i));
-			Face_DrawOutline(im, selFace, idVec3(1,0,0));
+			Face_DrawOutline( selFace, idVec3(1,0,0));
 		}
 	}
 	
@@ -1050,12 +1047,15 @@ void CCamWnd::Cam_Draw() {
 		}
 
 		for (face = brush->brush_faces; face; face = face->next) {
-			Face_DrawOutline(im, face, idVec3(1,1,1));
+			Face_DrawOutline( face, idVec3(1,1,1));
 		}
 	}
-  im.End();
+  
+  g_qeglobals.lineBuffer.Commit();
+  g_qeglobals.lineBuffer.Clear();
 
 	// edge / vertex flags
+  fhImmediateMode im;
 	if (g_qeglobals.d_select_mode == sel_vertex) {
 		glPointSize(4);
 

@@ -3948,7 +3948,7 @@ editorModel_t Brush_GetEditorModel(const brush_t* b) {
   ret.drawBounds = false;
   ret.model = b->modelHandle;  
 
-  if (ret.model == NULL) {
+  if (ret.model == NULL && b->owner && b->owner->eclass) {
     ret.model = b->owner->eclass->entityModel;
   } 
   if (ret.model == NULL) {
@@ -4662,22 +4662,15 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 Face_Draw
 ================
 */
-void Face_Draw(fhImmediateMode& im, face_t *f, const idVec4& color) {
-  assert(im.getCurrentMode() == GL_TRIANGLES);
-
+void Face_Draw( const face_t *f, const idVec4& color) {
   if (f->face_winding == NULL ||  f->face_winding->GetNumPoints() < 3) {
 		return;
 	}
 
-  im.Color4fv(color.ToFloatPtr());
+  fhTrisBuffer* buffer = g_qeglobals.surfaceBuffer.GetColorBuffer();
 
-  for (int i = 0; i<f->face_winding->GetNumPoints(); ++i) {
-    if (i>0 && i % 3 == 0) {
-      im.Vertex3fv( (*f->face_winding)[0].ToFloatPtr() );
-      im.Vertex3fv( (*f->face_winding)[i-1].ToFloatPtr() );
-    }
-
-    im.Vertex3fv( (*f->face_winding)[i].ToFloatPtr() );
+  for (int i = 2; i<f->face_winding->GetNumPoints(); ++i) {
+    buffer->Add((*f->face_winding)[0].ToVec3(), (*f->face_winding)[i-1].ToVec3(), (*f->face_winding)[i].ToVec3(), color);
   }
 }
 
@@ -4686,22 +4679,19 @@ void Face_Draw(fhImmediateMode& im, face_t *f, const idVec4& color) {
 Face_DrawOutline
 ================
 */
-void Face_DrawOutline(fhImmediateMode& im, face_t *f, const idVec3& color) {
-  assert(im.getCurrentMode() == GL_LINES);
-
+void Face_DrawOutline( const face_t *f, const idVec3& color) {
   if (f->face_winding == NULL || f->face_winding->GetNumPoints() < 2) {
     return;
   }
 
-  im.Color3fv(color.ToFloatPtr());
-  im.Vertex3fv((*f->face_winding)[0].ToFloatPtr());
-  for (int i = 1; i < (f->face_winding->GetNumPoints()-1); i++) {
-    im.Vertex3fv((*f->face_winding)[i].ToFloatPtr());
-    im.Vertex3fv((*f->face_winding)[i].ToFloatPtr());
+  int numPoints = f->face_winding->GetNumPoints();
+  const idVec5* points = &(*f->face_winding)[0];  
+    
+  for (int i=0; (i+1) < numPoints; i++) {
+    g_qeglobals.lineBuffer.Add(points[i].ToVec3(), points[i+1].ToVec3(), color);
   }
-  im.Vertex3fv((*f->face_winding)[f->face_winding->GetNumPoints()-1].ToFloatPtr());
-  im.Vertex3fv((*f->face_winding)[f->face_winding->GetNumPoints()-1].ToFloatPtr());
-  im.Vertex3fv((*f->face_winding)[0].ToFloatPtr());
+
+  g_qeglobals.lineBuffer.Add(points[0].ToVec3(), points[numPoints-1].ToVec3(), color);  
 }
 
 

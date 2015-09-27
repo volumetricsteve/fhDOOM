@@ -614,7 +614,7 @@ Version 2
 {
 "classname" "light"
 "name" "light_4"
-"origin" "256 256 144"
+"origin" "264 256 200"
 "noshadows" "0"
 "nospecular" "0"
 "nodiffuse" "0"

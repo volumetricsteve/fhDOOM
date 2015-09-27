@@ -117,8 +117,6 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
   }
-
-  Clear();
 }
 
 
@@ -166,6 +164,7 @@ void fhSurfaceBuffer::Clear() {
     entry->trisBuffer.Clear();
     entry->material = nullptr;
   }
+  coloredTrisBuffer.Clear();
 }
 
 void fhSurfaceBuffer::Commit(const idVec4& colorModulate, const idVec4& colorAdd) {

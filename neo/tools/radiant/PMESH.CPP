@@ -2491,7 +2491,14 @@ void DrawPatchMeshSolid(patchMesh_t *pm, const idVec4& color) {
   UpdatePatchGeometry(pm);
 
   fhTrisBuffer* buffer = g_qeglobals.surfaceBuffer.GetColorBuffer();
-  buffer->Add(pm->triangleVerts, pm->triangleVertsNum);
+
+  for(int i=0; i<pm->triangleVertsNum; i += 3) {
+    buffer->Add(pm->triangleVerts[i].xyz,
+      pm->triangleVerts[i+1].xyz,
+      pm->triangleVerts[i+2].xyz,
+      color);
+  }
+  
 /*
   int		nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
@@ -2592,10 +2599,10 @@ void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
     if(selected) {
       //glEnable(GL_BLEND);
       //DrawPatchMeshSolid(pm, idVec4(color.x, color.y, color.z, 0.25));
-      DrawPatchMeshSolid(pm, true, material);
+      //DrawPatchMeshSolid(pm, true, material);
       //glDisable(GL_BLEND);
-      DrawPatchMeshWireframe(pm, idVec3(1,1,1));
-      DrawPatchMeshHandles(pm);
+      //DrawPatchMeshWireframe(pm, idVec3(1,1,1));
+      //DrawPatchMeshHandles(pm);
     }
 
     /*
