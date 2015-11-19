@@ -932,6 +932,8 @@ add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
 if(MSVC)
   set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
   set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")  
+  set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:WINDOWS")  
+
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER exes)
 endif()
 
