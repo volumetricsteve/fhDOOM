@@ -143,6 +143,8 @@ typedef enum {
 
 #define	MAX_IMAGE_NAME	256
 
+class fhFramebuffer;
+
 class idImage {
 public:
 				idImage();
@@ -173,6 +175,9 @@ public:
 	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
 
 	void		CopyDepthbuffer( int x, int y, int width, int height );
+
+  void    AttachColorToFramebuffer(fhFramebuffer* framebuffer);
+  void    AttachDepthToFramebuffer(fhFramebuffer* framebuffer);
 
 	void		UploadScratch( const byte *pic, int width, int height );
 
@@ -293,6 +298,40 @@ void	R_WritePalTGA( const char *filename, const byte *data, const byte *palette,
 // data is in top-to-bottom raster order unless flipVertical is set
 
 
+
+class fhFramebuffer {
+public:
+  fhFramebuffer(int w, int h, idImage* color, idImage* depth) {
+    width = w;
+    height = h;
+    name = (!color || !depth) ? 0 : -1;
+    colorAttachment = color;
+    depthAttachment = depth;
+  }
+
+  void Bind() {
+    if(name == -1) {
+      glGenFramebuffers(1, &name);
+      glBindFramebuffer(GL_FRAMEBUFFER, name);
+      colorAttachment->AttachColorToFramebuffer(this);
+      depthAttachment->AttachDepthToFramebuffer(this);
+
+      if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        name = 0;
+      }
+    } else {
+      glBindFramebuffer(GL_FRAMEBUFFER, name);
+    }
+  }
+
+  int width;
+  int height;
+  GLuint name;
+  idImage* colorAttachment;
+  idImage* depthAttachment;
+};
+
+
 class idImageManager {
 public:
 	void				Init();
@@ -408,6 +447,11 @@ public:
 	idImage *			specularTableImage;			// 1D intensity texture with our specular function
 	idImage *			specular2DTableImage;		// 2D intensity texture with our specular function with variable specularity
 	idImage *			borderClampImage;			// white inside, black outside
+
+  idImage *     shadowmapDepthImage[6];
+  idImage *     shadowmapColorImage[6];
+  fhFramebuffer* shadowmapFramebuffer[6];  
+  fhFramebuffer* defaultFramebuffer;  
 
 	//--------------------------------------------------------
 	
