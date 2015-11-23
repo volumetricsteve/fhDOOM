@@ -209,7 +209,7 @@ typedef struct {
 	idMegaTexture		*megaTexture;		// handles all the binding and parameter setting 
 } newShaderStage_t;
 
-typedef struct {
+struct glslProgramDef_t {
   static const int vertex_attrib_position = 0;
   static const int vertex_attrib_texcoord = 1;
   static const int vertex_attrib_normal   = 2;
@@ -279,7 +279,7 @@ typedef struct {
   char   fragmentShaderName[64];
   GLuint ident;
   byte   usedTextureUnits;
-} glslProgramDef_t;
+};
 
 extern const glslProgramDef_t* shadowProgram;
 extern const glslProgramDef_t* interactionProgram;
