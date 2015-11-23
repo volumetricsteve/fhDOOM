@@ -103,7 +103,8 @@ If you have questions concerning this license or the applicable additional terms
 // Linux
 #ifdef __linux__
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__amd64__)
+  static_assert(sizeof(void*) == 4, "need 32bit pointers");
 	#define	BUILD_STRING				"linux-x86"
 	#define BUILD_OS_ID					2
 	#define CPUSTRING					"x86"

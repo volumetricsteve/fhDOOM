@@ -154,8 +154,14 @@ source_group(game\\Physics physics/.*)
 source_group(game\\Script script/.*)  
 
 
-set(TARGER_NAME "fhGame-x86")
+set(TARGET_NAME "fhGame-x86")
 add_definitions(-D__DOOM__ -DGAME_DLL)
-add_library(${TARGER_NAME} SHARED ${SOURCES})
-target_link_libraries(${TARGER_NAME} idlib)
-set_property(TARGET ${TARGER_NAME} PROPERTY FOLDER dlls)  
+add_library(${TARGET_NAME} SHARED ${SOURCES})
+target_link_libraries(${TARGET_NAME} idlib)
+set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER dlls)  
+
+IF(UNIX)
+  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+  ENDIF()
+ENDIF()  
