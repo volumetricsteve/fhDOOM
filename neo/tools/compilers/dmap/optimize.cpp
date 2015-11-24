@@ -1951,3 +1951,4 @@ void	OptimizeEntity( uEntity_t *e ) {
 		OptimizeGroupList( e->areas[i].groups );
 	}
 }
+

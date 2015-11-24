@@ -254,7 +254,7 @@ idImage *idMaterial::GetEditorImage( void ) const {
 
 // info parms
 typedef struct {
-	char	*name;
+	const char	*name;
 	int		clearSolid, surfaceFlags, contents;
 } infoParm_t;
 
@@ -1782,13 +1782,13 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
     if (!token.Icmp("fragmentShader")) {
       if (src.ReadTokenOnLine(&token)) {
-        strncpy(glslStage.fragmentShaderName, token.c_str(), min(token.Length(), sizeof(glslStage.fragmentShaderName)-1));        
+        strncpy(glslStage.fragmentShaderName, token.c_str(), Min<int>(token.Length(), sizeof(glslStage.fragmentShaderName)-1));        
       }
       continue;
     }
     if (!token.Icmp("vertexShader")) {
       if (src.ReadTokenOnLine(&token)) {
-        strncpy(glslStage.vertexShaderName, token.c_str(), min(token.Length(), sizeof(glslStage.vertexShaderName)-1));
+        strncpy(glslStage.vertexShaderName, token.c_str(), Min<int>(token.Length(), sizeof(glslStage.vertexShaderName)-1));
       }
       continue;
     }
@@ -2638,7 +2638,7 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 idMaterial::Print
 ===================
 */
-char *opNames[] = {
+const char *opNames[] = {
 	"OP_TYPE_ADD",
 	"OP_TYPE_SUBTRACT",
 	"OP_TYPE_MULTIPLY",

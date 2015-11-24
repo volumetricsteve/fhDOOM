@@ -141,9 +141,9 @@ void fhImmediateMode::End()
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
     GLenum mode = currentMode;
     
@@ -363,9 +363,9 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
   glDrawElements(GL_TRIANGLES,
     indexNum,
@@ -463,14 +463,14 @@ void fhLineBuffer::Commit()
     {
       static const int maxVerticesPerCommit = (sizeof(lineIndices)/sizeof(lineIndices[0]))/2;
 
-      int verticesToCommit = min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
+      int verticesToCommit = Min(maxVerticesPerCommit, verticesUsed - verticesCommitted);
 
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
 
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
       glDrawElements(GL_LINES,
         verticesToCommit,

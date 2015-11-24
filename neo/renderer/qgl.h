@@ -52,23 +52,4 @@ If you have questions concerning this license or the applicable additional terms
 #define WINAPI
 #endif
 
-//===========================================================================
-
-#if defined( __linux__ )
-
-//GLX Functions
-extern XVisualInfo * (*qglXChooseVisual)( Display *dpy, int screen, int *attribList );
-extern GLXContext (*qglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
-extern void (*qglXDestroyContext)( Display *dpy, GLXContext ctx );
-extern Bool (*qglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
-extern void (*qglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
-
-// make sure the code is correctly using qgl everywhere
-// don't enable that when building glimp itself obviously..
-#if !defined( GLIMP )
-	#include "../sys/linux/qgl_enforce.h"
-#endif
-
-#endif // __linux__
-
 #endif

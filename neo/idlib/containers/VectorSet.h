@@ -42,6 +42,8 @@ If you have questions concerning this license or the applicable additional terms
 template< class type, int dimension >
 class idVectorSet : public idList<type> {
 public:
+	using idList<type>::Append;
+
 							idVectorSet( void );
 							idVectorSet( const type &mins, const type &maxs, const int boxHashSize, const int initialSize );
 

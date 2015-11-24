@@ -496,9 +496,11 @@ IF(UNIX)
     sys/stub/util_stub.cpp
     sys/linux/glimp.cpp
     sys/posix/posix_input.cpp
-    sys/linux/input.cpp
+    sys/linux/input.cpp    
     sys/linux/libXNVCtrl/NVCtrl.c
     tools/guied/GEWindowWrapper_stub.cpp
+    sys/linux/sound_alsa.cpp
+    sys/linux/sound.cpp
     )
 ENDIF()
 
@@ -952,17 +954,43 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_force_include(precompiled.h SOURCES)
 add_msvc_precompiled_header(precompiled.h SOURCES)
 
+if(UNIX)
+   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/sys/linux/oss/include)
+   add_definitions(-Dlinux)
+   add_definitions(-DXTHREADS)
+   FIND_PACKAGE(OpenGL REQUIRED)   
+   FIND_PACKAGE(OpenAL REQUIRED)   
+
+   SET(EXTERNAL_LIBS
+    pthread
+    dl
+    X11
+    Xext  
+    Xxf86vm 
+    ${OPENAL_LIBRARY}
+    ${OPENGL_gl_LIBRARY})
+
+  set(LINK_LIBS
+    idlib 
+#    curl
+    glew
+    jpeg-6
+    oggvorbis
+    ${EXTERNAL_LIBS})
+else()
+  set(LINK_LIBS
+    idlib 
+    curl
+    glew
+    jpeg-6
+    oggvorbis
+    ${EXTERNAL_LIBS})  
+endif()  
+
 set(TARGET_NAME "fhDOOM")
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
 add_executable(${TARGET_NAME} ${SOURCES})
-target_link_libraries(${TARGET_NAME}
-  idlib 
-  curl
-  glew
-  jpeg-6
-  oggvorbis
-  ${EXTERNAL_LIBS}
-)
+target_link_libraries(${TARGET_NAME} ${LINK_LIBS})
 add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
 
 if(MSVC)

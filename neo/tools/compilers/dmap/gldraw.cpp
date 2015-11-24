@@ -148,3 +148,11 @@ void GLS_EndScene (void)
 }
 
 #endif
+
+
+#ifdef __linux__
+void Draw_ClearWindow() {}
+void GLS_BeginScene() {}
+void GLS_Winding( const idWinding *, int ) {}
+void GLS_EndScene() {}
+#endif
