@@ -482,6 +482,20 @@ ID_TIME_T Sys_FileTimeStamp( FILE *fp ) {
 	return (long) st.st_mtime;
 }
 
+bool Sys_IsFile(const char* path) {
+  DWORD dwAttrib = GetFileAttributesA(path);
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+    !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool Sys_IsDirectory(const char* path) {
+  DWORD dwAttrib = GetFileAttributesA(path);
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+    (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
 /*
 ==============
 Sys_Cwd
@@ -505,45 +519,6 @@ const char *Sys_DefaultCDPath( void ) {
 	return "";
 }
 
-
-/*
-==============
-Sys_IsBasePath
-==============
-*/
-static bool Sys_IsBasePath(const char* path) {
-  if(!path || !path[0])
-    return false;
-
-  char test[MAX_PATH];
-
-  strcpy(test, path);
-  strcpy(&test[strlen(test)], "\\base\\default.cfg");
-
-  return (PathFileExistsA(test) == TRUE);
-}
-
-/*
-==============
-Sys_DefaultBasePath
-Not thread-safe!
-==============
-*/
-const char *Sys_DefaultBasePath( void ) {   
-  static char path[MAX_PATH];
-  strcpy(path, Sys_Cwd());
-  
-  for(int i=strlen(path); i >= 0; --i) {
-    if(path[i] == '/' || path[i] == '\\' || path[i] == '\0') {
-      path[i] = '\0';
-      
-      if(Sys_IsBasePath(path))
-        return path;
-    }
-  }
-
-	return Sys_Cwd();
-}
 
 /*
 ==============

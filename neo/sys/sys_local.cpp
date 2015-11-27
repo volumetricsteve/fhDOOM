@@ -157,6 +157,46 @@ void idSysLocal::FPU_EnableExceptions( int exceptions ) {
 }
 
 /*
+==============
+Sys_DefaultBasePath
+
+Find base path by walking up the current working directory and checking
+each directory if it contains the 'base' game directory.
+
+Not thread-safe!
+==============
+*/
+const char *Sys_DefaultBasePath(void) {
+  static char path[MAX_OSPATH];
+
+#if defined(WIN32)
+  const char* base = "\\base";
+  const char seperator = '\\';
+#elif defined(__linux__)
+  const char* base = "/base";
+  const char seperator = '/';
+#endif
+  const int base_len = strlen(base);
+
+  strcpy(path, Sys_Cwd());
+
+  for (int i = strlen(path); i >= 0; --i) {
+    if (path[i] == seperator || path[i] == '\0') {
+
+      strcpy(&path[i], base);
+      path[i + base_len + 1] = '\0';
+
+      if (Sys_IsDirectory(path)) {
+        path[i] = '\0';
+        return path;
+      }
+    }
+  }
+
+  return Sys_Cwd();
+}
+
+/*
 =================
 Sys_TimeStampToStr
 =================

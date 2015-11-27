@@ -145,35 +145,6 @@ const char *Sys_EXEPath( void ) {
 }
 
 /*
-================
-Sys_DefaultBasePath
-
-Find base path, by walking up the current working directory and checking
-each directory, if it contains the 'base' game directory.
-================
-*/
-const char *Sys_DefaultBasePath(void) {
-    static char path[MAX_OSPATH];
-
-    strcpy(path, Sys_Cwd());
-
-    for(int i=strlen(path); i >= 0; --i) {
-      if(path[i] == '/' || path[i] == '\\' || path[i] == '\0') {
-
-        strcpy(&path[i], "/base");
-        path[i+6] = '\0';
-
-        if(Sys_IsDirectory(path)) {
-          path[i] = '\0';
-          return path;
-        }
-      }
-    }
-
-    return Sys_Cwd();
-}
-
-/*
 ===============
 Sys_GetConsoleKey
 ===============
