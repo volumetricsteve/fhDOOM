@@ -81,6 +81,7 @@ ENDIF()
 IF(CMAKE_COMPILER_IS_GNUCC)
   add_definitions(-DID_ENABLE_CURL=0)
   SET(CMAKE_CXX_FLAGS "-std=c++11 -Wno-format-security")    
+  SET(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer -O0")
 ENDIF()
 
 include_directories(neo/renderer)

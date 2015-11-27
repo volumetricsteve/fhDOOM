@@ -148,37 +148,29 @@ const char *Sys_EXEPath( void ) {
 ================
 Sys_DefaultBasePath
 
-Get the default base path
-- binary image path
-- current directory
-- hardcoded
-Try to be intelligent: if there is no BASE_GAMEDIR, try the next path
+Find base path, by walking up the current working directory and checking
+each directory, if it contains the 'base' game directory.
 ================
 */
 const char *Sys_DefaultBasePath(void) {
-	struct stat st;
-	idStr testbase;
-	basepath = Sys_EXEPath();
-	if ( basepath.Length() ) {
-		basepath.StripFilename();
-		testbase = basepath; testbase += "/"; testbase += BASE_GAMEDIR;
-		if ( stat( testbase.c_str(), &st ) != -1 && S_ISDIR( st.st_mode ) ) {
-			return basepath.c_str();
-		} else {
-			common->Printf( "no '%s' directory in exe path %s, skipping\n", BASE_GAMEDIR, basepath.c_str() );
-		}
-	}
-	if ( basepath != Posix_Cwd() ) {
-		basepath = Posix_Cwd();
-		testbase = basepath; testbase += "/"; testbase += BASE_GAMEDIR;
-		if ( stat( testbase.c_str(), &st ) != -1 && S_ISDIR( st.st_mode ) ) {
-			return basepath.c_str();
-		} else {
-			common->Printf("no '%s' directory in cwd path %s, skipping\n", BASE_GAMEDIR, basepath.c_str());
-		}
-	}
-	common->Printf( "WARNING: using hardcoded default base path\n" );
-	return LINUX_DEFAULT_PATH;
+    static char path[MAX_OSPATH];
+
+    strcpy(path, Sys_Cwd());
+
+    for(int i=strlen(path); i >= 0; --i) {
+      if(path[i] == '/' || path[i] == '\\' || path[i] == '\0') {
+
+        strcpy(&path[i], "/base");
+        path[i+6] = '\0';
+
+        if(Sys_IsDirectory(path)) {
+          path[i] = '\0';
+          return path;
+        }
+      }
+    }
+
+    return Sys_Cwd();
 }
 
 /*

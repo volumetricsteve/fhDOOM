@@ -100,13 +100,6 @@ If you have questions concerning this license or the applicable additional terms
 #define	WIN32_WINDOW_CLASS_NAME			"DOOM3"
 #define	WIN32_FAKE_WINDOW_CLASS_NAME	"DOOM3_WGL_FAKE"
 
-// Linux info
-#ifdef ID_DEMO_BUILD
-	#define LINUX_DEFAULT_PATH			"/usr/local/games/doom3-demo"
-#else
-	#define LINUX_DEFAULT_PATH			"/usr/local/games/doom3"
-#endif
-
 // CD Key file info
 // goes into BASE_GAMEDIR whatever the fs_game is set to
 // two distinct files for easier win32 installer job
