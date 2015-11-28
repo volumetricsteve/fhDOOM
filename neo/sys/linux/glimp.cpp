@@ -514,13 +514,40 @@ int GLX_Init(glimpParms_t a) {
 
 	XFlush(dpy);
 	XSync(dpy, False);
-	ctx = glXCreateContext(dpy, visinfo, NULL, True);
+/*
+    if(a.glCoreProfile) {
+        // NOTE: It is not necessary to create or make current to a context before
+        // calling glXGetProcAddressARB
+        typedef GLXContext (*glXCreateContextAttribsARBProc)(::Display*, GLXFBConfig, GLXContext, Bool, const int*);
+        glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+        glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
+                 glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
+
+
+        int flags = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+        int glattribs[] = {
+          GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+          GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+          GLX_CONTEXT_FLAGS_ARB, flags,
+          0 };
+
+        ctx = glXCreateContextAttribsARB( dpy, visinfo, 0, True, glattribs );
+
+    } else */{
+        ctx = glXCreateContext(dpy, visinfo, NULL, True);
+    }
+
 	XSync(dpy, False);
 
 	// Free the visinfo after we're done with it
 	XFree(visinfo);
 
 	glXMakeCurrent(dpy, win, ctx);
+    glewExperimental = GL_TRUE;
+    GLenum err = glewInit();
+    if(GLEW_OK != err) {
+        return false;
+    }
 
 	glstring = (const char *) glGetString(GL_RENDERER);
 	common->Printf("GL_RENDERER: %s\n", glstring);

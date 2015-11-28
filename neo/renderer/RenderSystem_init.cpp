@@ -227,11 +227,17 @@ static bool R_DoubleCheckExtension(char* name)
   //ext check via glew does not always work!? Do it manually...
   int ext_cnt = 0;
   glGetIntegerv(GL_NUM_EXTENSIONS, &ext_cnt);
-  for (int i = 0; i < ext_cnt; ++i) {
-    const char* current = (const char*)glGetStringi(GL_EXTENSIONS, i);
-    if (stricmp(current, name) == 0) {
-      return true;
-    }
+
+  if(ext_cnt != 0) {
+      for (int i = 0; i < ext_cnt; ++i) {
+        const char* current = (const char*)glGetStringi(GL_EXTENSIONS, i);
+        if (stricmp(current, name) == 0) {
+          return true;
+        }
+      }
+  } else {
+      bool glewCheck = glewIsSupported(name) == GL_TRUE;
+      return glewCheck;
   }
 
   return false;
