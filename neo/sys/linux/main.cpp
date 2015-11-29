@@ -206,6 +206,8 @@ Sys_GetClockticks
 ===============
 */
 double Sys_GetClockTicks( void ) {
+#if 0
+
 #if defined( __i386__ )
 	unsigned long lo, hi;
 
@@ -222,6 +224,13 @@ double Sys_GetClockTicks( void ) {
 #else
 #error unsupported CPU
 #endif
+
+#else
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return static_cast<double>(ts.tv_nsec);
+#endif
+
 }
 
 /*
