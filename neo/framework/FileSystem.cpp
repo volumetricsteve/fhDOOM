@@ -3883,6 +3883,14 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 		dllPath.StripFilename( );
 		dllPath.AppendPath( dllName );
 		dllFile = OpenExplicitFileRead( dllPath );
+
+        if(!dllFile) {
+            dllPath = Sys_EXEPath( );
+            dllPath.StripFilename( );
+            dllPath.AppendPath( "../lib" );
+            dllPath.AppendPath( dllName );
+            dllFile = OpenExplicitFileRead( dllPath );
+        }
 	}
 	if ( !dllFile ) {
 		if ( !serverPaks.Num() ) {
