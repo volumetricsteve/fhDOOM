@@ -519,44 +519,46 @@ static void RB_BlendLight( const drawSurf_t *drawSurfs,  const drawSurf_t *drawS
 RB_STD_FogAllLights
 ==================
 */
-void RB_STD_FogAllLights( void ) {
+void RB_STD_FogAllLights(void) {
 	viewLight_t	*vLight;
 
-	if ( r_skipFogLights.GetBool() || r_showOverDraw.GetInteger() != 0 
-		 || backEnd.viewDef->isXraySubview /* dont fog in xray mode*/
-		 ) {
+	if (r_skipFogLights.GetBool() || r_showOverDraw.GetInteger() != 0
+		|| backEnd.viewDef->isXraySubview /* dont fog in xray mode*/
+		) {
 		return;
 	}
 
-	RB_LogComment( "---------- RB_STD_FogAllLights ----------\n" );
+	RB_LogComment("---------- RB_STD_FogAllLights ----------\n");
 
-	glDisable( GL_STENCIL_TEST );
+	glDisable(GL_STENCIL_TEST);
 
-	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
+	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
 		backEnd.vLight = vLight;
 
-		if ( !vLight->lightShader->IsFogLight() && !vLight->lightShader->IsBlendLight() ) {
+		if (!vLight->lightShader->IsFogLight() && !vLight->lightShader->IsBlendLight()) {
 			continue;
 		}
 
-		if ( vLight->lightShader->IsFogLight() ) {
-      if(backEnd.glslEnabled) {
-        RB_GLSL_FogPass( vLight->globalInteractions, vLight->localInteractions );
-      } else {
-			  RB_STD_FogPass( vLight->globalInteractions, vLight->localInteractions );
-      }
-		} 
-    else if ( vLight->lightShader->IsBlendLight() ) {
-      if(backEnd.glslEnabled) {
-        RB_GLSL_BlendLight( vLight->globalInteractions, vLight->localInteractions );
-      } else {
-			  RB_BlendLight( vLight->globalInteractions, vLight->localInteractions );
-      }
+		if (vLight->lightShader->IsFogLight()) {
+			if (backEnd.glslEnabled) {
+				RB_GLSL_FogPass(vLight->globalInteractions, vLight->localInteractions);
+			}
+			else {
+				RB_STD_FogPass(vLight->globalInteractions, vLight->localInteractions);
+			}
 		}
-		glDisable( GL_STENCIL_TEST );
+		else if (vLight->lightShader->IsBlendLight()) {
+			if (backEnd.glslEnabled) {
+				RB_GLSL_BlendLight(vLight->globalInteractions, vLight->localInteractions);
+			}
+			else {
+				RB_BlendLight(vLight->globalInteractions, vLight->localInteractions);
+			}
+		}
+		glDisable(GL_STENCIL_TEST);
 	}
 
-	glEnable( GL_STENCIL_TEST );
+	glEnable(GL_STENCIL_TEST);
 }
 
 //=========================================================================================
@@ -592,11 +594,11 @@ void RB_STD_LightScale( void ) {
 	}
 
 	// full screen blends
-  GL_ModelViewMatrix.LoadIdentity();
+	GL_ModelViewMatrix.LoadIdentity();
 
-  GL_ProjectionMatrix.Push();
-  GL_ProjectionMatrix.LoadIdentity();
-  GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
+	GL_ProjectionMatrix.Push();
+	GL_ProjectionMatrix.LoadIdentity();
+	GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 
 	GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_COLOR );
 	GL_Cull( CT_TWO_SIDED );	// so mirror views also get it
@@ -656,23 +658,23 @@ void	RB_STD_DrawView( void ) {
 
 	// fill the depth buffer and clear color buffer to black except on
 	// subviews
-	if(backEnd.glslEnabled)
-    RB_GLSL_FillDepthBuffer( drawSurfs, numDrawSurfs );
-  else
-	  RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
+	if (backEnd.glslEnabled)
+		RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
+	else
+		RB_STD_FillDepthBuffer(drawSurfs, numDrawSurfs);
 
-  if (backEnd.viewDef->viewEntitys) {
-    globalImages->currentDepthImage->CopyDepthbuffer(backEnd.viewDef->viewport.x1,
-      backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
-      backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1);
-  }
+	if (backEnd.viewDef->viewEntitys) {
+		globalImages->currentDepthImage->CopyDepthbuffer(backEnd.viewDef->viewport.x1,
+			backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+			backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1);
+	}
 
 	// main light renderer
   
-  if (backEnd.glslEnabled)
-    RB_GLSL_DrawInteractions();
-  else
-    RB_ARB2_DrawInteractions();    
+	if (backEnd.glslEnabled)
+		RB_GLSL_DrawInteractions();
+	else
+		RB_ARB2_DrawInteractions();
 
 	// disable stencil shadow test
 	glStencilFunc( GL_ALWAYS, 128, 255 );
