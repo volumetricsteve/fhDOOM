@@ -420,9 +420,9 @@ void  GL_UseProgram( const glslProgramDef_t* program ) {
   if(program && program->ident) {
     glUseProgram(program->ident);
 
-    const byte usedTextureUnits = program->usedTextureUnits;
+    const unsigned short usedTextureUnits = program->usedTextureUnits;
     
-    for(int i=0; i<8; ++i) {
+    for(int i=0; i<(sizeof(usedTextureUnits) * 8); ++i) {
       if (usedTextureUnits & (1 << i)) {
         glUniform1i(glslProgramDef_t::uniform_texture0 + i, i);
       }

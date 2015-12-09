@@ -1639,7 +1639,7 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   GL_SelectTextureNoClient(10);
   globalImages->shadowmapDepthImage[4]->Bind();
 
-  GL_SelectTextureNoClient(12);
+  GL_SelectTextureNoClient(11);
   globalImages->shadowmapDepthImage[5]->Bind();
 
   // draw it
