@@ -1689,14 +1689,14 @@ void RB_ShowLights( void ) {
 
 	common->Printf( "volumes: " );	// FIXME: not in back end!
 
-  if(backEnd.glslEnabled) {
-    GL_UseProgram(defaultProgram);
-    glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
-    glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
-    GL_SelectTexture(1);
-    globalImages->whiteImage->Bind();
-    GL_SelectTexture(0);
-  }
+	if (backEnd.glslEnabled) {
+		GL_UseProgram(defaultProgram);
+		glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+		glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
+		GL_SelectTexture(1);
+		globalImages->whiteImage->Bind();
+		GL_SelectTexture(0);
+	}
 
 	count = 0;
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
@@ -1708,30 +1708,30 @@ void RB_ShowLights( void ) {
 		// depth buffered planes
 		if ( r_showLights.GetInteger() >= 2 ) {
 			GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK );
-      if(backEnd.glslEnabled)
-        glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 1.0f, 0.25f);
-      else
-			  glColor4f( 0, 0, 1, 0.25 );
+
+			if (backEnd.glslEnabled)
+				glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 1.0f, 0.25f);
+			else
+				glColor4f(0, 0, 1, 0.25);
+
 			glEnable( GL_DEPTH_TEST );
 			RB_RenderTriangleSurface( tri );
 		}
 
 		// non-hidden lines
 		if ( r_showLights.GetInteger() >= 3 ) {
-			GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK  );
-			glDisable( GL_DEPTH_TEST );
+			GL_State(GLS_POLYMODE_LINE | GLS_DEPTHMASK);
+			glDisable(GL_DEPTH_TEST);
 
-      if (backEnd.glslEnabled)
-        glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1.0f, 1.0f, 1.0f, 1.0f);
-      else
-        glColor3f( 1, 1, 1 );		
+			if (backEnd.glslEnabled)
+				glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1.0f, 1.0f, 1.0f, 1.0f);
+			else
+				glColor3f(1, 1, 1);
 
-			RB_RenderTriangleSurface( tri );
+			RB_RenderTriangleSurface(tri);
 		}
 
-		int index;
-
-		index = backEnd.viewDef->renderWorld->lightDefs.FindIndex( vLight->lightDef );
+		int index = backEnd.viewDef->renderWorld->lightDefs.FindIndex( vLight->lightDef );
 		if ( vLight->viewInsideLight ) {
 			// view is in this volume
 			common->Printf( "[%i] ", index );
@@ -1740,9 +1740,9 @@ void RB_ShowLights( void ) {
 		}
 	}
 
-  if (backEnd.glslEnabled) {
-    GL_UseProgram(nullptr);
-  }
+	if (backEnd.glslEnabled) {
+		GL_UseProgram(nullptr);
+	}
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_POLYGON_OFFSET_LINE );

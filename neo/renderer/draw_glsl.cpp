@@ -1623,25 +1623,6 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   GL_SelectTextureNoClient(5);
   din->specularImage->Bind();
 
-  // texture 5 is the per-surface specular map
-  GL_SelectTextureNoClient(6);
-  globalImages->shadowmapDepthImage[0]->Bind();
-
-  GL_SelectTextureNoClient(7);
-  globalImages->shadowmapDepthImage[1]->Bind();
-
-  GL_SelectTextureNoClient(8);
-  globalImages->shadowmapDepthImage[2]->Bind();
-
-  GL_SelectTextureNoClient(9);
-  globalImages->shadowmapDepthImage[3]->Bind();
-
-  GL_SelectTextureNoClient(10);
-  globalImages->shadowmapDepthImage[4]->Bind();
-
-  GL_SelectTextureNoClient(11);
-  globalImages->shadowmapDepthImage[5]->Bind();
-
   // draw it
   RB_DrawElementsWithCounters(din->surf->geo);
 }

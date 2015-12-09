@@ -3,6 +3,26 @@
 
 #include "tr_local.h"
 
+idCVar r_useShadowMapCulling( "r_useShadowMapCulling", "1", CVAR_RENDERER | CVAR_BOOL, "use culling when rendering shadow maps" );
+idCVar r_useShadowMapMinSize( "r_useShadowMapMinSize", "128", CVAR_RENDERER | CVAR_FLOAT, "minimum size for light to have shadow maps enabled" );
+
+
+static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
+static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
+
+static float viewLightAxialSize;
+
+/*
+====================
+GL_SelectTextureNoClient
+====================
+*/
+static void GL_SelectTextureNoClient(int unit) {
+	backEnd.glState.currenttmu = unit;
+	glActiveTextureARB(GL_TEXTURE0_ARB + unit);
+	RB_LogComment("glActiveTextureARB( %i )\n", unit);
+}
+
 static float	s_flipMatrix[16] = {
 	// convert from our coordinate system (looking down X)
 	// to OpenGL's coordinate system (looking down -Z)
@@ -16,6 +36,105 @@ template<typename T>
 static const void* attributeOffset(T offset, const void* attributeOffset)
 {
 	return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
+}
+
+
+/*
+==================
+R_EXP_CalcLightAxialSize
+
+all light side projections must currently match, so non-centered
+and non-cubic lights must take the largest length
+==================
+*/
+float	R_EXP_CalcLightAxialSize(const viewLight_t *vLight) {
+	float	max = 0;
+
+	if (!vLight->lightDef->parms.pointLight) {
+		idVec3	dir = vLight->lightDef->parms.target - vLight->lightDef->parms.origin;
+		max = dir.Length();
+		return max;
+	}
+
+	for (int i = 0; i < 3; i++) {
+		float	dist = fabs(vLight->lightDef->parms.lightCenter[i]);
+		dist += vLight->lightDef->parms.lightRadius[i];
+		if (dist > max) {
+			max = dist;
+		}
+	}
+	return max;
+}
+
+/*
+==================
+RB_EXP_CullInteractions
+
+Sets surfaceInteraction_t->cullBits
+==================
+*/
+void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
+	
+	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
+		const idRenderEntityLocal *entityDef = inter->entityDef;
+
+		if (!entityDef) {
+			continue;
+		}
+		if (inter->numSurfaces < 1) {
+			continue;
+		}
+
+		int	culled = 0;
+
+		if (r_useShadowMapCulling.GetBool()) {
+
+			// transform light frustum into object space, positive side points outside the light
+			idPlane	localPlanes[6];
+			int		plane;
+			for (plane = 0; plane < 6; plane++) {
+				R_GlobalPlaneToLocal(entityDef->modelMatrix, frustumPlanes[plane], localPlanes[plane]);
+			}
+
+			// cull the entire entity bounding box
+			// has referenceBounds been tightened to the actual model bounds?
+			idVec3	corners[8];
+			for (int i = 0; i < 8; i++) {
+				corners[i][0] = entityDef->referenceBounds[i & 1][0];
+				corners[i][1] = entityDef->referenceBounds[(i >> 1) & 1][1];
+				corners[i][2] = entityDef->referenceBounds[(i >> 2) & 1][2];
+			}
+
+			for (plane = 0; plane < 6; plane++) {
+				int		j;
+				for (j = 0; j < 8; j++) {
+					// if a corner is on the negative side (inside) of the frustum, the surface is not culled
+					// by this plane
+					if (corners[j] * localPlanes[plane].ToVec4().ToVec3() + localPlanes[plane][3] < 0) {
+						break;
+					}
+				}
+				if (j == 8) {
+					break;			// all points outside the light
+				}
+			}
+			if (plane < 6) {
+				culled = CULL_OCCLUDER_AND_RECEIVER;
+			}
+		}
+
+		for (int i = 0; i < inter->numSurfaces; i++) {
+			surfaceInteraction_t	*surfInt = &inter->surfaces[i];
+
+			
+
+			if (!surfInt->ambientTris) {
+				continue;
+			}
+			surfInt->expCulled = culled;
+		}
+
+	}
 }
 
 static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix) {
@@ -32,12 +151,6 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 		// a different space
 		float	matrix[16];
 		myGlMultMatrix(inter->entityDef->modelMatrix, shadowViewMatrix, matrix);
-		GL_ModelViewMatrix.Push();
-		GL_ModelViewMatrix.Load(matrix);		
-
-		GL_UseProgram(depthProgram);
-		glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-		glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);		
 
 		// draw each surface
 		for (int i = 0; i < inter->numSurfaces; i++) {
@@ -46,14 +159,15 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			if (!surfInt->ambientTris) {
 				continue;
 			}
+
 			if (surfInt->shader && !surfInt->shader->SurfaceCastsShadow()) {
 				continue;
 			}
 
 			// cull it
-			//if (surfInt->expCulled == CULL_OCCLUDER_AND_RECEIVER) {
-//				continue;
-			//}
+			if (surfInt->expCulled == CULL_OCCLUDER_AND_RECEIVER) {
+				continue;
+			}
 
 			// render it
 			const srfTriangles_t *tri = surfInt->ambientTris;
@@ -64,7 +178,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			const auto offset = vertexCache.Bind(tri->ambientCache);
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);
 			glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
 			float color[] {1,0,0,1};
@@ -72,19 +186,13 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			globalImages->whiteImage->Bind();
 
 			// draw it
-			RB_DrawElementsWithCounters(tri);			
+			RB_DrawElementsWithCounters(tri);
+			backEnd.pc.c_shadowMapDraws++;
 		}
-
-		glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-		glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-
-		GL_UseProgram(nullptr);
-
-		GL_ModelViewMatrix.Pop();
 	}
 }
 
-static void RB_RenderShadowBuffer(const viewLight_t* vLight, int side) {
+static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 
 
 	//
@@ -226,15 +334,64 @@ static void RB_RenderShadowBuffer(const viewLight_t* vLight, int side) {
 	
 	myGlMultMatrix(viewMatrix, s_flipMatrix, flippedViewMatrix);
 
+	if(r_useShadowMapCulling.GetBool()) {
+		// create frustum planes
+		idPlane	globalFrustum[6];
+
+		// near clip
+		globalFrustum[0][0] = -viewMatrix[0];
+		globalFrustum[0][1] = -viewMatrix[4];
+		globalFrustum[0][2] = -viewMatrix[8];
+		globalFrustum[0][3] = -(origin[0] * globalFrustum[0][0] + origin[1] * globalFrustum[0][1] + origin[2] * globalFrustum[0][2]);
+
+		// far clip
+		globalFrustum[1][0] = viewMatrix[0];
+		globalFrustum[1][1] = viewMatrix[4];
+		globalFrustum[1][2] = viewMatrix[8];
+		globalFrustum[1][3] = -globalFrustum[0][3] - viewLightAxialSize;
+
+		// side clips
+		globalFrustum[2][0] = -viewMatrix[0] + viewMatrix[1];
+		globalFrustum[2][1] = -viewMatrix[4] + viewMatrix[5];
+		globalFrustum[2][2] = -viewMatrix[8] + viewMatrix[9];
+
+		globalFrustum[3][0] = -viewMatrix[0] - viewMatrix[1];
+		globalFrustum[3][1] = -viewMatrix[4] - viewMatrix[5];
+		globalFrustum[3][2] = -viewMatrix[8] - viewMatrix[9];
+
+		globalFrustum[4][0] = -viewMatrix[0] + viewMatrix[2];
+		globalFrustum[4][1] = -viewMatrix[4] + viewMatrix[6];
+		globalFrustum[4][2] = -viewMatrix[8] + viewMatrix[10];
+
+		globalFrustum[5][0] = -viewMatrix[0] - viewMatrix[2];
+		globalFrustum[5][1] = -viewMatrix[4] - viewMatrix[6];
+		globalFrustum[5][2] = -viewMatrix[8] - viewMatrix[10];
+
+		// is this nromalization necessary?
+		for (int i = 0; i < 6; i++) {
+			globalFrustum[i].ToVec4().ToVec3().Normalize();
+		}
+
+		for (int i = 2; i < 6; i++) {
+			globalFrustum[i][3] = -(origin * globalFrustum[i].ToVec4().ToVec3());
+		}
+
+		RB_EXP_CullInteractions(vLight, globalFrustum);
+	}
+
+
+
 	myGlMultMatrix(flippedViewMatrix, lightProjectionMatrix, &backEnd.shadowViewProjection[side][0]);
 	RB_RenderShadowCasters(vLight, flippedViewMatrix);
 
 
 	GL_ProjectionMatrix.Pop();
+
+	backEnd.pc.c_shadowPasses++;
 }
 
 
-void RB_RenderShadowMaps(const viewLight_t* vLight) {
+void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	const idMaterial	*lightShader = vLight->lightShader;
 
@@ -255,10 +412,21 @@ void RB_RenderShadowMaps(const viewLight_t* vLight) {
 		return;
 	}
 
+	if(vLight->frustumTris->bounds.GetRadius() < r_useShadowMapMinSize.GetFloat()) {
+		return;
+	}
 
 	if (!vLight->frustumTris->ambientCache) {
 		R_CreateAmbientCache(const_cast<srfTriangles_t *>(vLight->frustumTris), false);
 	}
+
+	// all light side projections must currently match, so non-centered
+	// and non-cubic lights must take the largest length
+	viewLightAxialSize = R_EXP_CalcLightAxialSize(vLight);
+
+	GL_UseProgram(depthProgram);
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 
 	for (int side=0; side < 6; side++) {
 		// FIXME: check for frustums completely off the screen
@@ -266,6 +434,10 @@ void RB_RenderShadowMaps(const viewLight_t* vLight) {
 		// render a shadow buffer
 		RB_RenderShadowBuffer(vLight, side);		
 	}
+
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	GL_UseProgram(nullptr);
 
 	globalImages->defaultFramebuffer->Bind();
 	backEnd.currentSpace = NULL;
@@ -282,4 +454,24 @@ void RB_RenderShadowMaps(const viewLight_t* vLight) {
 		backEnd.viewDef->scissor.x2 + 1 - backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1);
 		backEnd.currentScissor = backEnd.viewDef->scissor;
+
+
+	// texture 5 is the per-surface specular map
+	GL_SelectTextureNoClient(6);
+	globalImages->shadowmapDepthImage[0]->Bind();
+
+	GL_SelectTextureNoClient(7);
+	globalImages->shadowmapDepthImage[1]->Bind();
+
+	GL_SelectTextureNoClient(8);
+	globalImages->shadowmapDepthImage[2]->Bind();
+
+	GL_SelectTextureNoClient(9);
+	globalImages->shadowmapDepthImage[3]->Bind();
+
+	GL_SelectTextureNoClient(10);
+	globalImages->shadowmapDepthImage[4]->Bind();
+
+	GL_SelectTextureNoClient(11);
+	globalImages->shadowmapDepthImage[5]->Bind();
 }

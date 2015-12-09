@@ -113,6 +113,10 @@ static void R_PerformanceCounters( void ) {
 		common->Printf( "lightScale: %f\n", backEnd.pc.maxLightValue );
 	}
 
+	if (r_showShadowPasses.GetBool()) {
+		common->Printf("shadow passes: %i,  draw calls: %i\n", backEnd.pc.c_shadowPasses, backEnd.pc.c_shadowMapDraws);
+	}
+
 	memset( &tr.pc, 0, sizeof( tr.pc ) );
 	memset( &backEnd.pc, 0, sizeof( backEnd.pc ) );
 }
