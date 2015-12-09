@@ -664,8 +664,10 @@ typedef struct {
 
 	int					c_copyFrameBuffer;
 
-  bool        glslEnabled;
-  bool        glslReplaceArb2;
+	bool				glslEnabled;
+	bool				glslReplaceArb2;
+
+	float               shadowViewProjection[6][16];
 } backEndState_t;
 
 
@@ -1700,6 +1702,17 @@ TR_SHADOWBOUNDS
 idScreenRect R_CalcIntersectionScissor( const idRenderLightLocal * lightDef,
 									    const idRenderEntityLocal * entityDef,
 									    const viewDef_t * viewDef );
+
+
+/*
+=============================================================
+
+TR_SHAODWMAPPING
+
+=============================================================
+*/
+
+void RB_RenderShadowMaps(const viewLight_t* light);
 
 //=============================================
 

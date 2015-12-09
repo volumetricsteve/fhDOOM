@@ -431,77 +431,84 @@ const GLchar* message,
 GLvoid* userParam
 )
 {
-  const char* debSource = "?source?";
-  const char* debType = "?type?";
-  const char* debSev = "?severity?";  
+	const char* debSource = "?source?";
+	const char* debType = "?type?";
+	const char* debSev = "?severity?";
+
+	static const char* ignoredMessages[] = {
+		"Program/shader state performance warning: Fragment Shader is going to be recompiled because the shader key based on GL state mismatches."
+	};
+
+	if(type == GL_DEBUG_TYPE_PERFORMANCE_ARB && strcmp(ignoredMessages[0], message) == 0)
+		return;
 
 #pragma warning( push )
 #pragma warning( disable : 4996 )
 
-  switch(source) {
-  case GL_DEBUG_SOURCE_API_ARB:
-    debSource = "OpenGL";
-    break;
-  case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-    debSource = "Window System";
-    break;
-  case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-    debSource = "Shader Compiler";
-    break;
-  case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-    debSource = "Third Party";
-    break;
-  case GL_DEBUG_SOURCE_APPLICATION_ARB:
-    debSource = "Application";
-    break;
-  case GL_DEBUG_SOURCE_OTHER_ARB:
-    debSource = "Other";
-    break;
-  default:
-    break;
-  }
+	switch (source) {
+	case GL_DEBUG_SOURCE_API_ARB:
+		debSource = "OpenGL";
+		break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+		debSource = "Window System";
+		break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+		debSource = "Shader Compiler";
+		break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+		debSource = "Third Party";
+		break;
+	case GL_DEBUG_SOURCE_APPLICATION_ARB:
+		debSource = "Application";
+		break;
+	case GL_DEBUG_SOURCE_OTHER_ARB:
+		debSource = "Other";
+		break;
+	default:
+		break;
+	}
 
-  switch(type) {
-  case GL_DEBUG_TYPE_ERROR_ARB:
-    debType = "ERROR";
-    break;
-  case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-    debType = "DEPRECATED";
-    break;
-  case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-    debType = "UNDEFINED";
-    break;
-  case GL_DEBUG_TYPE_PORTABILITY_ARB:
-    debType = "PORTABILITY";
-    break;
-  case GL_DEBUG_TYPE_PERFORMANCE_ARB:
-    debType = "PERFORMANCE";
-    break;
-  case GL_DEBUG_TYPE_OTHER_ARB:
-    debType = "MESSAGE";
-    break;
-  default:
-    break;
-  }
+	switch (type) {
+	case GL_DEBUG_TYPE_ERROR_ARB:
+		debType = "ERROR";
+		break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+		debType = "DEPRECATED";
+		break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+		debType = "UNDEFINED";
+		break;
+	case GL_DEBUG_TYPE_PORTABILITY_ARB:
+		debType = "PORTABILITY";
+		break;
+	case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+		debType = "PERFORMANCE";
+		break;
+	case GL_DEBUG_TYPE_OTHER_ARB:
+		debType = "MESSAGE";
+		break;
+	default:
+		break;
+	}
 
-  switch(severity) {
-  case GL_DEBUG_SEVERITY_HIGH_ARB:
-    debSev = "HIGH";
-    break;
-  case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-    debSev = "MEDIUM";
-    break;
-  case GL_DEBUG_SEVERITY_LOW_ARB:
-    debSev = "LOW";
-    break;
-  case GL_DEBUG_SEVERITY_NOTIFICATION:
-    debSev = "NOTE";
-    break;
-  default:
-    break;
-  }
+	switch (severity) {
+	case GL_DEBUG_SEVERITY_HIGH_ARB:
+		debSev = "HIGH";
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+		debSev = "MEDIUM";
+		break;
+	case GL_DEBUG_SEVERITY_LOW_ARB:
+		debSev = "LOW";
+		break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION:
+		debSev = "NOTE";
+		break;
+	default:
+		break;
+	}
 
-  common->Printf("(GL %u) %s, %s, %s: %s\n", id, debSource, debType, debSev, message);
+	common->Printf("(GL %u) %s, %s, %s: %s\n", id, debSource, debType, debSev, message);
 #pragma warning( pop ) 
 }
 
@@ -632,8 +639,8 @@ void R_InitOpenGL( void ) {
 	R_SetColorMappings();
 
   if(!r_glCoreProfile.GetBool()) {
-    glDisable(GL_VERTEX_PROGRAM_ARB);
-    glDisable(GL_FRAGMENT_PROGRAM_ARB);
+//    glDisable(GL_VERTEX_PROGRAM_ARB);
+//    glDisable(GL_FRAGMENT_PROGRAM_ARB);
   }
 
 #ifdef _WIN32

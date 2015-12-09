@@ -257,6 +257,14 @@ struct glslProgramDef_t {
   static const int uniform_texture5         = uniform_texture0 + 5;
   static const int uniform_texture6         = uniform_texture0 + 6;
   static const int uniform_texture7         = uniform_texture0 + 7;
+  static const int uniform_texture8         = uniform_texture0 + 8;
+  static const int uniform_texture9         = uniform_texture0 + 9;
+  static const int uniform_texture10        = uniform_texture0 + 10;
+  static const int uniform_texture11        = uniform_texture0 + 11;
+  static const int uniform_texture12        = uniform_texture0 + 12;
+  static const int uniform_texture13        = uniform_texture0 + 13;
+  static const int uniform_texture14        = uniform_texture0 + 14;
+  static const int uniform_texture15        = uniform_texture0 + 15;
 
   static const int uniform_textureMatrix0 = 50;
   static const int uniform_textureMatrix1 = uniform_textureMatrix0 + 1;
@@ -274,6 +282,8 @@ struct glslProgramDef_t {
   static const int uniform_shading = 107;
   static const int uniform_specularExp = 108;
   static const int uniform_specularScale = 109;
+
+  static const int uniform_shadowViewProjection = 120;
 
   char   vertexShaderName[64];
   char   fragmentShaderName[64];

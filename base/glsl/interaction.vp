@@ -17,10 +17,12 @@ out vs_output
   vec3 L;
   vec3 V;
   vec3 H;
+  vec4 shadow[6];
+  vec3 foo;
 } result;
 
 void main(void)
-{
+{  
   gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);  
 
   vec4 vertex_texcoord4 = vec4(vertex_texcoord, 1.0, 1.0);
@@ -51,6 +53,16 @@ void main(void)
   result.H = H * M;
 
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;
+
+  vec4 worldspace_position = rpModelMatrix * vec4(vertex_position, 1.0);  
+  result.shadow[0] = rpShadowProjection[0] * worldspace_position;
+  result.shadow[1] = rpShadowProjection[1] * worldspace_position;
+  result.shadow[2] = rpShadowProjection[2] * worldspace_position;
+  result.shadow[3] = rpShadowProjection[3] * worldspace_position;
+  result.shadow[4] = rpShadowProjection[4] * worldspace_position;
+  result.shadow[5] = rpShadowProjection[5] * worldspace_position;
+
+  result.foo = worldspace_position.xyz - rpLocalLightOrigin.xyz;
 }
 
 

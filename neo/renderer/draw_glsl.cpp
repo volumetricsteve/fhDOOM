@@ -613,8 +613,8 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
     return;
   }
 
-  glDisable(GL_VERTEX_PROGRAM_ARB);
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  //glDisable(GL_VERTEX_PROGRAM_ARB);
+  //glDisable(GL_FRAGMENT_PROGRAM_ARB);
   GL_UseProgram(shadowProgram);
 
   RB_LogComment("---------- RB_StencilShadowPass ----------\n");
@@ -1560,6 +1560,7 @@ RB_GLSL_DrawInteraction
 */
 void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
 
+  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, din->surf->space->modelMatrix);
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
@@ -1599,6 +1600,8 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 
   glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());  
+
+  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
   
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
@@ -1619,6 +1622,25 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   // texture 5 is the per-surface specular map
   GL_SelectTextureNoClient(5);
   din->specularImage->Bind();
+
+  // texture 5 is the per-surface specular map
+  GL_SelectTextureNoClient(6);
+  globalImages->shadowmapDepthImage[0]->Bind();
+
+  GL_SelectTextureNoClient(7);
+  globalImages->shadowmapDepthImage[1]->Bind();
+
+  GL_SelectTextureNoClient(8);
+  globalImages->shadowmapDepthImage[2]->Bind();
+
+  GL_SelectTextureNoClient(9);
+  globalImages->shadowmapDepthImage[3]->Bind();
+
+  GL_SelectTextureNoClient(10);
+  globalImages->shadowmapDepthImage[4]->Bind();
+
+  GL_SelectTextureNoClient(12);
+  globalImages->shadowmapDepthImage[5]->Bind();
 
   // draw it
   RB_DrawElementsWithCounters(din->surf->geo);
@@ -1641,8 +1663,8 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);  
 
   // bind the vertex program
-  glDisable(GL_VERTEX_PROGRAM_ARB);
-  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+  //glDisable(GL_VERTEX_PROGRAM_ARB);
+  //glDisable(GL_FRAGMENT_PROGRAM_ARB);
   GL_UseProgram(interactionProgram);
 
   glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
@@ -1739,6 +1761,11 @@ void RB_GLSL_DrawInteractions(void) {
       continue;
     }
 
+	if (r_ignore.GetBool())
+	{
+		RB_RenderShadowMaps(vLight);
+	}
+
     lightShader = vLight->lightShader;
 
     // clear the stencil buffer if needed
@@ -1759,10 +1786,10 @@ void RB_GLSL_DrawInteractions(void) {
       glStencilFunc(GL_ALWAYS, 128, 255);
     }
 
-    RB_GLSL_StencilShadowPass(vLight->globalShadows);
-    RB_GLSL_CreateDrawInteractions(vLight->localInteractions);
-    RB_GLSL_StencilShadowPass(vLight->localShadows);
-    RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
+	RB_GLSL_StencilShadowPass(vLight->globalShadows);
+	RB_GLSL_CreateDrawInteractions(vLight->localInteractions);
+	RB_GLSL_StencilShadowPass(vLight->localShadows);
+	RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
 
     // translucent surfaces never get stencil shadowed
     if (r_skipTranslucent.GetBool()) {

@@ -1960,16 +1960,16 @@ void idImageManager::Init() {
 	fogEnterImage = ImageFromFunction( "_fogEnter", R_FogEnterImage );
 	ImageFromFunction( "_quadratic", R_QuadraticImage );
 
-  if(!r_glCoreProfile.GetBool()) {
-    borderClampImage = ImageFromFunction( "_borderClamp", R_BorderClampImage ); //MegaTexture
-    specularTableImage = ImageFromFunction( "_specularTable", R_SpecularTableImage );
-    specular2DTableImage = ImageFromFunction( "_specular2DTable", R_Specular2DTableImage );
-    normalCubeMapImage = ImageFromFunction("_normalCubeMap", makeNormalizeVectorCubeMap);
-  }
+	if(!r_glCoreProfile.GetBool()) {
+		borderClampImage = ImageFromFunction( "_borderClamp", R_BorderClampImage ); //MegaTexture
+		specularTableImage = ImageFromFunction( "_specularTable", R_SpecularTableImage );
+		specular2DTableImage = ImageFromFunction( "_specular2DTable", R_Specular2DTableImage );
+		normalCubeMapImage = ImageFromFunction("_normalCubeMap", makeNormalizeVectorCubeMap);
+	}
 
-  rampImage = ImageFromFunction("_ramp", R_RampImage);
-  alphaRampImage = ImageFromFunction("_alphaRamp", R_RampImage);  
-  noFalloffImage = ImageFromFunction("_noFalloff", R_CreateNoFalloffImage);
+	rampImage = ImageFromFunction("_ramp", R_RampImage);
+	alphaRampImage = ImageFromFunction("_alphaRamp", R_RampImage);  
+	noFalloffImage = ImageFromFunction("_noFalloff", R_CreateNoFalloffImage);
 
 	// cinematicImage is used for cinematic drawing
 	// scratchImage is used for screen wipes/doublevision etc..
@@ -1979,25 +1979,25 @@ void idImageManager::Init() {
 	accumImage = ImageFromFunction("_accum", R_RGBA8Image );
 	scratchCubeMapImage = ImageFromFunction("_scratchCubeMap", makeNormalizeVectorCubeMap );
 	currentRenderImage = ImageFromFunction("_currentRender", R_RGBA8Image );
-  currentDepthImage = ImageFromFunction("_currentDepth", R_Depth );
+	currentDepthImage = ImageFromFunction("_currentDepth", R_Depth );
 
 
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
 
-  for(int i=0; i<6; ++i) {
-    char name[64] = {0};    
-    sprintf(name, "_shadowmapDepthImage%d", i);
-    shadowmapDepthImage[i] = ImageFromFunction(name, R_Depth);
+	for(int i=0; i<6; ++i) {
+		char name[64] = {0};    
+		sprintf(name, "_shadowmapDepthImage%d", i);
+		shadowmapDepthImage[i] = ImageFromFunction(name, R_Depth);
 
-    sprintf(name, "_shadowmapColorImage%d", i);
-    shadowmapColorImage[i] = ImageFromFunction(name, R_RGBA8Image);
+		sprintf(name, "_shadowmapColorImage%d", i);
+		shadowmapColorImage[i] = ImageFromFunction(name, R_RGBA8Image);
 
-    shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, shadowmapColorImage[i], shadowmapDepthImage[i]);
-  }
+		shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, shadowmapColorImage[i], shadowmapDepthImage[i]);
+	}
 
-  defaultFramebuffer  = new fhFramebuffer(0,0, nullptr, nullptr);
+	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
   
 
 	// should forceLoadImages be here?

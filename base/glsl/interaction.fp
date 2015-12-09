@@ -7,6 +7,13 @@ layout(location = TEXTURE_UNIT_3) uniform sampler2D texture3;
 layout(location = TEXTURE_UNIT_4) uniform sampler2D texture4;
 layout(location = TEXTURE_UNIT_5) uniform sampler2D texture5;
 
+layout(location = TEXTURE_UNIT_6) uniform sampler2D texture6;
+layout(location = TEXTURE_UNIT_7) uniform sampler2D texture7;
+layout(location = TEXTURE_UNIT_8) uniform sampler2D texture8;
+layout(location = TEXTURE_UNIT_9) uniform sampler2D texture9;
+layout(location = TEXTURE_UNIT_10) uniform sampler2D texture10;
+layout(location = TEXTURE_UNIT_11) uniform sampler2D texture11;
+
 in vs_output
 {
   vec4 color;
@@ -17,6 +24,8 @@ in vs_output
   vec3 L;
   vec3 V;
   vec3 H;
+  vec4 shadow[6];
+  vec3 foo;  
 } frag;
 
 out vec4 result;
@@ -177,6 +186,109 @@ vec4 phong(TextureData textureData, vec3 viewDir)
   return vec4(color, 1.0) * frag.color;
 }
 
+
+
+vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
+{
+    pos = pos / pos.w;
+
+    pos.x = pos.x/2.0 + 0.5;
+    pos.y = pos.y/2.0 + 0.5;
+
+/*
+    if(pos.s > 1 || pos.s < 0 || pos.t > 1 || pos.t < 0 ) {
+      return vec4(0,0,1,1);    
+    }  
+*/    
+    float shadowMapDepth = texture2D(tex, pos.st).x; 
+
+    if(shadowMapDepth < pos.z)
+      return shadowColor;
+      
+    return vec4(1, 1, 1, 1);      
+}
+
+
+vec4 shadow(float color)
+{
+  vec3 d = frag.foo;
+
+  int side = 0;
+  float l = d.x;
+
+
+  if( d.y > l ) {
+    side = 1;
+    l = d.y;
+  }
+  if( d.z > l ) {
+    side = 2;
+    l = d.z;
+  }
+  if( -d.x > l ) {
+    side = 3;
+    l = -d.x;
+  }
+  if( -d.y > l ) {
+    side = 4;
+    l = -d.y;
+  }
+  if( -d.z > l ) {
+    side = 5;
+    l = -d.z;
+  }   
+
+  if(side == 0)
+  {    
+    return getShadow(frag.shadow[0], texture6, vec4(0,1,0,1)); 
+  }
+  if(side == 1)
+  {
+    return getShadow(frag.shadow[2], texture8, vec4(0,1,0,1)); 
+  }  
+  if(side == 2)
+  {
+    return getShadow(frag.shadow[4], texture10, vec4(0,1,0,1)); 
+  } 
+  if(side == 3)
+  {
+    return getShadow(frag.shadow[1], texture7, vec4(0,1,0,1)); 
+  }
+  if(side == 4)
+  {
+    return getShadow(frag.shadow[3], texture9, vec4(0,1,0,1)); 
+  }
+  if(side == 5)
+  {
+    return getShadow(frag.shadow[5], texture11, vec4(0,1,0,1)); 
+  }
+
+/*^^
+  if(side == 0)
+  {    
+    return getShadow(frag.shadow[0], texture6, vec4(0,1,0,1)); 
+  }
+  if(side == 1)
+  {
+    return getShadow(frag.shadow[2], texture8, vec4(0,1,0,1)); 
+  }  
+  if(side == 2)
+  {
+    return getShadow(frag.shadow[2], texture8, vec4(0,1,0,1)); 
+  } 
+  if(side == 3)
+  {
+    return getShadow(frag.shadow[1], texture7, vec4(0,1,0,1)); 
+  }
+  if(side == 8)
+  {
+    return getShadow(frag.shadow[5], texture11, vec4(0,1,0,1)); 
+  } 
+*/
+
+  return vec4(0,0,0,1);
+}
+
 void main(void)
 {  
   vec3 viewDir = normalize(frag.V);
@@ -186,4 +298,6 @@ void main(void)
     result = phong(textureData, viewDir);
   else
     result = blinnPhong(textureData);
+
+  result *= shadow(0.0);
 }

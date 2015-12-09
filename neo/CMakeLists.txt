@@ -352,6 +352,7 @@ SET(SOURCES
   renderer/tr_render.cpp
   renderer/tr_rendertools.cpp
   renderer/tr_shadowbounds.cpp
+  renderer/tr_shadowmaps.cpp
   renderer/tr_stencilshadow.cpp
   renderer/tr_subview.cpp
   renderer/tr_trace.cpp

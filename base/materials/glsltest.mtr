@@ -13,6 +13,21 @@ textures/glsltest/heathaze_arb
     }
 }
 
+textures/glsltest/debugdepth
+{
+    nonsolid
+    translucent
+    sort postProcess
+
+    {
+        vertexShader    debugdepth.vp
+        fragmentShader  debugdepth.fp
+        shaderMap 0     _shadowmapdepthimage5
+        shaderMap 1     _shadowmapdepthimage0
+        shaderMap 2     _currentRender
+    }
+}
+
 textures/particles/glslSmoke
 {
     qer_editorimage textures/particles/smokepuff.tga
