@@ -48,6 +48,7 @@ layout(location = 108) uniform float rpSpecularExp;
 layout(location = 109) uniform float rpSpecularScale;
 
 layout(location = 120) uniform mat4 rpShadowProjection[6];
+layout(location = 126) uniform int rpShadowMappingMode;
 
 #define TEXTURE_UNIT_0 24
 #define TEXTURE_UNIT_1 25

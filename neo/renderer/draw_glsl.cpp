@@ -1601,7 +1601,13 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());  
 
-  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
+  int shadowMappingMode = (int)!!r_ignore.GetBool();
+  if(shadowMappingMode == 1)
+  {	  
+	  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
+  }
+  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, shadowMappingMode);
+  
   
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
@@ -1658,7 +1664,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glUniform1f(glslProgramDef_t::uniform_pomMaxHeight, r_pomEnabled.GetBool() ? r_pomMaxHeight.GetFloat() : -1);
   glUniform1i(glslProgramDef_t::uniform_shading, r_shading.GetInteger());
   glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
-  glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());
+  glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());  
 
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes

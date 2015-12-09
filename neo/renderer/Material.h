@@ -284,6 +284,7 @@ struct glslProgramDef_t {
   static const int uniform_specularScale = 109;
 
   static const int uniform_shadowViewProjection = 120;
+  static const int uniform_shadowMappingMode = 126;
 
   char   vertexShaderName[64];
   char   fragmentShaderName[64];

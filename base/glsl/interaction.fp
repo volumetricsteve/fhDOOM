@@ -197,27 +197,42 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
     pos.y = pos.y/2.0 + 0.5;
     pos.z = pos.z/2.0 + 0.5;
 
+#if 1
+    float occluded = 0;
+    float samplesTaken = 0;
+    float d = 0.005;
+    float s = d/2;
+    for(float i=-d;i<d;i+=s) {
+      for(float j=-s;j<d;j+=s) {
 
+        vec2 coord = pos.st + vec2(i,j);
+        float shadowMapDepth = texture2D(tex, coord).x;    
 
-   
-    float shadowMapDepth = texture2D(tex, pos.st).x;
+        shadowMapDepth += 0.0001;    
 
-    //return vec4(shadowMapDepth, shadowMapDepth, shadowMapDepth, 1);
+        if(shadowMapDepth < pos.z)        
+          occluded += 1.0;
+
+        samplesTaken += 1.0;
+      }     
+    }
+
+    float shadowness = occluded/samplesTaken;
+#else
+    float shadowMapDepth = texture2D(tex, pos.st).x;    
 
     shadowMapDepth += 0.0001;    
 
-    if(shadowMapDepth < pos.z)
-      return shadowColor;
+    float shadowness = (shadowMapDepth < pos.z) ? 1 : 0.0;
+#endif    
 
-    return vec4(1, 1, 1, 1);      
+  return vec4(1, 1, 1, 1) * (1.0 - shadowness) + shadowness * shadowColor;      
 }
 
 
 vec4 shadow(vec4 color)
 {  
-  vec3 d = vec3(frag.foo.x, frag.foo.y, frag.foo.z);
-
-
+  vec3 d = frag.foo;
 
   int side = 0;
   float l = d.x;
@@ -287,7 +302,9 @@ void main(void)
   else
     result = blinnPhong(textureData);
 
-  float light = 0.2;
-
-  result *= shadow(vec4(light,light,light,1));
+  if(rpShadowMappingMode == 1)
+  {
+    float light = 0.25;
+    result *= shadow(vec4(light,light,light,1));
+  }
 }
