@@ -191,24 +191,26 @@ vec4 phong(TextureData textureData, vec3 viewDir)
 
 vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
 {
+    const float bias = 0.01;
     pos = pos / pos.w;
 
     pos.x = pos.x/2.0 + 0.5;
     pos.y = pos.y/2.0 + 0.5;
     pos.z = pos.z/2.0 + 0.5;
 
-#if 0
+    if(pos.y < 0 || pos.y > 1)
+      return vec4(1,0,0,1);
+
+#if 1
     float occluded = 0;
     float samplesTaken = 0;
-    float d = 0.005;
-    float s = d/3;
+    float d = 0.025;
+    float s = d/5;
     for(float i=-d;i<d;i+=s) {
       for(float j=-s;j<d;j+=s) {
 
         vec2 coord = pos.st + vec2(i,j);
-        float shadowMapDepth = texture2D(tex, coord).x;    
-
-        shadowMapDepth += 0.0001;    
+        float shadowMapDepth = texture2D(tex, coord).x + bias;            
 
         if(shadowMapDepth < pos.z)        
           occluded += 1.0;
@@ -219,10 +221,8 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
 
     float shadowness = occluded/samplesTaken;
 #else
-    float shadowMapDepth = texture2D(tex, pos.st).x;    
-
-    shadowMapDepth += 0.0001;    
-
+    float shadowMapDepth = texture2D(tex, pos.st).x + bias;    
+    
     float shadowness = (shadowMapDepth < pos.z) ? 1 : 0.0;
 #endif    
 
