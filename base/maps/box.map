@@ -6,42 +6,6 @@ Version 2
 {
  brushDef3
  {
-  ( -0 -0 -1 64 ) ( ( 0.0078125 0 0.3125 ) ( 0 0.0078125075 0.1249999925 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 -0 1 -256 ) ( ( 0.0078125 0 0.3125 ) ( 0 0.0078125 -0.125 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 -1 0 24 ) ( ( 0.0078125 -0 -0.1250001788 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 0 -0 -16 ) ( ( 0.0078125 0 0.3125 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 1 0 -48 ) ( ( 0.0078125149 -0 0.1249997541 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -1 0 0 -8 ) ( ( 0.0078125298 0 -0.3125013113 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
- }
-}
-// primitive 1
-{
- brushDef3
- {
-  ( -0 -0 -1 112 ) ( ( 0.0078125 0 -0.0625 ) ( 0 0.0078125 0.25 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 -0 1 -256 ) ( ( 0.0078125 0 -0.0625 ) ( 0 0.0078125 -0.25 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 -1 0 72 ) ( ( 0.0078125 -0 -0.250000149 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 0 -0 -32 ) ( ( 0.0078125 0 -0.0625 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 1 0 -96 ) ( ( 0.0078125 0 0.25 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -1 0 0 8 ) ( ( 0.0078125149 0 0.0624998175 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
- }
-}
-// primitive 2
-{
- brushDef3
- {
-  ( 0 0 -1 64 ) ( ( 0.0078125 0 -0.0625 ) ( 0 0.0078125 -0.0624999925 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -0 0 1 -256 ) ( ( 0.0078125 0 -0.0625 ) ( 0 0.0078125 0.0625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -0 -1 -0 72 ) ( ( 0.0078125 0 0.0624999963 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 0 0 8 ) ( ( 0.0078125 0 -0.0625 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -0 1 0 -96 ) ( ( 0.0078125 0 -0.0624999963 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -1 0 0 -32 ) ( ( 0.0078125 0 0.0624999963 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
- }
-}
-// primitive 3
-{
- brushDef3
- {
   ( 0 0 -1 256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( 0 0 1 -272 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( -1 0.0000001344 0 -192.0000152588 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
@@ -50,7 +14,7 @@ Version 2
   ( 0.0000001343 1 0 -256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 4
+// primitive 1
 {
  brushDef3
  {
@@ -62,7 +26,7 @@ Version 2
   ( 0.0000001343 1 0 -256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 5
+// primitive 2
 {
  brushDef3
  {
@@ -74,7 +38,7 @@ Version 2
   ( 0.0000001343 1 0 -272 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 6
+// primitive 3
 {
  brushDef3
  {
@@ -86,7 +50,7 @@ Version 2
   ( 0.0000001344 1 0 128 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 7
+// primitive 4
 {
  brushDef3
  {
@@ -98,7 +62,7 @@ Version 2
   ( -1 0 0 192 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 8
+// primitive 5
 {
  brushDef3
  {
@@ -113,27 +77,12 @@ Version 2
 }
 // entity 1
 {
-"classname" "func_static"
-"name" "func_static_6"
-"origin" "0 24 32"
-"model" "models/mapobjects/base/misc/fireext.ase"
-"rotation" "5.96047e-008 -1 0 1 5.96047e-008 0 -0 0 1"
-}
-// entity 2
-{
-"classname" "func_static"
-"name" "func_static_1"
-"origin" "-64 64 0"
-"model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
-}
-// entity 3
-{
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "128 64 0"
 "angle" "180"
 }
-// entity 4
+// entity 2
 {
 "classname" "light"
 "name" "light_4"
@@ -144,18 +93,20 @@ Version 2
 "falloff" "0"
 "_color" "0.78 0.78 0.84"
 "light_radius" "225 225 225"
+"rotation" "-1 -1.07288e-006 0 1.07288e-006 -1 0 0 0 1"
 }
-// entity 5
+// entity 3
 {
 "classname" "func_static"
 "name" "func_static_3"
-"origin" "56 64 0"
-"model" "models/mapobjects/chairs/kitchenchair/kitchenchair.lwo"
+"origin" "64 128 0"
+"model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
 }
-// entity 6
+// entity 4
 {
 "classname" "func_static"
-"name" "func_static_5"
-"origin" "-16 128 0"
-"model" "models/mapobjects/cpu/comcenter.lwo"
+"name" "func_static_4"
+"origin" "64 64 0"
+"model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
+"rotation" "1.01328e-006 -1 0 1 1.01328e-006 0 -0 0 1"
 }

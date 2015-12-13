@@ -1,4 +1,5 @@
 #include "global.inc"
+#line 3 __FILE__
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec2 vertex_texcoord;
@@ -18,7 +19,7 @@ out vs_output
   vec3 V;
   vec3 H;
   vec4 shadow[6];
-  vec3 foo;
+  vec3 toGlobalLightOrigin;
 } result;
 
 void main(void)
@@ -62,8 +63,5 @@ void main(void)
   result.shadow[4] = rpShadowProjection[4] * worldspace_position;
   result.shadow[5] = rpShadowProjection[5] * worldspace_position;
 
-  result.foo = worldspace_position.xyz - rpLocalLightOrigin.xyz;
+  result.toGlobalLightOrigin = (worldspace_position - rpGlobalLightOrigin).xyz;
 }
-
-
-vec2 transformTexCoord(vec2 texcoord, vec4 s, vec4 t);

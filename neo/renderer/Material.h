@@ -285,6 +285,7 @@ struct glslProgramDef_t {
 
   static const int uniform_shadowViewProjection = 120;
   static const int uniform_shadowMappingMode = 126;
+  static const int uniform_globalLightOrigin = 127;
 
   char   vertexShaderName[64];
   char   fragmentShaderName[64];

@@ -1564,6 +1564,8 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
+  idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
+  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
   
@@ -1746,7 +1748,7 @@ void RB_GLSL_DrawInteractions(void) {
     if (!vLight->localInteractions && !vLight->globalInteractions
       && !vLight->translucentInteractions) {
       continue;
-    }
+    }	
 
 	if (r_ignore.GetBool())
 	{

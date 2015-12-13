@@ -25,7 +25,7 @@ in vs_output
   vec3 V;
   vec3 H;
   vec4 shadow[6];
-  vec3 foo;  
+  vec3 toGlobalLightOrigin;  
 } frag;
 
 out vec4 result;
@@ -197,11 +197,11 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
     pos.y = pos.y/2.0 + 0.5;
     pos.z = pos.z/2.0 + 0.5;
 
-#if 1
+#if 0
     float occluded = 0;
     float samplesTaken = 0;
     float d = 0.005;
-    float s = d/2;
+    float s = d/3;
     for(float i=-d;i<d;i+=s) {
       for(float j=-s;j<d;j+=s) {
 
@@ -232,7 +232,7 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
 
 vec4 shadow(vec4 color)
 {  
-  vec3 d = frag.foo;
+  vec3 d = frag.toGlobalLightOrigin;
 
   int side = 0;
   float l = d.x;
