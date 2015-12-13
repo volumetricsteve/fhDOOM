@@ -392,7 +392,7 @@ static void R_Depth( idImage *image ) {
 	data[0][0][3] = 255;
 
 	image->GenerateImage( (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, 
-		TF_DEFAULT, false, TR_REPEAT, TD_HIGH_QUALITY );
+		TF_DEFAULT, false, TR_CLAMP, TD_HIGH_QUALITY );
 }
 
 static void R_AlphaNotchImage( idImage *image ) {
