@@ -6,12 +6,12 @@ Version 2
 {
  brushDef3
  {
-  ( 0 0 -1 -0 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
-  ( -0 0 1 -256 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
-  ( -0 -1 -0 128 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
-  ( 1 0 0 120 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_trim/sgirder1a" 0 0 0
-  ( -0 1 0 -256 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
-  ( -1 0 0 -128 ) ( ( 0.0625 0 0 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( 0 0 -1 -0 ) ( ( 0.0625 0 12 ) ( 0 0.0625 -0.5 ) ) "textures/common/nodraw" 0 0 0
+  ( -0 0 1 -256 ) ( ( 0.0625 0 12 ) ( 0 0.0625 0.5 ) ) "textures/common/nodraw" 0 0 0
+  ( 0 -1 0 -64 ) ( ( 0.0625001788 0 0.4999994338 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( 1 0 -0 128 ) ( ( 0.0390625 0 2.5 ) ( 0 0.0390625 10 ) ) "textures/base_trim/sgirder1a" 0 0 0
+  ( 0 1 0 -64 ) ( ( 0.0625 0 -0.5000003576 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
+  ( -1 0 0 -136 ) ( ( 0.0625 0 -12 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
  }
 }
 // primitive 1
@@ -92,7 +92,7 @@ Version 2
 "anim" "idle"
 "classname" "marscity_marine_helmet_p90_directions_ver1"
 "name" "marscity_marine_helmet_p90_directions_ver1_1"
-"origin" "-168 112 0"
+"origin" "-168 136 0"
 }
 // entity 2
 {

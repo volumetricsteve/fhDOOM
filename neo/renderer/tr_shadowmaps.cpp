@@ -196,7 +196,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				// draw a normal opaque surface
 				
 				float *regs = (float *)R_ClearedFrameAlloc(shader->GetNumRegisters() * sizeof(float));
-				shader->EvaluateRegisters(regs, entityDef->parms.shaderParms, nullptr, nullptr);
+				shader->EvaluateRegisters(regs, entityDef->parms.shaderParms, backEnd.viewDef, nullptr);
 
 
 				// perforated surfaces may have multiple alpha tested stages
@@ -216,6 +216,13 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 					glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
 					glUniform1f(glslProgramDef_t::uniform_alphaTestThreshold, 0.5f);
+
+					idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};
+					if (pStage->texture.hasMatrix) {						
+						RB_GetShaderTextureMatrix(regs, &pStage->texture, textureMatrix);
+					}
+					glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+					glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
 
 					// draw it
 					RB_DrawElementsWithCounters(tri);
