@@ -2717,8 +2717,7 @@ void idMaterial::EvaluateRegisters( float *registers, const float shaderParms[MA
 		registers[i] = expressionRegisters[i];
 	}
 
-	// copy the local and global parameters
-	registers[EXP_REG_TIME] = view->floatTime;
+	// copy the local and global parameters	
 	registers[EXP_REG_PARM0] = shaderParms[0];
 	registers[EXP_REG_PARM1] = shaderParms[1];
 	registers[EXP_REG_PARM2] = shaderParms[2];
@@ -2731,14 +2730,17 @@ void idMaterial::EvaluateRegisters( float *registers, const float shaderParms[MA
 	registers[EXP_REG_PARM9] = shaderParms[9];
 	registers[EXP_REG_PARM10] = shaderParms[10];
 	registers[EXP_REG_PARM11] = shaderParms[11];
-	registers[EXP_REG_GLOBAL0] = view->renderView.shaderParms[0];
-	registers[EXP_REG_GLOBAL1] = view->renderView.shaderParms[1];
-	registers[EXP_REG_GLOBAL2] = view->renderView.shaderParms[2];
-	registers[EXP_REG_GLOBAL3] = view->renderView.shaderParms[3];
-	registers[EXP_REG_GLOBAL4] = view->renderView.shaderParms[4];
-	registers[EXP_REG_GLOBAL5] = view->renderView.shaderParms[5];
-	registers[EXP_REG_GLOBAL6] = view->renderView.shaderParms[6];
-	registers[EXP_REG_GLOBAL7] = view->renderView.shaderParms[7];
+	if(view) {
+		registers[EXP_REG_TIME] = view->floatTime;
+		registers[EXP_REG_GLOBAL0] = view->renderView.shaderParms[0];
+		registers[EXP_REG_GLOBAL1] = view->renderView.shaderParms[1];
+		registers[EXP_REG_GLOBAL2] = view->renderView.shaderParms[2];
+		registers[EXP_REG_GLOBAL3] = view->renderView.shaderParms[3];
+		registers[EXP_REG_GLOBAL4] = view->renderView.shaderParms[4];
+		registers[EXP_REG_GLOBAL5] = view->renderView.shaderParms[5];
+		registers[EXP_REG_GLOBAL6] = view->renderView.shaderParms[6];
+		registers[EXP_REG_GLOBAL7] = view->renderView.shaderParms[7];
+	}
 
 	op = ops;
 	for ( i = 0 ; i < numOps ; i++, op++ ) {

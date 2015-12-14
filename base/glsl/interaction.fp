@@ -191,7 +191,7 @@ vec4 phong(TextureData textureData, vec3 viewDir)
 
 vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
 {
-    const float bias = 0.0001;
+    const float bias = 0.001;
     pos = pos / pos.w;
 
     pos.x = pos.x/2.0 + 0.5;

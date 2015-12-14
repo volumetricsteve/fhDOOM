@@ -160,7 +160,9 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				continue;
 			}
 
-			if (surfInt->shader && !surfInt->shader->SurfaceCastsShadow()) {
+			const idMaterial* shader = surfInt->shader;
+
+			if (shader && !shader->SurfaceCastsShadow() && shader->Coverage() != MC_PERFORATED) {
 				continue;
 			}
 
@@ -171,6 +173,10 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 			// render it
 			const srfTriangles_t *tri = surfInt->ambientTris;
+			if(!tri || !tri->numVerts) {
+				continue;
+			}
+
 			if (!tri->ambientCache) {
 				R_CreateAmbientCache(const_cast<srfTriangles_t *>(tri), false);
 			}
@@ -179,15 +185,52 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
 			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);
-			glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+			glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());			
 
-			float color[] {1,0,0,1};
-			glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
-			globalImages->whiteImage->Bind();
 
-			// draw it
-			RB_DrawElementsWithCounters(tri);
-			backEnd.pc.c_shadowMapDraws++;
+			bool didDraw = false;
+			
+			// we may have multiple alpha tested stages
+			if (shader->Coverage() == MC_PERFORATED) {
+				// if the only alpha tested stages are condition register omitted,
+				// draw a normal opaque surface
+				
+				float *regs = (float *)R_ClearedFrameAlloc(shader->GetNumRegisters() * sizeof(float));
+				shader->EvaluateRegisters(regs, entityDef->parms.shaderParms, nullptr, nullptr);
+
+
+				// perforated surfaces may have multiple alpha tested stages
+				for (int stage = 0; stage < shader->GetNumStages(); stage++) {
+					const shaderStage_t* pStage = shader->GetStage(stage);
+
+					if (!pStage->hasAlphaTest) {
+						continue;
+					}
+
+					if (regs[pStage->conditionRegister] == 0) {
+						continue;
+					}
+
+					// bind the texture
+					pStage->texture.image->Bind();
+
+					glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
+					glUniform1f(glslProgramDef_t::uniform_alphaTestThreshold, 0.5f);
+
+					// draw it
+					RB_DrawElementsWithCounters(tri);
+					backEnd.pc.c_shadowMapDraws++;
+					didDraw = true;
+					break;
+				}
+			}
+			
+			if(!didDraw) {
+				glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+				// draw it
+				RB_DrawElementsWithCounters(tri);
+				backEnd.pc.c_shadowMapDraws++;
+			}
 		}
 	}
 }
