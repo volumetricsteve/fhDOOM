@@ -105,14 +105,14 @@ Version 2
 {
 "classname" "light"
 "name" "light_4"
-"origin" "0 64 24"
+"origin" "-8 72 24"
+"rotation" "-1 -1.07288e-006 0 1.07288e-006 -1 0 0 0 1"
 "noshadows" "0"
 "nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0"
+"falloff" "0.000000"
 "_color" "0.78 0.78 0.84"
-"light_radius" "225 225 225"
-"rotation" "-1 -1.07288e-006 0 1.07288e-006 -1 0 0 0 1"
+"light_radius" "1000 1000 1000"
 }
 // entity 4
 {

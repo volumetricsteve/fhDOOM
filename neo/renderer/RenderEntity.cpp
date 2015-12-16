@@ -115,3 +115,12 @@ void idRenderLightLocal::ForceUpdate() {
 int idRenderLightLocal::GetIndex() {
 	return index;
 }
+
+float idRenderLightLocal::GetMaximumCenterToEdgeDistance() const {	
+	const idVec3 halfSize = parms.lightRadius * 0.5;
+
+	const float l1 = (-halfSize - parms.lightCenter).Length();
+	const float l2 = (halfSize - parms.lightCenter).Length();
+
+	return max(l1, l2);
+}

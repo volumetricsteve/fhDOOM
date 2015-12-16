@@ -259,7 +259,8 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 
 	const float width = xmax - xmin;
 	const float height = ymax - ymin;
-
+	
+#if 1
 	float lightProjectionMatrix[16];
 	lightProjectionMatrix[0] = 2 * zNear / width;
 	lightProjectionMatrix[4] = 0;
@@ -283,7 +284,20 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 	lightProjectionMatrix[7] = 0;
 	lightProjectionMatrix[11] = -1;
 	lightProjectionMatrix[15] = 0;
+#else
+	const float zFar = 3000;
 
+	const float D2R = idMath::PI / 180.0;
+	const float scale = 1.0 / tan(D2R * fov / 2);	
+	const float nearmfar = zNear - zFar;
+	const float lightProjectionMatrix[] = {
+		scale, 0, 0, 0,
+		0, scale, 0, 0,
+		0, 0, (zFar + zNear) / nearmfar, -1,
+		0, 0, 2 * zFar*zNear / nearmfar, 0
+	};
+
+#endif
 	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[side];
 	framebuffer->Bind();
 
@@ -477,6 +491,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	GL_UseProgram(depthProgram);
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	glDisable(GL_CULL_FACE);
 
 	for (int side=0; side < 6; side++) {
 		// FIXME: check for frustums completely off the screen
@@ -485,6 +500,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		RB_RenderShadowBuffer(vLight, side);		
 	}
 
+	glEnable(GL_CULL_FACE);
 	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 	GL_UseProgram(nullptr);

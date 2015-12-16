@@ -1564,8 +1564,6 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
-  idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
-  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
   
@@ -1601,15 +1599,7 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   }
 
   glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());  
-
-  int shadowMappingMode = (int)!!r_ignore.GetBool();
-  if(shadowMappingMode == 1)
-  {	  
-	  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
-  }
-  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, shadowMappingMode);
-  
+  glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());    
   
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
@@ -1633,6 +1623,41 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 
   // draw it
   RB_DrawElementsWithCounters(din->surf->geo);
+}
+
+static idVec4 RB_GLSL_GetShadowParams()
+{
+	static const struct {
+		float size;
+		float bias_min;
+		float bias_max;
+	} biasTable[] = {
+		{ 0, 0.01, 0.1 },
+		{ 130, 0.001, 0.01 },
+		{ 256, 0.0001, 0.001 },
+		{ 500, 0.00001, 0.0001 },
+		{ 1000, 0.000001, 0.00001 }
+	};
+
+	//const float lightSize = max(backEnd.vLight->lightDef->parms.lightRadius.x, max(backEnd.vLight->lightDef->parms.lightRadius.y, backEnd.vLight->lightDef->parms.lightRadius.z));
+	const float lightSize = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
+
+	idVec4 ret;
+
+	for(int i=0; i<sizeof(biasTable)/sizeof(biasTable[0]); ++i) {
+		const auto& a = biasTable[i];
+		if(lightSize >= a.size) {
+			ret.x = a.bias_min;
+			ret.y = a.bias_max;
+		} else {
+			break;
+		}
+	}
+
+	ret.z = 6;
+	ret.w = 3;
+
+	return ret;
 }
 
 /*
@@ -1667,6 +1692,21 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glUniform1i(glslProgramDef_t::uniform_shading, r_shading.GetInteger());
   glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
   glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());  
+
+  int shadowMappingMode = (int)!!r_ignore.GetBool();
+  if (shadowMappingMode == 1)
+  {
+	  const idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
+	  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
+
+	  const idVec4 shadowParams = RB_GLSL_GetShadowParams();
+	  glUniform4fv(glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr());
+
+
+	  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
+  }
+  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, shadowMappingMode);
+
 
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes

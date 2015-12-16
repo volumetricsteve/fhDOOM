@@ -139,11 +139,9 @@ TextureData GetTextureData(vec3 viewDir)
   return data;
 }
 
-vec4 blinnPhong(TextureData textureData)
+vec4 blinnPhong(TextureData textureData, vec3 N, vec3 L)
 {
-  vec3 L = normalize(frag.L);
   vec3 H = normalize(frag.H);
-  vec3 N = 2.0 * textureData.normal.agb - 1.0;
 
   float NdotL = clamp(dot(N, L), 0.0, 1.0);
   float NdotH = clamp(dot(N, H), 0.0, 1.0);
@@ -162,18 +160,15 @@ vec4 blinnPhong(TextureData textureData)
   return vec4(color, 1.0) * frag.color;
 }
 
-vec4 phong(TextureData textureData, vec3 viewDir)
+vec4 phong(TextureData textureData, vec3 N, vec3 L, vec3 viewDir)
 {
-  vec3 lightDir = normalize(frag.L);  
-  vec3 normal = normalize(2.0 * textureData.normal.agb - 1.0);
-
-  float NdotL = clamp(dot(normal, lightDir), 0.0, 1.0);
+  float NdotL = clamp(dot(N, L), 0.0, 1.0);
 
   vec3 diffuseColor = textureData.diffuse.rgb * rpDiffuseColor.rgb;
   vec3 specularColor = 2.0 * textureData.specular.rgb * rpSpecularColor.rgb;
 
 
-  vec3 R = -reflect(lightDir, normal);
+  vec3 R = -reflect(L, N);
   float RdotV = clamp(dot(R, viewDir), 0.0, 1.0);
   float specularFalloff = pow(RdotV, rpSpecularExp);
 
@@ -187,50 +182,53 @@ vec4 phong(TextureData textureData, vec3 viewDir)
 }
 
 
-
-
-vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor)
+vec4 offset_lookup(sampler2D map, vec2 coord, vec2 offset)
 {
-    const float bias = 0.001;
+  vec2 uv = vec2(coord + vec2(1.0/1024.0, 1.0/1024.0) * offset);
+  return texture(map, uv);
+}
+
+float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
+{
+  float f = offset_lookup(map, coord, offset).x;
+  if( f < ref )
+    return 1.0;
+  else
+    return 0.0;
+}
+
+vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float bias)
+{   
     pos = pos / pos.w;
 
     pos.x = pos.x/2.0 + 0.5;
     pos.y = pos.y/2.0 + 0.5;
     pos.z = pos.z/2.0 + 0.5;
 
-    if(pos.y < 0 || pos.y > 1)
-      return vec4(1,0,0,1);
+#define FILTER_PCF
 
-#if 1
+#if defined(FILTER_PCF)
     float occluded = 0;
     float samplesTaken = 0;
-    float d = 0.008;
+    float d = 6;// * (1/rpLightSize.w);
     float s = d/3;
     for(float i=-d;i<d;i+=s) {
       for(float j=-s;j<d;j+=s) {
-
-        vec2 coord = pos.st + vec2(i,j);
-        float shadowMapDepth = texture2D(tex, coord).x + bias;            
-
-        if(shadowMapDepth < pos.z)        
-          occluded += 1.0;
-
+        occluded += isOccluded(tex, pos.st, vec2(i,j), pos.z - bias);
         samplesTaken += 1.0;
       }     
     }
 
     float shadowness = occluded/samplesTaken;
-#else
-    float shadowMapDepth = texture2D(tex, pos.st).x + bias;    
-    
-    float shadowness = (shadowMapDepth < pos.z) ? 1 : 0.0;
+#else    
+    float shadowness = isOccluded(tex, pos.st, vec2(0,0), pos.z - bias);
 #endif    
 
-  return vec4(1, 1, 1, 1) * (1.0 - shadowness) + shadowness * shadowColor;      
+  return mix(vec4(1, 1, 1, 1), shadowColor, shadowness);
 }
 
 
-vec4 shadow(vec4 color)
+vec4 shadow(vec4 color, float bias)
 {  
   vec3 d = frag.toGlobalLightOrigin;
 
@@ -261,32 +259,32 @@ vec4 shadow(vec4 color)
 
   if(side == 0)
   {  
-    return getShadow(frag.shadow[0], texture6, color); 
+    return getShadow(frag.shadow[0], texture6, color, bias); 
   }
 
   if(side == 1)
   {  
-    return getShadow(frag.shadow[2], texture8, color); 
+    return getShadow(frag.shadow[2], texture8, color, bias); 
   }  
 
   if(side == 2)
   {  
-    return getShadow(frag.shadow[4], texture10, color); 
+    return getShadow(frag.shadow[4], texture10, color, bias); 
   }   
 
   if(side == 3)
   {  
-    return getShadow(frag.shadow[1], texture7, color); 
+    return getShadow(frag.shadow[1], texture7, color, bias); 
   }   
 
   if(side == 4)
   {  
-    return getShadow(frag.shadow[3], texture9, color); 
+    return getShadow(frag.shadow[3], texture9, color, bias); 
   }  
 
   if(side == 5)
   {  
-    return getShadow(frag.shadow[5], texture11, color); 
+    return getShadow(frag.shadow[5], texture11, color, bias); 
   }   
 
   return vec4(0,0,0,1);
@@ -296,15 +294,24 @@ void main(void)
 {  
   vec3 viewDir = normalize(frag.V);
   TextureData textureData = GetTextureData(viewDir);    
+  vec3 lightDir = normalize(frag.L);
+  vec3 normalDir = normalize(2.0 * textureData.normal.agb - 1.0);
 
   if(rpShading == 1)
-    result = phong(textureData, viewDir);
+    result = phong(textureData, normalDir, lightDir, viewDir);
   else
-    result = blinnPhong(textureData);
+    result = blinnPhong(textureData, normalDir, lightDir);
+
 
   if(rpShadowMappingMode == 1)
   {
-    float light = 0.25;
-    result *= shadow(vec4(light,light,light,1));
+    float minBias = rpShadowParams.x;
+    float maxBias = rpShadowParams.y;
+
+
+    float bias = mix(maxBias/10, minBias, dot(normalDir, lightDir));
+
+    float light = 0.15;
+    result *= shadow(vec4(light,light,light,1), bias);
   }
 }

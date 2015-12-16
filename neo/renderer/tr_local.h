@@ -188,6 +188,8 @@ public:
 	virtual void			ForceUpdate();
 	virtual int				GetIndex();
 
+	float					GetMaximumCenterToEdgeDistance() const;
+
 	renderLight_t			parms;					// specification
 
 	bool					lightHasMoved;			// the light has changed its position since it was

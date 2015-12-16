@@ -50,6 +50,7 @@ layout(location = 109) uniform float rpSpecularScale;
 layout(location = 120) uniform mat4 rpShadowProjection[6];
 layout(location = 126) uniform int rpShadowMappingMode;
 layout(location = 127) uniform vec4 rpGlobalLightOrigin;
+layout(location = 128) uniform vec4 rpShadowParams; //x=minBias, y=maxbias, z=fuzzyness, w=samples
 
 #define TEXTURE_UNIT_0 24
 #define TEXTURE_UNIT_1 25
