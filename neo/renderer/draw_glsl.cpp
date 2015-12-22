@@ -1693,19 +1693,21 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
   glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());  
 
-  int shadowMappingMode = (int)!!r_ignore.GetBool();
-  if (shadowMappingMode == 1)
-  {
+  if (r_ignore.GetBool() && !backEnd.vLight->lightDef->parms.noShadows) {
 	  const idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
 	  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
 
-	  const idVec4 shadowParams = RB_GLSL_GetShadowParams();
+	  idVec4 shadowParams = RB_GLSL_GetShadowParams();
+	  shadowParams.x = 4.0f;
+	  shadowParams.y = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
+
 	  glUniform4fv(glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr());
 
-
 	  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
+	  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, 1);
+  } else {
+	  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, 0);
   }
-  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, shadowMappingMode);
 
 
   for (; surf; surf = surf->nextOnLight) {
@@ -1792,7 +1794,8 @@ void RB_GLSL_DrawInteractions(void) {
 
 	if (r_ignore.GetBool())
 	{
-		RB_RenderShadowMaps(vLight);
+		if(!vLight->lightDef->parms.noShadows)
+			RB_RenderShadowMaps(vLight);
 	}
 
     lightShader = vLight->lightShader;
