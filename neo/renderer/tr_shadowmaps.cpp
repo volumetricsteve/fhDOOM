@@ -3,9 +3,9 @@
 
 #include "tr_local.h"
 
-idCVar r_useShadowMapCulling( "r_useShadowMapCulling", "1", CVAR_RENDERER | CVAR_BOOL, "use culling when rendering shadow maps" );
-idCVar r_useShadowMapMinSize( "r_useShadowMapMinSize", "128", CVAR_RENDERER | CVAR_FLOAT, "minimum size for light to have shadow maps enabled" );
-
+idCVar r_smObjectCulling( "r_smObjectCulling", "1", CVAR_RENDERER | CVAR_BOOL, "cull objects/surfaces that are outside the shadow/light frustum when rendering shadow maps" );
+idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER, "Determines which faces should be rendered to shadow map: 0=front, 1=back, 2=front-and-back");
+idCVar r_smFov( "r_smFov", "90", CVAR_RENDERER|CVAR_FLOAT, "fov used when rendering point light shadow maps");
 
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
@@ -87,7 +87,7 @@ void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
 
 		int	culled = 0;
 
-		if (r_useShadowMapCulling.GetBool()) {
+		if (r_smObjectCulling.GetBool()) {
 
 			// transform light frustum into object space, positive side points outside the light
 			idPlane	localPlanes[6];
@@ -248,7 +248,7 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 	//
 	// set up 90 degree projection matrix
 	//
-	const float	fov = 90;
+	const float	fov = r_smFov.GetFloat();
 	const float zNear = 4;
 
 	const float ymax = zNear * tan(fov * idMath::PI / 360.0f);
@@ -398,7 +398,7 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 	
 	myGlMultMatrix(viewMatrix, s_flipMatrix, flippedViewMatrix);
 
-	if(r_useShadowMapCulling.GetBool()) {
+	if(r_smObjectCulling.GetBool()) {
 		// create frustum planes
 		idPlane	globalFrustum[6];
 
@@ -476,10 +476,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		return;
 	}
 
-	if(vLight->frustumTris->bounds.GetRadius() < r_useShadowMapMinSize.GetFloat()) {
-		return;
-	}
-
 	if (!vLight->frustumTris->ambientCache) {
 		R_CreateAmbientCache(const_cast<srfTriangles_t *>(vLight->frustumTris), false);
 	}
@@ -491,7 +487,22 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	GL_UseProgram(depthProgram);
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-	glDisable(GL_CULL_FACE);
+
+	switch (r_smFaceCullMode.GetInteger())
+	{
+	case 0:
+		glEnable(GL_CULL_FACE);
+		glFrontFace(GL_CCW);
+		break;
+	case 1:
+		glEnable(GL_CULL_FACE);
+		glFrontFace(GL_CW);
+		break;
+	case 2:
+	default:
+		glDisable(GL_CULL_FACE);
+		break;
+	}
 
 	for (int side=0; side < 6; side++) {
 		// FIXME: check for frustums completely off the screen
@@ -501,6 +512,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	}
 
 	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
 	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 	GL_UseProgram(nullptr);
