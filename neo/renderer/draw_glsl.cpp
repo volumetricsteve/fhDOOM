@@ -1625,8 +1625,10 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   RB_DrawElementsWithCounters(din->surf->geo);
 }
 
-static idVec4 RB_GLSL_GetShadowParams()
-{
+static void RB_GLSL_GetShadowBias(float* minBias, float* maxBias) {
+	assert(minBias);
+	assert(maxBias);
+
 	static const struct {
 		float size;
 		float bias_min;
@@ -1641,23 +1643,16 @@ static idVec4 RB_GLSL_GetShadowParams()
 
 	//const float lightSize = max(backEnd.vLight->lightDef->parms.lightRadius.x, max(backEnd.vLight->lightDef->parms.lightRadius.y, backEnd.vLight->lightDef->parms.lightRadius.z));
 	const float lightSize = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
-
-	idVec4 ret;
-
+	
 	for(int i=0; i<sizeof(biasTable)/sizeof(biasTable[0]); ++i) {
 		const auto& a = biasTable[i];
 		if(lightSize >= a.size) {
-			ret.x = a.bias_min;
-			ret.y = a.bias_max;
+			*minBias = a.bias_min;
+			*maxBias = a.bias_max;
 		} else {
 			break;
 		}
-	}
-
-	ret.z = 6;
-	ret.w = 3;
-
-	return ret;
+	}	
 }
 
 /*
@@ -1697,9 +1692,11 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 	  const idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
 	  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
 
-	  idVec4 shadowParams = RB_GLSL_GetShadowParams();
-	  shadowParams.x = 4.0f;
-	  shadowParams.y = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
+	  idVec4 shadowParams;
+	  RB_GLSL_GetShadowBias(&shadowParams.x, &shadowParams.y);
+
+	  shadowParams.z = 4.0f;
+	  shadowParams.w = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();	  
 
 	  glUniform4fv(glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr());
 
