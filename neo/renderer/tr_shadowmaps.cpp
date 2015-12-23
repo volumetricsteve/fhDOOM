@@ -3,9 +3,11 @@
 
 #include "tr_local.h"
 
-idCVar r_smObjectCulling( "r_smObjectCulling", "1", CVAR_RENDERER | CVAR_BOOL, "cull objects/surfaces that are outside the shadow/light frustum when rendering shadow maps" );
-idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER, "Determines which faces should be rendered to shadow map: 0=front, 1=back, 2=front-and-back");
-idCVar r_smFov( "r_smFov", "90", CVAR_RENDERER|CVAR_FLOAT, "fov used when rendering point light shadow maps");
+idCVar r_smObjectCulling( "r_smObjectCulling", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "cull objects/surfaces that are outside the shadow/light frustum when rendering shadow maps" );
+idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "Determines which faces should be rendered to shadow map: 0=front, 1=back, 2=front-and-back");
+idCVar r_smFov( "r_smFov", "93", CVAR_RENDERER|CVAR_FLOAT | CVAR_ARCHIVE, "fov used when rendering point light shadow maps");
+idCVar r_smFarClip( "r_smFarClip", "-1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "far clip distance for rendering shadow maps: -1=infinite-z, 0=max light radius, other=fixed distance");
+idCVar r_smNearClip( "r_smNearClip", "4", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "near clip distance for rendering shadow maps");
 
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
@@ -36,6 +38,95 @@ template<typename T>
 static const void* attributeOffset(T offset, const void* attributeOffset)
 {
 	return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
+}
+
+static void RB_CreateShadowMapProjectionMatrix(const viewLight_t* vLight, float* m) {
+
+	memset(m, 0, sizeof(m[0]) * 16);
+	//
+	// set up 90 degree projection matrix
+	//
+	const float	fov = r_smFov.GetFloat();
+	const float zNear = r_smNearClip.GetInteger();
+
+	if (r_smFarClip.GetInteger() < 0) {
+		const float ymax = zNear * tan(fov * idMath::PI / 360.0f);
+		const float ymin = -ymax;
+		const float xmax = zNear * tan(fov * idMath::PI / 360.0f);
+		const float xmin = -xmax;
+		const float width = xmax - xmin;
+		const float height = ymax - ymin;
+
+		m[0] = 2 * zNear / width;
+		m[5] = 2 * zNear / height;
+
+		// this is the far-plane-at-infinity formulation, and
+		// crunches the Z range slightly so w=0 vertexes do not
+		// rasterize right at the wraparound point
+		m[10] = -0.999f;
+		m[11] = -1;
+		m[14] = -2.0f * zNear;
+	}
+	else if (r_smFarClip.GetInteger() == 0) {
+		const float zFar = vLight->lightDef->GetMaximumCenterToEdgeDistance();
+		const float D2R = idMath::PI / 180.0;
+		const float scale = 1.0 / tan(D2R * fov / 2);
+		const float nearmfar = zNear - zFar;
+
+		m[0] = scale;
+		m[5] = scale;
+		m[10] = (zFar + zNear) / nearmfar;
+		m[11] = -1;
+		m[14] = 2 * zFar*zNear / nearmfar;
+	}
+	else {
+		const float zFar = r_smFarClip.GetInteger();
+		const float D2R = idMath::PI / 180.0;
+		const float scale = 1.0 / tan(D2R * fov / 2);
+		const float nearmfar = zNear - zFar;
+
+		m[0] = scale;
+		m[5] = scale;
+		m[10] = (zFar + zNear) / nearmfar;
+		m[11] = -1;
+		m[14] = 2 * zFar*zNear / nearmfar;
+	}
+}
+
+void RB_GLSL_GetShadowParams(float* minBias, float* maxBias, float* fuzzyness, int* samples) {
+	assert(minBias);
+	assert(maxBias);
+	assert(fuzzyness);
+	assert(samples);
+
+	static const struct {
+		float size;
+		float minBias;
+		float maxBias;
+		float fuzzyness;
+		int   samples;
+	} biasTable[] = {
+		{ 0,    0.0001, 0.01, 3.5, 3 },
+		{ 150,  0.0005,  0.006, 2.8, 3 },
+		{ 300,  0.000001, 0.0001, 2, 3 },
+		{ 1000, 0.000001, 0.000004, 1.2, 4 },
+	};
+
+	//const float lightSize = max(backEnd.vLight->lightDef->parms.lightRadius.x, max(backEnd.vLight->lightDef->parms.lightRadius.y, backEnd.vLight->lightDef->parms.lightRadius.z));
+	const float lightSize = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
+
+	for (int i = 0; i < sizeof(biasTable) / sizeof(biasTable[0]); ++i) {
+		const auto& a = biasTable[i];
+		if (lightSize >= a.size) {
+			*minBias = a.minBias;
+			*maxBias = a.maxBias;
+			*fuzzyness = a.fuzzyness;
+			*samples = a.samples;
+		}
+		else {
+			break;
+		}
+	}
 }
 
 
@@ -244,60 +335,9 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 
-
-	//
-	// set up 90 degree projection matrix
-	//
-	const float	fov = r_smFov.GetFloat();
-	const float zNear = 4;
-
-	const float ymax = zNear * tan(fov * idMath::PI / 360.0f);
-	const float ymin = -ymax;
-
-	const float xmax = zNear * tan(fov * idMath::PI / 360.0f);
-	const float xmin = -xmax;
-
-	const float width = xmax - xmin;
-	const float height = ymax - ymin;
-	
-#if 1
 	float lightProjectionMatrix[16];
-	lightProjectionMatrix[0] = 2 * zNear / width;
-	lightProjectionMatrix[4] = 0;
-	lightProjectionMatrix[8] = 0;
-	lightProjectionMatrix[12] = 0;
+	RB_CreateShadowMapProjectionMatrix(vLight, lightProjectionMatrix);
 
-	lightProjectionMatrix[1] = 0;
-	lightProjectionMatrix[5] = 2 * zNear / height;
-	lightProjectionMatrix[9] = 0;
-	lightProjectionMatrix[13] = 0;
-
-	// this is the far-plane-at-infinity formulation, and
-	// crunches the Z range slightly so w=0 vertexes do not
-	// rasterize right at the wraparound point
-	lightProjectionMatrix[2] = 0;
-	lightProjectionMatrix[6] = 0;
-	lightProjectionMatrix[10] = -0.999f;
-	lightProjectionMatrix[14] = -2.0f * zNear;
-
-	lightProjectionMatrix[3] = 0;
-	lightProjectionMatrix[7] = 0;
-	lightProjectionMatrix[11] = -1;
-	lightProjectionMatrix[15] = 0;
-#else
-	const float zFar = 3000;
-
-	const float D2R = idMath::PI / 180.0;
-	const float scale = 1.0 / tan(D2R * fov / 2);	
-	const float nearmfar = zNear - zFar;
-	const float lightProjectionMatrix[] = {
-		scale, 0, 0, 0,
-		0, scale, 0, 0,
-		0, 0, (zFar + zNear) / nearmfar, -1,
-		0, 0, 2 * zFar*zNear / nearmfar, 0
-	};
-
-#endif
 	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[side];
 	framebuffer->Bind();
 

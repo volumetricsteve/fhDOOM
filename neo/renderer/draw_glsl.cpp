@@ -4,6 +4,8 @@
 #include "tr_local.h"
 #include "ImmediateMode.h"
 
+void RB_GLSL_GetShadowParams(float* minBias, float* maxBias, float* fuzzyness, int* samples);
+
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong?), 1 = Phong");
@@ -1625,36 +1627,6 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   RB_DrawElementsWithCounters(din->surf->geo);
 }
 
-static void RB_GLSL_GetShadowBias(float* minBias, float* maxBias) {
-	assert(minBias);
-	assert(maxBias);
-
-	static const struct {
-		float size;
-		float bias_min;
-		float bias_max;
-	} biasTable[] = {
-		{ 0, 0.01, 0.1 },
-		{ 130, 0.001, 0.01 },
-		{ 256, 0.0001, 0.001 },
-		{ 500, 0.00001, 0.0001 },
-		{ 1000, 0.000001, 0.00001 }
-	};
-
-	//const float lightSize = max(backEnd.vLight->lightDef->parms.lightRadius.x, max(backEnd.vLight->lightDef->parms.lightRadius.y, backEnd.vLight->lightDef->parms.lightRadius.z));
-	const float lightSize = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
-	
-	for(int i=0; i<sizeof(biasTable)/sizeof(biasTable[0]); ++i) {
-		const auto& a = biasTable[i];
-		if(lightSize >= a.size) {
-			*minBias = a.bias_min;
-			*maxBias = a.bias_max;
-		} else {
-			break;
-		}
-	}	
-}
-
 /*
 =============
 RB_GLSL_CreateDrawInteractions
@@ -1693,12 +1665,12 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 	  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
 
 	  idVec4 shadowParams;
-	  RB_GLSL_GetShadowBias(&shadowParams.x, &shadowParams.y);
-
-	  shadowParams.z = 4.0f;
-	  shadowParams.w = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();	  
+	  int samples;
+	  RB_GLSL_GetShadowParams(&shadowParams.x, &shadowParams.y, &shadowParams.z, &samples);
+	  shadowParams.w = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
 
 	  glUniform4fv(glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr());
+	  glUniform1i(glslProgramDef_t::uniform_shadowSamples, samples);
 
 	  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
 	  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, 1);
