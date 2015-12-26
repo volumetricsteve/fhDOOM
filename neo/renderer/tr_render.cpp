@@ -153,7 +153,6 @@ void RB_RenderTriangleSurface( const srfTriangles_t *tri ) {
 		return;
 	}
 
-  if(backEnd.glslEnabled) {
     const int offset = vertexCache.Bind(tri->ambientCache);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
@@ -161,19 +160,12 @@ void RB_RenderTriangleSurface( const srfTriangles_t *tri ) {
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
     glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
-  } else {
-    idDrawVert *ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
-    glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-    glTexCoordPointer(2, GL_FLOAT, sizeof(idDrawVert), ac->st.ToFloatPtr());
-  }
 	
 	RB_DrawElementsWithCounters( tri );
 
-  if(backEnd.glslEnabled) {
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
     glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  }
 }
 
 /*
@@ -254,9 +246,7 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 		// change the matrix if needed
 		if ( drawSurf->space != backEnd.currentSpace ) {
 			GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
-      if(backEnd.glslEnabled) {
-        glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, drawSurf->space->modelViewMatrix);
-      }
+	        glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, drawSurf->space->modelViewMatrix);
 		}
 
 		if ( drawSurf->space->weaponDepthHack ) {

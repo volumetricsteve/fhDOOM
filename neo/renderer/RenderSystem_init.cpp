@@ -107,7 +107,6 @@ idCVar r_skipBump( "r_skipBump", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, 
 idCVar r_skipDiffuse( "r_skipDiffuse", "0", CVAR_RENDERER | CVAR_BOOL, "use black for diffuse" );
 idCVar r_skipROQ( "r_skipROQ", "0", CVAR_RENDERER | CVAR_BOOL, "skip ROQ decoding" );
 
-idCVar r_glslEnabled( "r_glslEnabled", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "use GLSL shaders for rendering" );
 idCVar r_glslReplaceArb2( "r_glslReplaceArb2", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "replace ARB2 shaders by GLSL shaders if possible" );
 idCVar r_glCoreProfile( "r_glCoreProfile", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "use OpenGL core profile" );
 

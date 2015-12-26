@@ -43,76 +43,34 @@ This should initialize all GL state that any part of the entire program
 may touch, including the editor.
 ======================
 */
-void RB_SetDefaultGLState( void ) {
-	int		i;
+void RB_SetDefaultGLState(void) {
+	RB_LogComment("--- R_SetDefaultGLState ---\n");
 
-	RB_LogComment( "--- R_SetDefaultGLState ---\n" );
-
-	glClearDepth( 1.0f );
-  if(!r_glCoreProfile.GetBool())
-    glColor4f(1,1,1,1);
-
-	// the vertex array is always enabled when rendering with ARB2 path.
-  // GLSL path uses user defined vertex attributes, so we disable all build-in 
-  // arrays
-  if(!backEnd.glslEnabled) {
-	  glEnableClientState( GL_VERTEX_ARRAY );
-	  glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-  } else {
-    if(!r_glCoreProfile.GetBool()) {
-      glDisableClientState(GL_VERTEX_ARRAY);
-      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
-  }
-
-  if(!r_glCoreProfile.GetBool()) {
-	  glDisableClientState( GL_COLOR_ARRAY );
-  }
+	glClearDepth(1.0f);
 
 	//
 	// make sure our GL state vector is set correctly
 	//
-	memset( &backEnd.glState, 0, sizeof( backEnd.glState ) );
+	memset(&backEnd.glState, 0, sizeof(backEnd.glState));
 	backEnd.glState.forceGlState = true;
 
-	glColorMask( 1, 1, 1, 1 );
+	glColorMask(1, 1, 1, 1);
 
-	glEnable( GL_DEPTH_TEST );
-	glEnable( GL_BLEND );
-	glEnable( GL_SCISSOR_TEST );
-	glEnable( GL_CULL_FACE );
-	glDisable( GL_STENCIL_TEST );
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glEnable(GL_SCISSOR_TEST);
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_STENCIL_TEST);
 
-	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
-	glDepthMask( GL_TRUE );
-	glDepthFunc( GL_ALWAYS );
- 
-	glCullFace( GL_FRONT_AND_BACK );
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_ALWAYS);
 
-	if ( r_useScissor.GetBool() ) {
-		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+	glCullFace(GL_FRONT_AND_BACK);
+
+	if (r_useScissor.GetBool()) {
+		glScissor(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 	}
-
-  if(!backEnd.glslEnabled) {
-	  for ( i = glConfig.maxTextureUnits - 1 ; i >= 0 ; i-- ) {
-		  GL_SelectTexture( i );
-
-		  // object linear texgen is our default
-		  glTexGenf( GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-		  glTexGenf( GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-		  glTexGenf( GL_R, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-		  glTexGenf( GL_Q, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
-
-		  GL_TexEnv( GL_MODULATE );
-		  glDisable( GL_TEXTURE_2D );
-		  if ( glConfig.texture3DAvailable ) {
-			  glDisable( GL_TEXTURE_3D );
-		  }
-		  if ( glConfig.cubeMapAvailable ) {
-			  glDisable( GL_TEXTURE_CUBE_MAP );
-		  }
-	  }
-  }
 }
 
 
@@ -386,33 +344,6 @@ void GL_State( int stateBits ) {
 		}
 	}
 
-	//
-	// alpha test
-	//
-	if(!backEnd.glslEnabled) {
-	  if ( diff & GLS_ATEST_BITS ) {
-		  switch ( stateBits & GLS_ATEST_BITS ) {
-		  case 0:
-			  glDisable( GL_ALPHA_TEST );
-			  break;
-		  case GLS_ATEST_EQ_255:
-			  glEnable( GL_ALPHA_TEST );
-			  glAlphaFunc( GL_EQUAL, 1 );
-			  break;
-		  case GLS_ATEST_LT_128:
-			  glEnable( GL_ALPHA_TEST );
-			  glAlphaFunc( GL_LESS, 0.5 );
-			  break;
-		  case GLS_ATEST_GE_128:
-			  glEnable( GL_ALPHA_TEST );
-			  glAlphaFunc( GL_GEQUAL, 0.5 );
-			  break;
-		  default:
-			  assert( 0 );
-			  break;
-		  }
-	  }
-  }
 	backEnd.glState.glStateBits = stateBits;
 }
 

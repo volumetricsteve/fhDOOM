@@ -394,8 +394,7 @@ void RB_ShowIntensity( void ) {
 	if ( !r_showIntensity.GetBool() ) {
 		return;
 	}
-
-  if(backEnd.glslEnabled) {
+  
     globalImages->currentRenderImage->CopyFramebuffer(backEnd.viewDef->viewport.x1,
       backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
       backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true);
@@ -443,47 +442,6 @@ void RB_ShowIntensity( void ) {
     GL_UseProgram(nullptr);
 
     GL_ProjectionMatrix.Pop();
-  } else {
-	  colorReadback = (byte *)R_StaticAlloc( glConfig.vidWidth * glConfig.vidHeight * 4 );
-	  glReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_RGBA, GL_UNSIGNED_BYTE, colorReadback );
-
-	  c = glConfig.vidWidth * glConfig.vidHeight * 4;
-	  for ( i = 0; i < c ; i+=4 ) {
-		  j = colorReadback[i];
-		  if ( colorReadback[i+1] > j ) {
-			  j = colorReadback[i+1];
-		  }
-		  if ( colorReadback[i+2] > j ) {
-			  j = colorReadback[i+2];
-		  }
-		  if ( j < 128 ) {
-			  colorReadback[i+0] = 2*(128-j);
-			  colorReadback[i+1] = 2*j;
-			  colorReadback[i+2] = 0;
-		  } else {
-			  colorReadback[i+0] = 0;
-			  colorReadback[i+1] = 2*(255-j);
-			  colorReadback[i+2] = 2*(j-128);
-		  }
-	  }
-
-	  // draw it back to the screen
-    GL_ModelViewMatrix.LoadIdentity();	
-    GL_State( GLS_DEPTHFUNC_ALWAYS );
-
-    GL_ProjectionMatrix.Push();
-    GL_ProjectionMatrix.LoadIdentity();
-    GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
-  
-	  glRasterPos2f( 0, 0 );
-    GL_ProjectionMatrix.Pop();
-	  glColor3f( 1, 1, 1 );
-	  globalImages->BindNull();	
-
-	  glDrawPixels( glConfig.vidWidth, glConfig.vidHeight, GL_RGBA , GL_UNSIGNED_BYTE, colorReadback );
-
-	  R_StaticFree( colorReadback );
-  }
 }
 
 
@@ -543,77 +501,72 @@ This is a debugging tool that will draw each surface with a color
 based on how many lights are effecting it
 =================
 */
-void RB_ShowLightCount( void ) {
+void RB_ShowLightCount(void) {
 	int		i;
 	const drawSurf_t	*surf;
 	const viewLight_t	*vLight;
 
-	if ( !r_showLightCount.GetBool() ) {
+	if (!r_showLightCount.GetBool()) {
 		return;
 	}
 
-	GL_State( GLS_DEPTHFUNC_EQUAL );
+	GL_State(GLS_DEPTHFUNC_EQUAL);
 
 	RB_SimpleWorldSetup();
-	glClearStencil( 0 );
-	glClear( GL_STENCIL_BUFFER_BIT );
+	glClearStencil(0);
+	glClear(GL_STENCIL_BUFFER_BIT);
 
-	glEnable( GL_STENCIL_TEST );
+	glEnable(GL_STENCIL_TEST);
 
 	// optionally count everything through walls
-	if ( r_showLightCount.GetInteger() >= 2 ) {
-		glStencilOp( GL_KEEP, GL_INCR, GL_INCR );
-	} else {
-		glStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
+	if (r_showLightCount.GetInteger() >= 2) {
+		glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
+	}
+	else {
+		glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 	}
 
-	glStencilFunc( GL_ALWAYS, 1, 255 );
+	glStencilFunc(GL_ALWAYS, 1, 255);
 
 	globalImages->defaultImage->Bind();
 
-  if (backEnd.glslEnabled) {
-    GL_UseProgram(vertexColorProgram);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  }
 
-	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
-		for ( i = 0 ; i < 2 ; i++ ) {
-			for ( surf = i ? vLight->localInteractions: vLight->globalInteractions; surf; surf = (drawSurf_t *)surf->nextOnLight ) {
-				RB_SimpleSurfaceSetup( surf );
-				if ( !surf->geo->ambientCache ) {
+	GL_UseProgram(vertexColorProgram);
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+
+
+	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+		for (i = 0; i < 2; i++) {
+			for (surf = i ? vLight->localInteractions : vLight->globalInteractions; surf; surf = (drawSurf_t *)surf->nextOnLight) {
+				RB_SimpleSurfaceSetup(surf);
+				if (!surf->geo->ambientCache) {
 					continue;
 				}
 
-        if (backEnd.glslEnabled) {
-          const int offset = vertexCache.Bind(surf->geo->ambientCache);
+				const int offset = vertexCache.Bind(surf->geo->ambientCache);
 
-          glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-          glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+				glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+				glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
-          glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
-          glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
-        } else {
-          const idDrawVert	*ac = (idDrawVert *)vertexCache.Position(surf->geo->ambientCache);
-          glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), &ac->xyz);
-        }
-				
-				RB_DrawElementsWithCounters( surf->geo );
+				glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
+				glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
+
+				RB_DrawElementsWithCounters(surf->geo);
 			}
 		}
 	}
 
-  if (backEnd.glslEnabled) {
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    GL_UseProgram(nullptr);
-  } 
+
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+	GL_UseProgram(nullptr);
 
 
 	// display the results
-  R_ColorByStencilBuffer();
+	R_ColorByStencilBuffer();
 
-	if ( r_showLightCount.GetInteger() > 2 ) {
+	if (r_showLightCount.GetInteger() > 2) {
 		RB_CountStencilBuffer();
 	}
 }
@@ -627,108 +580,98 @@ Blacks out all edges, then adds color for each edge that a shadow
 plane extends from, allowing you to see doubled edges
 =================
 */
-void RB_ShowSilhouette( void ) {
+void RB_ShowSilhouette(void) {
 	int		i;
 	const drawSurf_t	*surf;
 	const viewLight_t	*vLight;
 
-	if ( !r_showSilhouette.GetBool() ) {
+	if (!r_showSilhouette.GetBool()) {
 		return;
 	}
 
 	//
 	// clear all triangle edges to black
 	//
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	globalImages->BindNull();
-	glDisable( GL_TEXTURE_2D );
-	glDisable( GL_STENCIL_TEST );
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_STENCIL_TEST);
 
-  if(backEnd.glslEnabled) {
-    GL_UseProgram(flatColorProgram);
-    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 0.0f, 1.0f);
-  } else {
-    glColor3f( 0, 0, 0 );
-  }	
+	GL_UseProgram(flatColorProgram);
+	glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+	glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+	glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 0.0f, 1.0f);
 
-	GL_State( GLS_POLYMODE_LINE );
+	GL_State(GLS_POLYMODE_LINE);
 
-	GL_Cull( CT_TWO_SIDED );
-	glDisable( GL_DEPTH_TEST );
+	GL_Cull(CT_TWO_SIDED);
+	glDisable(GL_DEPTH_TEST);
 
-	RB_RenderDrawSurfListWithFunction( backEnd.viewDef->drawSurfs, backEnd.viewDef->numDrawSurfs, 
-		RB_T_RenderTriangleSurface );
+	RB_RenderDrawSurfListWithFunction(backEnd.viewDef->drawSurfs, backEnd.viewDef->numDrawSurfs,
+		RB_T_RenderTriangleSurface);
 
 
 	//
 	// now blend in edges that cast silhouettes
 	//
 	RB_SimpleWorldSetup();
-	
-	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
 
-	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
-		for ( i = 0 ; i < 2 ; i++ ) {
-			for ( surf = i ? vLight->localShadows : vLight->globalShadows
-				; surf ; surf = (drawSurf_t *)surf->nextOnLight ) {
-				RB_SimpleSurfaceSetup( surf );
+	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE);
+
+	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+		for (i = 0; i < 2; i++) {
+			for (surf = i ? vLight->localShadows : vLight->globalShadows
+				; surf; surf = (drawSurf_t *)surf->nextOnLight) {
+				RB_SimpleSurfaceSetup(surf);
 
 				const srfTriangles_t	*tri = surf->geo;
 
-        static const int maxIndices = 2048;
-        static unsigned short indices[maxIndices];
-        unsigned indicesUsed = 0;
+				static const int maxIndices = 2048;
+				static unsigned short indices[maxIndices];
+				unsigned indicesUsed = 0;
 
-        for (int j = 0; j < tri->numIndexes && (indicesUsed+2) < maxIndices; j += 3) {
-          int		i1 = tri->indexes[j + 0];
-          int		i2 = tri->indexes[j + 1];
-          int		i3 = tri->indexes[j + 2];
+				for (int j = 0; j < tri->numIndexes && (indicesUsed + 2) < maxIndices; j += 3) {
+					int		i1 = tri->indexes[j + 0];
+					int		i2 = tri->indexes[j + 1];
+					int		i3 = tri->indexes[j + 2];
 
-          if ((i1 & 1) + (i2 & 1) + (i3 & 1) == 1) {
-            if ((i1 & 1) + (i2 & 1) == 0) {
-              indices[indicesUsed++] = (unsigned short)i1;
-              indices[indicesUsed++] = (unsigned short)i2;
-            }
-            else if ((i1 & 1) + (i3 & 1) == 0) {
-              indices[indicesUsed++] = (unsigned short)i1;
-              indices[indicesUsed++] = (unsigned short)i3;
-            }
-          }
-        }
+					if ((i1 & 1) + (i2 & 1) + (i3 & 1) == 1) {
+						if ((i1 & 1) + (i2 & 1) == 0) {
+							indices[indicesUsed++] = (unsigned short)i1;
+							indices[indicesUsed++] = (unsigned short)i2;
+						}
+						else if ((i1 & 1) + (i3 & 1) == 0) {
+							indices[indicesUsed++] = (unsigned short)i1;
+							indices[indicesUsed++] = (unsigned short)i3;
+						}
+					}
+				}
 
-        glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-        glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-        glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.5f, 0.0f, 0.0f, 1.0f);
+				glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+				glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+				glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.5f, 0.0f, 0.0f, 1.0f);
 
-        const int offset = vertexCache.Bind(tri->shadowCache);
-        glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-        glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), GL_AttributeOffset(offset, 0));
+				const int offset = vertexCache.Bind(tri->shadowCache);
+				glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+				glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), GL_AttributeOffset(offset, 0));
 
-        glDrawElements(GL_LINES,
-          indicesUsed,
-          GL_UNSIGNED_SHORT,
-          indices);
+				glDrawElements(GL_LINES,
+					indicesUsed,
+					GL_UNSIGNED_SHORT,
+					indices);
 
-        glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+				glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 			}
 		}
 	}
 
+	GL_UseProgram(nullptr);
 
-  if (backEnd.glslEnabled) {
-    GL_UseProgram(nullptr);
-  }
-  else {
-    glColor3f( 1,1,1 );
-  }
+	glEnable(GL_DEPTH_TEST);
 
-	glEnable( GL_DEPTH_TEST );
+	GL_State(GLS_DEFAULT);
 
-	GL_State( GLS_DEFAULT );
-	
-	GL_Cull( CT_FRONT_SIDED );
+	GL_Cull(CT_FRONT_SIDED);
 }
 
 
@@ -822,55 +765,48 @@ Debugging tool
 =====================
 */
 static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
-	if ( !r_showTris.GetInteger() ) {
+	if (!r_showTris.GetInteger()) {
 		return;
 	}
 
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	globalImages->BindNull();
-	glDisable( GL_TEXTURE_2D );
-	glDisable( GL_STENCIL_TEST );
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_STENCIL_TEST);
 
+	GL_UseProgram(flatColorProgram);
+	glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+	glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+	glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
-  if (backEnd.glslEnabled) {
-    GL_UseProgram(flatColorProgram);
-    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
-    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-  } else {
-    glColor3f( 1, 1, 1 );
-  }
+	GL_State(GLS_POLYMODE_LINE);
 
-	GL_State( GLS_POLYMODE_LINE );
-
-	switch ( r_showTris.GetInteger() ) {
+	switch (r_showTris.GetInteger()) {
 	case 1:	// only draw visible ones
-		glPolygonOffset( -1, -2 );
-		glEnable( GL_POLYGON_OFFSET_LINE );
+		glPolygonOffset(-1, -2);
+		glEnable(GL_POLYGON_OFFSET_LINE);
 		break;
 	default:
 	case 2:	// draw all front facing
-		GL_Cull( CT_FRONT_SIDED );
-		glDisable( GL_DEPTH_TEST );
+		GL_Cull(CT_FRONT_SIDED);
+		glDisable(GL_DEPTH_TEST);
 		break;
 	case 3: // draw all
-		GL_Cull( CT_TWO_SIDED );
-		glDisable( GL_DEPTH_TEST );
+		GL_Cull(CT_TWO_SIDED);
+		glDisable(GL_DEPTH_TEST);
 		break;
 	}
 
-	RB_RenderDrawSurfListWithFunction( drawSurfs, numDrawSurfs, RB_T_RenderTriangleSurface );
+	RB_RenderDrawSurfListWithFunction(drawSurfs, numDrawSurfs, RB_T_RenderTriangleSurface);
 
-  if (backEnd.glslEnabled) {
-    GL_UseProgram(nullptr);
-  }
+	GL_UseProgram(nullptr);
 
-	glEnable( GL_DEPTH_TEST );
-	glDisable( GL_POLYGON_OFFSET_LINE );
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_POLYGON_OFFSET_LINE);
 
-	glDepthRange( 0, 1 );
-	GL_State( GLS_DEFAULT );
-	GL_Cull( CT_FRONT_SIDED );
+	glDepthRange(0, 1);
+	GL_State(GLS_DEFAULT);
+	GL_Cull(CT_FRONT_SIDED);
 }
 
 
@@ -1689,14 +1625,12 @@ void RB_ShowLights( void ) {
 
 	common->Printf( "volumes: " );	// FIXME: not in back end!
 
-	if (backEnd.glslEnabled) {
-		GL_UseProgram(defaultProgram);
-		glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
-		glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
-		GL_SelectTexture(1);
-		globalImages->whiteImage->Bind();
-		GL_SelectTexture(0);
-	}
+	GL_UseProgram(defaultProgram);
+	glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+	glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
+	GL_SelectTexture(1);
+	globalImages->whiteImage->Bind();
+	GL_SelectTexture(0);
 
 	count = 0;
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
@@ -1709,10 +1643,7 @@ void RB_ShowLights( void ) {
 		if ( r_showLights.GetInteger() >= 2 ) {
 			GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK );
 
-			if (backEnd.glslEnabled)
-				glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 1.0f, 0.25f);
-			else
-				glColor4f(0, 0, 1, 0.25);
+			glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 1.0f, 0.25f);
 
 			glEnable( GL_DEPTH_TEST );
 			RB_RenderTriangleSurface( tri );
@@ -1723,10 +1654,7 @@ void RB_ShowLights( void ) {
 			GL_State(GLS_POLYMODE_LINE | GLS_DEPTHMASK);
 			glDisable(GL_DEPTH_TEST);
 
-			if (backEnd.glslEnabled)
-				glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1.0f, 1.0f, 1.0f, 1.0f);
-			else
-				glColor3f(1, 1, 1);
+			glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1.0f, 1.0f, 1.0f, 1.0f);
 
 			RB_RenderTriangleSurface(tri);
 		}
@@ -1740,9 +1668,7 @@ void RB_ShowLights( void ) {
 		}
 	}
 
-	if (backEnd.glslEnabled) {
-		GL_UseProgram(nullptr);
-	}
+	GL_UseProgram(nullptr);
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_POLYGON_OFFSET_LINE );

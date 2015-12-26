@@ -82,94 +82,6 @@ SHADER PASSES
 =============================================================================================
 */
 
-/*
-==================
-RB_SetProgramEnvironment
-
-Sets variables that can be used by all vertex programs
-==================
-*/
-void RB_SetProgramEnvironment( void ) {
-	float	parm[4];
-	int		pot;
-
-	if ( !glConfig.ARBVertexProgramAvailable || backEnd.glslEnabled ) {
-		return;
-	}
-
-	// screen power of two correction factor, assuming the copy to _currentRender
-	// also copied an extra row and column for the bilerp
-	int	 w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-	pot = globalImages->currentRenderImage->uploadWidth;
-	parm[0] = (float)w / pot;
-
-	int	 h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-	pot = globalImages->currentRenderImage->uploadHeight;
-	parm[1] = (float)h / pot;
-
-	parm[2] = 0;
-	parm[3] = 1;
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 0, parm );
-
-
-	glProgramEnvParameter4fvARB( GL_FRAGMENT_PROGRAM_ARB, 0, parm );
-
-	// window coord to 0.0 to 1.0 conversion
-	parm[0] = 1.0 / w;
-	parm[1] = 1.0 / h;
-	parm[2] = 0;
-	parm[3] = 1;
-	glProgramEnvParameter4fvARB( GL_FRAGMENT_PROGRAM_ARB, 1, parm );
-
-	//
-	// set eye position in global space
-	//
-	parm[0] = backEnd.viewDef->renderView.vieworg[0];
-	parm[1] = backEnd.viewDef->renderView.vieworg[1];
-	parm[2] = backEnd.viewDef->renderView.vieworg[2];
-	parm[3] = 1.0;
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 1, parm );
-}
-
-/*
-==================
-RB_SetProgramEnvironmentSpace
-
-Sets variables related to the current space that can be used by all vertex programs
-==================
-*/
-void RB_SetProgramEnvironmentSpace( void ) {
-	if ( !glConfig.ARBVertexProgramAvailable || backEnd.glslEnabled ) {
-		return;
-	}
-
-	const struct viewEntity_s *space = backEnd.currentSpace;
-	float	parm[4];
-
-	// set eye position in local space
-	R_GlobalPointToLocal( space->modelMatrix, backEnd.viewDef->renderView.vieworg, *(idVec3 *)parm );
-	parm[3] = 1.0;
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 5, parm );
-
-	// we need the model matrix without it being combined with the view matrix
-	// so we can transform local vectors to global coordinates
-	parm[0] = space->modelMatrix[0];
-	parm[1] = space->modelMatrix[4];
-	parm[2] = space->modelMatrix[8];
-	parm[3] = space->modelMatrix[12];
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 6, parm );
-	parm[0] = space->modelMatrix[1];
-	parm[1] = space->modelMatrix[5];
-	parm[2] = space->modelMatrix[9];
-	parm[3] = space->modelMatrix[13];
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 7, parm );
-	parm[0] = space->modelMatrix[2];
-	parm[1] = space->modelMatrix[6];
-	parm[2] = space->modelMatrix[10];
-	parm[3] = space->modelMatrix[14];
-	glProgramEnvParameter4fvARB( GL_VERTEX_PROGRAM_ARB, 8, parm );
-}
-
 
 /*
 ==================
@@ -200,7 +112,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 	if ( surf->space != backEnd.currentSpace ) {
 		GL_ModelViewMatrix.Load( surf->space->modelViewMatrix );
 		backEnd.currentSpace = surf->space;
-		RB_SetProgramEnvironmentSpace();
 	}
 
 	// change the scissor if needed
@@ -261,39 +172,29 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 		}    
     
     if ( newShaderStage_t *newStage = pStage->newStage ) { // see if we are a new-style stage		
-			if ( r_skipNewAmbient.GetBool() )
-				continue;	
+		if (r_skipNewAmbient.GetBool())
+			continue;
 
-      if ( backEnd.glslEnabled ) {
-        if (r_skipGlsl.GetBool())
-          continue;
+		if (r_skipGlsl.GetBool())
+			continue;
 
-        if (!pStage->glslStage || !pStage->glslStage->program)
-          continue;
-    
-        RB_GLSL_RenderSpecialShaderStage(regs, pStage, pStage->glslStage, tri);
-      } 
-      else {
-        GL_UseProgram(nullptr);
-        RB_ARB2_RenderSpecialShaderStage(regs, pStage, newStage, tri);			
-      }      
+		if (!pStage->glslStage || !pStage->glslStage->program)
+			continue;
+
+		RB_GLSL_RenderSpecialShaderStage(regs, pStage, pStage->glslStage, tri);
     }
     else if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
 
-      if (r_skipGlsl.GetBool())
-        continue;
+		if (r_skipGlsl.GetBool())
+			continue;
 
-      if (!glslStage->program)
-        continue;
+		if (!glslStage->program)
+			continue;
 
-      RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
+		RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
     }    
     else {
-
-      if(backEnd.glslEnabled)
         RB_GLSL_RenderShaderStage(surf, pStage);
-      else
-        RB_STD_RenderShaderStage(surf, pStage);
     }
 	}
 
@@ -343,10 +244,6 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	globalImages->BindNull();
 
 	GL_SelectTexture( 0 );
-  if(!backEnd.glslEnabled)
-	  glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-
-	RB_SetProgramEnvironment();  
 
 	// we don't use RB_RenderDrawSurfListWithFunction()
 	// because we want to defer the matrix load because many
@@ -373,8 +270,6 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	}  
 
 	GL_Cull( CT_FRONT_SIDED );
-  if(!r_glCoreProfile.GetBool())
-    glColor3f(1,1,1);
 
 	return i;
 }
@@ -540,20 +435,10 @@ void RB_STD_FogAllLights(void) {
 		}
 
 		if (vLight->lightShader->IsFogLight()) {
-			if (backEnd.glslEnabled) {
-				RB_GLSL_FogPass(vLight->globalInteractions, vLight->localInteractions);
-			}
-			else {
-				RB_STD_FogPass(vLight->globalInteractions, vLight->localInteractions);
-			}
+			RB_GLSL_FogPass(vLight->globalInteractions, vLight->localInteractions);
 		}
 		else if (vLight->lightShader->IsBlendLight()) {
-			if (backEnd.glslEnabled) {
-				RB_GLSL_BlendLight(vLight->globalInteractions, vLight->localInteractions);
-			}
-			else {
-				RB_BlendLight(vLight->globalInteractions, vLight->localInteractions);
-			}
+			RB_GLSL_BlendLight(vLight->globalInteractions, vLight->localInteractions);
 		}
 		glDisable(GL_STENCIL_TEST);
 	}
@@ -658,10 +543,7 @@ void	RB_STD_DrawView( void ) {
 
 	// fill the depth buffer and clear color buffer to black except on
 	// subviews
-	if (backEnd.glslEnabled)
-		RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
-	else
-		RB_STD_FillDepthBuffer(drawSurfs, numDrawSurfs);
+	RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
 
 	if (backEnd.viewDef->viewEntitys) {
 		globalImages->currentDepthImage->CopyDepthbuffer(backEnd.viewDef->viewport.x1,
@@ -671,10 +553,7 @@ void	RB_STD_DrawView( void ) {
 
 	// main light renderer
   
-	if (backEnd.glslEnabled)
-		RB_GLSL_DrawInteractions();
-	else
-		RB_ARB2_DrawInteractions();
+	RB_GLSL_DrawInteractions();
 
 	// disable stencil shadow test
 	glStencilFunc( GL_ALWAYS, 128, 255 );

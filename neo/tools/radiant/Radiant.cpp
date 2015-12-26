@@ -293,9 +293,6 @@ BOOL CRadiantApp::InitInstance()
 
 	g_PrefsDlg.LoadPrefs();
 
-  if(!backEnd.glslEnabled)
-	  glEnableClientState( GL_VERTEX_ARRAY );
-
 	CString strTemp = m_lpCmdLine;
 	strTemp.MakeLower();
 	if (strTemp.Find("builddefs") >= 0) {

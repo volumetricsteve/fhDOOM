@@ -108,81 +108,64 @@ void fhImmediateMode::Begin(GLenum mode)
 
 void fhImmediateMode::End()
 {
-  active = false;
-  if(!drawVertsUsed)
-    return;
+	active = false;
+	if (!drawVertsUsed)
+		return;
 
-  if(r_glslEnabled.GetBool() || r_glCoreProfile.GetBool())
-  {
-    auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(fhSimpleVert));
-    drawCallVertexSize += drawVertsUsed * sizeof(fhSimpleVert);
-    int offset = vertexCache.Bind(vert);
+	auto vert = vertexCache.AllocFrameTemp(drawVerts, drawVertsUsed * sizeof(fhSimpleVert));
+	drawCallVertexSize += drawVertsUsed * sizeof(fhSimpleVert);
+	int offset = vertexCache.Bind(vert);
 
-    if(!geometryOnly) {
-      if(currentTexture) {
-        GL_SelectTexture(1);
-        currentTexture->Bind();
-        if(currentTexture->type == TT_CUBIC)
-          GL_UseProgram(skyboxProgram);
-        else
-          GL_UseProgram(defaultProgram);
-        GL_SelectTexture(0);
-      } else {
-        GL_UseProgram(vertexColorProgram);
-      }
+	if (!geometryOnly) {
+		if (currentTexture) {
+			GL_SelectTexture(1);
+			currentTexture->Bind();
+			if (currentTexture->type == TT_CUBIC)
+				GL_UseProgram(skyboxProgram);
+			else
+				GL_UseProgram(defaultProgram);
+			GL_SelectTexture(0);
+		}
+		else {
+			GL_UseProgram(vertexColorProgram);
+		}
 
-      glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-      glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-      glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
-      glUniform4f(glslProgramDef_t::uniform_color_add, 0,0,0,0);
-      glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
-    }
+		glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+		glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+		glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+		glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
+		glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+	}
 
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+	glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+	glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
-    GLenum mode = currentMode;
-    
-    if(mode == GL_QUADS || mode == GL_POLYGON || mode == GL_QUAD_STRIP) //quads and polygons are replaced by triangles in GLSL mode
-      mode = GL_TRIANGLES;
+	GLenum mode = currentMode;
 
-    glDrawElements(mode,
-      drawVertsUsed,
-      GL_UNSIGNED_SHORT,
-      lineIndices);
+	if (mode == GL_QUADS || mode == GL_POLYGON || mode == GL_QUAD_STRIP) //quads and polygons are replaced by triangles in GLSL mode
+		mode = GL_TRIANGLES;
 
-    drawCallCount++;    
+	glDrawElements(mode,
+		drawVertsUsed,
+		GL_UNSIGNED_SHORT,
+		lineIndices);
 
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	drawCallCount++;
 
-    if(!geometryOnly) {    
-      GL_UseProgram(nullptr);
-    }
-  } else {
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 
-    if(currentTexture)
-      currentTexture->Bind();
+	if (!geometryOnly) {
+		GL_UseProgram(nullptr);
+	}
 
-    glBegin(currentMode);
-
-    for (int i = 0; i < drawVertsUsed; ++i) {
-      const fhSimpleVert& vertex = drawVerts[i];
-      glColor4ubv(&vertex.color[0]);
-      glTexCoord2fv(vertex.st.ToFloatPtr());
-      glVertex3fv(vertex.xyz.ToFloatPtr());
-    }
-
-    glEnd();
-  }
-
-  drawVertsUsed = 0;
-  currentMode = GL_INVALID_ENUM;
+	drawVertsUsed = 0;
+	currentMode = GL_INVALID_ENUM;
 }
 
 void fhImmediateMode::TexCoord2f(float s, float t)
@@ -234,43 +217,42 @@ void fhImmediateMode::Vertex3fv(const float* c)
 
 void fhImmediateMode::Vertex3f(float x, float y, float z)
 {
-  if (drawVertsUsed + 1 >= drawVertsCapacity)
-    return;
+	if (drawVertsUsed + 1 >= drawVertsCapacity)
+		return;
 
-  //we don't want to draw deprecated quads/polygons... correct them by re-adding
-  // previous vertices, so we render triangles instead of quads/polygons
-  // NOTE: this only works for convex polygons (just as GL_POLYGON)
-  if (backEnd.glslEnabled)
-  {
-    if( (currentMode == GL_POLYGON || currentMode == GL_QUADS) &&
-      drawVertsUsed >= 3 &&
-      drawVertsUsed + 3 < drawVertsCapacity)
-    {
-      drawVerts[drawVertsUsed] = drawVerts[0];
-      drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
-      drawVertsUsed += 2;
-    }
+	//we don't want to draw deprecated quads/polygons... correct them by re-adding
+	// previous vertices, so we render triangles instead of quads/polygons
+	// NOTE: this only works for convex polygons (just as GL_POLYGON)
+	if ((currentMode == GL_POLYGON || currentMode == GL_QUADS) &&
+		drawVertsUsed >= 3 &&
+		drawVertsUsed + 3 < drawVertsCapacity)
+	{
+		drawVerts[drawVertsUsed] = drawVerts[0];
+		drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
+		drawVertsUsed += 2;
+	}
 
-    if ( currentMode == GL_QUAD_STRIP && drawVertsUsed >= 3 && drawVertsUsed+3 < drawVertsCapacity)
-    { 
-      if(drawVertsUsed % 6 == 0) {
-        drawVerts[drawVertsUsed] = drawVerts[drawVertsUsed - 3];
-        drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
-      } else if(drawVertsUsed % 3 == 0) {
-        drawVerts[drawVertsUsed] = drawVerts[drawVertsUsed-1];
-        drawVerts[drawVertsUsed+1] = drawVerts[drawVertsUsed-2];        
-      }
-      drawVertsUsed += 2;
-    }
-  }
+	if (currentMode == GL_QUAD_STRIP && drawVertsUsed >= 3 && drawVertsUsed + 3 < drawVertsCapacity)
+	{
+		if (drawVertsUsed % 6 == 0) {
+			drawVerts[drawVertsUsed] = drawVerts[drawVertsUsed - 3];
+			drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 1];
+		}
+		else if (drawVertsUsed % 3 == 0) {
+			drawVerts[drawVertsUsed] = drawVerts[drawVertsUsed - 1];
+			drawVerts[drawVertsUsed + 1] = drawVerts[drawVertsUsed - 2];
+		}
+		drawVertsUsed += 2;
+	}
 
-  fhSimpleVert& vertex = drawVerts[drawVertsUsed++];
-  vertex.xyz.Set(x, y, z);
-  vertex.st.Set(currentTexCoord[0], currentTexCoord[1]);
-  vertex.color[0] = currentColor[0];
-  vertex.color[1] = currentColor[1];
-  vertex.color[2] = currentColor[2];
-  vertex.color[3] = currentColor[3];
+
+	fhSimpleVert& vertex = drawVerts[drawVertsUsed++];
+	vertex.xyz.Set(x, y, z);
+	vertex.st.Set(currentTexCoord[0], currentTexCoord[1]);
+	vertex.color[0] = currentColor[0];
+	vertex.color[1] = currentColor[1];
+	vertex.color[2] = currentColor[2];
+	vertex.color[3] = currentColor[3];
 }
 
 void fhImmediateMode::Vertex2f(float x, float y)
