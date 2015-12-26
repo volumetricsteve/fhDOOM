@@ -62,8 +62,8 @@ void RB_DrawElementsImmediate( const srfTriangles_t *tri, const idVec4 &color ) 
 		}
 	}
 
-  fhImmediateMode im;
-  im.Color4fv(color.ToFloatPtr());
+	fhImmediateMode im;
+	im.Color4fv( color.ToFloatPtr() );
 	im.Begin( GL_TRIANGLES );
 	for ( int i = 0 ; i < tri->numIndexes ; i++ ) {
 		im.TexCoord2fv( tri->verts[ tri->indexes[i] ].st.ToFloatPtr() );
@@ -192,7 +192,7 @@ void RB_EnterWeaponDepthHack() {
 
 	matrix[14] *= 0.25;
 
-  GL_ProjectionMatrix.Load( matrix );
+	GL_ProjectionMatrix.Load( matrix );
 }
 
 /*
@@ -220,7 +220,7 @@ RB_LeaveDepthHack
 void RB_LeaveDepthHack() {
 	glDepthRange( 0, 1 );
 
-  GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
+	GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
 }
 
 /*
@@ -306,19 +306,19 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 		if ( r_useScissor.GetBool() && !backEnd.currentScissor.Equals( drawSurf->scissorRect ) ) {
 			backEnd.currentScissor = drawSurf->scissorRect;
 
-      const GLint x = backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1;
-      const GLint y = backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1;
-      const GLsizei width = backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1;
-      const GLsizei height = backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1;
+			const GLint x = backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1;
+			const GLint y = backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1;
+			const GLsizei width = backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1;
+			const GLsizei height = backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1;
 
-      if(width <= 0 || height <= 0){
-        if (drawSurf->space->weaponDepthHack || drawSurf->space->modelDepthHack != 0.0f) {
-          RB_LeaveDepthHack();
-        }
+			if (width <= 0 || height <= 0){
+				if (drawSurf->space->weaponDepthHack || drawSurf->space->modelDepthHack != 0.0f) {
+					RB_LeaveDepthHack();
+				}
 
-        backEnd.currentSpace = drawSurf->space;
-        return;
-      }
+				backEnd.currentSpace = drawSurf->space;
+				return;
+			}
 
 			glScissor( x, y, width, height );
 		}
@@ -406,7 +406,7 @@ void RB_LoadShaderTextureMatrix( const float *shaderRegisters, const textureStag
 	float	matrix[16];
 
 	RB_GetShaderTextureMatrix( shaderRegisters, texture, matrix );
-  GL_TextureMatrix.Load(matrix);
+	GL_TextureMatrix.Load( matrix );
 }
 
 /*
@@ -520,7 +520,7 @@ to actually render the visible surfaces for this view
 */
 void RB_BeginDrawingView (void) {
 	// set the modelview matrix for the viewer
-  GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );  
+	GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
 
 	// set the window clipping
 	glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1, 

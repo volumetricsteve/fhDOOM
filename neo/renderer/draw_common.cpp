@@ -175,9 +175,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 		if (r_skipNewAmbient.GetBool())
 			continue;
 
-		if (r_skipGlsl.GetBool())
-			continue;
-
 		if (!pStage->glslStage || !pStage->glslStage->program)
 			continue;
 
@@ -275,137 +272,6 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 }
 
 
-/*
-=============================================================================================
-
-BLEND LIGHT PROJECTION
-
-=============================================================================================
-*/
-
-/*
-=====================
-RB_T_BlendLight
-
-=====================
-*/
-static void RB_T_BlendLight( const drawSurf_t *surf ) {
-	const srfTriangles_t *tri;
-
-	tri = surf->geo;
-
-	if ( backEnd.currentSpace != surf->space ) {
-		idPlane	lightProject[4];
-		int		i;
-
-		for ( i = 0 ; i < 4 ; i++ ) {
-			R_GlobalPlaneToLocal( surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i] );
-		}
-
-		GL_SelectTexture( 0 );
-		glTexGenfv( GL_S, GL_OBJECT_PLANE, lightProject[0].ToFloatPtr() );
-		glTexGenfv( GL_T, GL_OBJECT_PLANE, lightProject[1].ToFloatPtr() );
-		glTexGenfv( GL_Q, GL_OBJECT_PLANE, lightProject[2].ToFloatPtr() );
-
-		GL_SelectTexture( 1 );
-		glTexGenfv( GL_S, GL_OBJECT_PLANE, lightProject[3].ToFloatPtr() );
-	}
-
-	// this gets used for both blend lights and shadow draws
-	if ( tri->ambientCache ) {
-		idDrawVert	*ac = (idDrawVert *)vertexCache.Position( tri->ambientCache );
-		glVertexPointer( 3, GL_FLOAT, sizeof( idDrawVert ), ac->xyz.ToFloatPtr() );
-	} else if ( tri->shadowCache ) {
-		shadowCache_t	*sc = (shadowCache_t *)vertexCache.Position( tri->shadowCache );
-		glVertexPointer( 3, GL_FLOAT, sizeof( shadowCache_t ), sc->xyz.ToFloatPtr() );
-	}
-
-	RB_DrawElementsWithCounters( tri );
-}
-
-
-/*
-=====================
-RB_BlendLight
-
-Dual texture together the falloff and projection texture with a blend
-mode to the framebuffer, instead of interacting with the surface texture
-=====================
-*/
-static void RB_BlendLight( const drawSurf_t *drawSurfs,  const drawSurf_t *drawSurfs2 ) {
-	const idMaterial	*lightShader;
-	const shaderStage_t	*stage;
-	int					i;
-	const float	*regs;
-
-	if ( !drawSurfs ) {
-		return;
-	}
-	if ( r_skipBlendLights.GetBool() ) {
-		return;
-	}
-	RB_LogComment( "---------- RB_BlendLight ----------\n" );
-
-	lightShader = backEnd.vLight->lightShader;
-	regs = backEnd.vLight->shaderRegisters;
-
-	// texture 1 will get the falloff texture
-	GL_SelectTexture( 1 );
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-	glEnable( GL_TEXTURE_GEN_S );
-	glTexCoord2f( 0, 0.5 );
-	backEnd.vLight->falloffImage->Bind();
-
-	// texture 0 will get the projected texture
-	GL_SelectTexture( 0 );
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
-	glEnable( GL_TEXTURE_GEN_S );
-	glEnable( GL_TEXTURE_GEN_T );
-	glEnable( GL_TEXTURE_GEN_Q );
-
-	for ( i = 0 ; i < lightShader->GetNumStages() ; i++ ) {
-		stage = lightShader->GetStage(i);
-
-		if ( !regs[ stage->conditionRegister ] ) {
-			continue;
-		}
-
-		GL_State( GLS_DEPTHMASK | stage->drawStateBits | GLS_DEPTHFUNC_EQUAL );
-
-		GL_SelectTexture( 0 );
-		stage->texture.image->Bind();
-
-		if ( stage->texture.hasMatrix ) {
-			RB_LoadShaderTextureMatrix( regs, &stage->texture );
-		}
-
-		// get the modulate values from the light, including alpha, unlike normal lights
-		backEnd.lightColor[0] = regs[ stage->color.registers[0] ];
-		backEnd.lightColor[1] = regs[ stage->color.registers[1] ];
-		backEnd.lightColor[2] = regs[ stage->color.registers[2] ];
-		backEnd.lightColor[3] = regs[ stage->color.registers[3] ];
-		glColor4fv( backEnd.lightColor );
-
-		RB_RenderDrawSurfChainWithFunction( drawSurfs, RB_T_BlendLight );
-		RB_RenderDrawSurfChainWithFunction( drawSurfs2, RB_T_BlendLight );
-
-		if ( stage->texture.hasMatrix ) {
-			GL_SelectTexture( 0 );
-      GL_TextureMatrix.LoadIdentity();
-		}
-	}
-
-	GL_SelectTexture( 1 );
-	glDisable( GL_TEXTURE_GEN_S );
-	globalImages->BindNull();
-
-	GL_SelectTexture( 0 );
-	glDisable( GL_TEXTURE_GEN_S );
-	glDisable( GL_TEXTURE_GEN_T );
-	glDisable( GL_TEXTURE_GEN_Q );
-}
-
-
 //========================================================================
 
 
@@ -499,9 +365,9 @@ void RB_STD_LightScale( void ) {
 			f = 1;
 		}   
 
-    v = v * f * 2;
+		v = v * f * 2;
 
-    fhImmediateMode im;   
+		fhImmediateMode im;   
 		im.Color3f( f, f, f );
 		im.Begin( GL_QUADS );
 		im.Vertex2f( 0,0 );	
