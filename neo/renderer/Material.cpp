@@ -1758,25 +1758,26 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 		if ( !token.Icmp( "program" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
+				
 				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
 
-        replaceBuildinVertexShader(token, glslStage);
-        replaceBuildinFragmentShader(token, glslStage);
+				replaceBuildinVertexShader( token, glslStage );
+				replaceBuildinFragmentShader( token, glslStage );
 			}
 			continue;
 		}
 		if ( !token.Icmp( "fragmentProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
-        replaceBuildinFragmentShader(token, glslStage);
+				replaceBuildinFragmentShader( token, glslStage );
 			}
 			continue;
 		}
 		if ( !token.Icmp( "vertexProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
-        replaceBuildinVertexShader(token, glslStage);
+				replaceBuildinVertexShader( token, glslStage );
 			}
 			continue;
 		}

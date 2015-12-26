@@ -530,10 +530,10 @@ all renderSystem functions will still operate properly, notably the material
 and model information functions.
 ==================
 */
-void R_InitOpenGL( void ) {	
+void R_InitOpenGL( void ) {
 	common->Printf( "----- R_InitOpenGL -----\n" );
 
-	if ( glConfig.isInitialized ) {
+	if (glConfig.isInitialized) {
 		common->FatalError( "R_InitOpenGL called while active" );
 	}
 
@@ -544,25 +544,25 @@ void R_InitOpenGL( void ) {
 	//
 	// initialize OS specific portions of the renderSystem
 	//
-	for ( int i = 0 ; i < 2 ; i++ ) {
+	for (int i = 0; i < 2; i++) {
 		// set the parameters we are trying
 		R_GetModeInfo( glConfig.vidWidth, glConfig.vidHeight, glConfig.vidAspectRatio, r_mode.GetInteger() );
 
-    glimpParms_t	parms;
+		glimpParms_t	parms;
 		parms.width = glConfig.vidWidth;
 		parms.height = glConfig.vidHeight;
 		parms.fullScreen = r_fullscreen.GetBool();
 		parms.displayHz = r_displayRefresh.GetInteger();
 		parms.multiSamples = r_multiSamples.GetInteger();
-    parms.glCoreProfile = r_glCoreProfile.GetBool();
+		parms.glCoreProfile = r_glCoreProfile.GetBool();
 		parms.stereo = false;
 
-		if ( GLimp_Init( parms ) ) {
+		if (GLimp_Init( parms )) {
 			// it worked
 			break;
 		}
 
-		if ( i == 1 ) {
+		if (i == 1) {
 			common->FatalError( "Unable to initialize OpenGL" );
 		}
 
@@ -572,7 +572,7 @@ void R_InitOpenGL( void ) {
 		r_fullscreen.SetInteger( 1 );
 		r_displayRefresh.SetInteger( 0 );
 		r_multiSamples.SetInteger( 0 );
-    r_glCoreProfile.SetBool(false);
+		r_glCoreProfile.SetBool( false );
 	}
 
 	// input and sound systems need to be tied to the new window
@@ -580,58 +580,52 @@ void R_InitOpenGL( void ) {
 	soundSystem->InitHW();
 
 	// get our config strings
-	glConfig.vendor_string = (const char *)glGetString(GL_VENDOR);
-	glConfig.renderer_string = (const char *)glGetString(GL_RENDERER);
-	glConfig.version_string = (const char *)glGetString(GL_VERSION);
-	glConfig.extensions_string = (const char *)glGetString(GL_EXTENSIONS);
+	glConfig.vendor_string = (const char *)glGetString( GL_VENDOR );
+	glConfig.renderer_string = (const char *)glGetString( GL_RENDERER );
+	glConfig.version_string = (const char *)glGetString( GL_VERSION );
+	glConfig.extensions_string = (const char *)glGetString( GL_EXTENSIONS );
 
 	// OpenGL driver constants
 	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 
 	// stubbed or broken drivers may have reported 0...
-	if ( glConfig.maxTextureSize <= 0 ) {
+	if (glConfig.maxTextureSize <= 0) {
 		glConfig.maxTextureSize = 256;
 	}
 
 	glConfig.isInitialized = true;
 
 	// recheck all the extensions (FIXME: this might be dangerous)
-	R_CheckPortableExtensions();  
+	R_CheckPortableExtensions();
 
-  if(r_glDebugOutput.GetInteger() == 1 || r_glDebugOutput.GetInteger() == 2) {
-    if(r_glDebugOutput.GetInteger() == 1) {
-      glEnable(GL_DEBUG_OUTPUT);
-    } else {
-      glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    }
+	if (r_glDebugOutput.GetInteger() == 1 || r_glDebugOutput.GetInteger() == 2) {
+		if (r_glDebugOutput.GetInteger() == 1) {
+			glEnable( GL_DEBUG_OUTPUT );
+		}
+		else {
+			glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS );
+		}
 
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, NULL, GL_FALSE);
-    glDebugMessageCallback(R_GLDebugOutput, NULL);
-  }
+		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE );
+		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE );
+		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, NULL, GL_FALSE );
+		glDebugMessageCallback( R_GLDebugOutput, NULL );
+	}
 
-  if(r_glCoreProfile.GetBool()) {
-    GLuint VaoID;
-    glGenVertexArrays(1, &VaoID);
-    glBindVertexArray(VaoID);
-  }
+	if (r_glCoreProfile.GetBool()) {
+		GLuint VaoID;
+		glGenVertexArrays( 1, &VaoID );
+		glBindVertexArray( VaoID );
+	}
 
-  // allocate the vertex array range or vertex objects
-  vertexCache.Init();
+	// allocate the vertex array range or vertex objects
+	vertexCache.Init();
 
-  cmdSystem->AddCommand( "reloadARBprograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB programs" );
-  cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
 
-	// parse our vertex and fragment programs, possibly disably support for
-	// one of the paths if there was an error
-	if(!r_glCoreProfile.GetBool()) {
-	  R_ARB2_Init();
-    R_ReloadARBPrograms_f( idCmdArgs() );
-  }
+	cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
 
-  R_GLSL_Init();  
-  R_ReloadGlslPrograms_f( idCmdArgs() );
+	R_GLSL_Init();
+	R_ReloadGlslPrograms_f( idCmdArgs() );
 
 	// allocate the frame data, which may be more if smp is enabled
 	R_InitFrameData();
@@ -639,27 +633,22 @@ void R_InitOpenGL( void ) {
 	// Reset our gamma
 	R_SetColorMappings();
 
-  if(!r_glCoreProfile.GetBool()) {
-//    glDisable(GL_VERTEX_PROGRAM_ARB);
-//    glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  }
-
 #ifdef _WIN32
 	static bool glCheck = false;
-	if ( !glCheck && win32.osversion.dwMajorVersion == 6 ) {
+	if (!glCheck && win32.osversion.dwMajorVersion == 6) {
 		glCheck = true;
-		if ( !idStr::Icmp( glConfig.vendor_string, "Microsoft" ) && idStr::FindText( glConfig.renderer_string, "OpenGL-D3D" ) != -1 ) {
-			if ( cvarSystem->GetCVarBool( "r_fullscreen" ) ) {
+		if (!idStr::Icmp( glConfig.vendor_string, "Microsoft" ) && idStr::FindText( glConfig.renderer_string, "OpenGL-D3D" ) != -1) {
+			if (cvarSystem->GetCVarBool( "r_fullscreen" )) {
 				cmdSystem->BufferCommandText( CMD_EXEC_NOW, "vid_restart partial windowed\n" );
 				Sys_GrabMouseCursor( false );
 			}
 			int ret = MessageBoxA( NULL, "Please install OpenGL drivers from your graphics hardware vendor to run " GAME_NAME ".\nYour OpenGL functionality is limited.",
 				"Insufficient OpenGL capabilities", MB_OKCANCEL | MB_ICONWARNING | MB_TASKMODAL );
-			if ( ret == IDCANCEL ) {
+			if (ret == IDCANCEL) {
 				cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "quit\n" );
 				cmdSystem->ExecuteCommandBuffer();
 			}
-			if ( cvarSystem->GetCVarBool( "r_fullscreen" ) ) {
+			if (cvarSystem->GetCVarBool( "r_fullscreen" )) {
 				cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "vid_restart\n" );
 			}
 		}
