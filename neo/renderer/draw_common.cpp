@@ -171,28 +171,34 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			continue;
 		}    
     
-    if ( newShaderStage_t *newStage = pStage->newStage ) { // see if we are a new-style stage		
-		if (r_skipNewAmbient.GetBool())
-			continue;
+		if (newShaderStage_t *newStage = pStage->newStage) { // see if we are a new-style stage		
 
-		if (!pStage->glslStage || !pStage->glslStage->program)
-			continue;
+			if (!r_glCoreProfile.GetBool() && !r_glslReplaceArb2.GetBool() && !r_skipNewAmbient.GetBool()) {
+				RB_ARB2_RenderSpecialShaderStage( regs, pStage, newStage, tri );
+				continue;
+			}
 
-		RB_GLSL_RenderSpecialShaderStage(regs, pStage, pStage->glslStage, tri);
-    }
-    else if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
+			if (r_skipGlsl.GetBool())
+				continue;
 
-		if (r_skipGlsl.GetBool())
-			continue;
+			if (!pStage->glslStage || !pStage->glslStage->program)
+				continue;
 
-		if (!glslStage->program)
-			continue;
+			RB_GLSL_RenderSpecialShaderStage( regs, pStage, pStage->glslStage, tri );
+		}
+		else if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
 
-		RB_GLSL_RenderSpecialShaderStage(regs, pStage, glslStage, tri);
-    }    
-    else {
-        RB_GLSL_RenderShaderStage(surf, pStage);
-    }
+			if (r_skipGlsl.GetBool())
+				continue;
+
+			if (!glslStage->program)
+				continue;
+
+			RB_GLSL_RenderSpecialShaderStage( regs, pStage, glslStage, tri );
+		}
+		else {
+			RB_GLSL_RenderShaderStage( surf, pStage );
+		}
 	}
 
 	// reset polygon offset

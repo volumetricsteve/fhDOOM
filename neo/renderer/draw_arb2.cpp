@@ -40,19 +40,86 @@ typedef struct {
 static	const int	MAX_GLPROGS = 200;
 
 // a single file can have both a vertex program and a fragment program
-static progDef_t	progs[MAX_GLPROGS] = {
-	{ GL_VERTEX_PROGRAM_ARB, VPROG_INTERACTION, "interaction.vfp" },
-	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_INTERACTION, "interaction.vfp" },
-	{ GL_VERTEX_PROGRAM_ARB, VPROG_BUMPY_ENVIRONMENT, "bumpyEnvironment.vfp" },
-	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_BUMPY_ENVIRONMENT, "bumpyEnvironment.vfp" },
-	{ GL_VERTEX_PROGRAM_ARB, VPROG_ENVIRONMENT, "environment.vfp" },
-	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_ENVIRONMENT, "environment.vfp" },
-	{ GL_VERTEX_PROGRAM_ARB, VPROG_GLASSWARP, "arbVP_glasswarp.txt" },
-	{ GL_FRAGMENT_PROGRAM_ARB, FPROG_GLASSWARP, "arbFP_glasswarp.txt" },
-  { GL_VERTEX_PROGRAM_ARB, VPROG_STENCIL_SHADOW, "shadow.vp" },
+static progDef_t	progs[MAX_GLPROGS] = { {0} };
 
-	// additional programs can be dynamically specified in materials
-};
+/*
+====================
+RB_ARB2_RenderCustomSpecialShaderStage
+====================
+*/
+void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* pStage, newShaderStage_t* newStage, const srfTriangles_t	*tri ) {
+	GL_UseProgram(nullptr);
+
+	idDrawVert *ac = (idDrawVert *)vertexCache.Position( tri->ambientCache );
+	glVertexPointer( 3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr() );
+	glTexCoordPointer( 2, GL_FLOAT, sizeof(idDrawVert), reinterpret_cast<void *>(&ac->st) );
+	glColorPointer( 4, GL_UNSIGNED_BYTE, sizeof(idDrawVert), (void *)&ac->color );
+	glVertexAttribPointerARB( 9, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[0].ToFloatPtr() );
+	glVertexAttribPointerARB( 10, 3, GL_FLOAT, false, sizeof(idDrawVert), ac->tangents[1].ToFloatPtr() );
+	glNormalPointer( GL_FLOAT, sizeof(idDrawVert), ac->normal.ToFloatPtr() );
+
+	glEnableClientState( GL_COLOR_ARRAY );
+	glEnableVertexAttribArrayARB( 9 );
+	glEnableVertexAttribArrayARB( 10 );
+	glEnableClientState( GL_NORMAL_ARRAY );
+
+	GL_State( pStage->drawStateBits );
+
+	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, newStage->vertexProgram );
+	glEnable( GL_VERTEX_PROGRAM_ARB );
+
+#if 0
+	// megaTextures bind a lot of images and set a lot of parameters
+	if (newStage->megaTexture) {
+		newStage->megaTexture->SetMappingForSurface( tri );
+		idVec3	localViewer;
+		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewer );
+		newStage->megaTexture->BindForViewOrigin( localViewer );
+	}
+#endif
+
+	for (int i = 0; i < newStage->numVertexParms; i++) {
+		float	parm[4];
+		parm[0] = regs[newStage->vertexParms[i][0]];
+		parm[1] = regs[newStage->vertexParms[i][1]];
+		parm[2] = regs[newStage->vertexParms[i][2]];
+		parm[3] = regs[newStage->vertexParms[i][3]];
+		glProgramLocalParameter4fvARB( GL_VERTEX_PROGRAM_ARB, i, parm );
+	}
+
+	for (int i = 0; i < newStage->numFragmentProgramImages; i++) {
+		if (newStage->fragmentProgramImages[i]) {
+			GL_SelectTexture( i );
+			newStage->fragmentProgramImages[i]->Bind();
+		}
+	}
+	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, newStage->fragmentProgram );
+	glEnable( GL_FRAGMENT_PROGRAM_ARB );
+
+	// draw it
+	RB_DrawElementsWithCounters( tri );
+
+	for (int i = 1; i < newStage->numFragmentProgramImages; i++) {
+		if (newStage->fragmentProgramImages[i]) {
+			GL_SelectTexture( i );
+			globalImages->BindNull();
+		}
+	}
+	if (newStage->megaTexture) {
+		newStage->megaTexture->Unbind();
+	}
+
+	GL_SelectTexture( 0 );
+
+	glDisable( GL_VERTEX_PROGRAM_ARB );
+	glDisable( GL_FRAGMENT_PROGRAM_ARB );
+	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, 0 );
+
+	glDisableClientState( GL_COLOR_ARRAY );
+	glDisableVertexAttribArrayARB( 9 );
+	glDisableVertexAttribArrayARB( 10 );
+	glDisableClientState( GL_NORMAL_ARRAY );
+}
 
 /*
 =================

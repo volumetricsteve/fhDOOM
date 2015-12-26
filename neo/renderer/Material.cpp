@@ -1339,7 +1339,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	int					a, b;
 	int					matrix[2][3];
 	newShaderStage_t	newStage;
-  glslShaderStage_t	glslStage;
+	glslShaderStage_t	glslStage;
 
 	if ( numStages >= MAX_SHADER_STAGES ) {
 		SetMaterialFlag( MF_DEFAULTED );
@@ -1355,20 +1355,12 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	imageName[0] = 0;
 
 	memset( &newStage, 0, sizeof( newStage ) );
-  memset( &glslStage, 0, sizeof( glslStage ) );
+	memset( &glslStage, 0, sizeof(glslStage) );
 
 	ss = &pd->parseStages[numStages];
 	ts = &ss->texture;
 
 	ClearStage( ss );
-/*
-  idStr name = GetName();
-  if(name.Find("textures/particles/") == 0) {
-    ss->depthBlendMode = DBM_AUTO;
-  }
-
-  ss->depthBlendRange = 32.0f;
-*/
 
 	while ( 1 ) {
 		if ( TestMaterialFlag( MF_DEFAULTED ) ) {	// we have a parse error
@@ -1396,15 +1388,15 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			continue;
 		}
 
-    if (!token.Icmp("depthBlendMode")) {
-      ParseDepthBlendMode( src, ss );
-      continue;
-    }
+		if (!token.Icmp( "depthBlendMode" )) {
+			ParseDepthBlendMode( src, ss );
+			continue;
+		}
 
-    if (!token.Icmp("depthBlendRange")) {
-      ss->depthBlendRange = src.ParseFloat();
-      continue;
-    }
+		if (!token.Icmp( "depthBlendRange" )) {
+			ss->depthBlendRange = src.ParseFloat();
+			continue;
+		}
 
 		if (  !token.Icmp( "map" ) ) {
 			str = R_ParsePastImageProgram( src );
@@ -1781,22 +1773,22 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			}
 			continue;
 		}
-    if (!token.Icmp("fragmentShader")) {
-      if (src.ReadTokenOnLine(&token)) {
-        strncpy(glslStage.fragmentShaderName, token.c_str(), Min<int>(token.Length(), sizeof(glslStage.fragmentShaderName)-1));        
-      }
-      continue;
-    }
-    if (!token.Icmp("vertexShader")) {
-      if (src.ReadTokenOnLine(&token)) {
-        strncpy(glslStage.vertexShaderName, token.c_str(), Min<int>(token.Length(), sizeof(glslStage.vertexShaderName)-1));
-      }
-      continue;
-    }
-		if ( !token.Icmp( "megaTexture" ) ) {
-			if ( src.ReadTokenOnLine( &token ) ) {
+		if (!token.Icmp( "fragmentShader" )) {
+			if (src.ReadTokenOnLine( &token )) {
+				strncpy( glslStage.fragmentShaderName, token.c_str(), Min<int>( token.Length(), sizeof(glslStage.fragmentShaderName) - 1 ) );
+			}
+			continue;
+		}
+		if (!token.Icmp( "vertexShader" )) {
+			if (src.ReadTokenOnLine( &token )) {
+				strncpy( glslStage.vertexShaderName, token.c_str(), Min<int>( token.Length(), sizeof(glslStage.vertexShaderName) - 1 ) );
+			}
+			continue;
+		}
+		if (!token.Icmp( "megaTexture" )) {
+			if (src.ReadTokenOnLine( &token )) {
 				newStage.megaTexture = new idMegaTexture;
-				if ( !newStage.megaTexture->InitFromMegaFile( token.c_str() ) ) {
+				if (!newStage.megaTexture->InitFromMegaFile( token.c_str() )) {
 					delete newStage.megaTexture;
 					SetMaterialFlag( MF_DEFAULTED );
 					continue;
@@ -1806,39 +1798,36 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 				continue;
 			}
 		}
-    if( !token.Icmp( "shaderParm" ) ) {
-      ParseShaderParm( src, &glslStage );
-      continue;
-    }
-    if (!token.Icmp("shaderMap")) {
-      ParseShaderMap(src, &glslStage);
-      continue;
-    }
-
+		if (!token.Icmp( "shaderParm" )) {
+			ParseShaderParm( src, &glslStage );
+			continue;
+		}
+		if (!token.Icmp( "shaderMap" )) {
+			ParseShaderMap( src, &glslStage );
+			continue;
+		}
 		if ( !token.Icmp( "vertexParm" ) ) {
 			ParseVertexParm( src, &newStage, &glslStage );
 			continue;
 		}
-
 		if (  !token.Icmp( "fragmentMap" ) ) {	
 			ParseFragmentMap( src, &newStage, &glslStage );
 			continue;
 		}
-
 
 		common->Warning( "unknown token '%s' in material '%s'", token.c_str(), GetName() );
 		SetMaterialFlag( MF_DEFAULTED );
 		return;
 	}
 
-  if( glslStage.fragmentShaderName[0] && glslStage.vertexShaderName[0] ) {
-    glslStage.program = R_FindGlslProgram( glslStage.vertexShaderName, glslStage.fragmentShaderName );
+	if (glslStage.fragmentShaderName[0] && glslStage.vertexShaderName[0]) {
+		glslStage.program = R_FindGlslProgram( glslStage.vertexShaderName, glslStage.fragmentShaderName );
 
-    if(glslStage.program) {
-      ss->glslStage = (glslShaderStage_t *)Mem_Alloc(sizeof(glslStage));
-      *(ss->glslStage) = glslStage;
-    }
-  }
+		if (glslStage.program) {
+			ss->glslStage = (glslShaderStage_t *)Mem_Alloc( sizeof(glslStage) );
+			*(ss->glslStage) = glslStage;
+		}
+	}
 
 	// if we are using newStage, allocate a copy of it
 	if ( newStage.fragmentProgram || newStage.vertexProgram ) {

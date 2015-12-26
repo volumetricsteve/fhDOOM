@@ -622,6 +622,7 @@ void R_InitOpenGL( void ) {
 	vertexCache.Init();
 
 
+	cmdSystem->AddCommand( "reloadARBPrograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB2 programs" );
 	cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );
 
 	R_GLSL_Init();

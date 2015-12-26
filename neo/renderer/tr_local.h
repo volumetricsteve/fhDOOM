@@ -1329,6 +1329,7 @@ DRAW_*
 
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
 int		R_FindARBProgram( GLenum target, const char *program );
+void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* pStage, newShaderStage_t* newStage, const srfTriangles_t	*tri );
 
 void	R_GLSL_Init( void );
 void	RB_GLSL_DrawInteractions( void );
