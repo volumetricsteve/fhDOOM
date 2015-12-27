@@ -438,6 +438,7 @@ idInteraction::idInteraction
 ===============
 */
 idInteraction::idInteraction( void ) {
+	stencilShadowsCreated	= false;
 	numSurfaces				= 0;
 	surfaces				= NULL;
 	entityDef				= NULL;
@@ -543,6 +544,7 @@ void idInteraction::FreeSurfaces( void ) {
 		this->surfaces = NULL;
 	}
 	this->numSurfaces = -1;
+	this->stencilShadowsCreated = false;
 }
 
 /*
@@ -821,14 +823,10 @@ The results of this are cached and valid until the light or entity change.
 ====================
 */
 void idInteraction::CreateInteraction( const idRenderModel *model ) {
-	const idMaterial *	lightShader = lightDef->lightShader;
-	const idMaterial*	shader;
-	bool				interactionGenerated;
-	idBounds			bounds;
-
+	const idMaterial *	lightShader = lightDef->lightShader;	
 	tr.pc.c_createInteractions++;
 
-	bounds = model->Bounds( &entityDef->parms );
+	const idBounds bounds = model->Bounds( &entityDef->parms );
 
 	// if it doesn't contact the light frustum, none of the surfaces will
 	if ( R_CullLocalBox( bounds, entityDef->modelMatrix, 6, lightDef->frustum ) ) {
@@ -852,7 +850,7 @@ void idInteraction::CreateInteraction( const idRenderModel *model ) {
 	numSurfaces = model->NumSurfaces();
 	surfaces = (surfaceInteraction_t *)R_ClearedStaticAlloc( sizeof( *surfaces ) * numSurfaces );
 
-	interactionGenerated = false;
+	bool interactionGenerated = false;
 
 	// check each surface in the model
 	for ( int c = 0 ; c < model->NumSurfaces() ; c++ ) {
@@ -867,7 +865,7 @@ void idInteraction::CreateInteraction( const idRenderModel *model ) {
 		}
 
 		// determine the shader for this surface, possibly by skinning
-		shader = surf->shader;
+		const idMaterial* shader = surf->shader;
 		shader = R_RemapShaderBySkin( shader, entityDef->parms.customSkin, entityDef->parms.customShader );
 
 		if ( !shader ) {
@@ -905,7 +903,7 @@ void idInteraction::CreateInteraction( const idRenderModel *model ) {
 		}
 
 		// if the interaction has shadows and this surface casts a shadow
-		if ( HasShadows() && shader->SurfaceCastsShadow() && tri->silEdges != NULL ) {
+		if ( r_shadows.GetBool() && HasShadows() && shader->SurfaceCastsShadow() && tri->silEdges != NULL ) {
 
 			// if the light has an optimized shadow volume, don't create shadows for any models that are part of the base areas
 			if ( lightDef->parms.prelightModel == NULL || !model->IsStaticWorldModel() || !r_useOptimizedShadows.GetBool() ) {
@@ -921,6 +919,7 @@ void idInteraction::CreateInteraction( const idRenderModel *model ) {
 						sint->shadowTris->numShadowIndexesNoFrontCaps = sint->shadowTris->numIndexes;
 					}
 				}
+				stencilShadowsCreated = true;
 				interactionGenerated = true;
 			}
 		}
@@ -1068,6 +1067,12 @@ void idInteraction::AddActiveInteraction( void ) {
 	idRenderModel *model = R_EntityDefDynamicModel( entityDef );
 	if ( model == NULL || model->NumSurfaces() <= 0 ) {
 		return;
+	}
+
+	// the light and shadows surfaces are already created but without stencil shadows,
+	// we need to re-create all that if stencil shadows are enabled
+	if (!IsDeferred() && r_shadows.GetBool() && !stencilShadowsCreated) {
+		FreeSurfaces();
 	}
 
 	// the dynamic model may have changed since we built the surface list
