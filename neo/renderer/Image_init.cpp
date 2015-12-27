@@ -1981,20 +1981,16 @@ void idImageManager::Init() {
 	currentRenderImage = ImageFromFunction("_currentRender", R_RGBA8Image );
 	currentDepthImage = ImageFromFunction("_currentDepth", R_Depth );
 
-
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
 
 	for(int i=0; i<6; ++i) {
 		char name[64] = {0};    
-		sprintf(name, "_shadowmapDepthImage%d", i);
-		shadowmapDepthImage[i] = ImageFromFunction(name, R_Depth);
+		sprintf(name, "_shadowmapImage%d", i);
+		shadowmapImage[i] = ImageFromFunction(name, R_Depth);
 
-		sprintf(name, "_shadowmapColorImage%d", i);
-		shadowmapColorImage[i] = ImageFromFunction(name, R_RGBA8Image);
-
-		shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, shadowmapColorImage[i], shadowmapDepthImage[i]);
+		shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, nullptr, shadowmapImage[i]);
 	}
 
 	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);

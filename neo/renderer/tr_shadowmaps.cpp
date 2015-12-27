@@ -344,8 +344,8 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 	GL_ProjectionMatrix.Push();
 	GL_ProjectionMatrix.Load(lightProjectionMatrix);
 
-	glViewport(0, 0, framebuffer->width, framebuffer->height);
-	glScissor(0, 0, framebuffer->width, framebuffer->height);
+	glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
+	glScissor(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
 
 	glStencilFunc(GL_ALWAYS, 0, 255);
 
@@ -353,19 +353,14 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
 
-	//TODO(johl): we don't need to clear to color buffer
-	glClearColor(0,1,0,1);
 	glClearDepth(1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// draw all the occluders	
 
 	backEnd.currentSpace = NULL;
 
-
-
-	float	viewMatrix[16];
-	
+	float	viewMatrix[16];	
 
 	if (side == -1) {
 		// projected light
@@ -488,7 +483,6 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 	myGlMultMatrix(flippedViewMatrix, lightProjectionMatrix, &backEnd.shadowViewProjection[side][0]);
 	RB_RenderShadowCasters(vLight, flippedViewMatrix);
 
-
 	GL_ProjectionMatrix.Pop();
 
 	backEnd.pc.c_shadowPasses++;
@@ -576,20 +570,20 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	// texture 5 is the per-surface specular map
 	GL_SelectTextureNoClient(6);
-	globalImages->shadowmapDepthImage[0]->Bind();
+	globalImages->shadowmapImage[0]->Bind();
 
 	GL_SelectTextureNoClient(7);
-	globalImages->shadowmapDepthImage[1]->Bind();
+	globalImages->shadowmapImage[1]->Bind();
 
 	GL_SelectTextureNoClient(8);
-	globalImages->shadowmapDepthImage[2]->Bind();
+	globalImages->shadowmapImage[2]->Bind();
 
 	GL_SelectTextureNoClient(9);
-	globalImages->shadowmapDepthImage[3]->Bind();
+	globalImages->shadowmapImage[3]->Bind();
 
 	GL_SelectTextureNoClient(10);
-	globalImages->shadowmapDepthImage[4]->Bind();
+	globalImages->shadowmapImage[4]->Bind();
 
 	GL_SelectTextureNoClient(11);
-	globalImages->shadowmapDepthImage[5]->Bind();
+	globalImages->shadowmapImage[5]->Bind();
 }

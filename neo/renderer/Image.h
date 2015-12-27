@@ -301,34 +301,57 @@ void	R_WritePalTGA( const char *filename, const byte *data, const byte *palette,
 
 class fhFramebuffer {
 public:
-  fhFramebuffer(int w, int h, idImage* color, idImage* depth) {
-    width = w;
-    height = h;
-    name = (!color || !depth) ? 0 : -1;
-    colorAttachment = color;
-    depthAttachment = depth;
-  }
+	fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
+		width = w;
+		height = h;
+		name = (!color && !depth) ? 0 : -1;
+		colorAttachment = color;
+		depthAttachment = depth;
+	}
 
-  void Bind() {
-    if(name == -1) {
-      glGenFramebuffers(1, &name);
-      glBindFramebuffer(GL_FRAMEBUFFER, name);
-      colorAttachment->AttachColorToFramebuffer(this);
-      depthAttachment->AttachDepthToFramebuffer(this);
+	void Bind() {
+		if (name == -1) {			
+			glGenFramebuffers( 1, &name );
+			glBindFramebuffer( GL_FRAMEBUFFER, name );
 
-      if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        name = 0;
-      }
-    } else {
-      glBindFramebuffer(GL_FRAMEBUFFER, name);
-    }
-  }
+			if (colorAttachment)
+				colorAttachment->AttachColorToFramebuffer( this );
 
-  int width;
-  int height;
-  GLuint name;
-  idImage* colorAttachment;
-  idImage* depthAttachment;
+			if (depthAttachment)
+				depthAttachment->AttachDepthToFramebuffer( this );
+
+			SetDrawBuffer();
+
+			if (glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
+				common->Warning("failed to generate framebuffer, framebuffer incomplete");
+				name = 0;
+			}
+		}
+		else {
+			glBindFramebuffer( GL_FRAMEBUFFER, name );
+			SetDrawBuffer();
+		}
+
+	}
+
+	int GetWidth() const { return width; }
+	int GetHeight() const { return height; }
+
+private:
+	void SetDrawBuffer() {
+		if (!colorAttachment && !depthAttachment) {
+			glDrawBuffer( GL_BACK );
+		}
+		else if (!colorAttachment) {
+			glDrawBuffer( GL_NONE );
+		}
+	}
+
+	int width;
+	int height;
+	GLuint name;
+	idImage* colorAttachment;
+	idImage* depthAttachment;
 };
 
 
@@ -448,10 +471,9 @@ public:
 	idImage *			specular2DTableImage;		// 2D intensity texture with our specular function with variable specularity
 	idImage *			borderClampImage;			// white inside, black outside
 
-  idImage *     shadowmapDepthImage[6];
-  idImage *     shadowmapColorImage[6];
-  fhFramebuffer* shadowmapFramebuffer[6];  
-  fhFramebuffer* defaultFramebuffer;  
+	idImage *			shadowmapImage[6];
+	fhFramebuffer*		shadowmapFramebuffer[6];
+	fhFramebuffer*		defaultFramebuffer;
 
 	//--------------------------------------------------------
 	

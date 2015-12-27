@@ -1861,63 +1861,63 @@ This should just be part of copyFramebuffer once we have a proper image type fie
 ====================
 */
 void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
-  Bind();
+	Bind();
 
-  glReadBuffer(GL_BACK);
+	glReadBuffer( GL_BACK );
 
-  if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-    uploadWidth = imageWidth;
-    uploadHeight = imageHeight;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);    
+	if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
+		uploadWidth = imageWidth;
+		uploadHeight = imageHeight;
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  }
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	}
 
-  glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
+	glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
 
-  backEnd.c_copyFrameBuffer++;
+	backEnd.c_copyFrameBuffer++;
 }
 
-void idImage::AttachDepthToFramebuffer(fhFramebuffer* framebuffer) {
-  Bind();
+void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
+	Bind();
 
-  if (uploadWidth != framebuffer->width || uploadHeight != framebuffer->height) {
-    uploadWidth = framebuffer->width;
-    uploadHeight = framebuffer->height;
+	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
+		uploadWidth = framebuffer->GetWidth();
+		uploadHeight = framebuffer->GetHeight();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  }
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	}
 
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texnum, 0);
+	glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texnum, 0 );
 }
 
-void idImage::AttachColorToFramebuffer(fhFramebuffer* framebuffer) {
-  Bind();
+void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
+	Bind();
 
-  if (uploadWidth != framebuffer->width || uploadHeight != framebuffer->height) {
-    uploadWidth = framebuffer->width;
-    uploadHeight = framebuffer->height;
+	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
+		uploadWidth = framebuffer->GetWidth();
+		uploadHeight = framebuffer->GetHeight();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  }
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	}
 
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texnum, 0);
+	glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texnum, 0 );
 }
 
 /*
