@@ -50,6 +50,12 @@ RB_ARB2_RenderCustomSpecialShaderStage
 void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* pStage, newShaderStage_t* newStage, const srfTriangles_t	*tri ) {
 	GL_UseProgram(nullptr);
 
+	glEnable( GL_VERTEX_PROGRAM_ARB );
+	glEnable( GL_FRAGMENT_PROGRAM_ARB );
+
+	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, newStage->vertexProgram );
+	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, newStage->fragmentProgram );
+
 	idDrawVert *ac = (idDrawVert *)vertexCache.Position( tri->ambientCache );
 	glVertexPointer( 3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr() );
 	glTexCoordPointer( 2, GL_FLOAT, sizeof(idDrawVert), reinterpret_cast<void *>(&ac->st) );
@@ -65,8 +71,10 @@ void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* p
 
 	GL_State( pStage->drawStateBits );
 
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, newStage->vertexProgram );
-	glEnable( GL_VERTEX_PROGRAM_ARB );
+	glMatrixMode( GL_PROJECTION );
+	glLoadMatrixf( GL_ProjectionMatrix.Top() );
+	glMatrixMode( GL_MODELVIEW );
+	glLoadMatrixf( GL_ModelViewMatrix.Top() );
 
 #if 0
 	// megaTextures bind a lot of images and set a lot of parameters
@@ -92,9 +100,7 @@ void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* p
 			GL_SelectTexture( i );
 			newStage->fragmentProgramImages[i]->Bind();
 		}
-	}
-	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, newStage->fragmentProgram );
-	glEnable( GL_FRAGMENT_PROGRAM_ARB );
+	}	
 
 	// draw it
 	RB_DrawElementsWithCounters( tri );
@@ -111,14 +117,16 @@ void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* p
 
 	GL_SelectTexture( 0 );
 
-	glDisable( GL_VERTEX_PROGRAM_ARB );
-	glDisable( GL_FRAGMENT_PROGRAM_ARB );
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, 0 );
+	glBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, 0 );
 
 	glDisableClientState( GL_COLOR_ARRAY );
 	glDisableVertexAttribArrayARB( 9 );
 	glDisableVertexAttribArrayARB( 10 );
 	glDisableClientState( GL_NORMAL_ARRAY );
+
+	glDisable( GL_VERTEX_PROGRAM_ARB );
+	glDisable( GL_FRAGMENT_PROGRAM_ARB );
 }
 
 /*
