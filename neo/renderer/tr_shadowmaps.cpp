@@ -93,6 +93,76 @@ static void RB_CreateShadowMapProjectionMatrix(const viewLight_t* vLight, float*
 	}
 }
 
+static void RB_CreateShadowViewMatrix(const viewLight_t* vLight, int side, float* viewMatrix) {
+	memset( viewMatrix, 0, 16 * sizeof(viewMatrix[0]) );
+
+	if (side == -1) {
+		// projected light
+		idVec3 vec = vLight->lightDef->parms.target;
+		vec.Normalize();
+		viewMatrix[0] = vec[0];
+		viewMatrix[4] = vec[1];
+		viewMatrix[8] = vec[2];
+
+		vec = vLight->lightDef->parms.right;
+		vec.Normalize();
+		viewMatrix[1] = -vec[0];
+		viewMatrix[5] = -vec[1];
+		viewMatrix[9] = -vec[2];
+
+		vec = vLight->lightDef->parms.up;
+		vec.Normalize();
+		viewMatrix[2] = vec[0];
+		viewMatrix[6] = vec[1];
+		viewMatrix[10] = vec[2];
+	}
+	else {
+		// side of a point light		
+		switch (side) {
+		case 0:
+			viewMatrix[0] = 1;
+			viewMatrix[9] = 1;
+			viewMatrix[6] = -1;
+			break;
+		case 1:
+			viewMatrix[0] = -1;
+			viewMatrix[9] = -1;
+			viewMatrix[6] = -1;
+			break;
+		case 2:
+			viewMatrix[4] = 1;
+			viewMatrix[1] = -1;
+			viewMatrix[10] = 1;
+			break;
+		case 3:
+			viewMatrix[4] = -1;
+			viewMatrix[1] = -1;
+			viewMatrix[10] = -1;
+			break;
+		case 4:
+			viewMatrix[8] = 1;
+			viewMatrix[1] = -1;
+			viewMatrix[6] = -1;
+			break;
+		case 5:
+			viewMatrix[8] = -1;
+			viewMatrix[1] = 1;
+			viewMatrix[6] = -1;
+			break;
+		}
+	}
+
+	idVec3	origin = vLight->lightDef->globalLightOrigin;
+	viewMatrix[12] = -origin[0] * viewMatrix[0] + -origin[1] * viewMatrix[4] + -origin[2] * viewMatrix[8];
+	viewMatrix[13] = -origin[0] * viewMatrix[1] + -origin[1] * viewMatrix[5] + -origin[2] * viewMatrix[9];
+	viewMatrix[14] = -origin[0] * viewMatrix[2] + -origin[1] * viewMatrix[6] + -origin[2] * viewMatrix[10];
+
+	viewMatrix[3] = 0;
+	viewMatrix[7] = 0;
+	viewMatrix[11] = 0;
+	viewMatrix[15] = 1;
+}
+
 void RB_GLSL_GetShadowParams(float* minBias, float* maxBias, float* fuzzyness, int* samples) {
 	assert(minBias);
 	assert(maxBias);
@@ -334,6 +404,8 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 }
 
 static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
+	float	viewMatrix[16];
+	RB_CreateShadowViewMatrix( vLight, side, viewMatrix );
 
 	float lightProjectionMatrix[16];
 	RB_CreateShadowMapProjectionMatrix(vLight, lightProjectionMatrix);
@@ -360,82 +432,11 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 
 	backEnd.currentSpace = NULL;
 
-	float	viewMatrix[16];	
-
-	if (side == -1) {
-		// projected light
-		idVec3 vec = vLight->lightDef->parms.target;
-		vec.Normalize();
-		viewMatrix[0] = vec[0];
-		viewMatrix[4] = vec[1];
-		viewMatrix[8] = vec[2];
-
-		vec = vLight->lightDef->parms.right;
-		vec.Normalize();
-		viewMatrix[1] = -vec[0];
-		viewMatrix[5] = -vec[1];
-		viewMatrix[9] = -vec[2];
-
-		vec = vLight->lightDef->parms.up;
-		vec.Normalize();
-		viewMatrix[2] = vec[0];
-		viewMatrix[6] = vec[1];
-		viewMatrix[10] = vec[2];
-	}
-	else {
-		// side of a point light
-		memset(viewMatrix, 0, sizeof(viewMatrix));
-		switch (side) {
-		case 0:
-			viewMatrix[0] = 1;
-			viewMatrix[9] = 1;
-			viewMatrix[6] = -1;
-			break;
-		case 1:
-			viewMatrix[0] = -1;
-			viewMatrix[9] = -1;
-			viewMatrix[6] = -1;
-			break;
-		case 2:
-			viewMatrix[4] = 1;
-			viewMatrix[1] = -1;
-			viewMatrix[10] = 1;
-			break;
-		case 3:
-			viewMatrix[4] = -1;
-			viewMatrix[1] = -1;
-			viewMatrix[10] = -1;
-			break;
-		case 4:
-			viewMatrix[8] = 1;
-			viewMatrix[1] = -1;
-			viewMatrix[6] = -1;
-			break;
-		case 5:
-			viewMatrix[8] = -1;
-			viewMatrix[1] = 1;
-			viewMatrix[6] = -1;
-			break;
-		}
-	}
-
-	idVec3	origin = vLight->lightDef->globalLightOrigin;
-	viewMatrix[12] = -origin[0] * viewMatrix[0] + -origin[1] * viewMatrix[4] + -origin[2] * viewMatrix[8];
-	viewMatrix[13] = -origin[0] * viewMatrix[1] + -origin[1] * viewMatrix[5] + -origin[2] * viewMatrix[9];
-	viewMatrix[14] = -origin[0] * viewMatrix[2] + -origin[1] * viewMatrix[6] + -origin[2] * viewMatrix[10];
-
-	viewMatrix[3] = 0;
-	viewMatrix[7] = 0;
-	viewMatrix[11] = 0;
-	viewMatrix[15] = 1;
-
-	float flippedViewMatrix[16];
 	
-	myGlMultMatrix(viewMatrix, s_flipMatrix, flippedViewMatrix);
-
 	if(r_smObjectCulling.GetBool()) {
 		// create frustum planes
 		idPlane	globalFrustum[6];
+		idVec3	origin = vLight->lightDef->globalLightOrigin;
 
 		// near clip
 		globalFrustum[0][0] = -viewMatrix[0];
@@ -478,8 +479,8 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
 		RB_EXP_CullInteractions(vLight, globalFrustum);
 	}
 
-
-
+	float flippedViewMatrix[16];
+	myGlMultMatrix( viewMatrix, s_flipMatrix, flippedViewMatrix );
 	myGlMultMatrix(flippedViewMatrix, lightProjectionMatrix, &backEnd.shadowViewProjection[side][0]);
 	RB_RenderShadowCasters(vLight, flippedViewMatrix);
 
