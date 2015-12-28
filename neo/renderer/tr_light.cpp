@@ -58,14 +58,14 @@ bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting ) {
 		R_DeriveTangents( tri );
 	}
 
-  //FIXME(johl): sometimes numVerts is zero... why?
-  assert(tri->numVerts > 0);
-  if(tri->numVerts <= 0) {
-    return false;
-  }
+	//FIXME(johl): sometimes numVerts is zero... why?
+	assert( tri->numVerts > 0 );
+	if (tri->numVerts <= 0) {
+		return false;
+	}
 
 	tri->ambientCache = vertexCache.Alloc( tri->verts, tri->numVerts * sizeof( tri->verts[0] ), false );
-	if ( !tri->ambientCache ) {
+	if ( !tri->ambientCache ) {	
 		return false;
 	}
 	return true;

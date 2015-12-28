@@ -144,8 +144,12 @@ The ARB_vertex_buffer_object will be bound
 ==============
 */
 int idVertexCache::Bind(const vertCache_t *buffer) {
-  if (!buffer || buffer->tag == TAG_FREE) {
-    common->FatalError("idVertexCache::Position: bad vertCache_t");
+  if (!buffer) {
+    common->FatalError("idVertexCache::Bind: null vertCache_t");
+  }
+
+  if (buffer->tag == TAG_FREE) {
+	  common->FatalError( "idVertexCache::Bind: vertCache_t tag is TAG_FREE" );
   }
 
   assert(buffer->vbo);
@@ -242,7 +246,7 @@ idVertexCache::Alloc
 ===========
 */
 vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
-  vertCache_t* buffer = NULL; // if we can't find anything, it will be NULL
+	vertCache_t* buffer = NULL; // if we can't find anything, it will be NULL
 	vertCache_t	*block;
 
 	if ( size <= 0 ) {
@@ -294,7 +298,7 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 	block->indexBuffer = indexBuffer;
 
 	// copy the data
-  assert(block->vbo);
+	assert(block->vbo);
 	
 	if ( indexBuffer ) {
 		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, block->vbo );
@@ -308,7 +312,7 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 		}
 	}	
 
-  return buffer;
+	return buffer;
 }
 
 /*

@@ -116,18 +116,14 @@ idRenderWorldLocal::ParseModel
 ================
 */
 idRenderModel *idRenderWorldLocal::ParseModel( idLexer *src ) {
-	idRenderModel	*model;
 	idToken			token;
-	int				i, j;
-	srfTriangles_t	*tri;
-	modelSurface_t	surf;
 
 	src->ExpectTokenString( "{" );
 
 	// parse the name
 	src->ExpectAnyToken( &token );
 
-	model = renderModelManager->AllocModel();
+	idRenderModel* model = renderModelManager->AllocModel();
 	model->InitEmpty( token );
 
 	int numSurfaces = src->ParseInt();
@@ -135,23 +131,24 @@ idRenderModel *idRenderWorldLocal::ParseModel( idLexer *src ) {
 		src->Error( "R_ParseModel: bad numSurfaces" );
 	}
 
-	for ( i = 0 ; i < numSurfaces ; i++ ) {
+	for ( int i = 0 ; i < numSurfaces ; i++ ) {
 		src->ExpectTokenString( "{" );
 
 		src->ExpectAnyToken( &token );
 
+		modelSurface_t	surf;
 		surf.shader = declManager->FindMaterial( token );
 
 		((idMaterial*)surf.shader)->AddReference();
 
-		tri = R_AllocStaticTriSurf();
+		srfTriangles_t* tri = R_AllocStaticTriSurf();
 		surf.geometry = tri;
-
+		
 		tri->numVerts = src->ParseInt();
 		tri->numIndexes = src->ParseInt();
 
 		R_AllocStaticTriSurfVerts( tri, tri->numVerts );
-		for ( j = 0 ; j < tri->numVerts ; j++ ) {
+		for ( int j = 0 ; j < tri->numVerts ; j++ ) {
 			float	vec[8];
 
 			src->Parse1DMatrix( 8, vec );
@@ -167,7 +164,7 @@ idRenderModel *idRenderWorldLocal::ParseModel( idLexer *src ) {
 		}
 
 		R_AllocStaticTriSurfIndexes( tri, tri->numIndexes );
-		for ( j = 0 ; j < tri->numIndexes ; j++ ) {
+		for ( int j = 0 ; j < tri->numIndexes ; j++ ) {
 			tri->indexes[j] = src->ParseInt();
 		}
 		src->ExpectTokenString( "}" );
@@ -617,24 +614,86 @@ void idRenderWorldLocal::ClearPortalStates() {
 }
 
 /*
+================
+CombineModelSurfaces
+
+Frees the model and returns a new model with all triangles combined
+into one surface
+================
+*/
+static idRenderModel *CombineModelSurfaces( idRenderModel *model, const char* name ) {
+	int		totalVerts;
+	int		totalIndexes;
+	int		numIndexes;
+	int		numVerts;
+	int		i, j;
+
+	totalVerts = 0;
+	totalIndexes = 0;
+
+	for (i = 0; i < model->NumSurfaces(); i++) {
+		const modelSurface_t	*surf = model->Surface( i );
+
+		totalVerts += surf->geometry->numVerts;
+		totalIndexes += surf->geometry->numIndexes;
+	}
+
+	srfTriangles_t *newTri = R_AllocStaticTriSurf();
+	R_AllocStaticTriSurfVerts( newTri, totalVerts );
+	R_AllocStaticTriSurfIndexes( newTri, totalIndexes );
+
+	newTri->numVerts = totalVerts;
+	newTri->numIndexes = totalIndexes;
+
+	newTri->bounds.Clear();
+
+	idDrawVert *verts = newTri->verts;
+	glIndex_t *indexes = newTri->indexes;
+	numIndexes = 0;
+	numVerts = 0;
+	for (i = 0; i < model->NumSurfaces(); i++) {
+		const modelSurface_t *surf = model->Surface( i );
+		const srfTriangles_t *tri = surf->geometry;
+
+		memcpy( verts + numVerts, tri->verts, tri->numVerts * sizeof(tri->verts[0]) );
+		for (j = 0; j < tri->numIndexes; j++) {
+			indexes[numIndexes + j] = numVerts + tri->indexes[j];
+		}
+		newTri->bounds.AddBounds( tri->bounds );
+		numIndexes += tri->numIndexes;
+		numVerts += tri->numVerts;
+	}
+
+	modelSurface_t surf;
+
+	surf.id = 0;
+	surf.geometry = newTri;
+	surf.shader = tr.defaultMaterial;
+
+	idRenderModel *newModel = renderModelManager->AllocModel();
+	newModel->InitEmpty(name);
+	newModel->AddSurface( surf );
+
+	renderModelManager->FreeModel( model );
+
+	return newModel;
+}
+
+
+/*
 =====================
 idRenderWorldLocal::AddWorldModelEntities
 =====================
 */
 void idRenderWorldLocal::AddWorldModelEntities() {
-	int		i;
-
 	// add the world model for each portal area
 	// we can't just call AddEntityDef, because that would place the references
 	// based on the bounding box, rather than explicitly into the correct area
-	for ( i = 0 ; i < numPortalAreas ; i++ ) {
-		idRenderEntityLocal	*def;
-		int			index;
-
-		def = new idRenderEntityLocal;
+	for ( int i = 0 ; i < numPortalAreas ; i++ ) {
+		idRenderEntityLocal* def = new idRenderEntityLocal;		
 
 		// try and reuse a free spot
-		index = entityDefs.FindNull();
+		int index = entityDefs.FindNull();
 		if ( index == -1 ) {
 			index = entityDefs.Append(def);
 		} else {
@@ -651,13 +710,58 @@ void idRenderWorldLocal::AddWorldModelEntities() {
 
 		idRenderModel *hModel = def->parms.hModel;
 
+		//helper model to merge all static and fully opaque world surfaces,
+		//so depth information for shadow maps for those surfaces can be rendered
+		//with just one draw call
+		idRenderModel* staticOccluderModel = renderModelManager->AllocModel();
+
 		for ( int j = 0; j < hModel->NumSurfaces(); j++ ) {
 			const modelSurface_t *surf = hModel->Surface( j );
 
 			if ( surf->shader->GetName() == idStr( "textures/smf/portal_sky" ) ) {
 				def->needsPortalSky = true;
 			}
+
+			if ( surf->geometry->numVerts <= 0 ) {
+				continue;
+			}
+			
+			//if surface cast a shadow and is fully opaque, add a copy of it the staticOccluderModel helper model
+			if(surf->shader->SurfaceCastsShadow() && surf->shader->Coverage() == MC_OPAQUE) {
+				modelSurface_s newSurf;
+				newSurf.shader = declManager->FindMaterial("_default");
+				newSurf.id = 0;
+				
+				newSurf.geometry = R_AllocStaticTriSurf();
+				newSurf.geometry->numVerts = surf->geometry->numVerts;
+				newSurf.geometry->numIndexes = surf->geometry->numIndexes;
+				
+				R_AllocStaticTriSurfVerts( newSurf.geometry, newSurf.geometry->numVerts );
+				R_AllocStaticTriSurfIndexes( newSurf.geometry, newSurf.geometry->numIndexes );
+
+				memcpy(newSurf.geometry->indexes, surf->geometry->indexes, sizeof(surf->geometry->indexes[0]) * newSurf.geometry->numIndexes);
+				memcpy(newSurf.geometry->verts, surf->geometry->verts, sizeof(surf->geometry->verts[0]) * newSurf.geometry->numVerts);
+				
+				staticOccluderModel->AddSurface(newSurf);
+			}			
 		}
+
+		//combine all surfaces of helper model to one single surface and use that
+		staticOccluderModel = CombineModelSurfaces(staticOccluderModel, va("_area_%d_occluders", i));				
+
+		if(staticOccluderModel->NumSurfaces() > 0 && staticOccluderModel->Surface(0)->geometry->numVerts > 0) {		
+			// add it to the model manager list
+			renderModelManager->AddModel( staticOccluderModel );
+			// save it in the list to free when clearing this map
+			localModels.Append( staticOccluderModel );			
+			//use as static occluder model
+			def->staticOccluderModel = staticOccluderModel;
+		} else {
+			//static occluder model is empty, no need to keep it.
+			renderModelManager->FreeModel(staticOccluderModel);
+			def->staticOccluderModel = nullptr;
+		}		
+
 
 		def->referenceBounds = def->parms.hModel->Bounds();
 

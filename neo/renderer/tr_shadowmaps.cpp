@@ -299,8 +299,32 @@ void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
 }
 
 static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix) {
+	
+	glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+	glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
+	glUniformMatrix4fv( glslProgramDef_t::uniform_modelViewMatrix, 1, false, shadowViewMatrix );
+/*
+	if(r_ignore2.GetBool()) {
+		for(const occluderGeometry* og = vLight->staticOccluders; og != nullptr; og = og->next) {
+			srfTriangles_t* tri = og->geometry;
+
+			if (!tri->ambientCache) {
+				if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
+					common->Error("RB_RenderShadowCasters: Failed to alloc ambient cache");
+				}
+			}
+			
+			const auto offset = vertexCache.Bind( tri->ambientCache );
+			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+
+			RB_DrawElementsWithCounters(tri);
+		}
+	}
+*/
 	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 		const idRenderEntityLocal *entityDef = inter->entityDef;
+
 		if (!entityDef) {
 			continue;
 		}
@@ -312,6 +336,26 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 		// a different space
 		float	matrix[16];
 		myGlMultMatrix(inter->entityDef->modelMatrix, shadowViewMatrix, matrix);
+
+		if(r_ignore2.GetBool() && entityDef->staticOccluderModel) {
+			assert(entityDef->staticOccluderModel->NumSurfaces() > 0);
+
+			srfTriangles_t* tri = entityDef->staticOccluderModel->Surface(0)->geometry;
+
+			if (!tri->ambientCache) {
+				if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
+					common->Error( "RB_RenderShadowCasters: Failed to alloc ambient cache" );
+				}
+			}
+
+			const auto offset = vertexCache.Bind( tri->ambientCache );			
+			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);		
+			glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+			RB_DrawElementsWithCounters( tri );
+			backEnd.pc.c_shadowMapDraws++;
+		}
 
 		// draw each surface
 		for (int i = 0; i < inter->numSurfaces; i++) {
@@ -327,6 +371,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				continue;
 			}
 
+
 			// cull it
 			if (surfInt->expCulled == CULL_OCCLUDER_AND_RECEIVER) {
 				continue;
@@ -338,6 +383,10 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				continue;
 			}
 
+			if (r_ignore2.GetBool() && entityDef->staticOccluderModel && shader->Coverage() == MC_OPAQUE)
+				continue;
+
+
 			if (!tri->ambientCache) {
 				R_CreateAmbientCache(const_cast<srfTriangles_t *>(tri), false);
 			}
@@ -345,8 +394,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			const auto offset = vertexCache.Bind(tri->ambientCache);
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);
-			glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());			
+			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);		
 
 
 			bool didDraw = false;

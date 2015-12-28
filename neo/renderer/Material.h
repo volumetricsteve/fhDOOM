@@ -715,11 +715,11 @@ private:
 	bool				MatchToken( idLexer &src, const char *match );
 	void				ParseSort( idLexer &src );
 	void				ParseBlend( idLexer &src, shaderStage_t *stage );
-  void        ParseDepthBlendMode( idLexer &src, shaderStage_t *stage );
+	void				ParseDepthBlendMode( idLexer &src, shaderStage_t *stage );
 	void				ParseVertexParm( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage );
-  void				ParseShaderParm( idLexer &src, glslShaderStage_t *glslStage );
+	void				ParseShaderParm( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage );
-  void				ParseShaderMap( idLexer &src, glslShaderStage_t *glslStage );
+	void				ParseShaderMap( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseStage( idLexer &src, const textureRepeat_t trpDefault = TR_REPEAT );
 	void				ParseDeform( idLexer &src );
 	void				ParseDecalInfo( idLexer &src );

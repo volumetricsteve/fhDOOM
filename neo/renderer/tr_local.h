@@ -289,8 +289,9 @@ public:
 	idInteraction *			lastInteraction;
 
 	bool					needsPortalSky;
-};
 
+	idRenderModel *			staticOccluderModel;
+};
 
 // viewLights are allocated on the frame temporary stack memory
 // a viewLight contains everything that the back end needs out of an idRenderLightLocal,

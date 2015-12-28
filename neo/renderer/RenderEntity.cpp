@@ -52,6 +52,7 @@ idRenderEntityLocal::idRenderEntityLocal() {
 	firstInteraction		= NULL;
 	lastInteraction			= NULL;
 	needsPortalSky			= false;
+	staticOccluderModel		= NULL;
 }
 
 void idRenderEntityLocal::FreeRenderEntity() {
