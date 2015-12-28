@@ -995,11 +995,10 @@ GL wrapper/helper functions
 
 void	GL_SelectTexture( int unit );
 void	GL_CheckErrors( void );
-void	GL_ClearStateDelta( void );
 void	GL_State( int stateVector );
 void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
-void  GL_UseProgram( const glslProgramDef_t* program );
+void	GL_UseProgram( const glslProgramDef_t* program );
 
 /*
 ====================

@@ -388,9 +388,6 @@ the resulting color shading from red at 0 to green at 128 to blue at 255
 ===================
 */
 void RB_ShowIntensity( void ) {
-	byte	*colorReadback;
-	int		i, j, c;
-
 	if ( !r_showIntensity.GetBool() ) {
 		return;
 	}

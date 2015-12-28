@@ -8,6 +8,7 @@ idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER | C
 idCVar r_smFov( "r_smFov", "93", CVAR_RENDERER|CVAR_FLOAT | CVAR_ARCHIVE, "fov used when rendering point light shadow maps");
 idCVar r_smFarClip( "r_smFarClip", "-1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "far clip distance for rendering shadow maps: -1=infinite-z, 0=max light radius, other=fixed distance");
 idCVar r_smNearClip( "r_smNearClip", "4", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "near clip distance for rendering shadow maps");
+idCVar r_smUseStaticOccluderModel( "r_smUseStaticOccluderModel", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "the occluder model is a single surface merged from all static and opaque world surfaces. Can be rendered to the shadow map with a single draw call");
 
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
@@ -337,7 +338,8 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 		float	matrix[16];
 		myGlMultMatrix(inter->entityDef->modelMatrix, shadowViewMatrix, matrix);
 
-		if(r_ignore2.GetBool() && entityDef->staticOccluderModel) {
+		bool staticOccluderModelWasRendered = false;
+		if(r_smUseStaticOccluderModel.GetBool() && entityDef->staticOccluderModel) {
 			assert(entityDef->staticOccluderModel->NumSurfaces() > 0);
 
 			srfTriangles_t* tri = entityDef->staticOccluderModel->Surface(0)->geometry;
@@ -355,6 +357,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
 			RB_DrawElementsWithCounters( tri );
 			backEnd.pc.c_shadowMapDraws++;
+			staticOccluderModelWasRendered = true;
 		}
 
 		// draw each surface
@@ -383,7 +386,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				continue;
 			}
 
-			if (r_ignore2.GetBool() && entityDef->staticOccluderModel && shader->Coverage() == MC_OPAQUE)
+			if (staticOccluderModelWasRendered && shader->Coverage() == MC_OPAQUE)
 				continue;
 
 

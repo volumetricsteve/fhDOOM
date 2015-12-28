@@ -188,17 +188,6 @@ void GL_TexEnv( int env ) {
 	}
 }
 
-/*
-=================
-GL_ClearStateDelta
-
-Clears the state delta bits, so the next GL_State
-will set every item
-=================
-*/
-void GL_ClearStateDelta( void ) {
-	backEnd.glState.forceGlState = true;
-}
 
 /*
 ====================

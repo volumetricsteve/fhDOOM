@@ -677,7 +677,6 @@ parameters and try again.
 ===================
 */
 bool GLimp_Init( glimpParms_t parms ) {
-	const char	*driverName;
 	HDC		hDC;
 
 	common->Printf( "Initializing OpenGL subsystem\n" );
