@@ -62,7 +62,7 @@ void RB_DrawElementsImmediate( const srfTriangles_t *tri, const idVec4 &color ) 
 		}
 	}
 
-	fhImmediateMode im;
+	fhImmediateMode im(true);
 	im.Color4fv( color.ToFloatPtr() );
 	im.Begin( GL_TRIANGLES );
 	for ( int i = 0 ; i < tri->numIndexes ; i++ ) {

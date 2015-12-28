@@ -1610,21 +1610,20 @@ void RB_ShowLights( void ) {
 
 	// all volumes are expressed in world coordinates
 	RB_SimpleWorldSetup();
-
-	glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+	
 	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
-
 
 	GL_Cull( CT_TWO_SIDED );
 	glDisable( GL_DEPTH_TEST );
 
-
 	common->Printf( "volumes: " );	// FIXME: not in back end!
 
 	GL_UseProgram(defaultProgram);
-	glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
-	glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
+	glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
+	
+	glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top());
+	glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top());
 	GL_SelectTexture(1);
 	globalImages->whiteImage->Bind();
 	GL_SelectTexture(0);
@@ -1640,7 +1639,7 @@ void RB_ShowLights( void ) {
 		if ( r_showLights.GetInteger() >= 2 ) {
 			GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK );
 
-			glUniform4f(glslProgramDef_t::uniform_diffuse_color, 0.0f, 0.0f, 1.0f, 0.25f);
+			glUniform4f(glslProgramDef_t::uniform_color_add, 0.0f, 0.0f, 1.0f, 0.25f);
 
 			glEnable( GL_DEPTH_TEST );
 			RB_RenderTriangleSurface( tri );
@@ -1651,7 +1650,7 @@ void RB_ShowLights( void ) {
 			GL_State(GLS_POLYMODE_LINE | GLS_DEPTHMASK);
 			glDisable(GL_DEPTH_TEST);
 
-			glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1.0f, 1.0f, 1.0f, 1.0f);
+			glUniform4f(glslProgramDef_t::uniform_color_add, 1.0f, 1.0f, 1.0f, 1.0f);
 
 			RB_RenderTriangleSurface(tri);
 		}
