@@ -299,30 +299,10 @@ void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
 	}
 }
 
-static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix) {
+static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix) {	
 	
-	glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
 	glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
-	glUniformMatrix4fv( glslProgramDef_t::uniform_modelViewMatrix, 1, false, shadowViewMatrix );
-/*
-	if(r_ignore2.GetBool()) {
-		for(const occluderGeometry* og = vLight->staticOccluders; og != nullptr; og = og->next) {
-			srfTriangles_t* tri = og->geometry;
 
-			if (!tri->ambientCache) {
-				if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
-					common->Error("RB_RenderShadowCasters: Failed to alloc ambient cache");
-				}
-			}
-			
-			const auto offset = vertexCache.Bind( tri->ambientCache );
-			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
-			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
-
-			RB_DrawElementsWithCounters(tri);
-		}
-	}
-*/
 	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 		const idRenderEntityLocal *entityDef = inter->entityDef;
 
@@ -332,11 +312,6 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 		if (inter->numSurfaces < 1) {
 			continue;
 		}
-
-		// no need to check for current on this, because each interaction is always
-		// a different space
-		float	matrix[16];
-		myGlMultMatrix(inter->entityDef->modelMatrix, shadowViewMatrix, matrix);
 
 		bool staticOccluderModelWasRendered = false;
 		if(r_smUseStaticOccluderModel.GetBool() && entityDef->staticOccluderModel) {
@@ -353,12 +328,15 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			const auto offset = vertexCache.Bind( tri->ambientCache );			
 			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
 			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
-			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);		
+			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, shadowViewMatrix);
 			glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
 			RB_DrawElementsWithCounters( tri );
 			backEnd.pc.c_shadowMapDraws++;
 			staticOccluderModelWasRendered = true;
-		}
+		}		
+
+		float matrix[16];
+		bool matrixOk = false; 		
 
 		// draw each surface
 		for (int i = 0; i < inter->numSurfaces; i++) {
@@ -394,11 +372,15 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				R_CreateAmbientCache(const_cast<srfTriangles_t *>(tri), false);
 			}
 
+			if(!matrixOk) {
+				myGlMultMatrix( inter->entityDef->modelMatrix, shadowViewMatrix, matrix );
+				matrixOk = true;
+			}
+
 			const auto offset = vertexCache.Bind(tri->ambientCache);
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
 			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
 			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, matrix);		
-
 
 			bool didDraw = false;
 			
