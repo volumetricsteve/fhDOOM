@@ -471,8 +471,8 @@ public:
 	idImage *			specular2DTableImage;		// 2D intensity texture with our specular function with variable specularity
 	idImage *			borderClampImage;			// white inside, black outside
 
-	idImage *			shadowmapImage[6];
-	fhFramebuffer*		shadowmapFramebuffer[6];
+	idImage *			shadowmapImage[3][6];
+	fhFramebuffer*		shadowmapFramebuffer[3][6];
 	fhFramebuffer*		defaultFramebuffer;
 
 	//--------------------------------------------------------

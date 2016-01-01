@@ -10,6 +10,8 @@ idCVar r_smFarClip( "r_smFarClip", "-1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHI
 idCVar r_smNearClip( "r_smNearClip", "4", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "near clip distance for rendering shadow maps");
 idCVar r_smUseStaticOccluderModel( "r_smUseStaticOccluderModel", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "the occluder model is a single surface merged from all static and opaque world surfaces. Can be rendered to the shadow map with a single draw call");
 
+idCVar r_smQuality( "r_smQuality", "-1", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
+
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
 
@@ -191,7 +193,7 @@ void RB_GLSL_GetShadowParams(float* minBias, float* maxBias, float* fuzzyness, i
 		if (lightSize >= a.size) {
 			*minBias = a.minBias;
 			*maxBias = a.maxBias;
-			*fuzzyness = a.fuzzyness;
+			*fuzzyness = 1.0f/backEnd.shadowMapSize * a.fuzzyness;
 			*samples = a.samples;
 		}
 		else {
@@ -436,14 +438,15 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 	}
 }
 
-static void RB_RenderShadowBuffer(viewLight_t* vLight, int side) {
+static void RB_RenderShadowBuffer(viewLight_t* vLight, int side, int qualityIndex) {
 	float	viewMatrix[16];
 	RB_CreateShadowViewMatrix( vLight, side, viewMatrix );
 
 	float lightProjectionMatrix[16];
 	RB_CreateShadowMapProjectionMatrix(vLight, lightProjectionMatrix);
 
-	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[side];
+
+	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[qualityIndex][side];
 	framebuffer->Bind();
 
 	GL_ProjectionMatrix.Push();
@@ -544,9 +547,10 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		return;
 	}
 
-	if (!vLight->frustumTris->ambientCache) {
-		R_CreateAmbientCache(const_cast<srfTriangles_t *>(vLight->frustumTris), false);
-	}
+	int qualityIndex = idMath::ClampInt(0, 2, vLight->shadowMapQualityIndex);
+	if(r_smQuality.GetInteger() >= 0) {
+		qualityIndex = idMath::ClampInt(0, 2, r_smQuality.GetInteger());
+	}	
 
 	// all light side projections must currently match, so non-centered
 	// and non-cubic lights must take the largest length
@@ -576,7 +580,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		// FIXME: check for frustums completely off the screen
 
 		// render a shadow buffer
-		RB_RenderShadowBuffer(vLight, side);		
+		RB_RenderShadowBuffer(vLight, side, qualityIndex);		
 	}
 
 	glEnable(GL_CULL_FACE);
@@ -601,23 +605,23 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1);
 		backEnd.currentScissor = backEnd.viewDef->scissor;
 
-
-	// texture 5 is the per-surface specular map
 	GL_SelectTextureNoClient(6);
-	globalImages->shadowmapImage[0]->Bind();
+	globalImages->shadowmapImage[qualityIndex][0]->Bind();
 
 	GL_SelectTextureNoClient(7);
-	globalImages->shadowmapImage[1]->Bind();
+	globalImages->shadowmapImage[qualityIndex][1]->Bind();
 
 	GL_SelectTextureNoClient(8);
-	globalImages->shadowmapImage[2]->Bind();
+	globalImages->shadowmapImage[qualityIndex][2]->Bind();
 
 	GL_SelectTextureNoClient(9);
-	globalImages->shadowmapImage[3]->Bind();
+	globalImages->shadowmapImage[qualityIndex][3]->Bind();
 
 	GL_SelectTextureNoClient(10);
-	globalImages->shadowmapImage[4]->Bind();
+	globalImages->shadowmapImage[qualityIndex][4]->Bind();
 
 	GL_SelectTextureNoClient(11);
-	globalImages->shadowmapImage[5]->Bind();
+	globalImages->shadowmapImage[qualityIndex][5]->Bind();
+
+	backEnd.shadowMapSize = globalImages->shadowmapImage[qualityIndex][0]->uploadWidth;
 }

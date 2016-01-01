@@ -388,6 +388,33 @@ static bool R_PointInFrustum( idVec3 &p, idPlane *planes, int numPlanes ) {
 	return true;
 }
 
+static int RB_SelectShadowMapQualityIndex( const idRenderLightLocal* light, const viewDef_t* view ) {
+
+	const float thresholds[] = { 0, 75, 100, 300, 600 };
+
+	int	index = 0;
+	float size = light->GetMaximumCenterToEdgeDistance();
+
+	for (int i = 0; i<sizeof(thresholds) / sizeof(thresholds[0]); ++i) {
+		if (thresholds[i] > size) {
+			break;
+		}
+		else {
+			index = i;
+		}
+	}
+
+	const float distance = (light->parms.origin - view->renderView.vieworg).Length();
+
+	if(distance > 400)
+		index--;
+
+	if(distance > 800)
+		index--;
+
+	return index;
+}
+
 /*
 =============
 R_SetLightDefViewLight
@@ -407,6 +434,8 @@ viewLight_t *R_SetLightDefViewLight( idRenderLightLocal *light ) {
 	// add to the view light chain
 	vLight = (viewLight_t *)R_ClearedFrameAlloc( sizeof( *vLight ) );
 	vLight->lightDef = light;
+
+	vLight->shadowMapQualityIndex = RB_SelectShadowMapQualityIndex(light, tr.viewDef);
 
 	// the scissorRect will be expanded as the light bounds is accepted into visible portal chains
 	vLight->scissorRect.Clear();

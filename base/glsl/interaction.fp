@@ -209,7 +209,7 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float bias, float fuzz
 #if defined(FILTER_PCF)
     float occluded = 0;
     float samplesTaken = 0;
-    float d = 1/1024.0 * fuzzyness;
+    float d = fuzzyness;
     float s = d/samples;
     for(float i=-d;i<d;i+=s) {
       for(float j=-s;j<d;j+=s) {

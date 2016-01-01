@@ -1588,6 +1588,87 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	glEnable( GL_DEPTH_TEST );
 }
 
+void RB_ShowLights2( void ) {	
+
+	if (!r_showLights2.GetInteger()) {
+		return;
+	}
+
+	// all volumes are expressed in world coordinates
+	RB_SimpleWorldSetup();
+
+	globalImages->BindNull();
+	glDisable( GL_STENCIL_TEST );
+
+	GL_Cull( CT_TWO_SIDED );
+	glDisable( GL_DEPTH_TEST );
+
+
+	GL_UseProgram( defaultProgram );
+	glUniform4f( glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0 );
+	glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
+	glUniformMatrix4fv( glslProgramDef_t::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top() );
+	glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top() );
+	GL_SelectTexture( 1 );
+	globalImages->whiteImage->Bind();
+	GL_SelectTexture( 0 );
+
+
+	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+		const idRenderLightLocal* light = vLight->lightDef;				
+
+		idVec3 color;
+		switch (vLight->shadowMapQualityIndex)
+		{
+		case 0:
+			color = idVec3( 0, 0, 1 );
+			break;
+		case 1:
+			color = idVec3( 0, 1, 0 );
+			break;
+		case 2:
+			color = idVec3( 1, 0, 0 );
+			break;
+		case 3:
+			color = idVec3( 1, 1, 0 );
+			break;
+		case 4:
+			color = idVec3( 0, 1, 1 );
+			break;
+		default:
+			color = idVec3( 1, 1, 1 );
+		}
+
+		if (light->parms.noShadows)
+			color = idVec3(0.2f, 0.2f, 0.2f);
+
+		if(r_showLights2.GetInteger() == 1) {
+			idBounds bounds( light->parms.origin );
+			bounds.ExpandSelf( 4 );
+
+			RB_DrawBounds( bounds, color );
+		}
+
+		if (r_showLights2.GetInteger() == 2) {
+			GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK );
+			glDisable( GL_DEPTH_TEST );
+
+			glUniform4f( glslProgramDef_t::uniform_color_add, color.x, color.y, color.z, 1.0f );
+
+			RB_RenderTriangleSurface( light->frustumTris );
+		}
+	}
+
+	GL_UseProgram( nullptr );
+
+	glEnable( GL_DEPTH_TEST );
+	glDisable( GL_POLYGON_OFFSET_LINE );
+
+	glDepthRange( 0, 1 );
+	GL_State( GLS_DEFAULT );
+	GL_Cull( CT_FRONT_SIDED );
+}
+
 /*
 ==============
 RB_ShowLights
@@ -2398,6 +2479,7 @@ void RB_RenderDebugTools( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	RB_ShowNormals( drawSurfs, numDrawSurfs );
 	RB_ShowViewEntitys( backEnd.viewDef->viewEntitys );
 	RB_ShowLights();
+	RB_ShowLights2();
 	RB_ShowTextureVectors( drawSurfs, numDrawSurfs );
 	RB_ShowDominantTris( drawSurfs, numDrawSurfs );
 	if ( r_testGamma.GetInteger() > 0 ) {	// test here so stack check isn't so damn slow on debug builds

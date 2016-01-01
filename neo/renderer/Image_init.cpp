@@ -1985,12 +1985,14 @@ void idImageManager::Init() {
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
 
-	for(int i=0; i<6; ++i) {
-		char name[64] = {0};    
-		sprintf(name, "_shadowmapImage%d", i);
-		shadowmapImage[i] = ImageFromFunction(name, R_Depth);
-
-		shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, nullptr, shadowmapImage[i]);
+	const int shadowmapSizes[] = {256, 512, 1024};
+	for(int j=0; j<sizeof(shadowmapSizes)/sizeof(shadowmapSizes[0]); ++j) {	
+		for(int i=0; i<6; ++i) {
+			char name[64] = {0};    
+			sprintf(name, "_shadowmapImage%d.%d", i, j);
+			shadowmapImage[j][i] = ImageFromFunction(name, R_Depth);
+			shadowmapFramebuffer[j][i] = new fhFramebuffer(shadowmapSizes[j], shadowmapSizes[j], nullptr, shadowmapImage[j][i]);
+		}
 	}
 
 	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
