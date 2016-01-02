@@ -304,12 +304,12 @@ void main(void)
 
   if(rpShadowMappingMode == 1)
   {
-    float minBias = rpShadowParams.x;
-    float maxBias = rpShadowParams.y;
+    float minBias = rpShadowParams.x * 0.001;
+    float maxBias = rpShadowParams.y * 0.01;
     float fuzzyness = rpShadowParams.z;
     float samples = rpShadowSamples;
 
-    float bias = mix(maxBias, minBias, dot(normalDir, lightDir));
+    float bias = 0;//0.0001;//mix(maxBias, minBias, dot(normalDir, lightDir));
 
     float light = 0.15;
     result *= shadow(vec4(light,light,light,1), bias, fuzzyness, samples);

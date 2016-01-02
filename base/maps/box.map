@@ -6,6 +6,30 @@ Version 2
 {
  brushDef3
  {
+  ( -0 -0 -1 0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 3 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( 0 -0 1 -40 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 -3 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( 0 -1 0 -64 ) ( ( 0.0078125 0 -3 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( 1 0 -0 -578 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( 0 1 0 -0 ) ( ( 0.0078125 0 3 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( -1 0 0 576 ) ( ( 0.0078125373 0 -0.0000003962 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+ }
+}
+// primitive 1
+{
+ brushDef3
+ {
+  ( 0 0 -1 -0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( -0 0 1 -40 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( -0 -1 -0 -64 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( 1 0 0 -194 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( -0 1 0 -0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+  ( -1 0 0 192 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
+ }
+}
+// primitive 2
+{
+ brushDef3
+ {
   ( 0 0 -1 -0 ) ( ( 0.0625 0 12 ) ( 0 0.0625 -0.5 ) ) "textures/common/nodraw" 0 0 0
   ( -0 0 1 -256 ) ( ( 0.0625 0 12 ) ( 0 0.0625 0.5 ) ) "textures/common/nodraw" 0 0 0
   ( 0 -1 0 -64 ) ( ( 0.0625001788 0 0.4999994338 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
@@ -14,43 +38,43 @@ Version 2
   ( -1 0 0 -136 ) ( ( 0.0625 0 -12 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
  }
 }
-// primitive 1
+// primitive 3
 {
  brushDef3
  {
   ( 0 0 -1 256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( 0 0 1 -272 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( -1 0.0000001344 0 -192.0000152588 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -0.0000001344 -1 0 -128.0000152588 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 -0.0000001343 0 -191.9999389648 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0.0000001343 1 0 -256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -0.0000001344 -1 0 -127.9999465942 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 1 -0.0000001343 0 -687.9999389648 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0.0000001343 1 -0 -256.0000610352 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 2
+// primitive 4
 {
  brushDef3
  {
   ( 0 0 -1 -16 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( 0 0 1 0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
   ( -1 0.0000001344 0 -192.0000152588 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -0.0000001344 -1 0 -128.0000152588 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 -0.0000001343 0 -191.9999389648 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0.0000001343 1 0 -256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -0.0000001344 -1 0 -127.9999465942 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 1 -0.0000001343 0 -687.9999389648 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0.0000001343 1 -0 -256.0000610352 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 3
+// primitive 5
 {
  brushDef3
  {
   ( 0 0 -1 0 ) ( ( -0.000000001 -0.0078125009 0.500000596 ) ( 0.0078125009 -0.000000001 1 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( 0 0 1 -256 ) ( ( -0.000000001 0.0078125 0.5000004172 ) ( -0.0078125 -0.000000001 -1 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( -1 0.0000001344 0 -192.0000305176 ) ( ( 0.0078125009 0 -1 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -0.0000001344 -1 0 256 ) ( ( 0.0078125009 0 0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 -0.0000001343 0 -191.9999237061 ) ( ( 0.0078125009 0 1 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -0.0000001343 -1 0 256.0000610352 ) ( ( 0.0078125009 0 0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 1 -0.0000001343 0 -687.9999389648 ) ( ( 0.0078125009 0 1 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( 0.0000001343 1 0 -272 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 4
+// primitive 6
 {
  brushDef3
  {
@@ -58,23 +82,23 @@ Version 2
   ( 0 0 1 -256 ) ( ( -0.000000001 0.0078125 0.4999998212 ) ( -0.0078125 -0.000000001 -4.5 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( -1 0.0000001344 0 -191.9999694824 ) ( ( 0.0078125009 0 -4.5 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
   ( -0.0000001344 -1 0 -144 ) ( ( 0.0078125009 -0 0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 -0.0000001343 0 -191.9999847412 ) ( ( 0.0078125009 -0 4.5 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0.0000001344 1 0 128 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 1 -0.0000001342 0 -688 ) ( ( 0.0078125009 -0 4.5 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0.0000001344 1 -0 127.9999313354 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 5
+// primitive 7
 {
  brushDef3
  {
-  ( 0 0 -1 0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 5 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 0 1 -256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 -5 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 -1 0 -128 ) ( ( 0.0078125 0 -5 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 1 0 0 -208 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( 0 1 0 -256 ) ( ( 0.0078125 0 5 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
-  ( -1 0 0 192 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0 0 -1 0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 8.875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0 0 1 -256 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 -8.875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0 -1 0 -128 ) ( ( 0.0078125 0 -8.875 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 1 0 -0 -704 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 0 1 0 -256 ) ( ( 0.0078125 0 8.875 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -1 0 0 688 ) ( ( 0.0078125 0 -0.0000002682 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 6
+// primitive 8
 {
  brushDef3
  {
@@ -124,14 +148,15 @@ Version 2
 {
 "classname" "light"
 "name" "light_4"
-"origin" "-8 72 24"
+"origin" "216 64 144"
 "rotation" "-1 -1.07288e-006 0 1.07288e-006 -1 0 0 0 1"
 "noshadows" "0"
 "nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0"
+"falloff" "0.000000"
 "_color" "0.78 0.78 0.84"
-"light_radius" "1000 1000 1000"
+"light_radius" "600 300 300"
+"light_center" "250 0 0"
 }
 // entity 5
 {
@@ -157,7 +182,7 @@ Version 2
 "noshadows" "0"
 "nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0.000000"
+"falloff" "0"
 "_color" "0.84 0.01 0"
 "light_radius" "120 120 120"
 }

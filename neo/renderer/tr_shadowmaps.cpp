@@ -11,6 +11,8 @@ idCVar r_smNearClip( "r_smNearClip", "4", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCH
 idCVar r_smUseStaticOccluderModel( "r_smUseStaticOccluderModel", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "the occluder model is a single surface merged from all static and opaque world surfaces. Can be rendered to the shadow map with a single draw call");
 
 idCVar r_smQuality( "r_smQuality", "-1", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
+idCVar r_smPolyOffsetFactor( "r_smPolyOffsetFactor", "0", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "0", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
@@ -317,23 +319,25 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 		bool staticOccluderModelWasRendered = false;
 		if(r_smUseStaticOccluderModel.GetBool() && entityDef->staticOccluderModel) {
-			assert(entityDef->staticOccluderModel->NumSurfaces() > 0);
+			if(!r_ignore2.GetBool()) {
+				assert(entityDef->staticOccluderModel->NumSurfaces() > 0);
 
-			srfTriangles_t* tri = entityDef->staticOccluderModel->Surface(0)->geometry;
+				srfTriangles_t* tri = entityDef->staticOccluderModel->Surface(0)->geometry;
 
-			if (!tri->ambientCache) {
-				if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
-					common->Error( "RB_RenderShadowCasters: Failed to alloc ambient cache" );
+				if (!tri->ambientCache) {
+					if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
+						common->Error( "RB_RenderShadowCasters: Failed to alloc ambient cache" );
+					}
 				}
-			}
 
-			const auto offset = vertexCache.Bind( tri->ambientCache );			
-			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
-			glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
-			glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, shadowViewMatrix);
-			glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
-			RB_DrawElementsWithCounters( tri );
-			backEnd.pc.c_shadowMapDraws++;
+				const auto offset = vertexCache.Bind( tri->ambientCache );			
+				glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+				glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+				glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, shadowViewMatrix);
+				glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+				RB_DrawElementsWithCounters( tri );
+				backEnd.pc.c_shadowMapDraws++;
+			}
 			staticOccluderModelWasRendered = true;
 		}		
 
@@ -560,6 +564,9 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 
+	glEnable( GL_POLYGON_OFFSET_FILL );
+	glPolygonOffset( r_smPolyOffsetFactor.GetFloat(), r_smPolyOffsetBias.GetFloat() );
+
 	switch (r_smFaceCullMode.GetInteger())
 	{
 	case 0:
@@ -579,10 +586,12 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	for (int side=0; side < 6; side++) {
 		// FIXME: check for frustums completely off the screen
 
-		// render a shadow buffer
 		RB_RenderShadowBuffer(vLight, side, qualityIndex);		
 	}
 
+	glPolygonOffset( 0, 0 );
+	glDisable( GL_POLYGON_OFFSET_FILL );
+	
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
