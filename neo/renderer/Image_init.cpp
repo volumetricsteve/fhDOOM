@@ -1989,7 +1989,7 @@ void idImageManager::Init() {
 	for(int j=0; j<sizeof(shadowmapSizes)/sizeof(shadowmapSizes[0]); ++j) {	
 		for(int i=0; i<6; ++i) {
 			char name[64] = {0};    
-			sprintf(name, "_shadowmapImage%d.%d", i, j);
+			sprintf(name, "_shadowmapImage%d_%d", i, j);
 			shadowmapImage[j][i] = ImageFromFunction(name, R_Depth);
 			shadowmapFramebuffer[j][i] = new fhFramebuffer(shadowmapSizes[j], shadowmapSizes[j], nullptr, shadowmapImage[j][i]);
 		}
