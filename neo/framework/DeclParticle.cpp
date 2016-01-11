@@ -235,10 +235,10 @@ idParticleStage *idDeclParticle::ParseParticleStage( idLexer &src ) {
 			stage->material = declManager->FindMaterial( token.c_str() );
 			continue;
 		}
-    if (!token.Icmp("softness")) {
-      stage->softness = src.ParseFloat();
-      continue;
-    }
+		if (!token.Icmp( "softness" )) {
+			stage->softness = src.ParseFloat();
+			continue;
+		}
 		if ( !token.Icmp( "count" ) ) {
 			stage->totalParticles = src.ParseInt();
 			continue;
@@ -538,7 +538,7 @@ void idDeclParticle::WriteStage( idFile *f, idParticleStage *stage ) {
 	f->WriteFloatString( "\t{\n" );
 	f->WriteFloatString( "\t\tcount\t\t\t\t%i\n", stage->totalParticles );
 	f->WriteFloatString( "\t\tmaterial\t\t\t%s\n", stage->material->GetName() );
-  f->WriteFloatString( "\t\tsoftness\t\t\t%f\n", stage->softness );
+	f->WriteFloatString( "\t\tsoftness\t\t\t%f\n", stage->softness );
 	if ( stage->animationFrames ) {
 		f->WriteFloatString( "\t\tanimationFrames \t%i\n", stage->animationFrames );
 	}
