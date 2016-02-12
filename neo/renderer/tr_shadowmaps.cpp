@@ -11,8 +11,8 @@ idCVar r_smNearClip( "r_smNearClip", "1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCH
 idCVar r_smUseStaticOccluderModel( "r_smUseStaticOccluderModel", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "the occluder model is a single surface merged from all static and opaque world surfaces. Can be rendered to the shadow map with a single draw call");
 
 idCVar r_smQuality( "r_smQuality", "-1", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
-idCVar r_smPolyOffsetFactor( "r_smPolyOffsetFactor", "0", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
-idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "0", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smPolyOffsetFactor( "r_smPolyOffsetFactor", "4", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "26", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
@@ -531,14 +531,9 @@ static void RB_RenderShadowBuffer(viewLight_t* vLight, int side, int qualityInde
 
 
 void RB_RenderShadowMaps(viewLight_t* vLight) {
-
-	const idMaterial	*lightShader = vLight->lightShader;
-
-	// do fogging later
-	if (lightShader->IsFogLight()) {
-		return;
-	}
-	if (lightShader->IsBlendLight()) {
+	const idMaterial* lightShader = vLight->lightShader;
+	
+	if (lightShader->IsFogLight() || lightShader->IsBlendLight()) {
 		return;
 	}
 

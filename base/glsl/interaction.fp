@@ -196,7 +196,7 @@ float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
     return 0.0;
 }
 
-vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float bias, float fuzzyness, float samples)
+vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float fuzzyness, float samples)
 {   
     pos = pos / pos.w;
 
@@ -227,7 +227,7 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float bias, float fuzz
 }
 
 
-vec4 shadow(vec4 color, float bias, float fuzzyness, float samples)
+vec4 shadow(vec4 color, float fuzzyness, float samples)
 {  
   vec3 d = frag.toGlobalLightOrigin;
 
@@ -258,32 +258,32 @@ vec4 shadow(vec4 color, float bias, float fuzzyness, float samples)
 
   if(side == 0)
   {  
-    return getShadow(frag.shadow[0], texture6, color, bias, fuzzyness, samples); 
+    return getShadow(frag.shadow[0], texture6, color, fuzzyness, samples); 
   }
 
   if(side == 1)
   {  
-    return getShadow(frag.shadow[2], texture8, color, bias, fuzzyness, samples); 
+    return getShadow(frag.shadow[2], texture8, color, fuzzyness, samples); 
   }  
 
   if(side == 2)
   {  
-    return getShadow(frag.shadow[4], texture10, color, bias, fuzzyness, samples); 
+    return getShadow(frag.shadow[4], texture10, color, fuzzyness, samples); 
   }   
 
   if(side == 3)
   {  
-    return getShadow(frag.shadow[1], texture7, color, bias, fuzzyness, samples); 
+    return getShadow(frag.shadow[1], texture7, color, fuzzyness, samples); 
   }   
 
   if(side == 4)
   {  
-    return getShadow(frag.shadow[3], texture9, color, bias, fuzzyness, samples); 
+    return getShadow(frag.shadow[3], texture9, color, fuzzyness, samples); 
   }  
 
   if(side == 5)
   {  
-    return getShadow(frag.shadow[5], texture11, color, bias, fuzzyness, samples); 
+    return getShadow(frag.shadow[5], texture11, color, fuzzyness, samples); 
   }   
 
   return vec4(0,0,0,1);
@@ -309,9 +309,7 @@ void main(void)
     float fuzzyness = rpShadowParams.z;
     float samples = rpShadowSamples;
 
-    float bias = 0;//0.0001;//mix(maxBias, minBias, dot(normalDir, lightDir));
-
     float light = 0.15;
-    result *= shadow(vec4(light,light,light,1), bias, fuzzyness, samples);
+    result *= shadow(vec4(light,light,light,1), fuzzyness, samples);
   }
 }
