@@ -213,14 +213,14 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float fuzzyness, float
     float s = d/samples;
     for(float i=-d;i<d;i+=s) {
       for(float j=-s;j<d;j+=s) {
-        occluded += isOccluded(tex, pos.st, vec2(i,j), pos.z - bias);
+        occluded += isOccluded(tex, pos.st, vec2(i,j), pos.z);
         samplesTaken += 1.0;
       }     
     }
 
     float shadowness = occluded/samplesTaken;
 #else    
-    float shadowness = isOccluded(tex, pos.st, vec2(0,0), pos.z - bias);
+    float shadowness = isOccluded(tex, pos.st, vec2(0,0), pos.z);
 #endif    
 
   return mix(vec4(1, 1, 1, 1), shadowColor, shadowness);
