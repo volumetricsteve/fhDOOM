@@ -11,6 +11,10 @@ idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | 
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong?), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
+idCVar r_shadowDefaultType("r_shadowDefaultType", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "set default shadow type: 0 = Stencil Shadows (hard shadws), 1 = Shadow Maps (soft shadows)");
+
+static const int DEFAULT_SHADOW_TYPE_STENCILSHADOWS = 0;
+static const int DEFAULT_SHADOW_TYPE_SHADOWMAPS = 1;
 
 #define MAX_GLPROGS 128
 static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
@@ -607,7 +611,7 @@ been set to 128 on any surfaces that might receive shadows
 void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   assert(shadowProgram);
 
-  if (!r_shadows.GetBool()) {
+  if (r_shadows.GetInteger() == 0) {
     return;
   }
 
@@ -1660,7 +1664,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
   glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());  
 
-  if (r_ignore.GetBool() && !backEnd.vLight->lightDef->parms.noShadows) {
+  if (r_shadows.GetInteger() == 2 && !backEnd.vLight->lightDef->parms.noShadows) {
 	  const idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
 	  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
 
@@ -1761,12 +1765,12 @@ void RB_GLSL_DrawInteractions(void) {
       continue;
     }	
 
-	if (r_ignore.GetBool())
+	if (r_shadows.GetInteger() == 2)
 	{
 		if(!vLight->lightDef->parms.noShadows)
 			RB_RenderShadowMaps(vLight);
 	}
-
+	
     lightShader = vLight->lightShader;
 
     // clear the stencil buffer if needed
