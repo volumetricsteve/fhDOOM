@@ -611,7 +611,7 @@ been set to 128 on any surfaces that might receive shadows
 void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   assert(shadowProgram);
 
-  if (r_shadows.GetInteger() == 0) {
+  if (r_shadows.GetInteger() != 1) {
     return;
   }
 
