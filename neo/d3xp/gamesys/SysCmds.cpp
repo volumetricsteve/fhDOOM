@@ -129,7 +129,7 @@ void Cmd_ListSpawnArgs_f( const idCmdArgs &args ) {
 
 	for ( i = 0; i < ent->spawnArgs.GetNumKeyVals(); i++ ) {
 		const idKeyValue *kv = ent->spawnArgs.GetKeyVal( i );
-		gameLocal.Printf( "\"%s\"  "S_COLOR_WHITE"\"%s\"\n", kv->GetKey().c_str(), kv->GetValue().c_str() );
+		gameLocal.Printf( "\"%s\"  " S_COLOR_WHITE "\"%s\"\n", kv->GetKey().c_str(), kv->GetValue().c_str() );
 	}
 }
 
@@ -446,7 +446,7 @@ argv(0) god
 ==================
 */
 void Cmd_God_f( const idCmdArgs &args ) {
-	char		*msg;
+	const char *msg;
 	idPlayer	*player;
 
 	player = gameLocal.GetLocalPlayer();
@@ -475,7 +475,7 @@ argv(0) notarget
 ==================
 */
 void Cmd_Notarget_f( const idCmdArgs &args ) {
-	char		*msg;
+	const char		*msg;
 	idPlayer	*player;
 
 	player = gameLocal.GetLocalPlayer();
@@ -502,7 +502,7 @@ argv(0) noclip
 ==================
 */
 void Cmd_Noclip_f( const idCmdArgs &args ) {
-	char		*msg;
+	const char		*msg;
 	idPlayer	*player;
 
 	player = gameLocal.GetLocalPlayer();

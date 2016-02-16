@@ -117,6 +117,12 @@ int idRenderLightLocal::GetIndex() {
 	return index;
 }
 
+//TODO(johl): 'max' undefined on linux... should replace all usage of max macro
+//(included via windows.h) by proper max function (std::max?)
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+
 float idRenderLightLocal::GetMaximumCenterToEdgeDistance() const {	
 	const idVec3 halfSize = parms.lightRadius * 0.5;
 
