@@ -338,15 +338,7 @@ void GL_State( int stateBits ) {
 
 void  GL_UseProgram( const glslProgramDef_t* program ) {
   if(program && program->ident) {
-    glUseProgram(program->ident);
-
-    const unsigned short usedTextureUnits = program->usedTextureUnits;
-    
-    for(int i=0; i<(sizeof(usedTextureUnits) * 8); ++i) {
-      if (usedTextureUnits & (1 << i)) {
-        glUniform1i(glslProgramDef_t::uniform_texture0 + i, i);
-      }
-    }
+    glUseProgram(program->ident);       
   } else {
     glUseProgram(0);
   }

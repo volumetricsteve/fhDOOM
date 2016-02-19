@@ -294,7 +294,6 @@ struct glslProgramDef_t {
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
   GLuint ident;
-  unsigned short  usedTextureUnits;
 };
 
 extern const glslProgramDef_t* shadowProgram;

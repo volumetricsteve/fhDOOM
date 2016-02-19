@@ -1,18 +1,18 @@
 #include "global.inc"
 #line 3 __FILE__
 
-layout(location = TEXTURE_UNIT_1) uniform sampler2D texture1;
-layout(location = TEXTURE_UNIT_2) uniform sampler2D texture2;
-layout(location = TEXTURE_UNIT_3) uniform sampler2D texture3;
-layout(location = TEXTURE_UNIT_4) uniform sampler2D texture4;
-layout(location = TEXTURE_UNIT_5) uniform sampler2D texture5;
+layout(binding = 1) uniform sampler2D texture1;
+layout(binding = 2) uniform sampler2D texture2;
+layout(binding = 3) uniform sampler2D texture3;
+layout(binding = 4) uniform sampler2D texture4;
+layout(binding = 5) uniform sampler2D texture5;
 
-layout(location = TEXTURE_UNIT_6) uniform sampler2D texture6;
-layout(location = TEXTURE_UNIT_7) uniform sampler2D texture7;
-layout(location = TEXTURE_UNIT_8) uniform sampler2D texture8;
-layout(location = TEXTURE_UNIT_9) uniform sampler2D texture9;
-layout(location = TEXTURE_UNIT_10) uniform sampler2D texture10;
-layout(location = TEXTURE_UNIT_11) uniform sampler2D texture11;
+layout(binding = 6) uniform sampler2D texture6;
+layout(binding = 7) uniform sampler2D texture7;
+layout(binding = 8) uniform sampler2D texture8;
+layout(binding = 9) uniform sampler2D texture9;
+layout(binding = 10) uniform sampler2D texture10;
+layout(binding = 11) uniform sampler2D texture11;
 
 in vs_output
 {

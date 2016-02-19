@@ -1,6 +1,6 @@
 #include "global.inc"
 
-layout(location = TEXTURE_UNIT_0) uniform sampler2D texture1;
+layout(binding = 0) uniform sampler2D texture1;
 
 in vs_output
 {

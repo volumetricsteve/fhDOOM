@@ -1,7 +1,7 @@
 #include "global.inc"
 
-layout(location = TEXTURE_UNIT_1) uniform samplerCube cubemap1;
-layout(location = TEXTURE_UNIT_2) uniform sampler2D texture2;
+layout(binding = 1) uniform samplerCube cubemap1;
+layout(binding = 2) uniform sampler2D texture2;
 
 in vs_output
 {
