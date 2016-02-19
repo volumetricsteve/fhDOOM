@@ -55,22 +55,3 @@ layout(location = 122) uniform mat4 rpPointlightProjection[6];
 layout(location = 128) uniform vec4 rpGlobalLightOrigin;
 layout(location = 129) uniform vec4 rpShadowParams; //x=minBias, y=maxbias, z=fuzzyness, w=samples
 layout(location = 130) uniform int rpShadowSamples;
-
-
-#define TEXTURE_UNIT_0 24
-#define TEXTURE_UNIT_1 25
-#define TEXTURE_UNIT_2 26
-#define TEXTURE_UNIT_3 27
-#define TEXTURE_UNIT_4 28
-#define TEXTURE_UNIT_5 29
-#define TEXTURE_UNIT_6 30
-#define TEXTURE_UNIT_7 31
-#define TEXTURE_UNIT_8 32
-#define TEXTURE_UNIT_9 33
-#define TEXTURE_UNIT_10 34
-#define TEXTURE_UNIT_11 35
-#define TEXTURE_UNIT_12 36
-#define TEXTURE_UNIT_13 37
-#define TEXTURE_UNIT_14 38
-#define TEXTURE_UNIT_15 39
-
