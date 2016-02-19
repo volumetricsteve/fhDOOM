@@ -1,13 +1,3 @@
-#include "../game/game.h"
-#include "../game/Game_local.h"
-#include "../game/gamesys/Event.h"
-#include "../game/gamesys/Class.h"
-#include "../game/script/Script_Program.h"
-#include "../game/Entity.h"
-
-#include <qpushbutton.h>
-#include <qapplication.h>
-#include <qlabel.h>
 
 static QApplication * app = nullptr;
 static QLabel * currentEntity = nullptr;
