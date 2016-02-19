@@ -47,10 +47,6 @@ If you have questions concerning this license or the applicable additional terms
 #undef INFINITY
 #endif
 
-#ifdef FLT_EPSILON
-#undef FLT_EPSILON
-#endif
-
 #define DEG2RAD(a)				( (a) * idMath::M_DEG2RAD )
 #define RAD2DEG(a)				( (a) * idMath::M_RAD2DEG )
 
@@ -214,7 +210,7 @@ public:
 	static const float			M_SEC2MS;					// seconds to milliseconds multiplier
 	static const float			M_MS2SEC;					// milliseconds to seconds multiplier
 	static const float			INFINITY;					// huge number which should be larger than any valid number used
-	static const float			FLT_EPSILON;				// smallest positive number such that 1.0+FLT_EPSILON != 1.0
+	static const float			FLOAT_EPSILON;				// smallest positive number such that 1.0+FLT_EPSILON != 1.0
 
 private:
 	enum {

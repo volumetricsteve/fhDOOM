@@ -189,22 +189,6 @@ IF(UNIX)
 ENDIF() 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ###############################################################################
 ######################## GLEW #################################################
 ###############################################################################
@@ -900,6 +884,9 @@ IF(WIN32)
       tools/sound/DialogSound.h
       tools/sound/DialogSoundGroup.cpp
       tools/sound/DialogSoundGroup.h  
+
+      qteditors/qteditors_public.h
+      qteditors/common.cpp
     ) 
   ENDIF()
 ENDIF()
@@ -988,11 +975,21 @@ else()
     ${EXTERNAL_LIBS})  
 endif()  
 
+set(CMAKE_PREFIX_PATH "C:\\Entwicklung\\Qt\\x86\\5.5.1\\5.5\\msvc2013\\")
+
+# Find includes in corresponding build directories
+# set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# Instruct CMake to run moc automatically when needed.
+set(CMAKE_AUTOMOC ON)
+# Find the QtWidgets library
+find_package(Qt5Widgets)
+
 set(TARGET_NAME "fhDOOM")
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
 add_executable(${TARGET_NAME} ${SOURCES})
 target_link_libraries(${TARGET_NAME} ${LINK_LIBS})
 add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
+qt5_use_modules(${TARGET_NAME} Widgets)
 
 if(MSVC)
   set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")

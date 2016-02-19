@@ -47,6 +47,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "win_local.h"
 #include "rc/CreateResourceIDs.h"
 #include "../../renderer/tr_local.h"
+#include "../../../qteditors/qteditors_public.h"
 
 idCVar Win32Vars_t::sys_arch( "sys_arch", "", CVAR_SYSTEM | CVAR_INIT, "" );
 idCVar Win32Vars_t::sys_cpustring( "sys_cpustring", "detect", CVAR_SYSTEM | CVAR_INIT, "" );
@@ -1431,6 +1432,8 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		Sys_FPU_EnableExceptions( TEST_FPU_EXCEPTIONS );
 
 #ifdef ID_ALLOW_TOOLS
+		runQtEditors();
+
 		if ( com_editors ) {
 			if ( com_editors & EDITOR_GUI ) {
 				// GUI editor
