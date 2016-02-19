@@ -48,4 +48,11 @@ SET(SOURCES
 
 include_directories("include")
 add_library(curl ${SOURCES})
+add_definitions(-DHAVE_GETTIMEOFDAY)
+add_definitions(-DHAVE_HAVE_NETINET_IN_H)
 SET_PROPERTY(TARGET curl                PROPERTY FOLDER 3rdParty)
+IF(UNIX)
+  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set_target_properties(curl PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+  ENDIF()
+ENDIF()  
