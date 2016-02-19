@@ -204,6 +204,14 @@ vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float fuzzyness, float
     pos.y = pos.y/2.0 + 0.5;
     pos.z = pos.z/2.0 + 0.5;
 
+    if(pos.x < 0 || pos.y < 0)
+      return vec4(1,0,0,1);
+
+    if(pos.x > 1 || pos.y > 1)
+      return vec4(0,1,0,1);      
+
+//    return vec4(1,1,1,1);
+
 #define FILTER_PCF
 
 #if defined(FILTER_PCF)
@@ -302,14 +310,18 @@ void main(void)
     result = blinnPhong(textureData, normalDir, lightDir);
 
 
+  float minBias = rpShadowParams.x * 0.001;
+  float maxBias = rpShadowParams.y * 0.01;
+  float fuzzyness = rpShadowParams.z;
+  float samples = rpShadowSamples;
+  float light = 0.15;
+
   if(rpShadowMappingMode == 1)
   {
-    float minBias = rpShadowParams.x * 0.001;
-    float maxBias = rpShadowParams.y * 0.01;
-    float fuzzyness = rpShadowParams.z;
-    float samples = rpShadowSamples;
-
-    float light = 0.15;
     result *= shadow(vec4(light,light,light,1), fuzzyness, samples);
+  } 
+  else if(rpShadowMappingMode == 2)
+  {
+    result *= getShadow(frag.shadow[0], texture6, vec4(light,light,light,1), fuzzyness, samples); 
   }
 }

@@ -676,6 +676,8 @@ typedef struct {
 
 	float               shadowViewProjection[6][16];
 	int                 shadowMapSize;
+	float               testViewMatrix[16];
+	float               testProjectionMatrix[16];
 } backEndState_t;
 
 
@@ -1242,6 +1244,8 @@ void R_ModulateLights_f( const idCmdArgs &args );
 
 void R_SetLightProject( idPlane lightProject[4], const idVec3 origin, const idVec3 targetPoint,
 	   const idVec3 rightVector, const idVec3 upVector, const idVec3 start, const idVec3 stop );
+
+void R_SetLightFrustum( const idPlane lightProject[4], idPlane frustum[6] );
 
 void R_AddLightSurfaces( void );
 void R_AddModelSurfaces( void );

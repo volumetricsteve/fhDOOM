@@ -283,12 +283,14 @@ struct glslProgramDef_t {
   static const int uniform_specularExp = 108;
   static const int uniform_specularScale = 109;
 
-  static const int uniform_shadowViewProjection = 120;
-  static const int uniform_shadowMappingMode = 126;
-  static const int uniform_globalLightOrigin = 127;
-  static const int uniform_shadowParams = 128;
-  static const int uniform_shadowSamples = 129;
-
+  static const int uniform_shadowMappingMode = 120;
+  static const int uniform_spotlightProjection = 121;
+  static const int uniform_pointlightProjection = 122;
+  
+  static const int uniform_globalLightOrigin = 128;
+  static const int uniform_shadowParams = 129;
+  static const int uniform_shadowSamples = 130;
+  
   char   vertexShaderName[64];
   char   fragmentShaderName[64];
   GLuint ident;
@@ -298,6 +300,7 @@ struct glslProgramDef_t {
 extern const glslProgramDef_t* shadowProgram;
 extern const glslProgramDef_t* interactionProgram;
 extern const glslProgramDef_t* depthProgram;
+extern const glslProgramDef_t* shadowmapProgram;
 extern const glslProgramDef_t* defaultProgram;
 extern const glslProgramDef_t* skyboxProgram;
 extern const glslProgramDef_t* bumpyEnvProgram;

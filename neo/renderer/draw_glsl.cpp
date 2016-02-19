@@ -22,6 +22,7 @@ static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
 const glslProgramDef_t* shadowProgram = nullptr;
 const glslProgramDef_t* interactionProgram = nullptr;
 const glslProgramDef_t* depthProgram = nullptr;
+const glslProgramDef_t* shadowmapProgram = nullptr;
 const glslProgramDef_t* defaultProgram = nullptr;
 const glslProgramDef_t* depthblendProgram = nullptr;
 const glslProgramDef_t* skyboxProgram = nullptr;
@@ -325,6 +326,7 @@ void	R_GLSL_Init( void )
   blendLightProgram = R_FindGlslProgram("blendLight.vp", "blendLight.fp");  
   shadowProgram = R_FindGlslProgram("shadow.vp", "shadow.fp");
   depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");  
+  shadowmapProgram = R_FindGlslProgram("shadowmap.vp", "shadowmap.fp");  
   defaultProgram = R_FindGlslProgram("default.vp", "default.fp");
   depthblendProgram = R_FindGlslProgram("depthblend.vp", "depthblend.fp");
   skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
@@ -1568,7 +1570,6 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, din->surf->space->modelMatrix);
   glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
   glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
   glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
@@ -1664,24 +1665,37 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
   glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());  
 
+  glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
+
   if (r_shadows.GetInteger() == 2 && !backEnd.vLight->lightDef->parms.noShadows) {
-	  const idVec4 globalLightOrigin = idVec4(backEnd.vLight->globalLightOrigin, 1);
-	  glUniform4fv(glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr());
+	  const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
+	  glUniform4fv( glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr() );
 
 	  idVec4 shadowParams;
 	  int samples;
-	  RB_GLSL_GetShadowParams(&shadowParams.x, &shadowParams.y, &shadowParams.z, &samples);
+	  RB_GLSL_GetShadowParams( &shadowParams.x, &shadowParams.y, &shadowParams.z, &samples );
 	  shadowParams.w = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
 
-	  glUniform4fv(glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr());
-	  glUniform1i(glslProgramDef_t::uniform_shadowSamples, samples);
+	  glUniform4fv( glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr() );
+	  glUniform1i( glslProgramDef_t::uniform_shadowSamples, samples );
 
-	  glUniformMatrix4fv(glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0]);
-	  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, 1);
-  } else {
-	  glUniform1i(glslProgramDef_t::uniform_shadowMappingMode, 0);
+	  //glUniformMatrix4fv( glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
+
+	  if (backEnd.vLight->lightDef->parms.pointLight) {
+		  //point light
+		  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 1 );
+		  glUniformMatrix4fv( glslProgramDef_t::uniform_pointlightProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
+	  }
+	  else {
+		  //projected light
+		  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 2 );
+		  glUniformMatrix4fv( glslProgramDef_t::uniform_spotlightProjection, 1, false, backEnd.testProjectionMatrix );
+	  }
   }
-
+  else {
+	  //no shadows
+	  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 0 );
+  }
 
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes
