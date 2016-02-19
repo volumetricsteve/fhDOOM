@@ -585,6 +585,9 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 		if (!entityDef) {
 			continue;
 		}
+		if (entityDef->parms.noShadow) {
+			continue;
+		}
 		if (inter->numSurfaces < 1) {
 			continue;
 		}
