@@ -205,15 +205,14 @@ This may need to scan six cube map images
 ===============
 */
 GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, int width, int height,
-									 textureDepth_t minimumDepth, bool *monochromeResult ) const {
-	int		i, c;
-	const byte	*scan;
+									 textureDepth_t minimumDepth, bool *monochromeResult ) const {	
+
 	int		rgbOr, rgbAnd, aOr, aAnd;
 	int		rgbDiffer, rgbaDiffer;
 
 	// determine if the rgb channels are all the same
 	// and if either all rgb or all alpha are 255
-	c = width*height;
+	
 	rgbDiffer = 0;
 	rgbaDiffer = 0;
 	rgbOr = 0;
@@ -224,15 +223,16 @@ GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, in
 	*monochromeResult = true;	// until shown otherwise
 
 	for ( int side = 0 ; side < numDataPtrs ; side++ ) {
-		scan = dataPtrs[side];
-		for ( i = 0; i < c; i++, scan += 4 ) {
-			int		cor, cand;
+		const int c = width*height;
+		const byte* scan = dataPtrs[side];
+
+		for ( int i = 0; i < c; i++, scan += 4 ) {
 
 			aOr |= scan[3];
 			aAnd &= scan[3];
 
-			cor = scan[0] | scan[1] | scan[2];
-			cand = scan[0] & scan[1] & scan[2];
+			int cor = scan[0] | scan[1] | scan[2];
+			int cand = scan[0] & scan[1] & scan[2];
 			
 			// if rgb are all the same, the or and and will match
 			rgbDiffer |= ( cor ^ cand );
@@ -288,6 +288,9 @@ GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, in
 	}
 
 	if ( minimumDepth == TD_SPECULAR ) {
+		if(needAlpha) {
+			return GL_RGBA8;
+		}
 		// we are assuming that any alpha channel is unintentional
 		if ( glConfig.textureCompressionAvailable ) {
 			return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
