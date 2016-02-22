@@ -54,6 +54,13 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	buttonLayout->addWidget(m_okButton);
 	mainLayout->addLayout(buttonLayout);
 
+	m_material = new QComboBox(this);
+	auto materialLayout = new QHBoxLayout;
+	materialLayout->addWidget( new QLabel( "Material" ) );
+	materialLayout->addWidget( m_material );
+	rightLayout->addLayout( materialLayout );
+	LoadMaterials();	
+
 	this->setLayout(mainLayout);
 
 	QObject::connect(m_lighttype, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
@@ -121,6 +128,12 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 
 	QObject::connect( m_castShadows, &QCheckBox::stateChanged, [=](){
 		this->m_currentData.castShadows = this->m_castShadows->isChecked();
+		this->UpdateGame();
+	} );
+
+	QObject::connect( m_material, &QComboBox::currentTextChanged, [=](QString text){
+		QByteArray ascii = text.toLocal8Bit();
+		this->m_currentData.material = ascii.data();
 		this->UpdateGame();
 	} );
 
@@ -249,6 +262,9 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 	center = spawnArgs->GetVector( "light_center", "0 0 0" );
 	color = spawnArgs->GetVector( "_color", "1 1 1" );
 	castShadows = !spawnArgs->GetBool("noshadows");
+	name = spawnArgs->GetString("name");
+	classname = spawnArgs->GetString("classname");
+	material = spawnArgs->GetString("texture");
 }
 
 void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {	
@@ -289,10 +305,14 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 	spawnArgs->SetVector("_color", color);	
 	spawnArgs->SetBool("noshadows", !castShadows);
 
+	if(!material.IsEmpty())
+		spawnArgs->Set("texture", material.c_str());
+
 	//TODO(johl): are expected to be there(?), but are not used by the game
 	spawnArgs->SetBool("nospecular", false);
 	spawnArgs->SetBool("nodiffuse", false);
 	spawnArgs->SetFloat("falloff", 0.0f);
+	
 }
 
 
@@ -304,10 +324,19 @@ static void initVec3EditFromSpawnArg(fhVec3Edit* edit, const idDict* spawnArgs, 
 
 
 void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
-	if(!spawnArgs)
+	if(!spawnArgs) {
+		m_currentData.name.Empty();
+		m_currentData.classname.Empty();
+		this->setWindowTitle(QString("Light Editor: <no light selected>"));
 		return;
+	}
 	
 	m_currentData.initFromSpawnArgs(spawnArgs);
+
+	if(m_currentData.classname != "light") {
+		this->setWindowTitle(QString("Light Editor: <no light selected>"));
+		return;
+	}
 
 	m_lighttype->setCurrentIndex((int)m_currentData.type);
 	m_pointlightParameters.radius->set(m_currentData.radius);
@@ -320,10 +349,13 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_projectedlightParameters.start->set( m_currentData.start );
 	m_projectedlightParameters.end->set( m_currentData.end );	
 	m_castShadows->setChecked(m_currentData.castShadows);
+	m_material->setCurrentText(m_currentData.material.c_str());
 
 	QColor color;
 	color.setRgbF(m_currentData.color.x, m_currentData.color.y, m_currentData.color.z);
 	setLightColor(color);
+
+	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));
 }
 
 void fhLightEditor::setLightColor(QColor color) {
@@ -342,6 +374,9 @@ void fhLightEditor::setLightColor(QColor color) {
 }
 
 void fhLightEditor::UpdateGame() {
+	if(m_currentData.name.IsEmpty() || m_currentData.classname != "light")
+		return;
+
 	idEntity* list[128];	
 	int count = gameEdit->GetSelectedEntities( list, 128 );	
 
@@ -353,6 +388,19 @@ void fhLightEditor::UpdateGame() {
 		gameEdit->EntityUpdateChangeableSpawnArgs( list[i], NULL );
 		gameEdit->EntityUpdateVisuals(list[i]);
 	}
+}
 
-	//gameEdit->FindEntity()
+
+void fhLightEditor::LoadMaterials() {
+	m_material->clear();
+	int count = declManager->GetNumDecls( DECL_MATERIAL );		
+	m_material->addItem("");
+	for (int i = 0; i < count; i++) {
+		const idMaterial *mat = declManager->MaterialByIndex( i, false );
+		idStr str = mat->GetName();
+		str.ToLower();
+		if (str.Icmpn( "lights/", strlen( "lights/" ) ) == 0 || str.Icmpn( "fogs/", strlen( "fogs/" ) ) == 0) {
+			m_material->addItem(str.c_str());
+		}
+	}
 }

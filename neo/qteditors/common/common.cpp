@@ -23,9 +23,9 @@ void runQtEditors()
 
 void QtLightEditorInit( const idDict* spawnArgs ) {
 	if(!lightEditor) {
-		lightEditor = new fhLightEditor(nullptr);
-		lightEditor->show();
+		lightEditor = new fhLightEditor(nullptr);		
 	}
 
 	lightEditor->initFromSpawnArgs(spawnArgs);
+	lightEditor->show();
 }

@@ -25,6 +25,9 @@ private:
 	};
 
 	struct Data {
+		idStr name;
+		idStr classname;
+		idStr material;
 		fhLightType type;
 		idVec3 radius;
 		idVec3 center;
@@ -43,6 +46,7 @@ private:
 	Data m_currentData;
 
 	QComboBox* m_lighttype;
+	QComboBox* m_material;
 	QPushButton* m_colorButton;
 	QPushButton* m_cancelButton;
 	QPushButton* m_applyButton;
@@ -76,4 +80,6 @@ private:
 	QWidget* CreatePointLightParameters();
 	QWidget* CreateParallelLightParameters();
 	QWidget* CreateProjectedLightParameters();
+
+	void LoadMaterials();
 };
