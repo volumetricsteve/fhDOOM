@@ -1,6 +1,9 @@
 #pragma once
 #include "../precompiled.h"
 
+
+class fhNumEdit;
+
 class fhVec3Edit : public QWidget {
 	Q_OBJECT
 
@@ -26,11 +29,13 @@ public:
 	void setY(float value);
 	void setZ(float value);
 
+	virtual QSize sizeHint() const override;
+
 signals:
 	void valueChanged(idVec3 v);
 
 private:
-	QLineEdit* m_xedit;
-	QLineEdit* m_yedit;
-	QLineEdit* m_zedit;	
+	fhNumEdit* m_xedit;
+	fhNumEdit* m_yedit;
+	fhNumEdit* m_zedit;	
 };

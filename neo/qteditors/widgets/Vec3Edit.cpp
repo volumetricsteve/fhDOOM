@@ -1,37 +1,18 @@
 #include "Vec3Edit.h"
-#include <qvalidator.h>
-
-static QValidator* createValidator(fhVec3Edit::Type type, QObject* parent)
-{
-	switch (type)
-	{
-	case fhVec3Edit::Size:
-		return new QIntValidator( 0, 65535, parent );
-	case fhVec3Edit::Position:
-		//fall through
-	case fhVec3Edit::Direction:
-		return new QIntValidator( -65535, 65535, parent );
-	}
-
-	return nullptr;
-}
+#include "NumEdit.h"
 
 fhVec3Edit::fhVec3Edit(Type type, bool labels) 
 : QWidget() {
 
-	const int width = 45;
+	int from = INT_MIN;
+	int to = INT_MAX;
+	
+	if(type == fhVec3Edit::Size)
+		from = 0;
 
-	m_xedit = new QLineEdit(this);
-	m_yedit = new QLineEdit(this);
-	m_zedit = new QLineEdit(this);
-
-	m_xedit->setValidator( createValidator( type, this ) );
-	m_yedit->setValidator( createValidator( type, this ) );
-	m_zedit->setValidator( createValidator( type, this ) );
-
-	m_xedit->setMaximumWidth(width);
-	m_yedit->setMaximumWidth(width);
-	m_zedit->setMaximumWidth(width);
+	m_xedit = new fhNumEdit(from, to, this);
+	m_yedit = new fhNumEdit(from, to, this);
+	m_zedit = new fhNumEdit(from, to, this);
 	
 	auto layout = new QGridLayout;
 	layout->setSpacing(2);
@@ -50,11 +31,12 @@ fhVec3Edit::fhVec3Edit(Type type, bool labels)
 		layout->addWidget( m_zedit, 0, 2 );
 	}
 
-	QObject::connect(m_xedit, &QLineEdit::textChanged, [&]() {this->valueChanged(this->get()); });
-	QObject::connect(m_yedit, &QLineEdit::textChanged, [&]() {this->valueChanged(this->get()); });
-	QObject::connect(m_zedit, &QLineEdit::textChanged, [&]() {this->valueChanged(this->get()); });
+	QObject::connect(m_xedit, &fhNumEdit::valueChanged, [&]() {this->valueChanged(this->get()); });
+	QObject::connect(m_yedit, &fhNumEdit::valueChanged, [&]() {this->valueChanged(this->get()); });
+	QObject::connect(m_zedit, &fhNumEdit::valueChanged, [&]() {this->valueChanged(this->get()); });
 
 	this->setLayout(layout);	
+	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 }
 
 fhVec3Edit::~fhVec3Edit() {
@@ -71,25 +53,30 @@ void fhVec3Edit::set( idVec3 v ) {
 }
 
 float fhVec3Edit::getX() const {
-	return m_xedit->text().toFloat();
+	return m_xedit->getFloat();
 }
 
 float fhVec3Edit::getY() const {
-	return m_yedit->text().toFloat();
+	return m_yedit->getFloat();
 }
 
 float fhVec3Edit::getZ() const {
-	return m_zedit->text().toFloat();
+	return m_zedit->getFloat();
 }
 
 void fhVec3Edit::setX( float value ) {
-	m_xedit->setText(QString::number(value));
+	m_xedit->setFloat(value);
 }
 
 void fhVec3Edit::setY( float value ) {
-	m_yedit->setText(QString::number(value));
+	m_yedit->setFloat(value);
 }
 
 void fhVec3Edit::setZ( float value ) {
-	m_zedit->setText(QString::number(value));
+	m_zedit->setFloat(value);
+}
+
+QSize fhVec3Edit::sizeHint() const {
+	QSize size = QSize(45, m_xedit->sizeHint().height());
+	return size;
 }

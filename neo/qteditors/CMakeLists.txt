@@ -5,6 +5,8 @@ set(SOURCES
   common/common.cpp  
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp
+  widgets/NumEdit.h
+  widgets/NumEdit.cpp
   widgets/Vec3Edit.h
   widgets/Vec3Edit.cpp)
 
