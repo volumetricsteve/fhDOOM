@@ -991,6 +991,7 @@ void idCommonLocal::InitTool( const toolFlag_t tool, const idDict *dict ) {
 		SoundEditorInit( dict );
 	} else if ( tool & EDITOR_LIGHT ) {
 		LightEditorInit( dict );
+		QtLightEditorInit( dict );
 	} else if ( tool & EDITOR_PARTICLE ) {
 		ParticleEditorInit( dict );
 	} else if ( tool & EDITOR_AF ) {

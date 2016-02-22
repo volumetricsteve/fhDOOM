@@ -11,3 +11,5 @@
 #include <qapplication.h>
 #include <qlabel.h>
 #include <QPushButton>
+#include <qlineedit.h>
+#include <qlayout.h>

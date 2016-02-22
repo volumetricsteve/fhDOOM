@@ -1,8 +1,12 @@
 
 set(SOURCES
   qteditors_public.h
-  common.cpp
-  precompiled.h)
+  precompiled.h
+  common/common.cpp  
+  dialogs/LightEditor.h
+  dialogs/LightEditor.cpp
+  widgets/Vec3Edit.h
+  widgets/Vec3Edit.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_force_include(precompiled.h SOURCES)
@@ -25,6 +29,10 @@ qt5_use_modules(${TARGET_NAME} Widgets)
 
 if(MSVC)
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER libs)
+
+  source_group(common common/.*)
+  source_group(dialogs dialogs/.*)
+  source_group(widgets widgets/.*)
 endif()
 
 IF(UNIX)
@@ -32,3 +40,4 @@ IF(UNIX)
     set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
   ENDIF()
 ENDIF()  
+
