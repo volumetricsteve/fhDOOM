@@ -37,7 +37,14 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
+#ifdef __linux__
+#define stricmp strcasecmp
+#define strnicmp strncasecmp
+#endif
+
 class idVec4;
+
+
 
 #ifndef FILE_HASH_SIZE
 #define FILE_HASH_SIZE		1024
