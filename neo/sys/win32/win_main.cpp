@@ -1431,8 +1431,10 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		// set exceptions, even if some crappy syscall changes them!
 		Sys_FPU_EnableExceptions( TEST_FPU_EXCEPTIONS );
 
+		// update Qt based GUIs
+		QtRun();
+
 #ifdef ID_ALLOW_TOOLS
-		runQtEditors();
 
 		if ( com_editors ) {
 			if ( com_editors & EDITOR_GUI ) {

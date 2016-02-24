@@ -41,6 +41,8 @@ If you have questions concerning this license or the applicable additional terms
 class	idProgram;
 class	idInterpreter;
 
+// Qt Stuff
+void    QtRun( void );
 
 // Radiant Level Editor
 void	RadiantInit( void );
@@ -54,7 +56,6 @@ void	RadiantSync( const char *mapName, const idVec3 &viewOrg, const idAngles &vi
 void	LightEditorInit( const idDict *spawnArgs );
 void	LightEditorShutdown( void );
 void	LightEditorRun( void );
-void    QtLightEditorInit( const idDict* spawnArgs );
 
 // in-game Sound Editor
 void	SoundEditorInit( const idDict *spawnArgs );

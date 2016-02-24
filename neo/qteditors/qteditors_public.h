@@ -1,3 +1,3 @@
 #pragma once
 
-void runQtEditors();
+void QtLightEditorInit( const idDict* spawnArgs );

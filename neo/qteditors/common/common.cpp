@@ -3,7 +3,7 @@
 static QApplication * app = nullptr;
 static fhLightEditor * lightEditor = nullptr;
 
-void runQtEditors()
+void QtRun()
 {	
 	if(!app)
 	{
@@ -14,10 +14,6 @@ void runQtEditors()
 	}
 
 	QApplication::processEvents();
-
-#if 0
-
-#endif
 }
 
 
@@ -27,5 +23,6 @@ void QtLightEditorInit( const idDict* spawnArgs ) {
 	}
 
 	lightEditor->initFromSpawnArgs(spawnArgs);
-	lightEditor->show();
+	lightEditor->show();	
+	lightEditor->setFocus();
 }

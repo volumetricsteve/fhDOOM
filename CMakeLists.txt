@@ -83,6 +83,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
   add_definitions(-DXTHREADS)
   SET(CMAKE_CXX_FLAGS "-std=c++11 -Wno-format-security -Wno-invalid-offsetof -fvisibility=hidden -fno-unsafe-math-optimizations -fno-strict-aliasing -fPIC")
   SET(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer -O0")
+  SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -msse2")
 ENDIF()
 
 IF(UNIX)

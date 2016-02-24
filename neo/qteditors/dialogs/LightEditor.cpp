@@ -4,7 +4,10 @@
 #include <qcheckbox.h>
 #include <qcombobox.h>
 #include <qcolordialog.h>
+#include <qmessagebox.h>
+#include <QCloseEvent>
 
+#include "../tools/radiant/QE3.H"
 
 fhLightEditor::fhLightEditor(QWidget* parent)
 : QDialog(parent) {
@@ -45,7 +48,7 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 
 	QHBoxLayout* buttonLayout = new QHBoxLayout;
 	m_cancelButton = new QPushButton("Cancel", this);
-	m_applyButton = new QPushButton("Apply", this);
+	m_applyButton = new QPushButton("Save", this);
 	m_okButton = new QPushButton("OK", this);	
 
 	buttonLayout->addWidget(m_cancelButton);
@@ -64,7 +67,10 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	this->setLayout(mainLayout);
 
 	QObject::connect(m_lighttype, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
-		this->UpdateLightParameters(); 
+		m_currentData.type = static_cast<fhLightType>(m_lighttype->currentIndex());
+		m_modified = true;
+		this->UpdateGame();
+		UpdateLightParameters();
 	});
 
 	QObject::connect(m_colorButton, &QPushButton::clicked, [=](){ 
@@ -83,64 +89,125 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 
 	QObject::connect(m_pointlightParameters.radius, &fhVec3Edit::valueChanged, [=](idVec3 v){
 		this->m_currentData.radius = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_pointlightParameters.center, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.center = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_parallellightParameters.radius, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.radius = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_parallellightParameters.direction, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.center = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_projectedlightParameters.target, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.target = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_projectedlightParameters.right, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.right = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_projectedlightParameters.up, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.up = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_projectedlightParameters.start, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.start = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_projectedlightParameters.end, &fhVec3Edit::valueChanged, [=]( idVec3 v ){
 		this->m_currentData.end = v;
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_castShadows, &QCheckBox::stateChanged, [=](){
 		this->m_currentData.castShadows = this->m_castShadows->isChecked();
+		this->m_modified = true;
 		this->UpdateGame();
 	} );
 
 	QObject::connect( m_material, &QComboBox::currentTextChanged, [=](QString text){
 		QByteArray ascii = text.toLocal8Bit();
 		this->m_currentData.material = ascii.data();
+		this->m_modified = true;
 		this->UpdateGame();
+	} );
+
+	QObject::connect( m_applyButton, &QPushButton::clicked, [=](){
+		this->UpdateGame();
+		this->m_originalData = this->m_currentData;
+		this->m_modified = false;
+	});
+
+
+	QObject::connect( m_okButton, &QPushButton::clicked, [=](){
+		this->UpdateGame();
+		this->m_originalData = this->m_currentData;
+		this->m_modified = false;
+		this->close();
+	} );
+
+	QObject::connect( m_cancelButton, &QPushButton::clicked, [=](){
+		this->m_currentData = this->m_originalData;
+		this->m_modified = false;
+		this->UpdateGame();		
+		this->close();
 	} );
 
 	UpdateLightParameters();
 }
 
 fhLightEditor::~fhLightEditor() {
+}
+
+void fhLightEditor::closeEvent(QCloseEvent* event) {
+	if(m_modified) {
+		QMessageBox::StandardButton resBtn = QMessageBox::question( this, "Light Editor",
+			tr( "You have unsaved changes." ),
+			QMessageBox::Cancel | QMessageBox::Save | QMessageBox::Discard );
+
+		if (resBtn == QMessageBox::Save) {
+			this->UpdateGame();
+			this->m_originalData = this->m_currentData;
+			this->m_modified = false;			
+			event->accept();
+			return;
+		}
+
+		if (resBtn == QMessageBox::Discard) {
+			this->m_currentData = this->m_originalData;
+			this->m_modified = false;
+			this->UpdateGame();
+			event->accept();
+			return;
+		}
+		
+		event->ignore();
+		return;		
+	}
+
+	event->accept();
 }
 
 QWidget* fhLightEditor::CreatePointLightParameters() {		
@@ -214,6 +281,12 @@ QWidget* fhLightEditor::CreateProjectedLightParameters() {
 	group->setLayout( grid );
 
 	QObject::connect(m_projectedlightParameters.explicitStartEnd, &QCheckBox::stateChanged, [=](){
+		this->m_currentData.explicitStartEnd = this->m_projectedlightParameters.explicitStartEnd->isChecked();
+		if(this->m_currentData.explicitStartEnd) {
+			this->m_currentData.end = this->m_currentData.target;
+			this->m_currentData.start = this->m_currentData.target.Normalized() * 8;
+		}
+		this->m_modified = true;
 		this->UpdateLightParameters();
 	} );
 
@@ -222,11 +295,10 @@ QWidget* fhLightEditor::CreateProjectedLightParameters() {
 
 
 void fhLightEditor::UpdateLightParameters() {
-	m_currentData.type = static_cast<fhLightType>(m_lighttype->currentIndex());
 	const bool pointlight = (m_lighttype->currentIndex() == 0);
 	const bool parallellight = (m_lighttype->currentIndex() == 1);
 	const bool projectedlight = (m_lighttype->currentIndex() == 2);
-	const bool explicitStartEnd = projectedlight && m_projectedlightParameters.explicitStartEnd->isChecked();
+	const bool explicitStartEnd = projectedlight && m_currentData.explicitStartEnd;
 
 	m_pointlightParameters.center->setEnabled(pointlight);
 	m_pointlightParameters.radius->setEnabled(pointlight);
@@ -254,10 +326,18 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 		type = fhLightType::Point;
 	}
 
+	explicitStartEnd = false;
+
+	if(spawnArgs->GetVector("light_start", "0 0 0", start)) {
+		explicitStartEnd = true;
+	}
+
+	if (spawnArgs->GetVector( "light_end", "0 0 0", end )) {
+		explicitStartEnd = true;
+	}
+
 	target = spawnArgs->GetVector( "light_target", "0 0 -256" );
 	up = spawnArgs->GetVector( "light_up", "0 -128 0" );
-	start = spawnArgs->GetVector( "light_start", "0 0 0" );
-	end = spawnArgs->GetVector( "light_end", "0 0 0" );
 	radius = spawnArgs->GetVector( "light_radius", "100 100 100" );
 	center = spawnArgs->GetVector( "light_center", "0 0 0" );
 	color = spawnArgs->GetVector( "_color", "1 1 1" );
@@ -287,8 +367,10 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 		spawnArgs->SetVector("light_right", right);
 		spawnArgs->SetVector("light_up", up);
 		spawnArgs->SetVector("light_target", target);
-		spawnArgs->SetVector("light_start", start);
-		spawnArgs->SetVector("light_end", end);
+		if(explicitStartEnd) {
+			spawnArgs->SetVector("light_start", start);
+			spawnArgs->SetVector("light_end", end);
+		}
 		break;
 	case fhLightType::Parallel:
 		spawnArgs->SetInt("parallel", 1);
@@ -332,6 +414,8 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	}
 	
 	m_currentData.initFromSpawnArgs(spawnArgs);
+	m_originalData = m_currentData;
+	m_modified = false;
 
 	if(m_currentData.classname != "light") {
 		this->setWindowTitle(QString("Light Editor: <no light selected>"));
@@ -348,13 +432,15 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_projectedlightParameters.up->set( m_currentData.up );
 	m_projectedlightParameters.start->set( m_currentData.start );
 	m_projectedlightParameters.end->set( m_currentData.end );	
+	m_projectedlightParameters.explicitStartEnd->setChecked( m_currentData.explicitStartEnd );
 	m_castShadows->setChecked(m_currentData.castShadows);
 	m_material->setCurrentText(m_currentData.material.c_str());
+
 
 	QColor color;
 	color.setRgbF(m_currentData.color.x, m_currentData.color.y, m_currentData.color.z);
 	setLightColor(color);
-
+	UpdateLightParameters();
 	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));
 }
 
@@ -371,22 +457,38 @@ void fhLightEditor::setLightColor(QColor color) {
 	m_currentData.color.x = qRed(rgb) / 255.0f;
 	m_currentData.color.y = qGreen(rgb) / 255.0f;
 	m_currentData.color.z = qBlue(rgb) / 255.0f;
+	m_modified = true;
 }
 
 void fhLightEditor::UpdateGame() {
 	if(m_currentData.name.IsEmpty() || m_currentData.classname != "light")
 		return;
 
-	idEntity* list[128];	
-	int count = gameEdit->GetSelectedEntities( list, 128 );	
+	if(!com_editorActive)
+	{
+		//use ingame
+		idEntity* list[128];
+		int count = gameEdit->GetSelectedEntities( list, 128 );
 
-	idDict newSpawnArgs;
-	m_currentData.toSpawnArgs( &newSpawnArgs );
+		idDict newSpawnArgs;
+		m_currentData.toSpawnArgs( &newSpawnArgs );
 
-	for(int i=0; i<count; ++i) {
-		gameEdit->EntityChangeSpawnArgs(list[i], &newSpawnArgs);
-		gameEdit->EntityUpdateChangeableSpawnArgs( list[i], NULL );
-		gameEdit->EntityUpdateVisuals(list[i]);
+		for (int i = 0; i < count; ++i) {
+			gameEdit->EntityChangeSpawnArgs( list[i], &newSpawnArgs );
+			gameEdit->EntityUpdateChangeableSpawnArgs( list[i], NULL );
+			gameEdit->EntityUpdateVisuals( list[i] );
+		}
+	}
+	else
+	{	
+		// used from Radiant
+		for (brush_t *b = selected_brushes.next; b && b != &selected_brushes; b = b->next) {
+			if ((b->owner->eclass->nShowFlags & ECLASS_LIGHT) && !b->entityModel) {
+				m_currentData.toSpawnArgs(&b->owner->epairs);
+				Brush_Build( b );
+			}
+		}
+		Sys_UpdateWindows( W_ALL );
 	}
 }
 

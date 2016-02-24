@@ -7,6 +7,12 @@
 class QCheckBox;
 class QComboBox;
 
+class fhEditing {
+public:
+	virtual ~fhEditing() {}
+		
+};
+
 class fhLightEditor : public QDialog {
 	Q_OBJECT
 
@@ -15,6 +21,8 @@ public:
 	~fhLightEditor();
 
 	void initFromSpawnArgs(const idDict* spawnArgs);
+
+	virtual void closeEvent(QCloseEvent* event) override;
 
 private:
 	enum class fhLightType
@@ -38,20 +46,23 @@ private:
 		idVec3 end;
 		idVec3 color;
 		bool castShadows;
+		bool explicitStartEnd;
 
 		void initFromSpawnArgs( const idDict* spawnArgs );
 		void toSpawnArgs(idDict* spawnArgs);
 	};
 	
-	Data m_currentData;
 
+	Data m_originalData;
+	Data m_currentData;
+	bool m_modified;
 	QComboBox* m_lighttype;
 	QComboBox* m_material;
 	QPushButton* m_colorButton;
 	QPushButton* m_cancelButton;
 	QPushButton* m_applyButton;
 	QPushButton* m_okButton;
-	QCheckBox* m_castShadows;
+	QCheckBox* m_castShadows;	
 
 	struct PointLightParameters {
 		fhVec3Edit* radius;

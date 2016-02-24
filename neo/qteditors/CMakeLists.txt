@@ -14,15 +14,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_force_include(precompiled.h SOURCES)
 add_msvc_precompiled_header(precompiled.h SOURCES)
 
-set(CMAKE_PREFIX_PATH "C:\\Entwicklung\\Qt\\x86\\5.5.1\\5.5\\msvc2013\\")
-
-# Find includes in corresponding build directories
-# set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
-# Find the QtWidgets library
-find_package(Qt5Widgets)
-
 set(TARGET_NAME "qteditors")
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
 add_library(${TARGET_NAME} STATIC ${SOURCES})
