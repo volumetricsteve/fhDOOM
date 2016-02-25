@@ -812,7 +812,7 @@ void LightEditorInit( const idDict *spawnArgs ) {
 		// FIXME: select light based on spawn args
 	}
 #else
-	if(!spawnArgs) {
+	if(!spawnArgs && com_editorActive) {
 		const entity_t *e = SingleLightSelected();
 		if(e) {
 			spawnArgs = &e->epairs;

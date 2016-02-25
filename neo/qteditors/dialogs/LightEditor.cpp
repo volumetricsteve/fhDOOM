@@ -8,6 +8,7 @@
 #include <QCloseEvent>
 
 #include "../tools/radiant/QE3.H"
+#include "../tools/radiant/GLWidget.h"
 
 fhLightEditor::fhLightEditor(QWidget* parent)
 : QDialog(parent) {
@@ -63,6 +64,11 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	materialLayout->addWidget( m_material );
 	rightLayout->addLayout( materialLayout );
 	LoadMaterials();	
+
+	m_drawableMaterial = new idGLDrawableMaterial();
+	fhRenderWidget* renderWidget = new fhRenderWidget(this);
+	renderWidget->setDrawable(m_drawableMaterial);		
+	rightLayout->addWidget(renderWidget);
 
 	this->setLayout(mainLayout);
 
@@ -151,6 +157,8 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		QByteArray ascii = text.toLocal8Bit();
 		this->m_currentData.material = ascii.data();
 		this->m_modified = true;
+		this->m_drawableMaterial->setMedia(ascii.data());
+		renderWidget->updateDrawable();
 		this->UpdateGame();
 	} );
 
@@ -174,6 +182,14 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		this->UpdateGame();		
 		this->close();
 	} );
+
+	m_timer.setInterval(33);
+	m_timer.start();
+
+	QObject::connect(&m_timer, &QTimer::timeout, [=](){
+		if(this->isVisible())
+			renderWidget->updateDrawable();
+	});
 
 	UpdateLightParameters();
 }
@@ -341,7 +357,8 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 	radius = spawnArgs->GetVector( "light_radius", "100 100 100" );
 	center = spawnArgs->GetVector( "light_center", "0 0 0" );
 	color = spawnArgs->GetVector( "_color", "1 1 1" );
-	castShadows = !spawnArgs->GetBool("noshadows");
+	castShadows = !spawnArgs->GetBool("noshadows", "0");
+
 	name = spawnArgs->GetString("name");
 	classname = spawnArgs->GetString("classname");
 	material = spawnArgs->GetString("texture");

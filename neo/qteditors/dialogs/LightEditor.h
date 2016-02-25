@@ -2,10 +2,13 @@
 
 #include "../precompiled.h"
 #include "../widgets/Vec3Edit.h"
+#include "../widgets/RenderWidget.h"
 #include <qdialog.h>
+#include <qtimer.h>
 
 class QCheckBox;
 class QComboBox;
+class idGLDrawableMaterial;
 
 class fhEditing {
 public:
@@ -63,6 +66,7 @@ private:
 	QPushButton* m_applyButton;
 	QPushButton* m_okButton;
 	QCheckBox* m_castShadows;	
+	idGLDrawableMaterial* m_drawableMaterial;
 
 	struct PointLightParameters {
 		fhVec3Edit* radius;
@@ -93,4 +97,6 @@ private:
 	QWidget* CreateProjectedLightParameters();
 
 	void LoadMaterials();
+
+	QTimer m_timer;
 };

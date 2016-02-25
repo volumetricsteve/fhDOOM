@@ -6,7 +6,7 @@ fhNumEdit::fhNumEdit(int from, int to, QWidget* parent) : QWidget(parent) {
 	m_down = new QPushButton("-", this);
 	m_up = new QPushButton("+", this);
 
-	const QSize updownSize(8,10);
+	const QSize updownSize(12,12);
 	const int repeatInterval = 20; //repeat every n milliseconds (lower means faster)
 	m_down->setMaximumSize(updownSize);
 	m_up->setMaximumSize(updownSize);
