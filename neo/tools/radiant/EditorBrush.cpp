@@ -89,6 +89,9 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
       glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
       glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
       glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
+	  glUniform4f(glslProgramDef_t::uniform_bumpMatrixS, 1, 0, 0, 0);
+	  glUniform4f(glslProgramDef_t::uniform_bumpMatrixT, 0, 1, 0, 0);
+
 
       glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
       glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);

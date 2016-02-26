@@ -102,7 +102,9 @@ public:
 		}
 
 		m_context->swapBuffers( this );
-		wglMakeCurrent(win32.hDC, win32.hGLRC);		
+		wglMakeCurrent(win32.hDC, win32.hGLRC);				
+		glViewport( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );		
 	}
 
 private:
@@ -143,8 +145,12 @@ fhRenderWidget::fhRenderWidget(QWidget* parent)
 {
 	auto layout = new QHBoxLayout;
 	this->setLayout(layout);
+	layout->setMargin(0);
+	layout->setSpacing(0);
 	m_window = new fhRenderWindow(&m_drawable);
 	layout->addWidget( QWidget::createWindowContainer(m_window, this));
+
+	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 }
 
 fhRenderWidget::~fhRenderWidget() {
@@ -152,4 +158,8 @@ fhRenderWidget::~fhRenderWidget() {
 
 void fhRenderWidget::updateDrawable() {
 	m_window->requestUpdate();
+}
+
+QSize fhRenderWidget::sizeHint() const {
+	return QSize(200,200);
 }

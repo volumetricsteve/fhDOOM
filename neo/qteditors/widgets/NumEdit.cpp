@@ -1,21 +1,25 @@
 #include "NumEdit.h"
 #include <qvalidator.h>
 
-fhNumEdit::fhNumEdit(int from, int to, QWidget* parent) : QWidget(parent) {
+static const int maxDecimals = 3;
+static const int defaultRepeatInterval = 20; //repeat every n milliseconds (lower means faster)
+
+fhNumEdit::fhNumEdit(float from, float to, QWidget* parent) : QWidget(parent), m_step(1), m_precision(maxDecimals) {
 	m_edit = new QLineEdit(this);
 	m_down = new QPushButton("-", this);
 	m_up = new QPushButton("+", this);
+	m_validator = new QDoubleValidator(from, to, m_precision, this);
+	m_validator->setNotation(QDoubleValidator::StandardNotation);	
 
-	const QSize updownSize(12,12);
-	const int repeatInterval = 20; //repeat every n milliseconds (lower means faster)
+	const QSize updownSize(12,12);	
 	m_down->setMaximumSize(updownSize);
 	m_up->setMaximumSize(updownSize);
 	m_up->setAutoRepeat(true);
 	m_down->setAutoRepeat(true);
-	m_up->setAutoRepeatInterval(repeatInterval);
-	m_down->setAutoRepeatInterval(repeatInterval);
-
-	m_edit->setValidator(new QIntValidator(from, to, this));	
+	m_up->setAutoRepeatInterval(defaultRepeatInterval);
+	m_down->setAutoRepeatInterval(defaultRepeatInterval);
+	
+	m_edit->setValidator(m_validator);	
 
 	auto vlayout = new QVBoxLayout;
 	vlayout->setSpacing(0);
@@ -32,12 +36,25 @@ fhNumEdit::fhNumEdit(int from, int to, QWidget* parent) : QWidget(parent) {
 	this->setLayout(hlayout);
 	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 
-	QObject::connect(m_up, &QPushButton::clicked, [=](){ int i = this->getInt(); this->setInt(i+1); });
-	QObject::connect(m_down, &QPushButton::clicked, [=](){ int i = this->getInt(); this->setInt(i-1); });
-	QObject::connect(m_edit, &QLineEdit::textChanged, [=](){this->valueChanged(this->getInt());} );
+	QObject::connect(m_up, &QPushButton::clicked, [=](){ float f = this->getFloat(); this->setFloat(f+m_step); });
+	QObject::connect(m_down, &QPushButton::clicked, [=](){ float f = this->getFloat(); this->setFloat(f-m_step); });
+	QObject::connect(m_edit, &QLineEdit::textChanged, [=](){this->valueChanged(this->getFloat());} );
+}
+
+fhNumEdit::fhNumEdit(QWidget* parent) 
+: fhNumEdit(-100000, 100000, parent) {
 }
 
 fhNumEdit::~fhNumEdit() {
+}
+
+void fhNumEdit::setAutoRepeatInterval( int intervalMs ) {
+	m_up->setAutoRepeatInterval( intervalMs );
+	m_down->setAutoRepeatInterval( intervalMs );
+}
+
+void fhNumEdit::setAdjustStepSize( float step ) {
+	m_step = step;
 }
 
 float fhNumEdit::getFloat() const {
@@ -54,9 +71,25 @@ void fhNumEdit::setInt( int v ) {
 
 
 void fhNumEdit::setFloat( float v ) {
-	m_edit->setText( QString::number( v ) );
+	m_edit->setText( QString::number( v, 'g', m_precision ) );
 }
 
 QSize fhNumEdit::sizeHint() const {	
-	return QSize(25, m_edit->sizeHint().height());
+	return QSize(60, m_edit->sizeHint().height());
+}
+
+void fhNumEdit::setMaximumValue(float f) {
+	m_validator->setRange(m_validator->bottom(), f, m_precision);
+	m_edit->setValidator(m_validator);	
+}
+
+void fhNumEdit::setMinimumValue( float f ) {
+	m_validator->setRange( f, m_validator->top(), m_precision );
+	m_edit->setValidator(m_validator);	
+}
+
+void fhNumEdit::setPrecision(int p) {
+	m_precision = p;
+	m_validator->setRange( m_validator->bottom(), m_validator->top(), m_precision );
+	m_edit->setValidator( m_validator );
 }

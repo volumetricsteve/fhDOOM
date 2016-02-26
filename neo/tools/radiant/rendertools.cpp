@@ -88,6 +88,8 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
     glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
     glUniform4fv(glslProgramDef_t::uniform_color_add, 1, colorAdd.ToFloatPtr());
     glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, colorModulate.ToFloatPtr());
+	glUniform4f(glslProgramDef_t::uniform_bumpMatrixS, 1, 0, 0, 0);
+	glUniform4f(glslProgramDef_t::uniform_bumpMatrixT, 0, 1, 0, 0);
 
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
     glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);

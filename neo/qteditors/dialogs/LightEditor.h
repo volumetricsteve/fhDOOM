@@ -7,6 +7,7 @@
 #include <qtimer.h>
 
 class QCheckBox;
+class QSlider;
 class QComboBox;
 class idGLDrawableMaterial;
 
@@ -62,11 +63,19 @@ private:
 	QComboBox* m_lighttype;
 	QComboBox* m_material;
 	QPushButton* m_colorButton;
+	fhVec3Edit* m_colorVec;
 	QPushButton* m_cancelButton;
 	QPushButton* m_applyButton;
 	QPushButton* m_okButton;
-	QCheckBox* m_castShadows;	
+	QComboBox* m_shadowMode;
+
+	QSlider* m_shadowFuzzynessSlider;
+	fhNumEdit* m_shadowFuzzyness;
+	QSlider* m_shadowBrightnessSlider;
+	fhNumEdit* m_shadowBrightness;
+	
 	idGLDrawableMaterial* m_drawableMaterial;
+	QLabel* m_materialFile;
 
 	struct PointLightParameters {
 		fhVec3Edit* radius;

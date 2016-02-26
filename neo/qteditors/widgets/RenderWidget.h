@@ -15,6 +15,8 @@ public:
 
 	void updateDrawable();
 
+	virtual QSize sizeHint() const override;
+
 private:
 	fhRenderWindow* m_window;
 	idGLDrawable* m_drawable;

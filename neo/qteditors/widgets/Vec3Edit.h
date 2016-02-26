@@ -8,14 +8,8 @@ class fhVec3Edit : public QWidget {
 	Q_OBJECT
 
 public:
-	enum Type
-	{
-		Size,
-		Position,
-		Direction
-	};
-
-	explicit fhVec3Edit(Type type, bool labels = false);
+	explicit fhVec3Edit(bool labels, QWidget* parent);
+	explicit fhVec3Edit(QWidget* parent);
 	~fhVec3Edit();
 
 	idVec3 get() const;
@@ -30,6 +24,18 @@ public:
 	void setZ(float value);
 
 	virtual QSize sizeHint() const override;
+
+	void setMinimumValue(idVec3 v);
+	void setMaximumValue(idVec3 v);
+	void setStepSize(idVec3 v);
+	void setStepSize(float f) {
+		setStepSize(idVec3(f,f,f));
+	}
+
+	void setPrecision(int x, int y, int z);
+	void setPrecision(int p) {
+		setPrecision(p,p,p);
+	}	
 
 signals:
 	void valueChanged(idVec3 v);

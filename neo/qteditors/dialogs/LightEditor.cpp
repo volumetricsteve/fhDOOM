@@ -6,20 +6,27 @@
 #include <qcolordialog.h>
 #include <qmessagebox.h>
 #include <QCloseEvent>
+#include <QRadioButton>
+#include <QSlider>
 
 #include "../tools/radiant/QE3.H"
 #include "../tools/radiant/GLWidget.h"
+#include "../widgets/NumEdit.h"
 
 fhLightEditor::fhLightEditor(QWidget* parent)
 : QDialog(parent) {
 
-	QVBoxLayout* mainLayout = new QVBoxLayout;
+	QVBoxLayout* mainLayout = new QVBoxLayout;	
 	QHBoxLayout* leftRightLayout = new QHBoxLayout;
+	leftRightLayout->setSpacing(0);
+	leftRightLayout->setMargin(0);
+	leftRightLayout->setContentsMargins(0, 0, 0, 0);
 
 	QWidget* left = new QWidget;
 	QVBoxLayout* leftLayout = new QVBoxLayout;
 	left->setLayout(leftLayout);
 	leftRightLayout->addWidget(left);
+	left->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
 	m_lighttype = new QComboBox;
 	m_lighttype->addItem("Point Light");
@@ -35,15 +42,50 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	QVBoxLayout* rightLayout = new QVBoxLayout;
 	right->setLayout( rightLayout );
 	leftRightLayout->addWidget( right );
-	
-	m_castShadows = new QCheckBox("Cast Shadows");	
-	rightLayout->addWidget(m_castShadows);	
 
-	m_colorButton = new QPushButton(this);
+	m_colorButton = new QPushButton( this );
+	m_colorVec = new fhVec3Edit(this);
+	m_colorVec->setMinimumValue(idVec3(0,0,0));
+	m_colorVec->setMaximumValue(idVec3(1,1,1));
+	m_colorVec->setStepSize(0.01);
+	m_colorVec->setMaximumWidth(130);
+	m_colorVec->setPrecision(2);
 	auto colorLayout = new QHBoxLayout;
-	colorLayout->addWidget(new QLabel("Color"));
-	colorLayout->addWidget(m_colorButton);
-	rightLayout->addLayout(colorLayout);
+	colorLayout->addWidget( new QLabel( "Color" ) );
+	colorLayout->addWidget( m_colorButton );
+	colorLayout->addWidget( m_colorVec );
+	rightLayout->addLayout( colorLayout );	
+
+	auto shadowGroup = new QGroupBox("Shadows", this);
+	auto shadowLayout = new QGridLayout(this);
+	m_shadowMode = new QComboBox(this);
+	m_shadowMode->addItem("No Shadows");
+	m_shadowMode->addItem("Default");
+	m_shadowMode->addItem("Stencil Shadows");
+	m_shadowMode->addItem("Shadow Mapping (No Filtering)");
+	m_shadowMode->addItem("Shadow Mapping (PCF)");
+	m_shadowBrightness = new fhNumEdit(0, 100, this);
+	m_shadowBrightness->setMaximumWidth(45);
+	m_shadowFuzzyness = new fhNumEdit(0, 100, this);
+	m_shadowFuzzyness->setMaximumWidth(45);
+	m_shadowBrightnessSlider = new QSlider(Qt::Horizontal, this);
+	m_shadowBrightnessSlider->setMinimum(0);
+	m_shadowBrightnessSlider->setMaximum(100);
+	m_shadowFuzzynessSlider = new QSlider(Qt::Horizontal, this);
+	m_shadowFuzzynessSlider->setMinimum( 0 );
+	m_shadowFuzzynessSlider->setMaximum( 100 );
+
+	shadowGroup->setLayout(shadowLayout);	
+	shadowLayout->addWidget( new QLabel( "Mode", this ), 0, 0 );
+	shadowLayout->addWidget( m_shadowMode, 0, 1, 1, 2 );
+	shadowLayout->addWidget(new QLabel("Fuzzyness", this), 1, 0);
+	shadowLayout->addWidget(m_shadowFuzzynessSlider, 1, 1);
+	shadowLayout->addWidget(m_shadowFuzzyness, 1, 2);
+	shadowLayout->addWidget(new QLabel("Brightness", this), 2, 0);
+	shadowLayout->addWidget( m_shadowBrightnessSlider, 2, 1 );
+	shadowLayout->addWidget( m_shadowBrightness, 2, 2 );
+
+	rightLayout->addWidget(shadowGroup);	
 
 	mainLayout->addLayout(leftRightLayout);
 
@@ -58,17 +100,23 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	buttonLayout->addWidget(m_okButton);
 	mainLayout->addLayout(buttonLayout);
 
+
+	auto materialGroup = new QGroupBox("Material", this);
+	auto materialVLayout = new QVBoxLayout(this);
+	materialGroup->setLayout(materialVLayout);	
 	m_material = new QComboBox(this);
-	auto materialLayout = new QHBoxLayout;
-	materialLayout->addWidget( new QLabel( "Material" ) );
-	materialLayout->addWidget( m_material );
-	rightLayout->addLayout( materialLayout );
+	materialVLayout->addWidget(m_material);
+
+	m_materialFile = new QLabel(this);
+	materialVLayout->addWidget(m_materialFile);
 	LoadMaterials();	
 
 	m_drawableMaterial = new idGLDrawableMaterial();
 	fhRenderWidget* renderWidget = new fhRenderWidget(this);
 	renderWidget->setDrawable(m_drawableMaterial);		
-	rightLayout->addWidget(renderWidget);
+	materialVLayout->addWidget(renderWidget);
+
+	rightLayout->addWidget(materialGroup);
 
 	this->setLayout(mainLayout);
 
@@ -147,8 +195,8 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		this->UpdateGame();
 	} );
 
-	QObject::connect( m_castShadows, &QCheckBox::stateChanged, [=](){
-		this->m_currentData.castShadows = this->m_castShadows->isChecked();
+	QObject::connect( m_shadowMode,  static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
+		this->m_currentData.castShadows = this->m_shadowMode->currentIndex() != 0;
 		this->m_modified = true;
 		this->UpdateGame();
 	} );
@@ -159,6 +207,13 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		this->m_modified = true;
 		this->m_drawableMaterial->setMedia(ascii.data());
 		renderWidget->updateDrawable();
+
+		if(const idMaterial* material = declManager->FindMaterial(ascii.data())) {
+			this->m_materialFile->setText(QString("%1:%2").arg(material->GetFileName()).arg(material->GetLineNum()));
+		} else {
+			this->m_materialFile->setText("");
+		}
+
 		this->UpdateGame();
 	} );
 
@@ -189,6 +244,28 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	QObject::connect(&m_timer, &QTimer::timeout, [=](){
 		if(this->isVisible())
 			renderWidget->updateDrawable();
+	});
+
+	QObject::connect(m_shadowFuzzynessSlider, &QSlider::valueChanged, [=](int value){
+		this->m_shadowFuzzyness->setFloat( static_cast<float>(value)/10.0f );
+	});
+
+	QObject::connect( m_shadowBrightnessSlider, &QSlider::valueChanged, [=]( int value ){
+		this->m_shadowBrightness->setFloat( static_cast<float>(value) / m_shadowBrightnessSlider->maximum() );
+	} );
+
+	QObject::connect(m_colorVec, &fhVec3Edit::valueChanged, [=](idVec3 v){
+		QColor color(static_cast<int>(v.x * 255), static_cast<int>(v.y * 255), static_cast<int>(v.z * 255));
+
+		QString s( "background: #"
+			+ QString( color.red() < 16 ? "0" : "" ) + QString::number( color.red(), 16 )
+			+ QString( color.green() < 16 ? "0" : "" ) + QString::number( color.green(), 16 )
+			+ QString( color.blue() < 16 ? "0" : "" ) + QString::number( color.blue(), 16 ) + ";" );
+		m_colorButton->setStyleSheet( s );
+		m_colorButton->update();
+		
+		m_currentData.color = v;
+		
 	});
 
 	UpdateLightParameters();
@@ -231,8 +308,9 @@ QWidget* fhLightEditor::CreatePointLightParameters() {
 	QGroupBox* pointlightGroup = new QGroupBox( tr( "Point Light Parameters" ) );;
 	QGridLayout* pointlightgrid = new QGridLayout;	
 
-	m_pointlightParameters.radius = new fhVec3Edit(fhVec3Edit::Size, true);
-	m_pointlightParameters.center = new fhVec3Edit(fhVec3Edit::Position);
+	m_pointlightParameters.radius = new fhVec3Edit(true, this);
+	m_pointlightParameters.radius->setMinimumValue(idVec3(0,0,0));
+	m_pointlightParameters.center = new fhVec3Edit(this);
 
 	pointlightgrid->addWidget( new QLabel( "Radius" ),        0, 0, Qt::AlignBottom );
 	pointlightgrid->addWidget( m_pointlightParameters.radius, 0, 1 );
@@ -250,8 +328,9 @@ QWidget* fhLightEditor::CreateParallelLightParameters() {
 	QGroupBox* group = new QGroupBox( tr( "Parallel Light Parameters" ) );;
 	QGridLayout* grid = new QGridLayout;	
 
-	m_parallellightParameters.radius = new fhVec3Edit(fhVec3Edit::Size, true);
-	m_parallellightParameters.direction = new fhVec3Edit(fhVec3Edit::Direction);
+	m_parallellightParameters.radius = new fhVec3Edit(true, this);
+	m_parallellightParameters.radius->setMinimumValue(idVec3(0,0,0));
+	m_parallellightParameters.direction = new fhVec3Edit(this);
 
 	grid->addWidget( new QLabel( "Radius" ), 0, 0, Qt::AlignBottom );
 	grid->addWidget( m_parallellightParameters.radius, 0, 1 );
@@ -269,11 +348,11 @@ QWidget* fhLightEditor::CreateProjectedLightParameters() {
 	QGroupBox* group = new QGroupBox( tr( "Projected Light Parameters" ) );;
 	QGridLayout* grid = new QGridLayout;	
 
-	m_projectedlightParameters.target = new fhVec3Edit(fhVec3Edit::Direction, true);
-	m_projectedlightParameters.right = new fhVec3Edit(fhVec3Edit::Direction);
-	m_projectedlightParameters.up = new fhVec3Edit(fhVec3Edit::Direction);
-	m_projectedlightParameters.start = new fhVec3Edit(fhVec3Edit::Direction, true);
-	m_projectedlightParameters.end = new fhVec3Edit(fhVec3Edit::Direction);
+	m_projectedlightParameters.target = new fhVec3Edit(true, this);
+	m_projectedlightParameters.right = new fhVec3Edit(this);
+	m_projectedlightParameters.up = new fhVec3Edit(this);
+	m_projectedlightParameters.start = new fhVec3Edit(true, this);
+	m_projectedlightParameters.end = new fhVec3Edit(this);
 
 	grid->addWidget( new QLabel( "Target" ), 0, 0, Qt::AlignBottom );
 	grid->addWidget( m_projectedlightParameters.target, 0, 1 );
@@ -450,7 +529,8 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_projectedlightParameters.start->set( m_currentData.start );
 	m_projectedlightParameters.end->set( m_currentData.end );	
 	m_projectedlightParameters.explicitStartEnd->setChecked( m_currentData.explicitStartEnd );
-	m_castShadows->setChecked(m_currentData.castShadows);
+	m_shadowMode->setCurrentIndex( m_currentData.castShadows ? 1 : 0 );
+	//m_castShadows->setChecked(m_currentData.castShadows);
 	m_material->setCurrentText(m_currentData.material.c_str());
 
 
@@ -459,6 +539,14 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	setLightColor(color);
 	UpdateLightParameters();
 	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));
+}
+
+void fhLightEditor::setLightColor(idVec3 color) {
+	QColor c;
+	c.setRed( static_cast<int>(color.x * 255));
+	c.setBlue( static_cast<int>(color.y * 255));
+	c.setGreen( static_cast<int>(color.z * 255));
+	setLightColor(c);
 }
 
 void fhLightEditor::setLightColor(QColor color) {
@@ -474,6 +562,7 @@ void fhLightEditor::setLightColor(QColor color) {
 	m_currentData.color.x = qRed(rgb) / 255.0f;
 	m_currentData.color.y = qGreen(rgb) / 255.0f;
 	m_currentData.color.z = qBlue(rgb) / 255.0f;
+	m_colorVec->set(m_currentData.color);
 	m_modified = true;
 }
 
