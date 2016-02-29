@@ -3,9 +3,9 @@
 
 fhVec3Edit::fhVec3Edit(bool labels, QWidget* parent) 
 : QWidget(parent) {
-	m_xedit = new fhNumEdit(0, 100, this);
-	m_yedit = new fhNumEdit(0, 100, this);
-	m_zedit = new fhNumEdit(0, 100, this);
+	m_xedit = new fhNumEdit(this);
+	m_yedit = new fhNumEdit(this);
+	m_zedit = new fhNumEdit(this);
 	
 	auto layout = new QGridLayout;
 	layout->setSpacing(2);

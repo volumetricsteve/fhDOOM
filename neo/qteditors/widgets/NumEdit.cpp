@@ -66,12 +66,17 @@ int fhNumEdit::getInt() const {
 }
 
 void fhNumEdit::setInt( int v ) {
-	m_edit->setText(QString::number(v));
+	setFloat(v);
 }
 
-
 void fhNumEdit::setFloat( float v ) {
-	m_edit->setText( QString::number( v, 'g', m_precision ) );
+	if ( v > m_validator->top() )
+		v = m_validator->top();
+
+	if (v < m_validator->bottom())
+		v = m_validator->bottom();
+
+	m_edit->setText( QString::number( v, 'f', m_precision ) );
 }
 
 QSize fhNumEdit::sizeHint() const {	

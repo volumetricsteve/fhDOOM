@@ -12,6 +12,7 @@
 #include "../tools/radiant/QE3.H"
 #include "../tools/radiant/GLWidget.h"
 #include "../widgets/NumEdit.h"
+#include "../widgets/ColorEdit.h"
 
 fhLightEditor::fhLightEditor(QWidget* parent)
 : QDialog(parent) {
@@ -43,17 +44,10 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	right->setLayout( rightLayout );
 	leftRightLayout->addWidget( right );
 
-	m_colorButton = new QPushButton( this );
-	m_colorVec = new fhVec3Edit(this);
-	m_colorVec->setMinimumValue(idVec3(0,0,0));
-	m_colorVec->setMaximumValue(idVec3(1,1,1));
-	m_colorVec->setStepSize(0.01);
-	m_colorVec->setMaximumWidth(130);
-	m_colorVec->setPrecision(2);
+	m_coloredit = new fhColorEdit(this);
 	auto colorLayout = new QHBoxLayout;
 	colorLayout->addWidget( new QLabel( "Color" ) );
-	colorLayout->addWidget( m_colorButton );
-	colorLayout->addWidget( m_colorVec );
+	colorLayout->addWidget( m_coloredit );
 	rightLayout->addLayout( colorLayout );	
 
 	auto shadowGroup = new QGroupBox("Shadows", this);
@@ -127,18 +121,10 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		UpdateLightParameters();
 	});
 
-	QObject::connect(m_colorButton, &QPushButton::clicked, [=](){ 
-		QColor color;
-		color.setRgbF( m_currentData.color.x, m_currentData.color.y, m_currentData.color.z );
-
-		QColorDialog dialog(color, this);
-		dialog.setWindowModality(Qt::WindowModal);
-		QObject::connect(&dialog, &QColorDialog::currentColorChanged, [&](){
-			this->setLightColor(dialog.currentColor());	
-			this->UpdateGame();
-		});
-
-		dialog.exec();
+	QObject::connect(m_coloredit, &fhColorEdit::valueChanged, [=](idVec3 color){ 
+		this->m_currentData.color = color;
+		this->m_modified = true;
+		this->UpdateGame();
 	});
 
 	QObject::connect(m_pointlightParameters.radius, &fhVec3Edit::valueChanged, [=](idVec3 v){
@@ -254,20 +240,6 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		this->m_shadowBrightness->setFloat( static_cast<float>(value) / m_shadowBrightnessSlider->maximum() );
 	} );
 
-	QObject::connect(m_colorVec, &fhVec3Edit::valueChanged, [=](idVec3 v){
-		QColor color(static_cast<int>(v.x * 255), static_cast<int>(v.y * 255), static_cast<int>(v.z * 255));
-
-		QString s( "background: #"
-			+ QString( color.red() < 16 ? "0" : "" ) + QString::number( color.red(), 16 )
-			+ QString( color.green() < 16 ? "0" : "" ) + QString::number( color.green(), 16 )
-			+ QString( color.blue() < 16 ? "0" : "" ) + QString::number( color.blue(), 16 ) + ";" );
-		m_colorButton->setStyleSheet( s );
-		m_colorButton->update();
-		
-		m_currentData.color = v;
-		
-	});
-
 	UpdateLightParameters();
 }
 
@@ -310,7 +282,9 @@ QWidget* fhLightEditor::CreatePointLightParameters() {
 
 	m_pointlightParameters.radius = new fhVec3Edit(true, this);
 	m_pointlightParameters.radius->setMinimumValue(idVec3(0,0,0));
+	m_pointlightParameters.radius->setPrecision(1);
 	m_pointlightParameters.center = new fhVec3Edit(this);
+	m_pointlightParameters.center->setPrecision(1);
 
 	pointlightgrid->addWidget( new QLabel( "Radius" ),        0, 0, Qt::AlignBottom );
 	pointlightgrid->addWidget( m_pointlightParameters.radius, 0, 1 );
@@ -330,7 +304,9 @@ QWidget* fhLightEditor::CreateParallelLightParameters() {
 
 	m_parallellightParameters.radius = new fhVec3Edit(true, this);
 	m_parallellightParameters.radius->setMinimumValue(idVec3(0,0,0));
+	m_parallellightParameters.radius->setPrecision(1);
 	m_parallellightParameters.direction = new fhVec3Edit(this);
+	m_parallellightParameters.direction->setPrecision(1);
 
 	grid->addWidget( new QLabel( "Radius" ), 0, 0, Qt::AlignBottom );
 	grid->addWidget( m_parallellightParameters.radius, 0, 1 );
@@ -353,6 +329,12 @@ QWidget* fhLightEditor::CreateProjectedLightParameters() {
 	m_projectedlightParameters.up = new fhVec3Edit(this);
 	m_projectedlightParameters.start = new fhVec3Edit(true, this);
 	m_projectedlightParameters.end = new fhVec3Edit(this);
+
+	m_projectedlightParameters.target->setPrecision(1);
+	m_projectedlightParameters.right->setPrecision(1);
+	m_projectedlightParameters.up->setPrecision(1);
+	m_projectedlightParameters.start->setPrecision(1);
+	m_projectedlightParameters.end->setPrecision(1);
 
 	grid->addWidget( new QLabel( "Target" ), 0, 0, Qt::AlignBottom );
 	grid->addWidget( m_projectedlightParameters.target, 0, 1 );
@@ -493,14 +475,6 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 	
 }
 
-
-
-static void initVec3EditFromSpawnArg(fhVec3Edit* edit, const idDict* spawnArgs, const char* name, const char* defaultString) {
-	idVec3 v = spawnArgs->GetVector(name, defaultString);
-	edit->set(v);
-}
-
-
 void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	if(!spawnArgs) {
 		m_currentData.name.Empty();
@@ -530,40 +504,11 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_projectedlightParameters.end->set( m_currentData.end );	
 	m_projectedlightParameters.explicitStartEnd->setChecked( m_currentData.explicitStartEnd );
 	m_shadowMode->setCurrentIndex( m_currentData.castShadows ? 1 : 0 );
-	//m_castShadows->setChecked(m_currentData.castShadows);
 	m_material->setCurrentText(m_currentData.material.c_str());
-
-
-	QColor color;
-	color.setRgbF(m_currentData.color.x, m_currentData.color.y, m_currentData.color.z);
-	setLightColor(color);
+	m_coloredit->set(m_currentData.color);
+	
 	UpdateLightParameters();
 	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));
-}
-
-void fhLightEditor::setLightColor(idVec3 color) {
-	QColor c;
-	c.setRed( static_cast<int>(color.x * 255));
-	c.setBlue( static_cast<int>(color.y * 255));
-	c.setGreen( static_cast<int>(color.z * 255));
-	setLightColor(c);
-}
-
-void fhLightEditor::setLightColor(QColor color) {
-
-	QString s( "background: #"
-		+ QString( color.red() < 16 ? "0" : "" ) + QString::number( color.red(), 16 )
-		+ QString( color.green() < 16 ? "0" : "" ) + QString::number( color.green(), 16 )
-		+ QString( color.blue() < 16 ? "0" : "" ) + QString::number( color.blue(), 16 ) + ";" );
-	m_colorButton->setStyleSheet( s );
-	m_colorButton->update();
-
-	QRgb rgb = color.rgb();
-	m_currentData.color.x = qRed(rgb) / 255.0f;
-	m_currentData.color.y = qGreen(rgb) / 255.0f;
-	m_currentData.color.z = qBlue(rgb) / 255.0f;
-	m_colorVec->set(m_currentData.color);
-	m_modified = true;
 }
 
 void fhLightEditor::UpdateGame() {

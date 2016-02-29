@@ -9,6 +9,10 @@ set(SOURCES
   widgets/RenderWidget.cpp  
   widgets/NumEdit.h
   widgets/NumEdit.cpp
+  widgets/SliderNumEdit.h
+  widgets/SliderNumEdit.cpp  
+  widgets/ColorEdit.h
+  widgets/ColorEdit.cpp  
   widgets/Vec3Edit.h
   widgets/Vec3Edit.cpp)
 

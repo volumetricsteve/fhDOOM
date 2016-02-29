@@ -11,6 +11,8 @@ class QSlider;
 class QComboBox;
 class idGLDrawableMaterial;
 
+class fhColorEdit;
+
 class fhEditing {
 public:
 	virtual ~fhEditing() {}
@@ -62,8 +64,9 @@ private:
 	bool m_modified;
 	QComboBox* m_lighttype;
 	QComboBox* m_material;
-	QPushButton* m_colorButton;
-	fhVec3Edit* m_colorVec;
+
+	
+	fhColorEdit* m_coloredit;
 	QPushButton* m_cancelButton;
 	QPushButton* m_applyButton;
 	QPushButton* m_okButton;
