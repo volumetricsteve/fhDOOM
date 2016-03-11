@@ -23,6 +23,9 @@ public:
 	void setMaximumValue(float f);
 	void setPrecision(int p);
 
+	float maximumValue() const;
+	float minimumValue() const;
+
 signals:
 	void valueChanged( int v );
 

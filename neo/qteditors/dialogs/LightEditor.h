@@ -51,8 +51,10 @@ private:
 		idVec3 start;
 		idVec3 end;
 		idVec3 color;
-		bool castShadows;
 		bool explicitStartEnd;
+		shadowMode_t shadowMode;
+		float shadowSoftness;
+		float shadowBrightness;
 
 		void initFromSpawnArgs( const idDict* spawnArgs );
 		void toSpawnArgs(idDict* spawnArgs);
@@ -72,8 +74,8 @@ private:
 	QPushButton* m_okButton;
 	QComboBox* m_shadowMode;
 
-	QSlider* m_shadowFuzzynessSlider;
-	fhNumEdit* m_shadowFuzzyness;
+	QSlider* m_shadowSoftnessSlider;
+	fhNumEdit* m_shadowSoftness;
 	QSlider* m_shadowBrightnessSlider;
 	fhNumEdit* m_shadowBrightness;
 	

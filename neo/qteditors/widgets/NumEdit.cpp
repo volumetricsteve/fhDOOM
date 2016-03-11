@@ -98,3 +98,11 @@ void fhNumEdit::setPrecision(int p) {
 	m_validator->setRange( m_validator->bottom(), m_validator->top(), m_precision );
 	m_edit->setValidator( m_validator );
 }
+
+float fhNumEdit::maximumValue() const {
+	return static_cast<float>(m_validator->top());
+}
+
+float fhNumEdit::minimumValue() const {
+	return static_cast<float>(m_validator->bottom());
+}

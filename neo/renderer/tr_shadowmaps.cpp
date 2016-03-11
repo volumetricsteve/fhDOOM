@@ -439,43 +439,6 @@ static fhRenderMatrix RB_CreateShadowViewMatrix(const viewLight_t* vLight, int s
 	return viewMatrix;
 }
 
-void RB_GLSL_GetShadowParams(float* minBias, float* maxBias, float* fuzzyness, int* samples) {
-	assert(minBias);
-	assert(maxBias);
-	assert(fuzzyness);
-	assert(samples);
-
-	static const struct {
-		float size;
-		float minBias;
-		float maxBias;
-		float fuzzyness;
-		int   samples;
-	} biasTable[] = {
-		{ 0,    0.0001, 0.01, 3.5, 3 },
-		{ 150,  0.0005,  0.006, 2.8, 3 },
-		{ 300,  0.000001, 0.0001, 2, 3 },
-		{ 1000, 0.000001, 0.000004, 1.2, 4 },
-	};
-
-	//const float lightSize = max(backEnd.vLight->lightDef->parms.lightRadius.x, max(backEnd.vLight->lightDef->parms.lightRadius.y, backEnd.vLight->lightDef->parms.lightRadius.z));
-	const float lightSize = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
-
-	for (int i = 0; i < sizeof(biasTable) / sizeof(biasTable[0]); ++i) {
-		const auto& a = biasTable[i];
-		if (lightSize >= a.size) {
-			*minBias = a.minBias;
-			*maxBias = a.maxBias;
-			*fuzzyness = 1.0f/backEnd.shadowMapSize * a.fuzzyness;
-			*samples = a.samples;
-		}
-		else {
-			break;
-		}
-	}
-}
-
-
 /*
 ==================
 R_EXP_CalcLightAxialSize

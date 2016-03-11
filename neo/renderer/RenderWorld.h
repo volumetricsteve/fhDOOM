@@ -76,10 +76,11 @@ const int MAX_RENDERENTITY_GUI		= 3;
 
 typedef bool(*deferredEntityCallback_t)( renderEntity_s *, const renderView_s * );
 
-enum class shadowType_t {
-	Default,
-	StencilShadow,
-	ShadowMap
+enum class shadowMode_t {
+	Default = 0,
+	NoShadows = 1,
+	StencilShadow = 2,
+	ShadowMap = 3
 };
 
 typedef struct renderEntity_s {
@@ -177,7 +178,9 @@ typedef struct renderLight_s {
 	// updates
 	bool					noShadows;			// (should we replace this with material parameters on the shader?)
 	bool					noSpecular;			// (should we replace this with material parameters on the shader?)
-	shadowType_t            shadowType;
+	shadowMode_t            shadowMode;
+	float                   shadowSoftness;
+	float                   shadowBrightness;
 
 	bool					pointLight;			// otherwise a projection light (should probably invert the sense of this, because points are way more common)
 	bool					parallel;			// lightCenter gives the direction to the light at infinity

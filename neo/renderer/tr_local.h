@@ -188,6 +188,10 @@ public:
 	virtual void			ForceUpdate();
 	virtual int				GetIndex();
 
+	shadowMode_t            ShadowMode() const;
+	float                   ShadowSoftness() const;
+	float                   ShadowBrightness() const;
+
 	float					GetMaximumCenterToEdgeDistance() const;
 
 	renderLight_t			parms;					// specification
@@ -230,9 +234,9 @@ public:
 
 	areaReference_t *		references;				// each area the light is present in will have a lightRef
 	idInteraction *			firstInteraction;		// doubly linked list
-	idInteraction *			lastInteraction;
+	idInteraction *			lastInteraction;	
 
-	struct doublePortal_s *	foggedPortals;
+	struct doublePortal_s *	foggedPortals;	
 };
 
 

@@ -117,6 +117,38 @@ int idRenderLightLocal::GetIndex() {
 	return index;
 }
 
+
+shadowMode_t idRenderLightLocal::ShadowMode() const {
+	if (r_shadows.GetInteger() == 0)
+		return shadowMode_t::NoShadows;
+
+	if (parms.noShadows)
+		return shadowMode_t::NoShadows;
+
+	if (parms.shadowMode != shadowMode_t::Default)
+		return parms.shadowMode;
+
+	if (r_shadows.GetInteger() == 1)
+		return shadowMode_t::StencilShadow;
+
+	return shadowMode_t::ShadowMap;
+}
+
+float idRenderLightLocal::ShadowSoftness() const {
+	if (parms.shadowMode == shadowMode_t::Default)
+		return 1.0f;
+
+	return parms.shadowSoftness;
+}
+
+float idRenderLightLocal::ShadowBrightness() const {
+	if (parms.shadowMode == shadowMode_t::Default)
+		return 0.15f;
+
+	return parms.shadowBrightness;
+}
+
+
 //TODO(johl): 'max' undefined on linux... should replace all usage of max macro
 //(included via windows.h) by proper max function (std::max?)
 #ifndef max

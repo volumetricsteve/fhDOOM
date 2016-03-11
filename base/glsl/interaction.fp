@@ -196,46 +196,175 @@ float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
     return 0.0;
 }
 
-vec4 getShadow(vec4 pos, sampler2D tex, vec4 shadowColor, float fuzzyness, float samples)
+float getShadow(vec4 pos, sampler2D tex)
 {   
     pos = pos / pos.w;
 
     pos.x = pos.x/2.0 + 0.5;
     pos.y = pos.y/2.0 + 0.5;
-    pos.z = pos.z/2.0 + 0.5;
+    pos.z = pos.z/2.0 + 0.5;    
 
-    if(pos.x < 0 || pos.y < 0)
-      return vec4(1,0,0,1);
+//#define FILTER_PCF
+//#define FILTER_PCF4
+//#define FILTER_PCF9
+//#define FILTER_PCF13
+#define FILTER_PCF21
 
-    if(pos.x > 1 || pos.y > 1)
-      return vec4(0,1,0,1);      
+vec2 texsize = 1.0/textureSize(tex, 0) * 3;
 
-//    return vec4(1,1,1,1);
+#if defined(FILTER_PCF4)
+    const vec2 kernel2x2[4] = vec2[](
+      vec2(1,0),
+      vec2(-1,0),
+      vec2(0,1),
+      vec2(0,-1)
+    );
 
-#define FILTER_PCF
+    float foo = 0;
+    for(int i=0;i<4; ++i) {
+       float f = texture(tex, pos.st + kernel2x2[i] * texsize).x;
+       if( f <= pos.z )
+          foo += 1.0;       
+    }
 
-#if defined(FILTER_PCF)
+    return foo/4.0;
+
+#elif defined(FILTER_PCF9)
+    const vec2 kernel3x3[9] = vec2[](
+      vec2(-1,1),
+      vec2(0,1),
+      vec2(1,1),
+      vec2(-1,0),
+      vec2(0,0),
+      vec2(1,0),
+      vec2(-1,-1),
+      vec2(0,-1),
+      vec2(1,-1)
+    );
+
+    float foo = 0;
+    for(int i=0;i<9; ++i) {
+       float f = texture(tex, pos.st + kernel3x3[i] * texsize).x;
+       if( f < pos.z )
+          foo += 1.0;       
+    }
+
+    return foo/9.0;
+
+#elif defined(FILTER_PCF13)
+    const vec2 kernel3x3[13] = vec2[](
+      vec2(0, 1),
+      vec2(0, -1),
+      vec2(-1, 0),
+      vec2(1, 0),      
+      vec2(-0.5,0.5),
+      vec2(0,0.5),
+      vec2(0.5,0.5),
+      vec2(-0.5,0),
+      vec2(0,0),
+      vec2(0.5,0),
+      vec2(-0.5,-0.5),
+      vec2(0,-0.5),
+      vec2(0.5,-0.5)
+    );
+
+    float foo = 0;
+    for(int i=0;i<13; ++i) {
+       float f = texture(tex, pos.st + kernel3x3[i] * texsize).x;
+       if( f < pos.z )
+          foo += 1.0;       
+    }
+
+    return foo/13.0;
+
+#elif defined(FILTER_PCF21)
+    const vec2 kernel3x3[21] = vec2[](
+      vec2(0.5, 1),
+      vec2(0.5, -1),
+      vec2(-0.5, 1),
+      vec2(-0.5, -1),
+      vec2(1, 0.5),
+      vec2(-1, 0.5),
+      vec2(1, -0.5),
+      vec2(-1, -0.5),
+
+      vec2(0, 1),
+      vec2(0, -1),
+      vec2(-1, 0),
+      vec2(1, 0),
+
+      vec2(-0.5,0.5),
+      vec2(0,0.5),
+      vec2(0.5,0.5),
+      vec2(-0.5,0),
+      vec2(0,0),
+      vec2(0.5,0),
+      vec2(-0.5,-0.5),
+      vec2(0,-0.5),
+      vec2(0.5,-0.5)
+    );
+
+    int foo = 0;
+    int i=0;
+    for(;i<8; ++i) {
+       float f = texture(tex, pos.st + kernel3x3[i] * texsize).x;
+       if( f < pos.z )
+          foo += 1;       
+    }
+
+    if(foo == 0)
+      return 0.0;
+
+    if(foo == 8)
+      return 1.0;
+
+    for(;i<21; ++i) {
+       float f = texture(tex, pos.st + kernel3x3[i] * texsize).x;
+       if( f < pos.z )
+          foo += 1;       
+    }
+
+    return foo/21.0;
+
+#elif defined(FILTER_PCF)
     float occluded = 0;
-    float samplesTaken = 0;
-    float d = fuzzyness;
-    float s = d/samples;
+    int samplesTaken = 0;
+    float d = 0.003 * rpShadowParams.x; //modulate 'base' softness by shadowSoftness parameter
+
+    if(d<0.0001)
+      return isOccluded(tex, pos.st, vec2(0,0), pos.z);
+
+    float s = d/4;
     for(float i=-d;i<d;i+=s) {
       for(float j=-s;j<d;j+=s) {
-        occluded += isOccluded(tex, pos.st, vec2(i,j), pos.z);
-        samplesTaken += 1.0;
+
+        vec2 coord = pos.st + vec2(i,j);
+                    
+        
+        float f = texture(tex, coord).x;
+        if( f < pos.z )
+          occluded += 1.0;
+
+        samplesTaken += 1;
       }     
     }
 
-    float shadowness = occluded/samplesTaken;
-#else    
-    float shadowness = isOccluded(tex, pos.st, vec2(0,0), pos.z);
-#endif    
+    if(samplesTaken > 40)
+      return -100;
 
-  return mix(vec4(1, 1, 1, 1), shadowColor, shadowness);
+    return occluded/samplesTaken;
+#else    
+    return isOccluded(tex, pos.st, vec2(0,0), pos.z);
+#endif  
+
 }
 
+float projectedShadow()
+{
+  return getShadow(frag.shadow[0], texture6);
+}
 
-vec4 shadow(vec4 color, float fuzzyness, float samples)
+float pointlightShadow()
 {  
   vec3 d = frag.toGlobalLightOrigin;
 
@@ -266,35 +395,35 @@ vec4 shadow(vec4 color, float fuzzyness, float samples)
 
   if(side == 0)
   {  
-    return getShadow(frag.shadow[0], texture6, color, fuzzyness, samples); 
+    return getShadow(frag.shadow[0], texture6); 
   }
 
   if(side == 1)
   {  
-    return getShadow(frag.shadow[2], texture8, color, fuzzyness, samples); 
+    return getShadow(frag.shadow[2], texture8); 
   }  
 
   if(side == 2)
   {  
-    return getShadow(frag.shadow[4], texture10, color, fuzzyness, samples); 
+    return getShadow(frag.shadow[4], texture10); 
   }   
 
   if(side == 3)
   {  
-    return getShadow(frag.shadow[1], texture7, color, fuzzyness, samples); 
+    return getShadow(frag.shadow[1], texture7); 
   }   
 
   if(side == 4)
   {  
-    return getShadow(frag.shadow[3], texture9, color, fuzzyness, samples); 
+    return getShadow(frag.shadow[3], texture9); 
   }  
 
   if(side == 5)
   {  
-    return getShadow(frag.shadow[5], texture11, color, fuzzyness, samples); 
+    return getShadow(frag.shadow[5], texture11); 
   }   
 
-  return vec4(0,0,0,1);
+  return 0;
 }
 
 void main(void)
@@ -310,18 +439,12 @@ void main(void)
     result = blinnPhong(textureData, normalDir, lightDir);
 
 
-  float minBias = rpShadowParams.x * 0.001;
-  float maxBias = rpShadowParams.y * 0.01;
-  float fuzzyness = rpShadowParams.z;
-  float samples = rpShadowSamples;
-  float light = 0.15;
+  float shadowness = 0;
 
-  if(rpShadowMappingMode == 1)
-  {
-    result *= shadow(vec4(light,light,light,1), fuzzyness, samples);
-  } 
+  if(rpShadowMappingMode == 1)  
+    shadowness = pointlightShadow();  
   else if(rpShadowMappingMode == 2)
-  {
-    result *= getShadow(frag.shadow[0], texture6, vec4(light,light,light,1), fuzzyness, samples); 
-  }
+    shadowness = projectedShadow(); 
+
+  result *= mix(rpShadowParams.y, 1, 1-shadowness);
 }

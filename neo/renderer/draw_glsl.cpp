@@ -4,8 +4,6 @@
 #include "tr_local.h"
 #include "ImmediateMode.h"
 
-void RB_GLSL_GetShadowParams(float* minBias, float* maxBias, float* fuzzyness, int* samples);
-
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong?), 1 = Phong");
@@ -613,7 +611,7 @@ been set to 128 on any surfaces that might receive shadows
 void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   assert(shadowProgram);
 
-  if (r_shadows.GetInteger() != 1) {
+  if (backEnd.vLight->lightDef->ShadowMode() != shadowMode_t::StencilShadow) {
     return;
   }
 
@@ -1650,32 +1648,27 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
   glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
 
-  if (r_shadows.GetInteger() == 2 && !backEnd.vLight->lightDef->parms.noShadows) {
+  if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 	  const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
 	  glUniform4fv( glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr() );
 
-	  idVec4 shadowParams;
-	  int samples;
-	  RB_GLSL_GetShadowParams( &shadowParams.x, &shadowParams.y, &shadowParams.z, &samples );
-	  shadowParams.w = backEnd.vLight->lightDef->GetMaximumCenterToEdgeDistance();
+	  const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
+	  const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
+	  glUniform4f( glslProgramDef_t::uniform_shadowParams, shadowSoftness, shadowBrightness, 0, 0);
 
-	  glUniform4fv( glslProgramDef_t::uniform_shadowParams, 1, shadowParams.ToFloatPtr() );
-	  glUniform1i( glslProgramDef_t::uniform_shadowSamples, samples );
-
-	  //glUniformMatrix4fv( glslProgramDef_t::uniform_shadowViewProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
+	  const int numSamples = 3;
+	  glUniform1i( glslProgramDef_t::uniform_shadowSamples, numSamples );
 
 	  if (backEnd.vLight->lightDef->parms.pointLight) {
 		  //point light
 		  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 1 );
 		  glUniformMatrix4fv( glslProgramDef_t::uniform_pointlightProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
-	  }
-	  else {
+	  } else {
 		  //projected light
 		  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 2 );
 		  glUniformMatrix4fv( glslProgramDef_t::uniform_spotlightProjection, 1, false, backEnd.testProjectionMatrix );
 	  }
-  }
-  else {
+  } else {
 	  //no shadows
 	  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 0 );
   }
@@ -1762,11 +1755,9 @@ void RB_GLSL_DrawInteractions(void) {
       continue;
     }	
 
-	if (r_shadows.GetInteger() == 2)
-	{
-		if(!vLight->lightDef->parms.noShadows)
-			RB_RenderShadowMaps(vLight);
-	}
+	if(vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap)
+		RB_RenderShadowMaps(vLight);
+
 	
     lightShader = vLight->lightShader;
 

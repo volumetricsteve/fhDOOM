@@ -1189,7 +1189,7 @@ srfTriangles_t *R_CreateShadowVolume( const idRenderEntityLocal *ent,
 	srfTriangles_t	*newTri;
 	int		capPlaneBits;
 
-	if ( r_shadows.GetInteger() != 1 ) {
+	if ( light->ShadowMode() != shadowMode_t::StencilShadow ) {
 		return NULL;
 	}
 

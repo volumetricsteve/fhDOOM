@@ -903,7 +903,7 @@ void idInteraction::CreateInteraction( const idRenderModel *model ) {
 		}
 
 		// if the interaction has shadows and this surface casts a shadow
-		if ( r_shadows.GetInteger() == 1 && HasShadows() && shader->SurfaceCastsShadow() && tri->silEdges != NULL ) {
+		if ( lightDef->ShadowMode() == shadowMode_t::StencilShadow && HasShadows() && shader->SurfaceCastsShadow() && tri->silEdges != NULL ) {
 
 			// if the light has an optimized shadow volume, don't create shadows for any models that are part of the base areas
 			if ( lightDef->parms.prelightModel == NULL || !model->IsStaticWorldModel() || !r_useOptimizedShadows.GetBool() ) {
@@ -1071,7 +1071,7 @@ void idInteraction::AddActiveInteraction( void ) {
 
 	// the light and shadows surfaces are already created but without stencil shadows,
 	// we need to re-create all that if stencil shadows are enabled
-	if (!IsDeferred() && r_shadows.GetInteger() == 1 && !stencilShadowsCreated) {
+	if (!IsDeferred() && vLight->lightDef->ShadowMode() == shadowMode_t::StencilShadow && !stencilShadowsCreated) {
 		FreeSurfaces();
 	}
 

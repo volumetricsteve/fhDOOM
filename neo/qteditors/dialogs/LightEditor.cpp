@@ -53,28 +53,27 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	auto shadowGroup = new QGroupBox("Shadows", this);
 	auto shadowLayout = new QGridLayout(this);
 	m_shadowMode = new QComboBox(this);
-	m_shadowMode->addItem("No Shadows");
-	m_shadowMode->addItem("Default");
-	m_shadowMode->addItem("Stencil Shadows");
-	m_shadowMode->addItem("Shadow Mapping (No Filtering)");
-	m_shadowMode->addItem("Shadow Mapping (PCF)");
+	m_shadowMode->addItem("No Shadows", QVariant((int)shadowMode_t::NoShadows));
+	m_shadowMode->addItem("Default", QVariant((int)shadowMode_t::Default));
+	m_shadowMode->addItem("Stencil Shadows", QVariant((int)shadowMode_t::StencilShadow));
+	m_shadowMode->addItem("Shadow Mapping", QVariant((int)shadowMode_t::ShadowMap));
 	m_shadowBrightness = new fhNumEdit(0, 100, this);
 	m_shadowBrightness->setMaximumWidth(45);
-	m_shadowFuzzyness = new fhNumEdit(0, 100, this);
-	m_shadowFuzzyness->setMaximumWidth(45);
+	m_shadowSoftness = new fhNumEdit(0, 100, this);
+	m_shadowSoftness->setMaximumWidth(45);
 	m_shadowBrightnessSlider = new QSlider(Qt::Horizontal, this);
 	m_shadowBrightnessSlider->setMinimum(0);
 	m_shadowBrightnessSlider->setMaximum(100);
-	m_shadowFuzzynessSlider = new QSlider(Qt::Horizontal, this);
-	m_shadowFuzzynessSlider->setMinimum( 0 );
-	m_shadowFuzzynessSlider->setMaximum( 100 );
+	m_shadowSoftnessSlider = new QSlider(Qt::Horizontal, this);
+	m_shadowSoftnessSlider->setMinimum( 0 );
+	m_shadowSoftnessSlider->setMaximum( 100 );
 
 	shadowGroup->setLayout(shadowLayout);	
 	shadowLayout->addWidget( new QLabel( "Mode", this ), 0, 0 );
 	shadowLayout->addWidget( m_shadowMode, 0, 1, 1, 2 );
-	shadowLayout->addWidget(new QLabel("Fuzzyness", this), 1, 0);
-	shadowLayout->addWidget(m_shadowFuzzynessSlider, 1, 1);
-	shadowLayout->addWidget(m_shadowFuzzyness, 1, 2);
+	shadowLayout->addWidget(new QLabel("Softness", this), 1, 0);
+	shadowLayout->addWidget(m_shadowSoftnessSlider, 1, 1);
+	shadowLayout->addWidget(m_shadowSoftness, 1, 2);
 	shadowLayout->addWidget(new QLabel("Brightness", this), 2, 0);
 	shadowLayout->addWidget( m_shadowBrightnessSlider, 2, 1 );
 	shadowLayout->addWidget( m_shadowBrightness, 2, 2 );
@@ -182,7 +181,7 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	} );
 
 	QObject::connect( m_shadowMode,  static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
-		this->m_currentData.castShadows = this->m_shadowMode->currentIndex() != 0;
+		this->m_currentData.shadowMode = static_cast<shadowMode_t>(this->m_shadowMode->currentData().toInt());
 		this->m_modified = true;
 		this->UpdateGame();
 	} );
@@ -232,12 +231,20 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 			renderWidget->updateDrawable();
 	});
 
-	QObject::connect(m_shadowFuzzynessSlider, &QSlider::valueChanged, [=](int value){
-		this->m_shadowFuzzyness->setFloat( static_cast<float>(value)/10.0f );
+	QObject::connect(m_shadowSoftnessSlider, &QSlider::valueChanged, [=](int value){
+		const float f = static_cast<float>(value)/10.0f;
+		this->m_shadowSoftness->setFloat( f );
+		this->m_currentData.shadowSoftness = f;
+		this->m_modified = true;
+		this->UpdateGame();
 	});
 
 	QObject::connect( m_shadowBrightnessSlider, &QSlider::valueChanged, [=]( int value ){
-		this->m_shadowBrightness->setFloat( static_cast<float>(value) / m_shadowBrightnessSlider->maximum() );
+		const float f = static_cast<float>(value) / m_shadowBrightnessSlider->maximum();
+		this->m_shadowBrightness->setFloat( f );
+		this->m_currentData.shadowBrightness = f;
+		this->m_modified = true;
+		this->UpdateGame();
 	} );
 
 	UpdateLightParameters();
@@ -418,7 +425,14 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 	radius = spawnArgs->GetVector( "light_radius", "100 100 100" );
 	center = spawnArgs->GetVector( "light_center", "0 0 0" );
 	color = spawnArgs->GetVector( "_color", "1 1 1" );
-	castShadows = !spawnArgs->GetBool("noshadows", "0");
+
+	shadowMode = shadowMode_t::Default;
+	int shadowModeInt = 0;
+	if(spawnArgs->GetInt("shadowMode", "0", shadowModeInt)) {
+		shadowMode = static_cast<shadowMode_t>(shadowModeInt);
+	} else if(spawnArgs->GetBool("noshadows", "0")) {
+		shadowMode = shadowMode_t::NoShadows;		
+	}
 
 	name = spawnArgs->GetString("name");
 	classname = spawnArgs->GetString("classname");
@@ -439,6 +453,9 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 	spawnArgs->Delete("noshadows");
 	spawnArgs->Delete("nospecular");
 	spawnArgs->Delete("nodiffuse");
+	spawnArgs->Delete("shadowMode");
+	spawnArgs->Delete("shadowBrightness");
+	spawnArgs->Delete("shadowSoftness");
 
 	switch(type) {
 	case fhLightType::Projected:
@@ -463,16 +480,21 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 	};
 
 	spawnArgs->SetVector("_color", color);	
-	spawnArgs->SetBool("noshadows", !castShadows);
 
-	if(!material.IsEmpty())
+	spawnArgs->SetInt("shadowMode", (int)shadowMode);
+	if(shadowMode == shadowMode_t::ShadowMap) {
+		spawnArgs->SetFloat("shadowSoftness", shadowSoftness);
+		spawnArgs->SetFloat("shadowBrightness", shadowBrightness);
+	}
+
+	if(!material.IsEmpty()) {
 		spawnArgs->Set("texture", material.c_str());
+	}
 
 	//TODO(johl): are expected to be there(?), but are not used by the game
 	spawnArgs->SetBool("nospecular", false);
 	spawnArgs->SetBool("nodiffuse", false);
 	spawnArgs->SetFloat("falloff", 0.0f);
-	
 }
 
 void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
@@ -503,9 +525,18 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_projectedlightParameters.start->set( m_currentData.start );
 	m_projectedlightParameters.end->set( m_currentData.end );	
 	m_projectedlightParameters.explicitStartEnd->setChecked( m_currentData.explicitStartEnd );
-	m_shadowMode->setCurrentIndex( m_currentData.castShadows ? 1 : 0 );
 	m_material->setCurrentText(m_currentData.material.c_str());
 	m_coloredit->set(m_currentData.color);
+
+	const int shadowModeIndex = m_shadowMode->findData((int)m_currentData.shadowMode);
+	if(shadowModeIndex >= 0) {
+		m_shadowMode->setCurrentIndex(shadowModeIndex);
+	}
+
+	m_shadowSoftnessSlider->setValue(static_cast<int>( m_currentData.shadowSoftness * 10 ));
+	m_shadowSoftness->setFloat( m_currentData.shadowSoftness );
+	m_shadowBrightnessSlider->setValue(static_cast<int>( m_currentData.shadowBrightness * 10 ));
+	m_shadowBrightness->setFloat( m_currentData.shadowBrightness );
 	
 	UpdateLightParameters();
 	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));

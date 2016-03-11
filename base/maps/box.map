@@ -6,6 +6,18 @@ Version 2
 {
  brushDef3
  {
+  ( 0 0 -1 0 ) ( ( 0.125 0 6 ) ( 0 0.125 1 ) ) "_emptyname" 0 0 0
+  ( -0 0 1 -256 ) ( ( 0.125 0 6 ) ( -0 0.125 -1 ) ) "_emptyname" 0 0 0
+  ( -0 -1 -0 -232 ) ( ( 0.125 -0 -1.0000002384 ) ( 0 0.125 0 ) ) "_emptyname" 0 0 0
+  ( 1 0 0 -24 ) ( ( 0.125 0 6 ) ( 0 0.125 0 ) ) "_emptyname" 0 0 0
+  ( -0 1 0 128 ) ( ( 0.125 0 0.9999997616 ) ( 0 0.125 0 ) ) "_emptyname" 0 0 0
+  ( -1 0 0 16 ) ( ( 0.125 0 -6 ) ( 0 0.125 0 ) ) "_emptyname" 0 0 0
+ }
+}
+// primitive 1
+{
+ brushDef3
+ {
   ( -0 -0 -1 0 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 3 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
   ( 0 -0 1 -40 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 -3 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
   ( 0 -1 0 -64 ) ( ( 0.0078125 0 -3 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
@@ -14,7 +26,7 @@ Version 2
   ( -1 0 0 576 ) ( ( 0.0078125373 0 -0.0000003962 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
  }
 }
-// primitive 1
+// primitive 2
 {
  brushDef3
  {
@@ -26,7 +38,7 @@ Version 2
   ( -1 0 0 192 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
  }
 }
-// primitive 2
+// primitive 3
 {
  brushDef3
  {
@@ -38,7 +50,7 @@ Version 2
   ( -1 0 0 -136 ) ( ( 0.0625 0 -12 ) ( 0 0.0625 0 ) ) "textures/common/nodraw" 0 0 0
  }
 }
-// primitive 3
+// primitive 4
 {
  brushDef3
  {
@@ -50,7 +62,7 @@ Version 2
   ( 0.0000001343 1 -0 -256.0000610352 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 4
+// primitive 5
 {
  brushDef3
  {
@@ -62,7 +74,7 @@ Version 2
   ( 0.0000001343 1 -0 -256.0000610352 ) ( ( 0.0078125 0 0 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 5
+// primitive 6
 {
  brushDef3
  {
@@ -74,7 +86,7 @@ Version 2
   ( 0.0000001343 1 0 -272 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 6
+// primitive 7
 {
  brushDef3
  {
@@ -86,7 +98,7 @@ Version 2
   ( 0.0000001344 1 -0 127.9999313354 ) ( ( 0.0078125009 0 -0.4999997616 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 7
+// primitive 8
 {
  brushDef3
  {
@@ -98,7 +110,7 @@ Version 2
   ( -1 0 0 688 ) ( ( 0.0078125 0 -0.0000002682 ) ( 0 0.0078125 0 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 8
+// primitive 9
 {
  brushDef3
  {
@@ -146,43 +158,25 @@ Version 2
 }
 // entity 4
 {
-"classname" "light"
-"name" "light_4"
-"origin" "216 64 144"
-"rotation" "-1 -1.07288e-006 0 1.07288e-006 -1 0 0 0 1"
-"noshadows" "0"
-"nospecular" "0"
-"nodiffuse" "0"
-"falloff" "0.000000"
-"_color" "0.78 0.78 0.84"
-"light_radius" "600 300 300"
-"light_center" "250 0 0"
+"classname" "func_static"
+"name" "func_static_3"
+"origin" "64 64 0"
+"model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
 }
 // entity 5
 {
-"classname" "func_static"
-"name" "func_static_3"
-"origin" "64 128 0"
-"model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
-}
-// entity 6
-{
-"classname" "func_static"
-"name" "func_static_4"
-"origin" "64 64 0"
-"model" "models/mapobjects/fuel_barrel/exp_barrel.lwo"
-"rotation" "1.01328e-006 -1 0 1 1.01328e-006 0 -0 0 1"
-}
-// entity 7
-{
 "classname" "light"
-"name" "light_5"
-"origin" "-144 -64 208"
-"rotation" "-1 -1.07288e-006 0 1.07288e-006 -1 0 0 0 1"
-"noshadows" "0"
+"name" "light_7"
+"origin" "136 -16 152"
+"falloff" "0.000000"
+"shadowType" "2"
+"parallel" "0"
+"light_radius" "300 300 300"
+"light_center" "0 0 0"
+"_color" "1 1 1"
+"shadowMode" "3"
+"shadowSoftness" "10.000000"
+"shadowBrightness" "0.160000"
 "nospecular" "0"
 "nodiffuse" "0"
-"falloff" "0"
-"_color" "0.84 0.01 0"
-"light_radius" "120 120 120"
 }
