@@ -66,7 +66,6 @@ fhColorEdit::fhColorEdit(QWidget* parent)
 	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 	this->setContentsMargins(0,0,0,0);
 	layout->setMargin(0);
-	//layout->setSpacing(0);
 }
 
 fhColorEdit::~fhColorEdit() {

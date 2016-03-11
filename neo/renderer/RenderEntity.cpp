@@ -125,6 +125,9 @@ shadowMode_t idRenderLightLocal::ShadowMode() const {
 	if (parms.noShadows)
 		return shadowMode_t::NoShadows;
 
+	if (parms.parallel)
+		return shadowMode_t::StencilShadow;
+
 	if (parms.shadowMode != shadowMode_t::Default)
 		return parms.shadowMode;
 
@@ -135,17 +138,35 @@ shadowMode_t idRenderLightLocal::ShadowMode() const {
 }
 
 float idRenderLightLocal::ShadowSoftness() const {
-	if (parms.shadowMode == shadowMode_t::Default)
-		return 1.0f;
+	if (parms.shadowMode == shadowMode_t::Default) {
+		return r_smSoftness.GetFloat();
+	}
 
 	return parms.shadowSoftness;
 }
 
 float idRenderLightLocal::ShadowBrightness() const {
-	if (parms.shadowMode == shadowMode_t::Default)
-		return 0.15f;
+	if (parms.shadowMode == shadowMode_t::Default) {
+		return r_smBrightness.GetFloat();
+	}
 
 	return parms.shadowBrightness;
+}
+
+float idRenderLightLocal::ShadowPolygonOffsetFactor() const {
+	if (parms.shadowMode == shadowMode_t::Default) {
+		return r_smPolyOffsetFactor.GetFloat();
+	}
+
+	return parms.shadowPolygonOffsetFactor;
+}
+
+float idRenderLightLocal::ShadowPolygonOffsetBias() const {
+	if (parms.shadowMode == shadowMode_t::Default) {
+		return r_smPolyOffsetBias.GetFloat();
+	}
+
+	return parms.shadowPolygonOffsetBias;
 }
 
 

@@ -181,6 +181,8 @@ typedef struct renderLight_s {
 	shadowMode_t            shadowMode;
 	float                   shadowSoftness;
 	float                   shadowBrightness;
+	float                   shadowPolygonOffsetFactor;
+	float                   shadowPolygonOffsetBias;
 
 	bool					pointLight;			// otherwise a projection light (should probably invert the sense of this, because points are way more common)
 	bool					parallel;			// lightCenter gives the direction to the light at infinity

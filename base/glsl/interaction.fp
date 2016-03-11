@@ -210,7 +210,8 @@ float getShadow(vec4 pos, sampler2D tex)
 //#define FILTER_PCF13
 #define FILTER_PCF21
 
-vec2 texsize = 1.0/textureSize(tex, 0) * 3;
+//vec2 texsize = 1.0/textureSize(tex, 0) * 3 * rpShadowParams.x;
+vec2 texsize = vec2(1,1) * 0.003 * rpShadowParams.x;
 
 #if defined(FILTER_PCF4)
     const vec2 kernel2x2[4] = vec2[](

@@ -191,6 +191,8 @@ public:
 	shadowMode_t            ShadowMode() const;
 	float                   ShadowSoftness() const;
 	float                   ShadowBrightness() const;
+	float                   ShadowPolygonOffsetFactor() const;
+	float                   ShadowPolygonOffsetBias() const;
 
 	float					GetMaximumCenterToEdgeDistance() const;
 
@@ -994,6 +996,12 @@ extern idCVar r_softParticles;
 extern idCVar r_defaultParticleSoftness;
 
 extern idCVar r_showShadowPasses;
+
+extern idCVar r_smPolyOffsetFactor;
+extern idCVar r_smPolyOffsetBias;
+extern idCVar r_smSoftness;
+extern idCVar r_smBrightness;
+
 
 /*
 ====================================================================

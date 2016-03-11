@@ -13,6 +13,7 @@
 #include "../tools/radiant/GLWidget.h"
 #include "../widgets/NumEdit.h"
 #include "../widgets/ColorEdit.h"
+#include "../widgets/SliderNumEdit.h"
 
 fhLightEditor::fhLightEditor(QWidget* parent)
 : QDialog(parent) {
@@ -57,26 +58,42 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	m_shadowMode->addItem("Default", QVariant((int)shadowMode_t::Default));
 	m_shadowMode->addItem("Stencil Shadows", QVariant((int)shadowMode_t::StencilShadow));
 	m_shadowMode->addItem("Shadow Mapping", QVariant((int)shadowMode_t::ShadowMap));
-	m_shadowBrightness = new fhNumEdit(0, 100, this);
-	m_shadowBrightness->setMaximumWidth(45);
-	m_shadowSoftness = new fhNumEdit(0, 100, this);
-	m_shadowSoftness->setMaximumWidth(45);
-	m_shadowBrightnessSlider = new QSlider(Qt::Horizontal, this);
-	m_shadowBrightnessSlider->setMinimum(0);
-	m_shadowBrightnessSlider->setMaximum(100);
-	m_shadowSoftnessSlider = new QSlider(Qt::Horizontal, this);
-	m_shadowSoftnessSlider->setMinimum( 0 );
-	m_shadowSoftnessSlider->setMaximum( 100 );
+
+	m_shadowBrightnessEdit = new fhSliderNumEdit(this);	
+	m_shadowBrightnessEdit->setMaximum(1.0f);
+	m_shadowBrightnessEdit->setMinimum(0.0f);
+	m_shadowBrightnessEdit->setAdjustStepSize(0.01);
+	m_shadowBrightnessEdit->setPrecision(2);
+
+	m_shadowSoftnessEdit = new fhSliderNumEdit( this );
+	m_shadowSoftnessEdit->setMaximum( 10.0f );
+	m_shadowSoftnessEdit->setMinimum( 0.0f );
+	m_shadowSoftnessEdit->setAdjustStepSize( 0.01 );
+	m_shadowSoftnessEdit->setPrecision( 2 );
+
+	m_shadowOffsetBias = new fhSliderNumEdit( this );
+	m_shadowOffsetBias->setMaximum( 50.0f );
+	m_shadowOffsetBias->setMinimum( 0.0f );
+	m_shadowOffsetBias->setAdjustStepSize( 0.1f );
+	m_shadowOffsetBias->setPrecision( 1 );
+
+	m_shadowOffsetFactor = new fhSliderNumEdit( this );
+	m_shadowOffsetFactor->setMaximum( 50.0f );
+	m_shadowOffsetFactor->setMinimum( 0.0f );
+	m_shadowOffsetFactor->setAdjustStepSize( 0.1f );
+	m_shadowOffsetFactor->setPrecision( 1 );
 
 	shadowGroup->setLayout(shadowLayout);	
 	shadowLayout->addWidget( new QLabel( "Mode", this ), 0, 0 );
-	shadowLayout->addWidget( m_shadowMode, 0, 1, 1, 2 );
+	shadowLayout->addWidget( m_shadowMode, 0, 1 );
 	shadowLayout->addWidget(new QLabel("Softness", this), 1, 0);
-	shadowLayout->addWidget(m_shadowSoftnessSlider, 1, 1);
-	shadowLayout->addWidget(m_shadowSoftness, 1, 2);
+	shadowLayout->addWidget(m_shadowSoftnessEdit, 1, 1);	
 	shadowLayout->addWidget(new QLabel("Brightness", this), 2, 0);
-	shadowLayout->addWidget( m_shadowBrightnessSlider, 2, 1 );
-	shadowLayout->addWidget( m_shadowBrightness, 2, 2 );
+	shadowLayout->addWidget( m_shadowBrightnessEdit, 2, 1 );
+	shadowLayout->addWidget( new QLabel( "Offset Bias", this ), 3, 0 );
+	shadowLayout->addWidget( m_shadowOffsetBias, 3, 1 );
+	shadowLayout->addWidget( new QLabel( "Offset Factor", this ), 4, 0 );
+	shadowLayout->addWidget( m_shadowOffsetFactor, 4, 1 );
 
 	rightLayout->addWidget(shadowGroup);	
 
@@ -182,6 +199,13 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 
 	QObject::connect( m_shadowMode,  static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](){
 		this->m_currentData.shadowMode = static_cast<shadowMode_t>(this->m_shadowMode->currentData().toInt());
+
+		const bool shadowMapping = this->m_currentData.shadowMode == shadowMode_t::ShadowMap;
+		this->m_shadowSoftnessEdit->setEnabled(shadowMapping);
+		this->m_shadowBrightnessEdit->setEnabled(shadowMapping);
+		this->m_shadowOffsetBias->setEnabled(shadowMapping);
+		this->m_shadowOffsetFactor->setEnabled(shadowMapping);
+
 		this->m_modified = true;
 		this->UpdateGame();
 	} );
@@ -231,18 +255,26 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 			renderWidget->updateDrawable();
 	});
 
-	QObject::connect(m_shadowSoftnessSlider, &QSlider::valueChanged, [=](int value){
-		const float f = static_cast<float>(value)/10.0f;
-		this->m_shadowSoftness->setFloat( f );
-		this->m_currentData.shadowSoftness = f;
+	QObject::connect(m_shadowBrightnessEdit, &fhSliderNumEdit::valueChanged, [=](float f){
+		this->m_currentData.shadowBrightness = f;
 		this->m_modified = true;
 		this->UpdateGame();
 	});
 
-	QObject::connect( m_shadowBrightnessSlider, &QSlider::valueChanged, [=]( int value ){
-		const float f = static_cast<float>(value) / m_shadowBrightnessSlider->maximum();
-		this->m_shadowBrightness->setFloat( f );
-		this->m_currentData.shadowBrightness = f;
+	QObject::connect( m_shadowSoftnessEdit, &fhSliderNumEdit::valueChanged, [=]( float f ){
+		this->m_currentData.shadowSoftness = f;
+		this->m_modified = true;
+		this->UpdateGame();
+	} );
+
+	QObject::connect( m_shadowOffsetBias, &fhSliderNumEdit::valueChanged, [=]( float f ){
+		this->m_currentData.shadowPolygonOffsetBias = f;
+		this->m_modified = true;
+		this->UpdateGame();
+	} );
+
+	QObject::connect( m_shadowOffsetFactor, &fhSliderNumEdit::valueChanged, [=]( float f ){
+		this->m_currentData.shadowPolygonOffsetFactor = f;
 		this->m_modified = true;
 		this->UpdateGame();
 	} );
@@ -433,6 +465,10 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 	} else if(spawnArgs->GetBool("noshadows", "0")) {
 		shadowMode = shadowMode_t::NoShadows;		
 	}
+	shadowBrightness = spawnArgs->GetFloat("shadowBrightness", "0.15");
+	shadowSoftness = spawnArgs->GetFloat("shadowSoftness", "1");
+	shadowPolygonOffsetBias = spawnArgs->GetFloat("shadowPolygonOffsetBias", "10");
+	shadowPolygonOffsetFactor = spawnArgs->GetFloat("shadowPolygonOffsetFactor", "4");
 
 	name = spawnArgs->GetString("name");
 	classname = spawnArgs->GetString("classname");
@@ -485,6 +521,8 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 	if(shadowMode == shadowMode_t::ShadowMap) {
 		spawnArgs->SetFloat("shadowSoftness", shadowSoftness);
 		spawnArgs->SetFloat("shadowBrightness", shadowBrightness);
+		spawnArgs->SetFloat("shadowPolygonOffsetBias", shadowPolygonOffsetBias);
+		spawnArgs->SetFloat("shadowPolygonOffsetFactor", shadowPolygonOffsetFactor);
 	}
 
 	if(!material.IsEmpty()) {
@@ -533,10 +571,10 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 		m_shadowMode->setCurrentIndex(shadowModeIndex);
 	}
 
-	m_shadowSoftnessSlider->setValue(static_cast<int>( m_currentData.shadowSoftness * 10 ));
-	m_shadowSoftness->setFloat( m_currentData.shadowSoftness );
-	m_shadowBrightnessSlider->setValue(static_cast<int>( m_currentData.shadowBrightness * 10 ));
-	m_shadowBrightness->setFloat( m_currentData.shadowBrightness );
+	m_shadowBrightnessEdit->setValue(m_currentData.shadowBrightness);
+	m_shadowSoftnessEdit->setValue(m_currentData.shadowSoftness);
+	m_shadowOffsetBias->setValue(m_currentData.shadowPolygonOffsetBias);
+	m_shadowOffsetFactor->setValue(m_currentData.shadowPolygonOffsetFactor);
 	
 	UpdateLightParameters();
 	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));

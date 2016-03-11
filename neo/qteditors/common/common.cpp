@@ -32,11 +32,11 @@ void QtRun()
 		darkPalette.setColor( QPalette::Highlight, QColor( 42, 130, 218 ) );
 		darkPalette.setColor( QPalette::HighlightedText, Qt::black );
 
-
-		darkPalette.setColor( QPalette::Disabled, QPalette::WindowText, Qt::gray );
-		darkPalette.setColor( QPalette::Disabled, QPalette::Text, Qt::gray );
-		darkPalette.setColor( QPalette::Disabled, QPalette::BrightText, Qt::gray );
-		
+		darkPalette.setColor( QPalette::Disabled, QPalette::WindowText, Qt::darkGray );
+		darkPalette.setColor( QPalette::Disabled, QPalette::Text, Qt::darkGray );
+		darkPalette.setColor( QPalette::Disabled, QPalette::BrightText, Qt::darkGray );
+		darkPalette.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::darkGray );
+		darkPalette.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::darkGray );		
 
 		app->setPalette( darkPalette );
 

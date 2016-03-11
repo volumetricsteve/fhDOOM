@@ -12,6 +12,7 @@ class QComboBox;
 class idGLDrawableMaterial;
 
 class fhColorEdit;
+class fhSliderNumEdit;
 
 class fhEditing {
 public:
@@ -55,6 +56,8 @@ private:
 		shadowMode_t shadowMode;
 		float shadowSoftness;
 		float shadowBrightness;
+		float shadowPolygonOffsetFactor;
+		float shadowPolygonOffsetBias;
 
 		void initFromSpawnArgs( const idDict* spawnArgs );
 		void toSpawnArgs(idDict* spawnArgs);
@@ -74,10 +77,10 @@ private:
 	QPushButton* m_okButton;
 	QComboBox* m_shadowMode;
 
-	QSlider* m_shadowSoftnessSlider;
-	fhNumEdit* m_shadowSoftness;
-	QSlider* m_shadowBrightnessSlider;
-	fhNumEdit* m_shadowBrightness;
+	fhSliderNumEdit* m_shadowBrightnessEdit;
+	fhSliderNumEdit* m_shadowSoftnessEdit;
+	fhSliderNumEdit* m_shadowOffsetBias;
+	fhSliderNumEdit* m_shadowOffsetFactor;
 	
 	idGLDrawableMaterial* m_drawableMaterial;
 	QLabel* m_materialFile;

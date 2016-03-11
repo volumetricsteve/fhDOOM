@@ -11,8 +11,11 @@ idCVar r_smNearClip( "r_smNearClip", "1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCH
 idCVar r_smUseStaticOccluderModel( "r_smUseStaticOccluderModel", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "the occluder model is a single surface merged from all static and opaque world surfaces. Can be rendered to the shadow map with a single draw call");
 
 idCVar r_smQuality( "r_smQuality", "-1", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
+
 idCVar r_smPolyOffsetFactor( "r_smPolyOffsetFactor", "4", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "26", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smSoftness( "r_smSoftness", "1", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smBrightness( "r_smBrightness", "0.15", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 
 static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
@@ -934,8 +937,10 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
 	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
 
+	const float polygonOffsetBias = vLight->lightDef->ShadowPolygonOffsetBias();
+	const float polygonOffsetFactor = vLight->lightDef->ShadowPolygonOffsetFactor();
 	glEnable( GL_POLYGON_OFFSET_FILL );
-	glPolygonOffset( r_smPolyOffsetFactor.GetFloat(), r_smPolyOffsetBias.GetFloat() );
+	glPolygonOffset( polygonOffsetFactor, polygonOffsetBias );
 
 	switch (r_smFaceCullMode.GetInteger())
 	{
