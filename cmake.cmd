@@ -1,5 +1,4 @@
-mkdir build
-cd build
-mkdir default
-cd default
+mkdir build\default
+pushd build\default
 cmake ../..
+popd

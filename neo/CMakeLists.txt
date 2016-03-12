@@ -192,12 +192,28 @@ ENDIF()
 ######################## QT TOOLS #############################################
 ###############################################################################
 
-set(CMAKE_PREFIX_PATH "C:\\Entwicklung\\Qt\\x86\\5.5.1\\5.5\\msvc2013\\")
+if(DEFINED ENV{QTDIR})
+  set(CMAKE_PREFIX_PATH $ENV{QTDIR})
+  message("Found QTDIR env var")
+else()
+  message(WARNING "Found no QTDIR env var")
+endif()
+
 set(CMAKE_AUTOMOC ON)
 find_package(Qt5Widgets)
 if(Qt5Widgets_FOUND)
   add_definitions(-DID_ALLOW_QT)
   add_subdirectory(qteditors)
+
+  get_target_property(QtCore_location Qt5::Core LOCATION)
+  get_target_property(QtWidgets_location Qt5::Widgets LOCATION)
+  get_target_property(QtGui_location Qt5::Gui LOCATION)
+
+  SET(QTDLLS
+    ${QtCore_location}
+    ${QtWidgets_location}
+    ${QtGui_location}
+  )
 else()
   message(WARNING "Qt5 not found. Qt based tools are excluded from the build")
 endif()
@@ -982,9 +998,12 @@ else()
     glew
     jpeg-6
     oggvorbis
-    qteditors
     ${EXTERNAL_LIBS})  
 endif()  
+
+if(Qt5Widgets_FOUND)
+  set(LINK_LIBS ${LINK_LIBS} qteditors)
+endif()
 
 set(TARGET_NAME "fhDOOM")
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
@@ -998,6 +1017,20 @@ if(MSVC)
   set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:WINDOWS")  
 
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER exes)
+
+  #TODO(johl): copy ONLY the debug versions for a Debug build and ONLY the release for a Release build
+  foreach(DLL ${QTDLLS})
+    string(REPLACE ".dll" "d.dll" DLLFILE ${DLL})
+    add_custom_command(
+      TARGET ${TARGET_NAME} 
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${DLLFILE} $<TARGET_FILE_DIR:${TARGET_NAME}> )    
+
+    add_custom_command(
+      TARGET ${TARGET_NAME} 
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy ${DLL} $<TARGET_FILE_DIR:${TARGET_NAME}> )          
+  endforeach()    
 endif()
 
 IF(UNIX)

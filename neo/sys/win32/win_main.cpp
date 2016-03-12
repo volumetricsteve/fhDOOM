@@ -1432,7 +1432,9 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		Sys_FPU_EnableExceptions( TEST_FPU_EXCEPTIONS );
 
 		// update Qt based GUIs
+#ifdef ID_ALLOW_QT
 		QtRun();
+#endif
 
 #ifdef ID_ALLOW_TOOLS
 

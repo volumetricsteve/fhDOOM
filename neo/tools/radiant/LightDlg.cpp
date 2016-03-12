@@ -787,7 +787,15 @@ void LightEditorInit( const idDict *spawnArgs ) {
 					"Set r_fullscreen to 0 and vid_restart.\n" );
 		return;
 	}
-#if 0
+#if ID_ALLOW_QT
+	if(!spawnArgs && com_editorActive) {
+		const entity_t *e = SingleLightSelected();
+		if(e) {
+			spawnArgs = &e->epairs;
+		}
+	}
+	QtLightEditorInit(spawnArgs);
+#else
 	if ( g_LightDialog == NULL ) {
 		InitAfx();
 		g_LightDialog = new CLightDlg();
@@ -811,14 +819,6 @@ void LightEditorInit( const idDict *spawnArgs ) {
 	if ( spawnArgs ) {
 		// FIXME: select light based on spawn args
 	}
-#else
-	if(!spawnArgs && com_editorActive) {
-		const entity_t *e = SingleLightSelected();
-		if(e) {
-			spawnArgs = &e->epairs;
-		}
-	}
-	QtLightEditorInit(spawnArgs);
 #endif
 }
 
@@ -842,14 +842,14 @@ void LightEditorShutdown( void ) {
 }
 
 void UpdateLightInspector() {
-#if 0
-	if ( g_LightDialog && g_LightDialog->GetSafeHwnd() != NULL ) {
-		g_LightDialog->UpdateDialog(true);   //jhefty - update ALL info about the light, including check boxes
-	}
-#else
+#ifdef ID_ALLOW_QT
 	const entity_t *e = SingleLightSelected();
 	if (e) {
 		QtLightEditorInit( &e->epairs );
+	}
+#else
+	if ( g_LightDialog && g_LightDialog->GetSafeHwnd() != NULL ) {
+		g_LightDialog->UpdateDialog(true);   //jhefty - update ALL info about the light, including check boxes
 	}	
 #endif
 }
@@ -862,13 +862,13 @@ void CLightDlg::OnApply() {
 
 void UpdateLightDialog( float r, float g, float b, float a ) {
 	UpdateRadiantColor( 0.0f, 0.0f, 0.0f, 0.0f );
-#if 0
-	g_LightDialog->UpdateColor( r, g, b, a );
-#else
+#ifdef ID_ALLOW_QT
 	const entity_t *e = SingleLightSelected();
-	if(e) {
-		QtLightEditorInit(&e->epairs);
-	}
+	if (e) {
+		QtLightEditorInit( &e->epairs );
+	}	
+#else
+	g_LightDialog->UpdateColor( r, g, b, a );
 #endif
 }
 
