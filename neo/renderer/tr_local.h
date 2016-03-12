@@ -1016,7 +1016,7 @@ void	GL_CheckErrors( void );
 void	GL_State( int stateVector );
 void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
-void	GL_UseProgram( const glslProgramDef_t* program );
+void	GL_UseProgram( const fhRenderProgram* program );
 
 /*
 ====================
@@ -1353,7 +1353,7 @@ void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* p
 
 void	R_GLSL_Init( void );
 void	RB_GLSL_DrawInteractions( void );
-const	glslProgramDef_t*  R_FindGlslProgram( const char* vertexShaderName, const char* fragmentShaderName );
+const	fhRenderProgram*  R_FindGlslProgram( const char* vertexShaderName, const char* fragmentShaderName );
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
 void	RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
 void	RB_GLSL_RenderSpecialShaderStage( const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const srfTriangles_t	*tri );

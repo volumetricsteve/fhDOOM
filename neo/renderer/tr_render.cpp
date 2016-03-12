@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "ImmediateMode.h"
+#include "RenderProgram.h"
 
 /*
 
@@ -154,18 +155,18 @@ void RB_RenderTriangleSurface( const srfTriangles_t *tri ) {
 	}
 
     const int offset = vertexCache.Bind(tri->ambientCache);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
 	
 	RB_DrawElementsWithCounters( tri );
 
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
 }
 
 /*
@@ -246,7 +247,7 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 		// change the matrix if needed
 		if ( drawSurf->space != backEnd.currentSpace ) {
 			GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
-	        glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, drawSurf->space->modelViewMatrix);
+	        glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, drawSurf->space->modelViewMatrix);
 		}
 
 		if ( drawSurf->space->weaponDepthHack ) {

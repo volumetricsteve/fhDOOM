@@ -2,34 +2,14 @@
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "RenderProgram.h"
 #include "ImmediateMode.h"
 
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
-idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong?), 1 = Phong");
+idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
-idCVar r_shadowDefaultType("r_shadowDefaultType", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "set default shadow type: 0 = Stencil Shadows (hard shadws), 1 = Shadow Maps (soft shadows)");
-
-static const int DEFAULT_SHADOW_TYPE_STENCILSHADOWS = 0;
-static const int DEFAULT_SHADOW_TYPE_SHADOWMAPS = 1;
-
-#define MAX_GLPROGS 128
-static glslProgramDef_t glslPrograms[MAX_GLPROGS] = { 0 };
-
-const glslProgramDef_t* shadowProgram = nullptr;
-const glslProgramDef_t* interactionProgram = nullptr;
-const glslProgramDef_t* depthProgram = nullptr;
-const glslProgramDef_t* shadowmapProgram = nullptr;
-const glslProgramDef_t* defaultProgram = nullptr;
-const glslProgramDef_t* depthblendProgram = nullptr;
-const glslProgramDef_t* skyboxProgram = nullptr;
-const glslProgramDef_t* bumpyEnvProgram = nullptr;
-const glslProgramDef_t* fogLightProgram = nullptr;
-const glslProgramDef_t* blendLightProgram = nullptr;
-const glslProgramDef_t* vertexColorProgram = nullptr;
-const glslProgramDef_t* flatColorProgram = nullptr;
-const glslProgramDef_t* intensityProgram = nullptr;
 
 /*
 ====================
@@ -66,8 +46,8 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
 
   tri = surf->geo;
 
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
   if (backEnd.currentSpace != surf->space) {
     idPlane	lightProject[4];
@@ -77,10 +57,10 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
       R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i]);
     }
 
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, lightProject[0].ToFloatPtr());
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, lightProject[1].ToFloatPtr());
-    glUniform4fv(glslProgramDef_t::uniform_specularMatrixS, 1, lightProject[2].ToFloatPtr());
-    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, lightProject[3].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, lightProject[0].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, lightProject[1].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_specularMatrixS, 1, lightProject[2].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, lightProject[3].ToFloatPtr());
 /*
     GL_SelectTexture(0);
     glTexGenfv(GL_S, GL_OBJECT_PLANE, lightProject[0].ToFloatPtr());
@@ -98,24 +78,24 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
     //glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
     //     
     int offset = vertexCache.Bind(tri->ambientCache);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
   }
   else if (tri->shadowCache) {
     //shadowCache_t	*sc = (shadowCache_t *)vertexCache.Position(tri->shadowCache);
     //glVertexPointer(3, GL_FLOAT, sizeof(shadowCache_t), sc->xyz.ToFloatPtr());
     int offset = vertexCache.Bind(tri->shadowCache);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 3, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position_shadow, 3, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
   }
 
   RB_DrawElementsWithCounters(tri);
 
   if (tri->ambientCache) {   
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
   }
   else if (tri->shadowCache) {
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
   }
 }
 
@@ -173,7 +153,7 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
     backEnd.lightColor[1] = regs[stage->color.registers[1]];
     backEnd.lightColor[2] = regs[stage->color.registers[2]];
     backEnd.lightColor[3] = regs[stage->color.registers[3]];
-    glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, backEnd.lightColor);
+    glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, backEnd.lightColor);
 
     RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BlendLight);
     RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BlendLight);
@@ -261,10 +241,10 @@ static void RB_GLSL_RenderTriangleSurface(const srfTriangles_t *tri) {
 
   auto offset = vertexCache.Bind(tri->ambientCache);
 
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, 0));
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, 0));
   RB_DrawElementsWithCounters(tri);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
 }
 
 static idPlane	fogPlanes[4];
@@ -276,8 +256,8 @@ RB_T_BasicFog
 =====================
 */
 static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
   if (backEnd.currentSpace != surf->space) {
     idPlane	local;
@@ -286,13 +266,13 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
     local[3] += 0.5;
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, local.ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, local.ToFloatPtr());
     //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
 
     //		R_GlobalPlaneToLocal( surf->space->modelMatrix, fogPlanes[1], local );
     //		local[3] += 0.5;
     local[0] = local[1] = local[2] = 0; local[3] = 0.5;
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, local.ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, local.ToFloatPtr());
     //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
 
     GL_SelectTexture(1);
@@ -300,11 +280,11 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
     // GL_S is constant per viewer
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
     local[3] += FOG_ENTER;
-    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, local.ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, local.ToFloatPtr());
     //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
 
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
-    glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, local.ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, local.ToFloatPtr());
     //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
   }
 
@@ -320,21 +300,8 @@ Load default shaders.
 */
 void	R_GLSL_Init( void )
 {
-  fogLightProgram = R_FindGlslProgram("fogLight.vp", "fogLight.fp");  
-  blendLightProgram = R_FindGlslProgram("blendLight.vp", "blendLight.fp");  
-  shadowProgram = R_FindGlslProgram("shadow.vp", "shadow.fp");
-  depthProgram = R_FindGlslProgram("depth.vp", "depth.fp");  
-  shadowmapProgram = R_FindGlslProgram("shadowmap.vp", "shadowmap.fp");  
-  defaultProgram = R_FindGlslProgram("default.vp", "default.fp");
-  depthblendProgram = R_FindGlslProgram("depthblend.vp", "depthblend.fp");
-  skyboxProgram = R_FindGlslProgram("skybox.vp", "skybox.fp");
-  bumpyEnvProgram = R_FindGlslProgram("bumpyenv.vp", "bumpyenv.fp");  
-  interactionProgram = R_FindGlslProgram("interaction.vp", "interaction.fp");
-  vertexColorProgram = R_FindGlslProgram("vertexcolor.vp", "vertexcolor.fp");
-  flatColorProgram = R_FindGlslProgram("flatcolor.vp", "flatcolor.fp");
-  intensityProgram = R_FindGlslProgram("intensity.vp", "intensity.fp");
-
-  fhImmediateMode::Init();
+	fhRenderProgram::Init();
+	fhImmediateMode::Init();
 }
 
 
@@ -375,7 +342,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   backEnd.lightColor[2] = regs[stage->color.registers[2]];
   backEnd.lightColor[3] = regs[stage->color.registers[3]];
   
-  glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, backEnd.lightColor);
+  glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, backEnd.lightColor);
 
   // calculate the falloff planes
   float	a;
@@ -473,9 +440,9 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
     localLight.w = 0.0f;
 
     assert(shadowProgram);
-    glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, localLight.ToFloatPtr());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    glUniform4fv(fhRenderProgram::uniform_localLightOrigin, 1, localLight.ToFloatPtr());
+    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
   }
 
   tri = surf->geo;
@@ -485,8 +452,8 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
   }
 
   const auto offset = vertexCache.Bind(tri->shadowCache);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
 
   // we always draw the sil planes, but we may not need to draw the front or rear caps
   int	numIndexes;
@@ -567,7 +534,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
     RB_DrawShadowElementsWithCounters(tri, numIndexes);
     GL_Cull(CT_FRONT_SIDED);
     glEnable(GL_STENCIL_TEST);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
 
     return;
   }
@@ -593,7 +560,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
   GL_Cull(CT_BACK_SIDED);
   RB_DrawShadowElementsWithCounters(tri, numIndexes);
 
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position_shadow);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
 }
 
 
@@ -760,10 +727,10 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
   }
 
   const auto offset = vertexCache.Bind(tri->ambientCache);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
   bool drawSolid = false;
 
@@ -805,9 +772,9 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
       // bind the texture
       pStage->texture.image->Bind();
       
-      glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
-      glUniform1f(glslProgramDef_t::uniform_alphaTestThreshold, regs[pStage->alphaTestRegister]);
-      glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
+      glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 1);
+      glUniform1f(fhRenderProgram::uniform_alphaTestThreshold, regs[pStage->alphaTestRegister]);
+      glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, color);
 
       // set texture matrix and texGens      
 
@@ -819,8 +786,8 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
       if (pStage->texture.hasMatrix) {
         idVec4 textureMatrix[2];
         RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
       }
       
 
@@ -842,10 +809,10 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
         textureMatrix[1][1] = 1;
         textureMatrix[1][2] = 0;
         textureMatrix[1][3] = 0;
-        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-        glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
 
-        glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+        glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 0);
       }
     }
     //glDisable(GL_ALPHA_TEST);
@@ -856,7 +823,7 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
 
   // draw the entire surface solid
   if (drawSolid) {
-    glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
+    glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, color);
     //    glColor4fv(color);
     globalImages->whiteImage->Bind();
 
@@ -920,13 +887,13 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
   glStencilFunc(GL_ALWAYS, 1, 255);
 
   GL_UseProgram(depthProgram);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
 
   RB_RenderDrawSurfListWithFunction(drawSurfs, numDrawSurfs, RB_GLSL_FillDepthBuffer);
 
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
   GL_UseProgram(nullptr);
 
   if (backEnd.viewDef->numClipPlanes) {
@@ -949,19 +916,19 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
 
   const auto offset = vertexCache.Bind(tri->ambientCache);
 
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
 
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert),   attributeOffset(offset, idDrawVert::normalOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert),   attributeOffset(offset, idDrawVert::normalOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
 
   GL_State(pStage->drawStateBits);
   GL_UseProgram(glslStage->program);
@@ -972,12 +939,12 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
     parm[1] = regs[glslStage->shaderParms[i][1]];
     parm[2] = regs[glslStage->shaderParms[i][2]];
     parm[3] = regs[glslStage->shaderParms[i][3]];
-    glUniform4fv(glslProgramDef_t::uniform_shaderparm0 + i, 1, parm);
+    glUniform4fv(fhRenderProgram::uniform_shaderparm0 + i, 1, parm);
   }
 
 //  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
   // current render
   const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
@@ -987,7 +954,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
   currentRenderSize[2] = w;
   currentRenderSize[3] = h;
-  glUniform4fv(glslProgramDef_t::uniform_currentRenderSize, 1, currentRenderSize);
+  glUniform4fv(fhRenderProgram::uniform_currentRenderSize, 1, currentRenderSize);
 
   // set textures
   for (int i = 0; i < glslStage->numShaderMaps; i++) {
@@ -1010,274 +977,14 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   GL_UseProgram(nullptr);
   GL_SelectTexture(0);
 
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
 }
 
-
-/*
-=================
-R_PreprocessShader
-=================
-*/
-static bool R_PreprocessShader(char* src, int srcsize, char* dest, int destsize) {
-  static const char* const inc_stmt = "#include ";
-
-  char* inc_start = strstr(src, inc_stmt);
-  if(!inc_start) {
-    if(srcsize >= destsize) {
-      common->Warning(": File too large\n");
-      return false;
-    }     
-
-    memcpy(dest, src, srcsize);
-    dest[srcsize] = '\0';
-
-    return true;
-  }
-
-  char* filename_start = strstr(inc_start, "\"");
-  if(!filename_start)
-    return false;
-  
-  filename_start++;
-
-  char* filename_stop = strstr(filename_start, "\"");
-  if(!filename_stop)
-    return false;  
-
-  int filename_len = (ptrdiff_t)filename_stop - (ptrdiff_t)filename_start;
-  filename_stop++;
-
-  int bytes_before_inc = (ptrdiff_t)inc_start - (ptrdiff_t)src;
-  int bytes_after_inc = (ptrdiff_t)srcsize - ((ptrdiff_t)filename_stop - (ptrdiff_t)src);
-  
-  idStr fullPath = idStr("glsl/") + idStr(filename_start, 0, filename_len);
-
-  char	*fileBuffer = nullptr;
-  fileSystem->ReadFile(fullPath.c_str(), (void **)&fileBuffer, NULL);
-  if (!fileBuffer) {
-    common->Printf(": File not found\n");
-    return false;
-  }
-  int file_size = strlen(fileBuffer);
-
-  if(file_size + bytes_before_inc + bytes_after_inc >= destsize) {
-    common->Printf(": File too large\n");
-    fileSystem->FreeFile(fileBuffer);
-    return false;
-  }
-
-  memcpy(dest, src, bytes_before_inc);
-  dest += bytes_before_inc;
-  memcpy(dest, fileBuffer, file_size);
-  dest += file_size;
-  memcpy(dest, filename_stop, bytes_after_inc);
-  dest[bytes_after_inc] = '\0';
-  return true;
-}
-
-
-/*
-=================
-R_LoadGlslShader
-=================
-*/
-static GLuint R_LoadGlslShader(GLenum shaderType, const char* filename) {
-  assert(filename);
-  assert(filename[0]);
-  assert(shaderType == GL_VERTEX_SHADER || shaderType == GL_FRAGMENT_SHADER);
-
-  idStr	fullPath = "glsl/";
-  fullPath += filename;
-
-  if(shaderType == GL_VERTEX_SHADER)
-    common->Printf("load vertex shader %s\n", fullPath.c_str());
-  else
-    common->Printf("load fragment shader %s\n", fullPath.c_str());
-
-  // load the program even if we don't support it, so
-  // fs_copyfiles can generate cross-platform data dumps
-  // 
-  char	*fileBuffer = nullptr;
-  fileSystem->ReadFile(fullPath.c_str(), (void **)&fileBuffer, NULL);
-  if (!fileBuffer) {
-    common->Printf(": File not found\n");
-    return 0;
-  }
-
-  const int buffer_size = 1024 * 256;
-  char* buffer = new char[buffer_size];
-
-  bool ok = R_PreprocessShader(fileBuffer, strlen(fileBuffer), buffer, buffer_size);
-
-  fileSystem->FreeFile(fileBuffer);
-
-  if(!ok) {
-    return 0;
-  }
-
-  GLuint shaderObject = glCreateShader(shaderType);
-
-  const int bufferLen = strlen(buffer);
-
-  glShaderSource(shaderObject, 1, (const GLchar**)&buffer, &bufferLen);
-  glCompileShader(shaderObject);
-
-  delete buffer;
-
-  GLint success = 0;
-  glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &success);
-  if(success == GL_FALSE) {
-    char buffer[1024];
-    GLsizei length;
-    glGetShaderInfoLog(shaderObject, sizeof(buffer)-1, &length, &buffer[0]);
-    buffer[length] = '\0';
-
-
-    common->Printf("failed to compile shader '%s': %s", filename, &buffer[0]);
-    return 0;
-  }
-
-  return shaderObject;
-}
-
-namespace {
-  // Little RAII helper to deal with detaching and deleting of shader objects
-  struct GlslShader {
-    GlslShader(GLuint ident)
-      : ident(ident)
-      , program(0)
-    {}
-
-    ~GlslShader() {      
-      release();        
-    }
-
-    void release() {
-      if (ident) {
-        if (program) {
-          glDetachShader(program, ident);
-        }
-        glDeleteShader(ident);
-      }
-
-      ident = 0;
-      program = 0;
-    }
-
-    void attachToProgram(GLuint program) {
-      this->program = program;
-      glAttachShader(program, ident);
-    }
-
-    GLuint ident;
-    GLuint program;
-  };
-}
-
-/*
-=================
-R_LoadGlslProgram
-=================
-*/
-static void R_LoadGlslProgram(glslProgramDef_t& programDef) {
-  if(!programDef.vertexShaderName[0] || !programDef.fragmentShaderName[0])
-    return;
-
-  GlslShader vertexShader = R_LoadGlslShader(GL_VERTEX_SHADER, programDef.vertexShaderName);
-  if (!vertexShader.ident) {
-    common->Warning("failed to load GLSL vertex shader: %s", programDef.vertexShaderName);
-    return;
-  }
-
-  GlslShader fragmentShader = R_LoadGlslShader(GL_FRAGMENT_SHADER, programDef.fragmentShaderName);
-  if (!fragmentShader.ident) {
-    common->Warning("failed to load GLSL fragment shader: %s", programDef.fragmentShaderName);
-    return;
-  }
-
-  const GLuint program = glCreateProgram();
-  if (!program) {
-    common->Warning("failed to create GLSL program object");
-    return;
-  }
-
-  vertexShader.attachToProgram(program);
-  fragmentShader.attachToProgram(program);
-  glLinkProgram(program);
-
-  GLint isLinked = 0;
-  glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-  if (isLinked == GL_FALSE) {
-
-    char buffer[1024];
-    GLsizei length;
-    glGetProgramInfoLog(program, sizeof(buffer)-1, &length, &buffer[0]);
-    buffer[length] = '\0';
-
-    vertexShader.release();
-    fragmentShader.release();
-    glDeleteProgram(program);
-
-    common->Warning("failed to link GLSL shaders to program: %s", &buffer[0]);
-    return;
-  }
-
-  if (programDef.ident)
-    glDeleteProgram(programDef.ident);
-
-  programDef.ident = program;
-}
-
-/*
-=================
-R_FindGlslProgram
-=================
-*/
-const glslProgramDef_t* R_FindGlslProgram(const char* vertexShaderName, const char* fragmentShaderName) {
-  assert(vertexShaderName && vertexShaderName[0]);
-  assert(fragmentShaderName && fragmentShaderName[0]);
-
-  const int vertexShaderNameLen = strlen(vertexShaderName);
-  const int fragmentShaderNameLen = strlen(fragmentShaderName);
-
-  int i;
-  for (i = 0; i < MAX_GLPROGS; ++i) {
-    const int vsLen = strlen(glslPrograms[i].vertexShaderName);
-    const int fsLen = strlen(glslPrograms[i].fragmentShaderName);
-    
-    if(!vsLen || !fsLen)
-      break;
-
-    if(vsLen != vertexShaderNameLen || fsLen != fragmentShaderNameLen)
-      continue;
-
-    if(idStr::Icmpn(vertexShaderName, glslPrograms[i].vertexShaderName, vsLen) != 0)
-      continue;
-
-    if (idStr::Icmpn(fragmentShaderName, glslPrograms[i].fragmentShaderName, fsLen) != 0)
-      continue;
-
-    return &glslPrograms[i];
-  }
-
-  if(i >= MAX_GLPROGS) {
-    common->Error("cannot create GLSL program, maximum number of programs reached");
-    return nullptr;
-  }
-
-  strncpy(glslPrograms[i].vertexShaderName, vertexShaderName, vertexShaderNameLen);
-  strncpy(glslPrograms[i].fragmentShaderName, fragmentShaderName, fragmentShaderNameLen);
-
-  R_LoadGlslProgram(glslPrograms[i]);
-
-  return &glslPrograms[i];
-}
 
 
 /*
@@ -1286,13 +993,7 @@ R_ReloadGlslPrograms_f
 =================
 */
 void R_ReloadGlslPrograms_f( const idCmdArgs &args ) {
-  common->Printf( "----- R_ReloadGlslPrograms -----\n" );
-
-  for(int i=0; i<MAX_GLPROGS; ++i) {
-    R_LoadGlslProgram(glslPrograms[i]);
-  }
-
-  common->Printf( "----- R_ReloadGlslPrograms -----\n" );
+	fhRenderProgram::ReloadAll();
 }
 
 
@@ -1342,14 +1043,14 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     idVec4 localViewOrigin;
     R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
     localViewOrigin[3] = 1.0f;
-    glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
+    glUniformMatrix4fv(fhRenderProgram::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
 
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);    
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);    
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));    
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));    
   }
   else if (pStage->texture.texgen == TG_SCREEN) {
     return;
@@ -1366,22 +1067,22 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     idVec4 localViewOrigin;
     R_GlobalPointToLocal(surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3());
     localViewOrigin[3] = 1.0f;
-    glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
+    glUniformMatrix4fv(fhRenderProgram::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
 
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::normalOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::normalOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
 
     // set the texture matrix
     idVec4 textureMatrixST[2];
@@ -1406,8 +1107,8 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     }
     GL_SelectTextureNoClient(0);
 
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, textureMatrixST[0].ToFloatPtr());
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrixST[1].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, textureMatrixST[0].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, textureMatrixST[1].ToFloatPtr());
 
   }
   else {    
@@ -1438,23 +1139,23 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
       GL_SelectTexture(7);
       globalImages->currentDepthImage->Bind();
 
-      glUniform1f(glslProgramDef_t::uniform_depthBlendRange, depthBlendRange);
-      glUniform1i(glslProgramDef_t::uniform_depthBlendMode, static_cast<int>(depthBlendMode));
+      glUniform1f(fhRenderProgram::uniform_depthBlendRange, depthBlendRange);
+      glUniform1i(fhRenderProgram::uniform_depthBlendMode, static_cast<int>(depthBlendMode));
 
       float clipRange[] = { backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance() };
-      glUniform2fv(glslProgramDef_t::uniform_clipRange, 1, clipRange);
+      glUniform2fv(fhRenderProgram::uniform_clipRange, 1, clipRange);
     }
     else {
       GL_UseProgram(defaultProgram);
     }
 
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
   }
 
   GL_SelectTexture(1);
@@ -1472,22 +1173,22 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
   switch (pStage->vertexColor) {
   case SVC_IGNORE:
-    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, zero);
-    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, zero);
+    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
     break;
   case SVC_MODULATE:
-    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, one);
-    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, zero);
+    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, one);
+    glUniform4fv(fhRenderProgram::uniform_color_add, 1, zero);
     break;
   case SVC_INVERSE_MODULATE:
-    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, negOne);
-    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, negOne);
+    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
     break;
   }  
 
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
   // current render
   const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
@@ -1497,7 +1198,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
   currentRenderSize[2] = w;
   currentRenderSize[3] = h;
-  glUniform4fv(glslProgramDef_t::uniform_currentRenderSize, 1, currentRenderSize);
+  glUniform4fv(fhRenderProgram::uniform_currentRenderSize, 1, currentRenderSize);
 
   // set privatePolygonOffset if necessary
   if (pStage->privatePolygonOffset) {
@@ -1518,25 +1219,25 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     textureMatrix[1][3] = 0;
     if(pStage->texture.hasMatrix)
       RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, textureMatrix[0].ToFloatPtr());
-    glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, textureMatrix[1].ToFloatPtr());    
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, textureMatrix[0].ToFloatPtr());
+    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, textureMatrix[1].ToFloatPtr());    
   
     GL_SelectTextureNoClient(1);
     pStage->texture.image->Bind();
     GL_SelectTextureNoClient(0);
   }
 
-  glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, color);
+  glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, color);
 
   // draw it
   RB_DrawElementsWithCounters(surf->geo);
 
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
   GL_UseProgram(nullptr);
 }
 
@@ -1548,24 +1249,24 @@ RB_GLSL_DrawInteraction
 */
 void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
 
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, din->surf->space->modelMatrix);
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, din->surf->space->modelMatrix);
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
 
-  glUniform4fv(glslProgramDef_t::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
   
-  glUniform4fv(glslProgramDef_t::uniform_lightProjectionMatrixS, 1, din->lightProjection[0].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_lightProjectionMatrixT, 1, din->lightProjection[1].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_lightProjectionMatrixQ, 1, din->lightProjection[2].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_lightFallOffS, 1, din->lightProjection[3].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_lightProjectionMatrixS, 1, din->lightProjection[0].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_lightProjectionMatrixT, 1, din->lightProjection[1].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_lightProjectionMatrixQ, 1, din->lightProjection[2].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_lightFallOffS, 1, din->lightProjection[3].ToFloatPtr());
 
-  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixS, 1, din->bumpMatrix[0].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_bumpMatrixT, 1, din->bumpMatrix[1].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, din->diffuseMatrix[0].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, din->diffuseMatrix[1].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_specularMatrixS, 1, din->specularMatrix[0].ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_specularMatrixT, 1, din->specularMatrix[1].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, din->bumpMatrix[0].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, din->bumpMatrix[1].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, din->diffuseMatrix[0].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, din->diffuseMatrix[1].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_specularMatrixS, 1, din->specularMatrix[0].ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_specularMatrixT, 1, din->specularMatrix[1].ToFloatPtr());
 
   static const float zero[4] = { 0, 0, 0, 0 };
   static const float one[4] = { 1, 1, 1, 1 };
@@ -1573,21 +1274,21 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 
   switch (din->vertexColor) {
   case SVC_IGNORE:
-    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, zero);
-    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, zero);
+    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
     break;
   case SVC_MODULATE:
-    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, one);
-    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, zero);
+    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, one);
+    glUniform4fv(fhRenderProgram::uniform_color_add, 1, zero);
     break;
   case SVC_INVERSE_MODULATE:
-    glUniform4fv(glslProgramDef_t::uniform_color_modulate, 1, negOne);
-    glUniform4fv(glslProgramDef_t::uniform_color_add, 1, one);
+    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, negOne);
+    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
     break;
   }
 
-  glUniform4fv(glslProgramDef_t::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
-  glUniform4fv(glslProgramDef_t::uniform_specular_color, 1, din->specularColor.ToFloatPtr());    
+  glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
+  glUniform4fv(fhRenderProgram::uniform_specular_color, 1, din->specularColor.ToFloatPtr());    
   
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
@@ -1634,43 +1335,43 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   //glDisable(GL_FRAGMENT_PROGRAM_ARB);
   GL_UseProgram(interactionProgram);
 
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
 
-  glUniform1f(glslProgramDef_t::uniform_pomMaxHeight, r_pomEnabled.GetBool() ? r_pomMaxHeight.GetFloat() : -1);
-  glUniform1i(glslProgramDef_t::uniform_shading, r_shading.GetInteger());
-  glUniform1f(glslProgramDef_t::uniform_specularExp, r_specularExp.GetFloat());
-  glUniform1f(glslProgramDef_t::uniform_specularScale, r_specularScale.GetFloat());  
+  glUniform1f(fhRenderProgram::uniform_pomMaxHeight, r_pomEnabled.GetBool() ? r_pomMaxHeight.GetFloat() : -1);
+  glUniform1i(fhRenderProgram::uniform_shading, r_shading.GetInteger());
+  glUniform1f(fhRenderProgram::uniform_specularExp, r_specularExp.GetFloat());
+  glUniform1f(fhRenderProgram::uniform_specularScale, r_specularScale.GetFloat());  
 
-  glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
+  glUniformMatrix4fv( fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
 
   if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 	  const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
-	  glUniform4fv( glslProgramDef_t::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr() );
+	  glUniform4fv( fhRenderProgram::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr() );
 
 	  const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
 	  const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-	  glUniform4f( glslProgramDef_t::uniform_shadowParams, shadowSoftness, shadowBrightness, 0, 0);
+	  glUniform4f( fhRenderProgram::uniform_shadowParams, shadowSoftness, shadowBrightness, 0, 0);
 
 	  const int numSamples = 3;
-	  glUniform1i( glslProgramDef_t::uniform_shadowSamples, numSamples );
+	  glUniform1i( fhRenderProgram::uniform_shadowSamples, numSamples );
 
 	  if (backEnd.vLight->lightDef->parms.pointLight) {
 		  //point light
-		  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 1 );
-		  glUniformMatrix4fv( glslProgramDef_t::uniform_pointlightProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
+		  glUniform1i( fhRenderProgram::uniform_shadowMappingMode, 1 );
+		  glUniformMatrix4fv( fhRenderProgram::uniform_pointlightProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
 	  } else {
 		  //projected light
-		  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 2 );
-		  glUniformMatrix4fv( glslProgramDef_t::uniform_spotlightProjection, 1, false, backEnd.testProjectionMatrix );
+		  glUniform1i( fhRenderProgram::uniform_shadowMappingMode, 2 );
+		  glUniformMatrix4fv( fhRenderProgram::uniform_spotlightProjection, 1, false, backEnd.testProjectionMatrix );
 	  }
   } else {
 	  //no shadows
-	  glUniform1i( glslProgramDef_t::uniform_shadowMappingMode, 0 );
+	  glUniform1i( fhRenderProgram::uniform_shadowMappingMode, 0 );
   }
 
   for (; surf; surf = surf->nextOnLight) {
@@ -1679,24 +1380,24 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
     // set the vertex pointers
     const auto offset = vertexCache.Bind(surf->geo->ambientCache);
 
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::normalOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
-    glVertexAttribPointer(glslProgramDef_t::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::normalOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::binormalOffset));
+    glVertexAttribPointer(fhRenderProgram::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::tangentOffset));
 
     // this may cause RB_ARB2_DrawInteraction to be exacuted multiple
     // times with different colors and images if the surface or light have multiple layers
     RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
   }
 
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_normal);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_binormal);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_tangent);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
 
   // disable features
 #if 0

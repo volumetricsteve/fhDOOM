@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "ImmediateMode.h"
+#include "RenderProgram.h"
 
 frameData_t		*frameData;
 backEndState_t	backEnd;
@@ -336,12 +337,12 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
-void  GL_UseProgram( const glslProgramDef_t* program ) {
-  if(program && program->ident) {
-    glUseProgram(program->ident);       
+void  GL_UseProgram( const fhRenderProgram* program ) {
+  if(program) {
+	  program->Bind();
   } else {
-    glUseProgram(0);
-  }
+	  fhRenderProgram::Unbind();
+  }  
 }
 
 joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {

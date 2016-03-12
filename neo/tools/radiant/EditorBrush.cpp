@@ -34,6 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../../renderer/tr_local.h"
 #include "../../renderer/model_local.h"	// for idRenderModelMD5
+#include "../../renderer/RenderProgram.h"
 #include "../../renderer/ImmediateMode.h"
 
 void	Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset);
@@ -78,33 +79,33 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 
         idVec3 colorAdd = color * 0.25;
 
-        glUniform4f(glslProgramDef_t::uniform_color_add, colorAdd.x, colorAdd.y, color.z, 0);
-        glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
+        glUniform4f(fhRenderProgram::uniform_color_add, colorAdd.x, colorAdd.y, color.z, 0);
+        glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
       } else {
         GL_UseProgram(vertexColorProgram);      
-        glUniform4f(glslProgramDef_t::uniform_color_add, color.x, color.y, color.z, 1);
-        glUniform4f(glslProgramDef_t::uniform_color_modulate, 0, 0, 0, 0);
+        glUniform4f(fhRenderProgram::uniform_color_add, color.x, color.y, color.z, 1);
+        glUniform4f(fhRenderProgram::uniform_color_modulate, 0, 0, 0, 0);
       }
 
-      glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-      glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-      glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
-	  glUniform4f(glslProgramDef_t::uniform_bumpMatrixS, 1, 0, 0, 0);
-	  glUniform4f(glslProgramDef_t::uniform_bumpMatrixT, 0, 1, 0, 0);
+      glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+      glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+      glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
+	  glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
+	  glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
 
 
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-      glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
+      glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+      glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+      glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+      glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
+      glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
+      glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
       
       glDrawElements(GL_TRIANGLES, surf->geometry->numIndexes,  GL_INDEX_TYPE, surf->geometry->indexes);
 
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-      glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+      glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+      glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+      glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
       GL_UseProgram(nullptr);
 
       

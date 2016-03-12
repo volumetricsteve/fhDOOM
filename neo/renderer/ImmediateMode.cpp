@@ -3,6 +3,7 @@
 
 #include "tr_local.h"
 #include "ImmediateMode.h"
+#include "RenderProgram.h"
 
 namespace {
   const int drawVertsCapacity = (1 << 14);
@@ -130,21 +131,21 @@ void fhImmediateMode::End()
 			GL_UseProgram(vertexColorProgram);
 		}
 
-		glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-		glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-		glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
-		glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
-		glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
-		glUniform4f(glslProgramDef_t::uniform_bumpMatrixS, 1, 0, 0, 0);
-		glUniform4f(glslProgramDef_t::uniform_bumpMatrixT, 0, 1, 0, 0);
+		glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+		glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+		glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
+		glUniform4f(fhRenderProgram::uniform_color_add, 0, 0, 0, 0);
+		glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
+		glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
+		glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
 	}
 
-	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-	glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-	glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-	glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+	glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+	glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
 	GLenum mode = currentMode;
 
@@ -158,9 +159,9 @@ void fhImmediateMode::End()
 
 	drawCallCount++;
 
-	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
 
 	if (!geometryOnly) {
 		GL_UseProgram(nullptr);
@@ -340,27 +341,27 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   auto vert = vertexCache.AllocFrameTemp(drawVerts, vertexNum * sizeof(fhSimpleVert));
   int offset = vertexCache.Bind(vert);
 
-  glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-  glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);  
-  glUniform4f( glslProgramDef_t::uniform_bumpMatrixS, 1, 0, 0, 0 );
-  glUniform4f( glslProgramDef_t::uniform_bumpMatrixT, 0, 1, 0, 0 );
+  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);  
+  glUniform4f( fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0 );
+  glUniform4f( fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0 );
 
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-  glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+  glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
   glDrawElements(GL_TRIANGLES,
     indexNum,
     GL_UNSIGNED_SHORT,
     sphereIndices);
 
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-  glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
   
   GL_UseProgram(nullptr);
 }
@@ -434,17 +435,17 @@ void fhLineBuffer::Commit()
   {
     GL_UseProgram(vertexColorProgram);
 
-    glUniformMatrix4fv(glslProgramDef_t::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(glslProgramDef_t::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniform4f(glslProgramDef_t::uniform_diffuse_color, 1, 1, 1, 1);
-    glUniform4f(glslProgramDef_t::uniform_color_add, 0, 0, 0, 0);
-    glUniform4f(glslProgramDef_t::uniform_color_modulate, 1, 1, 1, 1);
-	glUniform4f(glslProgramDef_t::uniform_bumpMatrixS, 1, 0, 0, 0);
-	glUniform4f(glslProgramDef_t::uniform_bumpMatrixT, 0, 1, 0, 0);
+    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+    glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
+    glUniform4f(fhRenderProgram::uniform_color_add, 0, 0, 0, 0);
+    glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
+	glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
+	glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
 
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
 
     int verticesCommitted = 0;
     while(verticesCommitted < verticesUsed)
@@ -456,9 +457,9 @@ void fhLineBuffer::Commit()
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
 
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-      glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+      glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
+      glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
+      glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
 
       glDrawElements(GL_LINES,
         verticesToCommit,
@@ -469,9 +470,9 @@ void fhLineBuffer::Commit()
     }
 
 
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_color);
-    glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
   }
 
   verticesUsed = 0;

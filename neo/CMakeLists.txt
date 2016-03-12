@@ -347,6 +347,8 @@ SET(SOURCES
   renderer/RenderSystem_init.cpp
   renderer/RenderWorld.cpp
   renderer/RenderWorld.h
+  renderer/RenderProgram.cpp
+  renderer/RenderProgram.h  
   renderer/RenderWorld_demo.cpp
   renderer/RenderWorld_load.cpp
   renderer/RenderWorld_local.h

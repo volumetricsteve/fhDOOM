@@ -2,6 +2,7 @@
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "RenderProgram.h"
 
 idCVar r_smObjectCulling( "r_smObjectCulling", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "cull objects/surfaces that are outside the shadow/light frustum when rendering shadow maps" );
 idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "Determines which faces should be rendered to shadow map: 0=front, 1=back, 2=front-and-back");
@@ -542,8 +543,8 @@ void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
 
 static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix, const float* shadowProjectionMatrix) {	
 	
-	glUniformMatrix4fv( glslProgramDef_t::uniform_projectionMatrix, 1, false, shadowProjectionMatrix );
-	glUniformMatrix4fv (glslProgramDef_t::uniform_viewMatrix, 1, false, shadowViewMatrix );		
+	glUniformMatrix4fv( fhRenderProgram::uniform_projectionMatrix, 1, false, shadowProjectionMatrix );
+	glUniformMatrix4fv (fhRenderProgram::uniform_viewMatrix, 1, false, shadowViewMatrix );		
 
 	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 		const idRenderEntityLocal *entityDef = inter->entityDef;
@@ -572,10 +573,10 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				}
 
 				const auto offset = vertexCache.Bind( tri->ambientCache );			
-				glVertexAttribPointer( glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
-				glVertexAttribPointer( glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
-				glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, fhRenderMatrix::identity.ToFloatPtr());
-				glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+				glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+				glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+				glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, fhRenderMatrix::identity.ToFloatPtr());
+				glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 0);
 				RB_DrawElementsWithCounters( tri );
 				backEnd.pc.c_shadowMapDraws++;
 			}
@@ -617,9 +618,9 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			}
 
 			const auto offset = vertexCache.Bind(tri->ambientCache);
-			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-			glVertexAttribPointer(glslProgramDef_t::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-			glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, inter->entityDef->modelMatrix);		
+			glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
+			glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+			glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, inter->entityDef->modelMatrix);		
 
 			bool didDraw = false;
 			
@@ -647,15 +648,15 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 					// bind the texture
 					pStage->texture.image->Bind();
 
-					glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 1);
-					glUniform1f(glslProgramDef_t::uniform_alphaTestThreshold, 0.5f);
+					glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 1);
+					glUniform1f(fhRenderProgram::uniform_alphaTestThreshold, 0.5f);
 
 					idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};
 					if (pStage->texture.hasMatrix) {						
 						RB_GetShaderTextureMatrix(regs, &pStage->texture, textureMatrix);
 					}
-					glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-					glUniform4fv(glslProgramDef_t::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+					glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
+					glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
 
 					// draw it
 					RB_DrawElementsWithCounters(tri);
@@ -666,7 +667,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			}
 			
 			if(!didDraw) {
-				glUniform1i(glslProgramDef_t::uniform_alphaTestEnabled, 0);
+				glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 0);
 				// draw it
 				RB_DrawElementsWithCounters(tri);
 				backEnd.pc.c_shadowMapDraws++;
@@ -934,8 +935,8 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	viewLightAxialSize = R_EXP_CalcLightAxialSize(vLight);
 
 	GL_UseProgram(shadowmapProgram);
-	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-	glEnableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
 
 	const float polygonOffsetBias = vLight->lightDef->ShadowPolygonOffsetBias();
 	const float polygonOffsetFactor = vLight->lightDef->ShadowPolygonOffsetFactor();
@@ -974,8 +975,8 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
-	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_position);
-	glDisableVertexAttribArray(glslProgramDef_t::vertex_attrib_texcoord);
+	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
 	GL_UseProgram(nullptr);
 
 	globalImages->defaultFramebuffer->Bind();
