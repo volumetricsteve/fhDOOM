@@ -13,11 +13,6 @@ namespace {
   unsigned short sphereIndices[drawVertsCapacity * 2];
 
   bool active = false;
-
-//  GLuint lineVertexBUffer;
-//  GLuint lineIndexBUffer;
-
-
 }
 
 void fhSimpleVert::SetColor(const idVec3& v) {
@@ -43,24 +38,6 @@ void fhImmediateMode::Init()
   }
 
   ResetStats();
-/*
-  const size_t vertexSize = sizeof(drawVerts);
-  const size_t indexSize = drawVertsCapacity * 2 * sizeof(lineIndices[0]);
-
-  //TODO: vertex buffer should be managed by vertexCache
-  glGenBuffers(1, &lineVertexBUffer);
-  glBindBuffer( GL_ARRAY_BUFFER, lineVertexBUffer );
-  glBufferData( GL_ARRAY_BUFFER, (GLsizeiptrARB)vertexSize, nullptr, GL_STREAM_DRAW );
-  glBindBuffer( GL_ARRAY_BUFFER, 0);
-
-  //TODO: index buffer should be managed by some kind of 'indexCache' (similar to vertexCache, does not exist yet)
-  glGenBuffers(1, &lineIndexBUffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineIndexBUffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptrARB)indexSize, linesIndices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  delete[] linesIndices;
-*/
 }
 
 void fhImmediateMode::ResetStats()

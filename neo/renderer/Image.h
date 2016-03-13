@@ -337,6 +337,13 @@ public:
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }
 
+	void Purge() {
+		if(name != 0 && name != -1) {
+			glDeleteFramebuffers(1, &name);
+			name = -1;
+		}
+	}
+
 private:
 	void SetDrawBuffer() {
 		if (!colorAttachment && !depthAttachment) {

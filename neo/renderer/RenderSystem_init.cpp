@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "RenderProgram.h"
 
 // Vista OpenGL wrapper check
 #ifdef _WIN32
@@ -1805,6 +1806,7 @@ void R_VidRestart_f( const idCmdArgs &args ) {
 		soundSystem->ShutdownHW();
 		Sys_ShutdownInput();
 		globalImages->PurgeAllImages();
+		fhRenderProgram::PurgeAll();
 		// free the context and close the window
 		GLimp_Shutdown();
 		glConfig.isInitialized = false;
@@ -1819,6 +1821,7 @@ void R_VidRestart_f( const idCmdArgs &args ) {
 
 		// regenerate all images
 		globalImages->ReloadAllImages();
+		fhRenderProgram::ReloadAll();
 	} else {
 		glimpParms_t	parms;
 		parms.width = glConfig.vidWidth;

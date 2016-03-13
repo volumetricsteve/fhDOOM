@@ -5,7 +5,6 @@ static GLuint currentProgram = 0;
 #define MAX_GLPROGS 128
 static fhRenderProgram glslPrograms[MAX_GLPROGS];// = { 0 };
 
-
 const fhRenderProgram* shadowProgram = nullptr;
 const fhRenderProgram* interactionProgram = nullptr;
 const fhRenderProgram* depthProgram = nullptr;
@@ -220,11 +219,7 @@ const fhRenderProgram* R_FindGlslProgram( const char* vertexShaderName, const ch
 	}
 
 	glslPrograms[i].Load(vertexShaderName, fragmentShaderName);
-/*
-	strncpy( glslPrograms[i].vertexShaderName, vertexShaderName, vertexShaderNameLen );
-	strncpy( glslPrograms[i].fragmentShaderName, fragmentShaderName, fragmentShaderNameLen );
-	R_LoadGlslProgram( glslPrograms[i] );
-*/
+
 	return &glslPrograms[i];
 }
 
@@ -336,12 +331,16 @@ const char* fhRenderProgram::fragmentShader() const {
 }
 
 void fhRenderProgram::ReloadAll() {
+	Unbind();
+
 	for (int i = 0; i < MAX_GLPROGS; ++i) {
 		glslPrograms[i].Reload();
 	}
 }
 
 void fhRenderProgram::PurgeAll() {
+	Unbind();
+
 	for (int i = 0; i < MAX_GLPROGS; ++i) {
 		glslPrograms[i].Purge();
 	}

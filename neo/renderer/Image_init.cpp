@@ -1659,13 +1659,17 @@ PurgeAllImages
 ===============
 */
 void idImageManager::PurgeAllImages() {
-	int		i;
-	idImage	*image;
 
-	for ( i = 0; i < images.Num() ; i++ ) {
-		image = images[i];
-		image->PurgeImage();
+	for ( int i = 0; i < images.Num() ; i++ ) {
+		images[i]->PurgeImage();
 	}
+
+	for ( int i = 0; i < 3; ++i ) {
+		for ( int j = 0; j < 6; ++j ) {
+			shadowmapImage[i][j]->PurgeImage();
+			shadowmapFramebuffer[i][j]->Purge();
+		}
+	}	
 }
 
 /*
