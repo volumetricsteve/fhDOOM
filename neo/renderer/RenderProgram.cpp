@@ -57,8 +57,7 @@ static idStr R_ReadFile(const char* filename) {
 	return ret;
 }
 
-static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previoulsyLoadedFiles, idList<idStr>& includeStack )
-{
+static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previoulsyLoadedFiles, idList<idStr>& includeStack ) {
 	includeStack.Append( filename );
 	previoulsyLoadedFiles.Append( filename );
 
@@ -74,41 +73,35 @@ static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previouls
 	int currentColumn = 1;
 	bool isLineComment = false;
 
-	for (; !ptr.IsEmpty(); ++ptr)
-	{
-		if (ptr[0] == '\n')
-		{
+	for (; !ptr.IsEmpty(); ++ptr) {
+
+		if (ptr[0] == '\n')	{
 			++currentLine;
 			currentColumn = 1;
 			isLineComment = false;
 			continue;
 		}
 
-		if (isLineComment)
-		{
+		if (isLineComment) {
 			continue;
 		}
 
-		if (ptr.StartsWith( "//" ))
-		{
+		if (ptr.StartsWith( "//" )) {
 			isLineComment = true;
 			continue;
 		}
 
 		static const fhStrRef includeDirective = "#include \"";
-		if (currentColumn == 1 && ptr.StartsWith( includeDirective ))
-		{
+		if (currentColumn == 1 && ptr.StartsWith( includeDirective )) {
 			fhStrRef includeFilename = ptr.Substr( includeDirective.Length() );
-			for (int i = 0; i < includeFilename.Length() + 1; ++i)
-			{
+			for (int i = 0; i < includeFilename.Length() + 1; ++i) {
 				if (i == includeFilename.Length())
 					throw fhParseException( filename, currentLine, currentColumn, "unexpected end-of-file in preprocessor include" );
 
 				if (includeFilename[i] == '\n')
 					throw fhParseException( filename, currentLine, currentColumn, "unexpected end-of-line in preprocessor include" );
 
-				if (includeFilename[i] == '"')
-				{
+				if (includeFilename[i] == '"') {
 					includeFilename = includeFilename.Substr( 0, i );
 					break;
 				}
@@ -122,8 +115,7 @@ static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previouls
 
 			idStr includeContent;
 			//try to load included shader relative to current file. If that fails try to load included shader from root directory.
-			try
-			{
+			try	{
 				idStr includeFilePath;
 				filename.ExtractFilePath(includeFilePath);				
 				includeFilePath.AppendPath( includeFilename.c_str(), includeFilename.Length() );
@@ -132,25 +124,19 @@ static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previouls
 				ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
 				ret.Append( includeContent );
 				//ret.Append( "\n#line " + toString( currentLine + 1 ) + " \"" + filename + "\"" );
-			}
-			catch (const fhFileNotFoundException& e)
-			{				
-				try
-				{
+			} catch (const fhFileNotFoundException& e) {				
+				try	{
 					includeContent = R_LoadPreprocessed( includeFilename.ToString(), previoulsyLoadedFiles, includeStack );
 					ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
 					ret.Append( includeContent );
 					//ret.append( "\n#line " + ToString( currentLine + 1 ) + " \"" + filename + "\"" );
-				}
-				catch (const fhFileNotFoundException& e)
-				{
+				} catch (const fhFileNotFoundException& e) {
 					throw fhParseException( filename, currentLine, currentColumn, idStr( "include file not found: " ) + includeFilename.ToString() );
 				}
 			}
 
 			//skip rest of the line
-			while (!ptr.IsEmpty() && ptr[0] != '\n')
-			{
+			while (!ptr.IsEmpty() && ptr[0] != '\n') {
 				++ptr;
 			}
 
@@ -211,11 +197,9 @@ static GLuint R_LoadGlslShader( GLenum shaderType, const char* filename ) {
 		}
 
 		return shaderObject;
-	}
-	catch (const fhFileNotFoundException& e) {
+	} catch (const fhFileNotFoundException& e) {
 		return 0;
-	}
-	catch (const fhParseException& e) {
+	} catch (const fhParseException& e) {
 		return 0;
 	}
 
