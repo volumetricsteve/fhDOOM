@@ -1,4 +1,5 @@
 #include "RenderProgram.h"
+#include "../idlib/StrRef.h"
 
 static GLuint currentProgram = 0;
 
@@ -19,66 +20,153 @@ const fhRenderProgram* vertexColorProgram = nullptr;
 const fhRenderProgram* flatColorProgram = nullptr;
 const fhRenderProgram* intensityProgram = nullptr;
 
-/*
-=================
-R_PreprocessShader
-=================
-*/
-static bool R_PreprocessShader( char* src, int srcsize, char* dest, int destsize ) {
-	static const char* const inc_stmt = "#include ";
+class fhParseException {
+public:
+	idStr filename;
+	idStr message;
+	int line;
+	int column;
 
-	char* inc_start = strstr( src, inc_stmt );
-	if (!inc_start) {
-		if (srcsize >= destsize) {
-			common->Warning( ": File too large\n" );
-			return false;
-		}
-
-		memcpy( dest, src, srcsize );
-		dest[srcsize] = '\0';
-
-		return true;
+	fhParseException(const idStr& filename, int line, int column, const char* message) 
+		: filename(filename)
+		, message(message)
+		, line(line)
+		, column(column) {
 	}
+};
 
-	char* filename_start = strstr( inc_start, "\"" );
-	if (!filename_start)
-		return false;
+class fhFileNotFoundException {
+public:
+	idStr filename;
 
-	filename_start++;
+	explicit fhFileNotFoundException( const idStr& filename )
+		: filename( filename ) {
+	}
+};
 
-	char* filename_stop = strstr( filename_start, "\"" );
-	if (!filename_stop)
-		return false;
-
-	int filename_len = (ptrdiff_t)filename_stop - (ptrdiff_t)filename_start;
-	filename_stop++;
-
-	int bytes_before_inc = (ptrdiff_t)inc_start - (ptrdiff_t)src;
-	int bytes_after_inc = (ptrdiff_t)srcsize - ((ptrdiff_t)filename_stop - (ptrdiff_t)src);
-
-	idStr fullPath = idStr( "glsl/" ) + idStr( filename_start, 0, filename_len );
-
+static idStr R_ReadFile(const char* filename) {
 	char	*fileBuffer = nullptr;
-	fileSystem->ReadFile( fullPath.c_str(), (void **)&fileBuffer, NULL );
+	fileSystem->ReadFile( filename, (void **)&fileBuffer, NULL );
 	if (!fileBuffer) {
 		common->Printf( ": File not found\n" );
-		return false;
-	}
-	int file_size = strlen( fileBuffer );
-
-	if (file_size + bytes_before_inc + bytes_after_inc >= destsize) {
-		common->Printf( ": File too large\n" );
-		fileSystem->FreeFile( fileBuffer );
-		return false;
+		throw fhFileNotFoundException(filename);
 	}
 
-	memcpy( dest, src, bytes_before_inc );
-	dest += bytes_before_inc;
-	memcpy( dest, fileBuffer, file_size );
-	dest += file_size;
-	memcpy( dest, filename_stop, bytes_after_inc );
-	dest[bytes_after_inc] = '\0';
-	return true;
+	idStr ret = fileBuffer;
+	fileSystem->FreeFile( fileBuffer );	
+	return ret;
+}
+
+static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previoulsyLoadedFiles, idList<idStr>& includeStack )
+{
+	includeStack.Append( filename );
+	previoulsyLoadedFiles.Append( filename );
+
+	const int fileIndex = previoulsyLoadedFiles.Num() - 1;
+	
+	idStr content = R_ReadFile(filename.c_str());
+	idStr ret;
+
+	fhStrRef ptr = fhStrRef( content.c_str(), content.Length() );
+	fhStrRef remaining = ptr;
+
+	int currentLine = 1;
+	int currentColumn = 1;
+	bool isLineComment = false;
+
+	for (; !ptr.IsEmpty(); ++ptr)
+	{
+		if (ptr[0] == '\n')
+		{
+			++currentLine;
+			currentColumn = 1;
+			isLineComment = false;
+			continue;
+		}
+
+		if (isLineComment)
+		{
+			continue;
+		}
+
+		if (ptr.StartsWith( "//" ))
+		{
+			isLineComment = true;
+			continue;
+		}
+
+		static const fhStrRef includeDirective = "#include \"";
+		if (currentColumn == 1 && ptr.StartsWith( includeDirective ))
+		{
+			fhStrRef includeFilename = ptr.Substr( includeDirective.Length() );
+			for (int i = 0; i < includeFilename.Length() + 1; ++i)
+			{
+				if (i == includeFilename.Length())
+					throw fhParseException( filename, currentLine, currentColumn, "unexpected end-of-file in preprocessor include" );
+
+				if (includeFilename[i] == '\n')
+					throw fhParseException( filename, currentLine, currentColumn, "unexpected end-of-line in preprocessor include" );
+
+				if (includeFilename[i] == '"')
+				{
+					includeFilename = includeFilename.Substr( 0, i );
+					break;
+				}
+			}
+
+			if (includeFilename.IsEmpty())
+				throw fhParseException( filename, currentLine, currentColumn, "empty filename in preprocessor include" );
+
+			if (includeStack.FindIndex( includeFilename.ToString() ) >= 0)
+				throw fhParseException( filename, currentLine, currentColumn, "circular preprocessor include" );
+
+			idStr includeContent;
+			//try to load included shader relative to current file. If that fails try to load included shader from root directory.
+			try
+			{
+				idStr includeFilePath;
+				filename.ExtractFilePath(includeFilePath);				
+				includeFilePath.AppendPath( includeFilename.c_str(), includeFilename.Length() );
+
+				includeContent = R_LoadPreprocessed( includeFilePath, previoulsyLoadedFiles, includeStack );
+				ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
+				ret.Append( includeContent );
+				//ret.Append( "\n#line " + toString( currentLine + 1 ) + " \"" + filename + "\"" );
+			}
+			catch (const fhFileNotFoundException& e)
+			{				
+				try
+				{
+					includeContent = R_LoadPreprocessed( includeFilename.ToString(), previoulsyLoadedFiles, includeStack );
+					ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
+					ret.Append( includeContent );
+					//ret.append( "\n#line " + ToString( currentLine + 1 ) + " \"" + filename + "\"" );
+				}
+				catch (const fhFileNotFoundException& e)
+				{
+					throw fhParseException( filename, currentLine, currentColumn, idStr( "include file not found: " ) + includeFilename.ToString() );
+				}
+			}
+
+			//skip rest of the line
+			while (!ptr.IsEmpty() && ptr[0] != '\n')
+			{
+				++ptr;
+			}
+
+			++currentLine;
+			currentColumn = 1;
+			remaining = ptr;
+
+			continue;
+		}
+
+		currentColumn++;
+	}
+
+	ret.Append( remaining.ToString() );
+	includeStack.RemoveIndex(includeStack.Num() - 1);
+	return ret;
 }
 
 
@@ -100,50 +188,38 @@ static GLuint R_LoadGlslShader( GLenum shaderType, const char* filename ) {
 	else
 		common->Printf( "load fragment shader %s\n", fullPath.c_str() );
 
-	// load the program even if we don't support it, so
-	// fs_copyfiles can generate cross-platform data dumps
-	// 
-	char	*fileBuffer = nullptr;
-	fileSystem->ReadFile( fullPath.c_str(), (void **)&fileBuffer, NULL );
-	if (!fileBuffer) {
-		common->Printf( ": File not found\n" );
+	try {
+		idList<idStr> files;
+		idList<idStr> stack;
+		idStr shader = R_LoadPreprocessed( fullPath, files, stack );
+
+		GLuint shaderObject = glCreateShader( shaderType );
+		const int len = shader.Length();
+		const char* ptr = shader.c_str();
+		glShaderSource( shaderObject, 1, (const GLchar**)&ptr, &len );
+		glCompileShader( shaderObject );
+
+		GLint success = 0;
+		glGetShaderiv( shaderObject, GL_COMPILE_STATUS, &success );
+		if (success == GL_FALSE) {
+			char buffer[1024];
+			GLsizei length;
+			glGetShaderInfoLog( shaderObject, sizeof(buffer)-1, &length, &buffer[0] );
+			buffer[length] = '\0';
+			common->Printf( "failed to compile shader '%s': %s", filename, &buffer[0] );
+			return 0;
+		}
+
+		return shaderObject;
+	}
+	catch (const fhFileNotFoundException& e) {
+		return 0;
+	}
+	catch (const fhParseException& e) {
 		return 0;
 	}
 
-	const int buffer_size = 1024 * 256;
-	char* buffer = new char[buffer_size];
-
-	bool ok = R_PreprocessShader( fileBuffer, strlen( fileBuffer ), buffer, buffer_size );
-
-	fileSystem->FreeFile( fileBuffer );
-
-	if (!ok) {
-		return 0;
-	}
-
-	GLuint shaderObject = glCreateShader( shaderType );
-
-	const int bufferLen = strlen( buffer );
-
-	glShaderSource( shaderObject, 1, (const GLchar**)&buffer, &bufferLen );
-	glCompileShader( shaderObject );
-
-	delete buffer;
-
-	GLint success = 0;
-	glGetShaderiv( shaderObject, GL_COMPILE_STATUS, &success );
-	if (success == GL_FALSE) {
-		char buffer[1024];
-		GLsizei length;
-		glGetShaderInfoLog( shaderObject, sizeof(buffer)-1, &length, &buffer[0] );
-		buffer[length] = '\0';
-
-
-		common->Printf( "failed to compile shader '%s': %s", filename, &buffer[0] );
-		return 0;
-	}
-
-	return shaderObject;
+	return 0;
 }
 
 namespace {

@@ -116,6 +116,7 @@ SET(SOURCES
   precompiled.h
   Str.cpp
   Str.h
+  StrRef.h
   Timer.cpp
   Timer.h
   Token.cpp

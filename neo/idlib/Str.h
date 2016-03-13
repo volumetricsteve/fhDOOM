@@ -210,6 +210,7 @@ public:
 	idStr &				DefaultFileExtension( const char *extension );	// if there's no file extension use the default
 	idStr &				DefaultPath( const char *basepath );			// if there's no path use the default
 	void				AppendPath( const char *text );					// append a partial path
+	void				AppendPath( const char *text, int length );		// append a partial path
 	idStr &				StripFilename( void );							// remove the filename from a path
 	idStr &				StripPath( void );								// remove the path from the filename
 	void				ExtractFilePath( idStr &dest ) const;			// copy the file path to another string

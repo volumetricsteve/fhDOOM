@@ -828,31 +828,41 @@ idStr::AppendPath
 ====================
 */
 void idStr::AppendPath( const char *text ) {
+	AppendPath(text, strlen(text));
+}
+
+/*
+====================
+idStr::AppendPath
+====================
+*/
+void idStr::AppendPath( const char *text, int length ) {
 	int pos;
 	int i = 0;
 
-	if ( text && text[i] ) {
+	if (text && text[i]) {
 		pos = len;
-		EnsureAlloced( len + strlen( text ) + 2 );
+		EnsureAlloced( len + length + 2 );
 
-		if ( pos ) {
-			if ( data[ pos-1 ] != '/' ) {
-				data[ pos++ ] = '/';
+		if (pos) {
+			if (data[pos - 1] != '/') {
+				data[pos++] = '/';
 			}
 		}
-		if ( text[i] == '/' ) {
+		if (text[i] == '/') {
 			i++;
 		}
 
-		for ( ; text[ i ]; i++ ) {
-			if ( text[ i ] == '\\' ) {
-				data[ pos++ ] = '/';
-			} else {
-				data[ pos++ ] = text[ i ];
+		for (; i<length; i++) {
+			if (text[i] == '\\') {
+				data[pos++] = '/';
+			}
+			else {
+				data[pos++] = text[i];
 			}
 		}
 		len = pos;
-		data[ pos ] = '\0';
+		data[pos] = '\0';
 	}
 }
 
@@ -980,7 +990,6 @@ void idStr::ExtractFileExtension( idStr &dest ) const {
 		Right( Length() - pos, dest );
 	}
 }
-
 
 /*
 =====================================================================
