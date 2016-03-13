@@ -1989,7 +1989,7 @@ void idImageManager::Init() {
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
 
-	const int shadowmapSizes[] = {256, 512, 1024};
+	const int shadowmapSizes[] = {1024, 512, 256};
 	for(int j=0; j<sizeof(shadowmapSizes)/sizeof(shadowmapSizes[0]); ++j) {	
 		for(int i=0; i<6; ++i) {
 			char name[64] = {0};    

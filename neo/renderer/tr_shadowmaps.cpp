@@ -11,7 +11,7 @@ idCVar r_smFarClip( "r_smFarClip", "-1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHI
 idCVar r_smNearClip( "r_smNearClip", "1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "near clip distance for rendering shadow maps");
 idCVar r_smUseStaticOccluderModel( "r_smUseStaticOccluderModel", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "the occluder model is a single surface merged from all static and opaque world surfaces. Can be rendered to the shadow map with a single draw call");
 
-idCVar r_smQuality( "r_smQuality", "-1", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
+idCVar r_smLod( "r_smQuality", "-1", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
 
 idCVar r_smPolyOffsetFactor( "r_smPolyOffsetFactor", "4", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "26", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
@@ -735,7 +735,7 @@ static void RB_CreateProjectedProjectionMatrix(const viewLight_t* vLight, float*
 }
 
 
-static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int qualityIndex ) {
+static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int lod ) {
 	float	viewMatrix[16];
 	memset( viewMatrix, 0, sizeof(viewMatrix) );
 	viewMatrix[0] = 1.0f;
@@ -749,7 +749,7 @@ static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int qualityIndex
 	float lightProjectionMatrix[16];
 	RB_CreateOrthographicProjectionMatrix( vLight, lightProjectionMatrix );
 
-	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[qualityIndex][0];
+	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer(0, lod);
 	framebuffer->Bind();
 
 	glViewport( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
@@ -775,7 +775,7 @@ static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int qualityIndex
 }
 
 
-static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int qualityIndex) {
+static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
 	fhRenderMatrix::test();
 
 	//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
@@ -791,7 +791,7 @@ static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int qualityIndex
 	fhRenderMatrix projectionMatrix;	
 	RB_CreateProjectedProjectionMatrix( vLight, projectionMatrix.ToFloatPtr() );
 
-	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[qualityIndex][0];
+	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer(0, lod);
 	framebuffer->Bind();
 	glViewport( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
 	glScissor( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
@@ -820,7 +820,7 @@ static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int qualityIndex
 	backEnd.pc.c_shadowPasses++;
 }
 
-static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int qualityIndex) {
+static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int lod) {
 	
 	fhRenderMatrix viewMatrix = RB_CreateShadowViewMatrix( vLight, side );
 
@@ -833,7 +833,7 @@ static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int q
 		projectionMatrix = fhRenderMatrix::CreateProjectionMatrix(r_smFov.GetFloat(), 1, r_smNearClip.GetFloat(), r_smFarClip.GetFloat());
 	}
 
-	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[qualityIndex][side];
+	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer(side, lod);
 	framebuffer->Bind();
 
 	glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
@@ -925,10 +925,11 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		return;
 	}
 
-	int qualityIndex = idMath::ClampInt(0, 2, vLight->shadowMapQualityIndex);
-	if(r_smQuality.GetInteger() >= 0) {
-		qualityIndex = idMath::ClampInt(0, 2, r_smQuality.GetInteger());
+	int lod = vLight->shadowMapLod;
+	if(r_smLod.GetInteger() >= 0) {
+		lod = r_smLod.GetInteger();
 	}	
+	lod = idMath::ClampInt(0, idImageManager::shadowMapLodNum-1, lod);
 
 	// all light side projections must currently match, so non-centered
 	// and non-cubic lights must take the largest length
@@ -961,13 +962,13 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	if(vLight->lightDef->parms.pointLight) {
 		for (int side=0; side < 6; side++) {
-			RB_RenderPointLightShadowBuffer(vLight, side, qualityIndex);		
+			RB_RenderPointLightShadowBuffer(vLight, side, lod);		
 		}
 	} else if (vLight->lightDef->parms.parallel) {
-		RB_RenderParallelShadowBuffer(vLight, qualityIndex);		
+		RB_RenderParallelShadowBuffer(vLight, lod);		
 	}
 	else {
-		RB_RenderProjectedShadowBuffer( vLight, qualityIndex );
+		RB_RenderProjectedShadowBuffer( vLight, lod );
 	}
 
 	glPolygonOffset( 0, 0 );
@@ -996,22 +997,20 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.currentScissor = backEnd.viewDef->scissor;
 
 	GL_SelectTextureNoClient(6);
-	globalImages->shadowmapImage[qualityIndex][0]->Bind();
+	globalImages->GetShadowMapImage(0, lod)->Bind();
 
 	GL_SelectTextureNoClient(7);
-	globalImages->shadowmapImage[qualityIndex][1]->Bind();
+	globalImages->GetShadowMapImage(1, lod)->Bind();
 
 	GL_SelectTextureNoClient(8);
-	globalImages->shadowmapImage[qualityIndex][2]->Bind();
+	globalImages->GetShadowMapImage(2, lod)->Bind();
 
 	GL_SelectTextureNoClient(9);
-	globalImages->shadowmapImage[qualityIndex][3]->Bind();
+	globalImages->GetShadowMapImage(3, lod)->Bind();
 
 	GL_SelectTextureNoClient(10);
-	globalImages->shadowmapImage[qualityIndex][4]->Bind();
+	globalImages->GetShadowMapImage(4, lod)->Bind();
 
 	GL_SelectTextureNoClient(11);
-	globalImages->shadowmapImage[qualityIndex][5]->Bind();
-
-	backEnd.shadowMapSize = globalImages->shadowmapImage[qualityIndex][0]->uploadWidth;
+	globalImages->GetShadowMapImage(5, lod)->Bind();
 }

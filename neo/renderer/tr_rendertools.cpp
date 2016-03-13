@@ -1619,22 +1619,22 @@ void RB_ShowLights2( void ) {
 		const idRenderLightLocal* light = vLight->lightDef;				
 
 		idVec3 color;
-		switch (vLight->shadowMapQualityIndex)
+		switch (vLight->shadowMapLod)
 		{
 		case 0:
-			color = idVec3( 0, 0, 1 );
-			break;
-		case 1:
-			color = idVec3( 0, 1, 0 );
-			break;
-		case 2:
 			color = idVec3( 1, 0, 0 );
 			break;
-		case 3:
+		case 1:
 			color = idVec3( 1, 1, 0 );
 			break;
-		case 4:
+		case 2:
+			color = idVec3( 0, 1, 0 );
+			break;
+		case 3:
 			color = idVec3( 0, 1, 1 );
+			break;
+		case 4:
+			color = idVec3( 0, 0, 1 );
 			break;
 		default:
 			color = idVec3( 1, 1, 1 );

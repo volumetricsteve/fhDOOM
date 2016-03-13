@@ -336,7 +336,7 @@ typedef struct viewLight_s {
 	const float	*			shaderRegisters;			// shader registers used by backend
 	idImage *				falloffImage;				// falloff image used by backend
 
-	int						shadowMapQualityIndex;      // 
+	int						shadowMapLod;               // Shadow Map Level of Detail, 0 = max shadow map resolution, higher values means lower resolution
 
 	const struct drawSurf_s	*globalShadows;				// shadow everything
 	const struct drawSurf_s	*localInteractions;			// don't get local shadows
@@ -681,7 +681,6 @@ typedef struct {
 	bool				glslReplaceArb2;
 
 	float               shadowViewProjection[6][16];
-	int                 shadowMapSize;
 	float               testViewMatrix[16];
 	float               testProjectionMatrix[16];
 } backEndState_t;
