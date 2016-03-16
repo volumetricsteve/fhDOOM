@@ -205,7 +205,7 @@ This may need to scan six cube map images
 ===============
 */
 GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, int width, int height,
-									 textureDepth_t minimumDepth, bool *monochromeResult ) const {	
+									 textureDepth_t minimumDepth, bool *monochromeResult, bool *hasAlpha ) const {	
 
 	int		rgbOr, rgbAnd, aOr, aAnd;
 	int		rgbDiffer, rgbaDiffer;
@@ -265,6 +265,9 @@ GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, in
 	if ( aAnd == 255 || aOr == 0 ) {
 		needAlpha = false;
 	} else {
+		if(hasAlpha) {
+			*hasAlpha = true;
+		}
 		needAlpha = true;
 	}
 
@@ -559,7 +562,8 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	glGenTextures( 1, &texnum );
 
 	// select proper internal format before we resample
-	internalFormat = SelectInternalFormat( &pic, 1, width, height, depth, &isMonochrome );
+	hasAlpha = false;
+	internalFormat = SelectInternalFormat( &pic, 1, width, height, depth, &isMonochrome, &hasAlpha );
 
 	// copy or resample data as appropriate for first MIP level
 	if ( ( scaled_width == width ) && ( scaled_height == height ) ) {
@@ -768,7 +772,8 @@ void idImage::Generate3DImage( const byte *pic, int width, int height, int picDe
 
 	// select proper internal format before we resample
 	// this function doesn't need to know it is 3D, so just make it very "tall"
-	internalFormat = SelectInternalFormat( &pic, 1, width, height * picDepth, minDepthParm, &isMonochrome );
+	hasAlpha = false;
+	internalFormat = SelectInternalFormat( &pic, 1, width, height * picDepth, minDepthParm, &isMonochrome, &hasAlpha );
 
 	uploadHeight = scaled_height;
 	uploadWidth = scaled_width;
@@ -898,7 +903,8 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	glGenTextures( 1, &texnum );
 
 	// select proper internal format before we resample
-	internalFormat = SelectInternalFormat( pic, 6, width, height, depth, &isMonochrome );
+	hasAlpha = false;
+	internalFormat = SelectInternalFormat( pic, 6, width, height, depth, &isMonochrome, &hasAlpha );
 
 	// don't bother with downsample for now
 	scaled_width = width;

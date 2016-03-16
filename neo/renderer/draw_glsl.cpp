@@ -1289,6 +1289,12 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 
   glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
   glUniform4fv(fhRenderProgram::uniform_specular_color, 1, din->specularColor.ToFloatPtr());    
+
+  if( r_pomEnabled.GetBool() && din->specularImage->hasAlpha ) {
+	  glUniform1f(fhRenderProgram::uniform_pomMaxHeight, r_pomMaxHeight.GetFloat());	   
+  } else {
+	  glUniform1f(fhRenderProgram::uniform_pomMaxHeight, -1);
+  }  
   
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
@@ -1341,8 +1347,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
-
-  glUniform1f(fhRenderProgram::uniform_pomMaxHeight, r_pomEnabled.GetBool() ? r_pomMaxHeight.GetFloat() : -1);
+  
   glUniform1i(fhRenderProgram::uniform_shading, r_shading.GetInteger());
   glUniform1f(fhRenderProgram::uniform_specularExp, r_specularExp.GetFloat());
   glUniform1f(fhRenderProgram::uniform_specularScale, r_specularScale.GetFloat());  
