@@ -171,10 +171,7 @@ float getShadow(vec4 pos, sampler2D tex)
 
         samplesTaken += 1;
       }     
-    }
-
-    if(samplesTaken > 40)
-      return -100;
+    }   
 
     return occluded/samplesTaken;
 #else    
