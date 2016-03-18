@@ -37,7 +37,7 @@ If you have questions concerning this license or the applicable additional terms
 #define GAME_NAME						"fhDOOM"		// appears on window titles and errors
 
 #ifndef ENGINE_VERSION
-#define ENGINE_VERSION					"fhDOOM 1.3.2"	// printed in console
+#define ENGINE_VERSION					"fhDOOM 1.3.2 (alpha)"	// printed in console
 #endif
 
 // paths

@@ -130,8 +130,8 @@ idCVar idConsoleLocal::con_noPrint( "con_noPrint", "0", CVAR_BOOL|CVAR_SYSTEM|CV
 #else
 idCVar idConsoleLocal::con_noPrint( "con_noPrint", "1", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT|CVAR_ARCHIVE, "print on the console but not onscreen when console is pulled up" );
 #endif
-idCVar idConsoleLocal::con_fontScale( "con_fontScale", "0.6", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "scale of console font" );
-idCVar idConsoleLocal::con_size("con_size", "0.5", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "screen size of console");
+idCVar idConsoleLocal::con_fontScale( "con_fontScale", "0.5", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "scale of console font" );
+idCVar idConsoleLocal::con_size("con_size", "0.3", CVAR_SYSTEM|CVAR_FLOAT|CVAR_NOCHEAT|CVAR_ARCHIVE, "screen size of console");
 
 
 
