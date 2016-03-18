@@ -14691,7 +14691,7 @@ windowDef MultiplayerLANParent {
 			}
 			choiceDef ADV2Primary {
 				rect		320, 1, 50, 14
-				choices		"#str_04221"
+				choices		"Off;Hard;Soft"
 				cvar		"r_shadows"
 				choiceType	0
 				font		"fonts/bank"
