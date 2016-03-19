@@ -225,37 +225,45 @@ R_CheckPortableExtensions
 
 ==================
 */
-static bool R_DoubleCheckExtension(const char* name)
-{
-  //ext check via glew does not always work!? Do it manually...
-  int ext_cnt = 0;
-  glGetIntegerv(GL_NUM_EXTENSIONS, &ext_cnt);
+static bool R_DoubleCheckExtension( const char* name ) {
+	//ext check via glew does not always work!? Do it manually...
+	int ext_cnt = 0;
+	glGetIntegerv( GL_NUM_EXTENSIONS, &ext_cnt );
 
-  if(ext_cnt != 0) {
-      for (int i = 0; i < ext_cnt; ++i) {
-        const char* current = (const char*)glGetStringi(GL_EXTENSIONS, i);
-        if (stricmp(current, name) == 0) {
-          return true;
-        }
-      }
-  } else {
-      bool glewCheck = glewIsSupported(name) == GL_TRUE;
-      return glewCheck;
-  }
+	bool ret = false;
 
-  return false;
+	if (ext_cnt != 0) {
+		for (int i = 0; i < ext_cnt; ++i) {
+			const char* current = (const char*)glGetStringi( GL_EXTENSIONS, i );
+			if (stricmp( current, name ) == 0) {				
+				ret = true;
+				break;
+			}
+		}
+	}
+	else {
+		ret = glewIsSupported( name ) == GL_TRUE;
+	}
+	
+	if(ret) {
+		common->Printf("Check extension '%s': OK\n", name);
+	} else {
+		common->Warning("Check extension '%s': failed", name);
+	}	
+
+	return ret;
 
 #if 0
-  bool glewCheck = glewIsSupported(name) == GL_TRUE;
+	bool glewCheck = glewIsSupported(name) == GL_TRUE;
 
-  static const char* status[] = { 
-    "[ FAILED ]",
-    "[   OK   ]" 
-  };
+	static const char* status[] = { 
+		"[ FAILED ]",
+		"[   OK   ]" 
+	};
 
-  common->Printf("%s %s\n", status[glewCheck ? 1 : 0], name);
+	common->Printf("%s %s\n", status[glewCheck ? 1 : 0], name);
 
-  return glewCheck;
+	return glewCheck;
 #endif
 }
 
@@ -346,10 +354,12 @@ static void R_CheckPortableExtensions( void ) {
   }
 
   // check for minimum set
+  /*
   if ( !glConfig.multitextureAvailable || !glConfig.cubeMapAvailable
     || !glConfig.envDot3Available ) {
       common->Error( common->GetLanguageDict()->GetString( "#str_06780" ) );
   }
+  */
 
   // GL_EXT_depth_bounds_test
   glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );

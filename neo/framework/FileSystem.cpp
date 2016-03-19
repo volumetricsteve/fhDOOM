@@ -3873,6 +3873,8 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 	sys->DLL_GetFileName( name, dllName, MAX_OSPATH );
 	dllHash = HashFileName( dllName );
 
+	common->Printf("DLL file name: %s\n", dllName);
+
 #if ID_FAKE_PURE
 	if ( 1 ) {
 #else
@@ -3882,6 +3884,8 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 		dllPath = Sys_EXEPath( );
 		dllPath.StripFilename( );
 		dllPath.AppendPath( dllName );
+		
+		common->Printf("look for DLL next to executable: %s\n", dllPath.c_str());
 		dllFile = OpenExplicitFileRead( dllPath );
 
         if(!dllFile) {
