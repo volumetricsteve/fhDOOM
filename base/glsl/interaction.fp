@@ -24,19 +24,19 @@ in vs_output
 
 out vec4 result;
 
-vec4 diffuse(vec3 N) 
+vec4 diffuse(vec2 texcoord, vec3 N, vec3 L) 
 {
-  return texture(diffuseMap, frag.texDiffuse) * rpDiffuseColor * lambert(N, frag.L);
+  return texture(diffuseMap, texcoord) * rpDiffuseColor * lambert(N, L);
 }
 
-vec4 specular(vec3 N)
+vec4 specular(vec2 texcoord, vec3 N, vec3 L, vec3 V)
 {
-  vec4 spec = texture(specularMap, frag.texSpecular) * rpSpecularColor * rpSpecularScale;
+  vec4 spec = texture(specularMap, texcoord) * rpSpecularColor * rpSpecularScale;
   if(rpShading == 1) {
-    spec *= phong(N, frag.L, frag.V, rpSpecularExp);
+    spec *= phong(N, L, V, rpSpecularExp);
   } else {
-    frag.H = normalize(frag.H);
-    spec *= blinn(N, frag.H, rpSpecularExp);
+    vec3 H = normalize(frag.H);
+    spec *= blinn(N, H, rpSpecularExp);
   }
 
   return spec;
@@ -56,24 +56,14 @@ float shadow()
 
 void main(void)
 {  
-  frag.V = normalize(frag.V);
-  frag.L = normalize(frag.L);  
-
-  if(rpPomMaxHeight > 0.0)
-  {
-    vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, frag.V);
-     
-    frag.texSpecular += offset;
-    frag.texDiffuse += offset;
-    frag.texNormal += offset;    
-  }    
-  
-  vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal).agb - 1.0);
+  vec3 V = normalize(frag.V);
+  vec3 L = normalize(frag.L);  
+  vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, V);      
+  vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).agb - 1.0);
 
   result = vec4(0,0,0,0);
-
-  result += diffuse(N);
-  result += specular(N);
+  result += diffuse(frag.texDiffuse + offset, N, L);
+  result += specular(frag.texSpecular + offset, N, L, V);
 
   result *= frag.color;
   result *= texture2DProj(lightTexture, frag.texLight.xyw);

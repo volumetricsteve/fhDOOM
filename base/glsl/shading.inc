@@ -19,6 +19,9 @@ float phong(vec3 N, vec3 L, vec3 V, float m)
 
 vec2 parallaxOffset(sampler2D heightMapAlpha, vec2 texCoords, vec3 viewDir)
 { 
+    if(rpPomMaxHeight < 0.00001)
+        return vec2(0,0);
+
     // number of depth layers
     const float minLayers = 8;
     const float maxLayers = 16;

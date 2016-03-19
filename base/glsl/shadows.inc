@@ -239,10 +239,5 @@ float pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
     return getShadow(pos[3], texture9); 
   }  
 
-  if(side == 5)
-  {  
-    return getShadow(pos[5], texture11); 
-  }   
-
-  return 0;
+  return getShadow(pos[5], texture11); 
 }
