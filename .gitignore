@@ -29,3 +29,4 @@ build2
 /base/savegames/*.save
 /base/screenshots
 /base/savegames
+/base/glsl/*.i

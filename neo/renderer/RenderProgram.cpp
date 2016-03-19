@@ -1,6 +1,8 @@
 #include "RenderProgram.h"
 #include "../idlib/StrRef.h"
 
+idCVar r_dumpPreprocessedShaders( "r_dumpPreprocessedShaders", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "dump preprocessed shaders for debugging purposes" );
+
 static GLuint currentProgram = 0;
 
 #define MAX_GLPROGS 128
@@ -178,6 +180,14 @@ static GLuint R_LoadGlslShader( GLenum shaderType, const char* filename ) {
 		idList<idStr> files;
 		idList<idStr> stack;
 		idStr shader = R_LoadPreprocessed( fullPath, files, stack );
+
+		if(r_dumpPreprocessedShaders.GetBool()) {
+			if(idFile* file = fileSystem->OpenFileWrite(fullPath + ".i")) {
+				file->Write(shader.c_str(), shader.Length());
+				file->Flush();
+				fileSystem->CloseFile( file );
+			}
+		}
 
 		GLuint shaderObject = glCreateShader( shaderType );
 		const int len = shader.Length();

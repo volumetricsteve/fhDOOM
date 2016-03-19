@@ -1,5 +1,4 @@
 #include "global.inc"
-#line 3 __FILE__
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec2 vertex_texcoord;
