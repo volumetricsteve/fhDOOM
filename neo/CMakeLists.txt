@@ -214,6 +214,9 @@ if(Qt5Widgets_FOUND)
     ${QtWidgets_location}
     ${QtGui_location}
   )
+
+
+
 else()
   message(WARNING "Qt5 not found. Qt based tools are excluded from the build")
 endif()
@@ -1040,3 +1043,52 @@ IF(UNIX)
     set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
   ENDIF()
 ENDIF()  
+
+
+
+
+IF(WIN32)
+  SET(DIST_DIR ${CMAKE_BINARY_DIR}/dist)
+
+  add_custom_target(copy_game_files 
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${DIST_DIR}/fhDOOM/base/pak100fhdoom.pk4" --format=zip "glsl" "guis"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base"
+#    DEPENDS fhDOOM fhGame-x86 fhGame-roe-x86 maya2md5
+  )
+
+  add_custom_command(TARGET copy_game_files
+      PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${DIST_DIR}/fhDOOM"
+      COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/fhDOOM/base"
+      COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/fhDOOM/d3xp"
+      COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/fhDOOM/platforms"
+  )
+
+  add_custom_command(TARGET copy_game_files
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak005.pk4" "${DIST_DIR}/fhDOOM/base/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak006.pk4" "${DIST_DIR}/fhDOOM/base/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak007.pk4" "${DIST_DIR}/fhDOOM/base/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak008.pk4" "${DIST_DIR}/fhDOOM/base/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/default.cfg" "${DIST_DIR}/fhDOOM/base/"
+      COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:fhDOOM> "${DIST_DIR}/fhDOOM/"
+      COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:maya2md5> "${DIST_DIR}/fhDOOM/"
+      COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:fhGame-x86> "${DIST_DIR}/fhDOOM/base/"
+      COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:fhGame-roe-x86> "${DIST_DIR}/fhDOOM/d3xp/fhGame-x86.dll"
+
+      COMMAND ${CMAKE_COMMAND} -E copy  "$ENV{QTDIR}/bin/Qt5Core.dll" "${DIST_DIR}/fhDOOM/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "$ENV{QTDIR}/bin/Qt5Gui.dll" "${DIST_DIR}/fhDOOM/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "$ENV{QTDIR}/bin/Qt5Widgets.dll" "${DIST_DIR}/fhDOOM/"
+      COMMAND ${CMAKE_COMMAND} -E copy  "$ENV{QTDIR}/plugins/platforms/qwindows.dll" "${DIST_DIR}/fhDOOM/platforms/"
+  )
+
+  add_custom_target(make_zip 
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "fhDOOM.zip" --format=zip "fhDOOM"
+    DEPENDS copy_game_files
+    WORKING_DIRECTORY "${DIST_DIR}"
+  )
+
+  set_target_properties(copy_game_files PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  set_target_properties(make_zip PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+ENDIF()

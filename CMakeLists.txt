@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.2.0)
 project (fhDOOM)
 
 OPTION(ID_ALLOW_TOOLS "Compile Tools" ON)
@@ -102,3 +102,5 @@ ENDIF()
 add_subdirectory (neo/game)
 add_subdirectory (neo/d3xp)
 add_subdirectory (neo)
+
+
