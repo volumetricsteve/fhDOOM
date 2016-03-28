@@ -192,11 +192,12 @@ ENDIF()
 ######################## QT TOOLS #############################################
 ###############################################################################
 
-if(DEFINED ENV{QTDIR})
+if (NOT "${QTDIR}" STREQUAL "")
+  set(CMAKE_PREFIX_PATH ${QTDIR})
+  message("QTDIR from options: ${QTDIR}")
+elseif(DEFINED ENV{QTDIR})
   set(CMAKE_PREFIX_PATH $ENV{QTDIR})
-  message("Found QTDIR env var")
-else()
-  message(WARNING "Found no QTDIR env var")
+  message("QTDIR from environment: $ENV{QTDIR}")
 endif()
 
 set(CMAKE_AUTOMOC ON)
