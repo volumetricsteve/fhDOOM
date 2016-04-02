@@ -10,6 +10,8 @@ idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | 
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
+idCVar r_amdWorkaround("r_amdWorkaround", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "temporary: enable workaround for AMD driver issues: 0=Off, 1=Enabled for AMD, 2=Always enabled");
+
 
 /*
 ====================
@@ -1350,7 +1352,8 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 	//            Why do we have to re-configure the program between multiple interaction draws?
 	//            is this a AMD driver bug or do we do something stupid here?
 	//            Works fine on nVidia without this hack... what about Intel?
-	if(glConfig.vendorisAMD && !r_ignore.GetBool()) {
+	const int amdWorkaround = r_amdWorkaround.GetInteger();
+	if((glConfig.vendorisAMD && amdWorkaround == 1) || amdWorkaround == 2) {
 		GL_UseProgram( nullptr );
 		configureInteractionProgram();
 	}
