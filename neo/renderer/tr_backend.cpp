@@ -113,10 +113,11 @@ void GL_SelectTexture( int unit ) {
 		return;
 	}
 
-	glActiveTextureARB( GL_TEXTURE0_ARB + unit );
-  if(!r_glCoreProfile.GetBool())
-	  glClientActiveTextureARB( GL_TEXTURE0_ARB + unit );
-	RB_LogComment( "glActiveTextureARB( %i );\n", unit );
+	glActiveTexture( GL_TEXTURE0 + unit );
+	if (!r_glCoreProfile.GetBool()) {
+		glClientActiveTexture( GL_TEXTURE0 + unit );
+	}
+	RB_LogComment( "glActiveTexture( %i );\n", unit );
 
 	backEnd.glState.currenttmu = unit;
 }

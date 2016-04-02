@@ -405,16 +405,13 @@ void RB_ShowIntensity( void ) {
     GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 
     GL_UseProgram(intensityProgram);
-    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+    fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+    fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
     // current render
-    float currentRenderSize[4];
-    currentRenderSize[0] = globalImages->currentRenderImage->uploadWidth;
-    currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
-    currentRenderSize[2] = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-    currentRenderSize[3] = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-    glUniform4fv(fhRenderProgram::uniform_currentRenderSize, 1, currentRenderSize);
+	fhRenderProgram::SetCurrentRenderSize(
+		idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
+		idVec2(backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,	backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1));
 
     GL_SelectTexture(0);
     globalImages->currentRenderImage->Bind();    
@@ -544,8 +541,8 @@ void RB_ShowLightCount(void) {
 
 				const int offset = vertexCache.Bind(surf->geo->ambientCache);
 
-				glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-				glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+				fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+				fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
 				glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
 				glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
@@ -596,9 +593,9 @@ void RB_ShowSilhouette(void) {
 	glDisable(GL_STENCIL_TEST);
 
 	GL_UseProgram(flatColorProgram);
-	glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-	glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-	glUniform4f(fhRenderProgram::uniform_diffuse_color, 0.0f, 0.0f, 0.0f, 1.0f);
+	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+	fhRenderProgram::SetDiffuseColor(idVec4(0,0,0,1));
 
 	GL_State(GLS_POLYMODE_LINE);
 
@@ -645,9 +642,9 @@ void RB_ShowSilhouette(void) {
 					}
 				}
 
-				glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-				glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-				glUniform4f(fhRenderProgram::uniform_diffuse_color, 0.5f, 0.0f, 0.0f, 1.0f);
+				fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+				fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+				fhRenderProgram::SetDiffuseColor(idVec4(0.5f, 0, 0, 1));
 
 				const int offset = vertexCache.Bind(tri->shadowCache);
 				glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
@@ -773,9 +770,9 @@ static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	glDisable(GL_STENCIL_TEST);
 
 	GL_UseProgram(flatColorProgram);
-	glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
-	glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-	glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetDiffuseColor(idVec4::one);
+	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
 	GL_State(GLS_POLYMODE_LINE);
 
@@ -1606,10 +1603,9 @@ void RB_ShowLights2( void ) {
 
 
 	GL_UseProgram( defaultProgram );
-	glUniform4f( fhRenderProgram::uniform_color_modulate, 0, 0, 0, 0 );
-	glUniform4f(fhRenderProgram::uniform_color_modulate, 0, 0, 0, 0);
-	glUniformMatrix4fv( fhRenderProgram::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top() );
-	glUniformMatrix4fv( fhRenderProgram::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top() );
+	fhRenderProgram::SetColorModulate(idVec4::zero);
+	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 	GL_SelectTexture( 1 );
 	globalImages->whiteImage->Bind();
 	GL_SelectTexture( 0 );
@@ -1654,7 +1650,7 @@ void RB_ShowLights2( void ) {
 			GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK );
 			glDisable( GL_DEPTH_TEST );
 
-			glUniform4f( fhRenderProgram::uniform_color_add, color.x, color.y, color.z, 1.0f );
+			fhRenderProgram::SetColorAdd(idVec4(color, 1));
 
 			RB_RenderTriangleSurface( light->frustumTris );
 		}
@@ -1702,10 +1698,9 @@ void RB_ShowLights( void ) {
 	common->Printf( "volumes: " );	// FIXME: not in back end!
 
 	GL_UseProgram(defaultProgram);
-	glUniform4f(fhRenderProgram::uniform_color_modulate, 0, 0, 0, 0);
-	
-	glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, GL_FALSE, GL_ModelViewMatrix.Top());
-	glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, GL_FALSE, GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetColorModulate(idVec4::zero);	
+	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 	GL_SelectTexture(1);
 	globalImages->whiteImage->Bind();
 	GL_SelectTexture(0);
@@ -1721,8 +1716,7 @@ void RB_ShowLights( void ) {
 		if ( r_showLights.GetInteger() >= 2 ) {
 			GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHMASK );
 
-			glUniform4f(fhRenderProgram::uniform_color_add, 0.0f, 0.0f, 1.0f, 0.25f);
-
+			fhRenderProgram::SetColorAdd(idVec4(0, 0, 1, 0.25f));
 			glEnable( GL_DEPTH_TEST );
 			RB_RenderTriangleSurface( tri );
 		}
@@ -1732,8 +1726,7 @@ void RB_ShowLights( void ) {
 			GL_State(GLS_POLYMODE_LINE | GLS_DEPTHMASK);
 			glDisable(GL_DEPTH_TEST);
 
-			glUniform4f(fhRenderProgram::uniform_color_add, 1.0f, 1.0f, 1.0f, 1.0f);
-
+			fhRenderProgram::SetColorAdd(idVec4(1, 1, 1, 1));
 			RB_RenderTriangleSurface(tri);
 		}
 

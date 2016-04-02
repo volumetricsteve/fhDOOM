@@ -327,8 +327,8 @@ GL_SelectTextureNoClient
 */
 static void GL_SelectTextureNoClient(int unit) {
 	backEnd.glState.currenttmu = unit;
-	glActiveTextureARB(GL_TEXTURE0_ARB + unit);
-	RB_LogComment("glActiveTextureARB( %i )\n", unit);
+	glActiveTextureARB(GL_TEXTURE0 + unit);
+	RB_LogComment("glActiveTexture( %i )\n", unit);
 }
 
 static float	s_flipMatrix[16] = {
@@ -543,8 +543,8 @@ void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
 
 static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix, const float* shadowProjectionMatrix) {	
 	
-	glUniformMatrix4fv( fhRenderProgram::uniform_projectionMatrix, 1, false, shadowProjectionMatrix );
-	glUniformMatrix4fv (fhRenderProgram::uniform_viewMatrix, 1, false, shadowViewMatrix );		
+	fhRenderProgram::SetProjectionMatrix( shadowProjectionMatrix );
+	fhRenderProgram::SetViewMatrix( shadowViewMatrix );		
 
 	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 		const idRenderEntityLocal *entityDef = inter->entityDef;
@@ -575,8 +575,9 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				const auto offset = vertexCache.Bind( tri->ambientCache );			
 				glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
 				glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
-				glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, fhRenderMatrix::identity.ToFloatPtr());
-				glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 0);
+
+				fhRenderProgram::SetModelMatrix(fhRenderMatrix::identity.ToFloatPtr());				
+				fhRenderProgram::SetAlphaTestEnabled( false );				
 				RB_DrawElementsWithCounters( tri );
 				backEnd.pc.c_shadowMapDraws++;
 			}
@@ -620,7 +621,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			const auto offset = vertexCache.Bind(tri->ambientCache);
 			glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
 			glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-			glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, inter->entityDef->modelMatrix);		
+			fhRenderProgram::SetModelMatrix(inter->entityDef->modelMatrix);		
 
 			bool didDraw = false;
 			
@@ -648,15 +649,14 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 					// bind the texture
 					pStage->texture.image->Bind();
 
-					glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 1);
-					glUniform1f(fhRenderProgram::uniform_alphaTestThreshold, 0.5f);
+					fhRenderProgram::SetAlphaTestEnabled(true);
+					fhRenderProgram::SetAlphaTestThreshold(0.5f);
 
 					idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};
 					if (pStage->texture.hasMatrix) {						
 						RB_GetShaderTextureMatrix(regs, &pStage->texture, textureMatrix);
 					}
-					glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-					glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+					fhRenderProgram::SetDiffuseMatrix(textureMatrix[0], textureMatrix[1]);
 
 					// draw it
 					RB_DrawElementsWithCounters(tri);
@@ -667,7 +667,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			}
 			
 			if(!didDraw) {
-				glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 0);
+				fhRenderProgram::SetAlphaTestEnabled(false);
 				// draw it
 				RB_DrawElementsWithCounters(tri);
 				backEnd.pc.c_shadowMapDraws++;
@@ -910,6 +910,7 @@ static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int l
 
 
 void RB_RenderShadowMaps(viewLight_t* vLight) {
+
 	const idMaterial* lightShader = vLight->lightShader;
 	
 	if (lightShader->IsFogLight() || lightShader->IsBlendLight()) {

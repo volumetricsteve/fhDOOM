@@ -29,6 +29,12 @@ If you have questions concerning this license or the applicable additional terms
 #include "../precompiled.h"
 #pragma hdrstop
 
+const idVec4 idVec4::zero = idVec4(0,0,0,0);
+const idVec4 idVec4::one = idVec4(1,1,1,1);
+const idVec4 idVec4::negOne = idVec4(-1,-1,-1,-1);
+const idVec4 idVec4::identityS = idVec4(1,0,0,0);
+const idVec4 idVec4::identityT = idVec4(0,1,0,0);
+
 idVec2 vec2_origin( 0.0f, 0.0f );
 idVec3 vec3_origin( 0.0f, 0.0f, 0.0f );
 idVec4 vec4_origin( 0.0f, 0.0f, 0.0f, 0.0f );

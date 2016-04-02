@@ -135,13 +135,13 @@ float getShadow(vec4 pos, sampler2D tex)
        if( f < pos.z )
           foo += 1;       
     }
-
+/*
     if(foo == 0)
       return 0.0;
 
     if(foo == 8)
       return 1.0;
-
+*/
     for(;i<21; ++i) {
        float f = texture(tex, pos.st + kernel3x3[i] * texsize).x;
        if( f < pos.z )

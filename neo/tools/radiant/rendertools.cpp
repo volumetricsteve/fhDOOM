@@ -85,14 +85,13 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
       GL_UseProgram(vertexColorProgram);
     }
 
-    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, colorAdd.ToFloatPtr());
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, colorModulate.ToFloatPtr());
-	glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
-	glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
-
+    fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+    fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+    fhRenderProgram::SetDiffuseColor(idVec4(1,1,1,1));
+	fhRenderProgram::SetColorAdd(colorAdd);
+	fhRenderProgram::SetColorModulate(colorModulate);
+	fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
+	
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
@@ -260,11 +259,11 @@ void fhPointBuffer::entry_t::Commit() {
     glPointSize(size);
     GL_UseProgram(vertexColorProgram);
 
-    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
-    glUniform4f(fhRenderProgram::uniform_color_add, 0, 0, 0, 0);
-    glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
+    fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+    fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetDiffuseColor(idVec4(1,1,1,1));
+	fhRenderProgram::SetColorAdd(idVec4(0,0,0,0));
+	fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));
 
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);

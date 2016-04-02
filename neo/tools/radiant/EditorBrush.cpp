@@ -76,23 +76,19 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
         GL_SelectTexture(1);
         material->GetEditorImage()->Bind();
         GL_SelectTexture(0);
-
-        idVec3 colorAdd = color * 0.25;
-
-        glUniform4f(fhRenderProgram::uniform_color_add, colorAdd.x, colorAdd.y, color.z, 0);
-        glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
+        
+		fhRenderProgram::SetColorAdd(idVec4(color * 0.25, 1));
+		fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));
       } else {
         GL_UseProgram(vertexColorProgram);      
-        glUniform4f(fhRenderProgram::uniform_color_add, color.x, color.y, color.z, 1);
-        glUniform4f(fhRenderProgram::uniform_color_modulate, 0, 0, 0, 0);
+		fhRenderProgram::SetColorAdd( idVec4( color, 1 ) );
+		fhRenderProgram::SetColorModulate( idVec4( 0, 0, 0, 0 ) );
       }
 
-      glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-      glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-      glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
-	  glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
-	  glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
-
+      fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+      fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+      fhRenderProgram::SetDiffuseColor(idVec4::one);
+	  fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
       glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
       glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);

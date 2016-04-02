@@ -31,7 +31,7 @@ vec4 diffuse(vec2 texcoord, vec3 N, vec3 L)
 
 vec4 specular(vec2 texcoord, vec3 N, vec3 L, vec3 V)
 {
-  vec4 spec = texture(specularMap, texcoord) * rpSpecularColor * rpSpecularScale;
+  vec4 spec = texture(specularMap, texcoord) * rpSpecularColor;
   if(rpShading == 1) {
     spec *= phong(N, L, V, rpSpecularExp);
   } else {
@@ -56,17 +56,23 @@ float shadow()
 
 void main(void)
 {  
+
   vec3 V = normalize(frag.V);
   vec3 L = normalize(frag.L);  
   vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, V);      
   vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).agb - 1.0);
 
   result = vec4(0,0,0,0);
+
   result += diffuse(frag.texDiffuse + offset, N, L);
+  
   result += specular(frag.texSpecular + offset, N, L, V);
 
   result *= frag.color;
+
   result *= texture2DProj(lightTexture, frag.texLight.xyw);
   result *= texture2D(lightFalloff, vec2(frag.texLight.z, 0.5));
   result *= shadow();
+
+
 }

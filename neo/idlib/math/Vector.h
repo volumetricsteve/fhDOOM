@@ -821,7 +821,8 @@ public:
 
 	idVec4( void );
 	explicit idVec4( const float x, const float y, const float z, const float w );
-  explicit idVec4( const idVec3& xyz, const float w );
+    explicit idVec4( const idVec3& xyz, const float w );
+	explicit idVec4( const float* xyzw );
 
 	void 			Set( const float x, const float y, const float z, const float w );
 	void			Zero( void );
@@ -863,6 +864,12 @@ public:
 	const char *	ToString( int precision = 2 ) const;
 
 	void			Lerp( const idVec4 &v1, const idVec4 &v2, const float l );
+
+	static const idVec4 zero;
+	static const idVec4 one;
+	static const idVec4 negOne;
+	static const idVec4 identityS;
+	static const idVec4 identityT;
 };
 
 extern idVec4 vec4_origin;
@@ -883,6 +890,14 @@ ID_INLINE idVec4::idVec4(const idVec3& xyz, const float w) {
   this->y = xyz.y;
   this->z = xyz.z;
   this->w = w;
+}
+
+ID_INLINE idVec4::idVec4( const float* xyzw ) {
+	assert(xyzw);
+	this->x = xyzw[0];
+	this->y = xyzw[1];
+	this->z = xyzw[2];
+	this->w = xyzw[3];
 }
 
 ID_INLINE void idVec4::Set( const float x, const float y, const float z, const float w ) {

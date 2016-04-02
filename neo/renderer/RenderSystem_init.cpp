@@ -274,6 +274,10 @@ static void R_CheckPortableExtensions( void ) {
   glConfig.multitextureAvailable = R_DoubleCheckExtension( "GL_ARB_multitexture" );
   if ( glConfig.multitextureAvailable ) {
     glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&glConfig.maxTextureUnits );
+	if(glConfig.maxTextureUnits == 0) {
+		glConfig.maxTextureUnits = 16;
+		//glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS_ARB , (GLint *)&glConfig.maxTextureUnits );
+	}
     if ( glConfig.maxTextureUnits > MAX_MULTITEXTURE_UNITS ) {
       glConfig.maxTextureUnits = MAX_MULTITEXTURE_UNITS;
     }
@@ -597,6 +601,8 @@ void R_InitOpenGL( void ) {
 	glConfig.version_string = (const char *)glGetString( GL_VERSION );
 	glConfig.extensions_string = (const char *)glGetString( GL_EXTENSIONS );
 
+	glConfig.vendorisAMD = (strstr(glConfig.vendor_string, "AMD") != nullptr) || (strstr(glConfig.renderer_string, "AMD") != nullptr);
+
 	// OpenGL driver constants
 	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 
@@ -619,8 +625,8 @@ void R_InitOpenGL( void ) {
 		}
 
 		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE );
-		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE );
-		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, NULL, GL_FALSE );
+//		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE );
+//		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, NULL, GL_FALSE );
 		glDebugMessageCallback( R_GLDebugOutput, NULL );
 	}
 

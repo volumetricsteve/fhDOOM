@@ -108,13 +108,12 @@ void fhImmediateMode::End()
 			GL_UseProgram(vertexColorProgram);
 		}
 
-		glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-		glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-		glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
-		glUniform4f(fhRenderProgram::uniform_color_add, 0, 0, 0, 0);
-		glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
-		glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
-		glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
+		fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+		fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+		fhRenderProgram::SetDiffuseColor(idVec4::one);
+		fhRenderProgram::SetColorAdd(idVec4::zero);
+		fhRenderProgram::SetColorModulate(idVec4::one);
+		fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 	}
 
 	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
@@ -318,11 +317,10 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   auto vert = vertexCache.AllocFrameTemp(drawVerts, vertexNum * sizeof(fhSimpleVert));
   int offset = vertexCache.Bind(vert);
 
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-  glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);  
-  glUniform4f( fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0 );
-  glUniform4f( fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0 );
+  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+  fhRenderProgram::SetDiffuseColor(idVec4::one);
+  fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
@@ -412,13 +410,12 @@ void fhLineBuffer::Commit()
   {
     GL_UseProgram(vertexColorProgram);
 
-    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniform4f(fhRenderProgram::uniform_diffuse_color, 1, 1, 1, 1);
-    glUniform4f(fhRenderProgram::uniform_color_add, 0, 0, 0, 0);
-    glUniform4f(fhRenderProgram::uniform_color_modulate, 1, 1, 1, 1);
-	glUniform4f(fhRenderProgram::uniform_bumpMatrixS, 1, 0, 0, 0);
-	glUniform4f(fhRenderProgram::uniform_bumpMatrixT, 0, 1, 0, 0);
+    fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+    fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetDiffuseColor(idVec4::one);
+	fhRenderProgram::SetColorAdd(idVec4::zero);
+	fhRenderProgram::SetColorModulate(idVec4::one);
+	fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);

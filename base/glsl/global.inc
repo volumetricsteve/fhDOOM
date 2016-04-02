@@ -1,55 +1,50 @@
 #version 430
 
-layout(location = 0)  uniform mat4 rpModelMatrix;
-layout(location = 1)  uniform mat4 rpViewMatrix;
-layout(location = 2)  uniform mat4 rpModelViewMatrix;
-layout(location = 3)  uniform mat4 rpProjectionMatrix;
+uniform mat4 rpModelMatrix;
+uniform mat4 rpViewMatrix;
+uniform mat4 rpModelViewMatrix;
+uniform mat4 rpProjectionMatrix;
 
-layout(location = 4)  uniform vec4 rpLocalLightOrigin;
-layout(location = 5)  uniform vec4 rpLocalViewOrigin;
-layout(location = 6)  uniform vec4 rpLightProjectionS;
-layout(location = 7)  uniform vec4 rpLightProjectionT;
-layout(location = 8)  uniform vec4 rpLightProjectionQ;
-layout(location = 9)  uniform vec4 rpLightFallOff;
+uniform vec4 rpLocalLightOrigin;
+uniform vec4 rpLocalViewOrigin;
+uniform vec4 rpLightProjectionS;
+uniform vec4 rpLightProjectionT;
+uniform vec4 rpLightProjectionQ;
+uniform vec4 rpLightFallOff;
 
-layout(location = 10) uniform vec4 rpBumpMatrixS;
-layout(location = 11) uniform vec4 rpBumpMatrixT;
-layout(location = 12) uniform vec4 rpDiffuseMatrixS;
-layout(location = 13) uniform vec4 rpDiffuseMatrixT;
-layout(location = 14) uniform vec4 rpSpecularMatrixS;
-layout(location = 15) uniform vec4 rpSpecularMatrixT;
+uniform vec4 rpBumpMatrixS;
+uniform vec4 rpBumpMatrixT;
+uniform vec4 rpDiffuseMatrixS;
+uniform vec4 rpDiffuseMatrixT;
+uniform vec4 rpSpecularMatrixS;
+uniform vec4 rpSpecularMatrixT;
 
-layout(location = 16) uniform vec4 rpColorModulate;
-layout(location = 17) uniform vec4 rpColorAdd;
-layout(location = 18) uniform vec4 rpDiffuseColor;
-layout(location = 19) uniform vec4 rpSpecularColor;
+uniform vec4 rpColorModulate;
+uniform vec4 rpColorAdd;
+uniform vec4 rpDiffuseColor;
+uniform vec4 rpSpecularColor;
 
-layout(location = 20) uniform vec4 shaderParm0;
-layout(location = 21) uniform vec4 shaderParm1;
-layout(location = 22) uniform vec4 shaderParm2;
-layout(location = 23) uniform vec4 shaderParm3;
+uniform vec4 shaderParm0;
+uniform vec4 shaderParm1;
+uniform vec4 shaderParm2;
+uniform vec4 shaderParm3;
 
-layout(location = 50) uniform mat4 textureMatrix0;
-layout(location = 51) uniform mat4 textureMatrix1;
-layout(location = 52) uniform mat4 textureMatrix2;
-layout(location = 53) uniform mat4 textureMatrix3;
+uniform mat4 textureMatrix0;
 
-layout(location = 100) uniform int rpAlphaTestEnabled;
-layout(location = 101) uniform float rpAlphaTestThreshold;
-layout(location = 102) uniform vec4 rpCurrentRenderSize;
+uniform int rpAlphaTestEnabled;
+uniform float rpAlphaTestThreshold;
+uniform vec4 rpCurrentRenderSize;
 
-layout(location = 103) uniform vec2 rpClipRange;
-layout(location = 104) uniform int rpDepthBlendMode;
-layout(location = 105) uniform float rpDepthBlendRange;
-layout(location = 106) uniform float rpPomMaxHeight;
-layout(location = 107) uniform int rpShading;
-layout(location = 108) uniform float rpSpecularExp;
-layout(location = 109) uniform float rpSpecularScale;
+uniform vec2 rpClipRange;
+uniform int rpDepthBlendMode;
+uniform float rpDepthBlendRange;
+uniform float rpPomMaxHeight;
+uniform int rpShading;
+uniform float rpSpecularExp;
 
-layout(location = 120) uniform int rpShadowMappingMode;
-layout(location = 121) uniform mat4 rpSpotlightProjection;
-layout(location = 122) uniform mat4 rpPointlightProjection[6];
+uniform int rpShadowMappingMode;
+uniform mat4 rpSpotlightProjection;
+uniform mat4 rpPointlightProjection[6];
 
-layout(location = 128) uniform vec4 rpGlobalLightOrigin;
-layout(location = 129) uniform vec4 rpShadowParams; //x=minBias, y=maxbias, z=fuzzyness, w=samples
-layout(location = 130) uniform int rpShadowSamples;
+uniform vec4 rpGlobalLightOrigin;
+uniform vec4 rpShadowParams; //x=minBias, y=maxbias, z=fuzzyness, w=samples

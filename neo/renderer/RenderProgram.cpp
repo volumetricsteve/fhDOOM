@@ -4,6 +4,9 @@
 idCVar r_dumpPreprocessedShaders( "r_dumpPreprocessedShaders", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "dump preprocessed shaders for debugging purposes" );
 
 static GLuint currentProgram = 0;
+static GLint defaultUniformLocations[fhUniform::NUM];
+
+const GLint* fhRenderProgram::currentUniformLocations = &defaultUniformLocations[0];
 
 #define MAX_GLPROGS 128
 static fhRenderProgram glslPrograms[MAX_GLPROGS];// = { 0 };
@@ -21,6 +24,16 @@ const fhRenderProgram* blendLightProgram = nullptr;
 const fhRenderProgram* vertexColorProgram = nullptr;
 const fhRenderProgram* flatColorProgram = nullptr;
 const fhRenderProgram* intensityProgram = nullptr;
+
+
+static void R_TestUniformLocations(GLuint program)
+{
+	auto rpModelMatrix = glGetUniformLocation(program, "rpModelIndex");
+	auto rpViewMatrix = glGetUniformLocation(program, "rpViewMatrix");
+	auto rpModelViewMatrix = glGetUniformLocation(program, "rpModelViewMatrix");
+	auto rpProjectionMatrix = glGetUniformLocation(program, "rpProjectionMatrix");
+}
+
 
 class fhParseException {
 public:
@@ -359,10 +372,55 @@ void fhRenderProgram::Load() {
 
 	if (ident) {
 		glDeleteProgram( ident );
+	}	
+
+	if(program > 0) {
+		uniformLocations[fhUniform::ModelMatrix] = glGetUniformLocation(program, "rpModelMatrix");
+		uniformLocations[fhUniform::ViewMatrix] = glGetUniformLocation(program, "rpViewMatrix");
+		uniformLocations[fhUniform::ModelViewMatrix] = glGetUniformLocation(program, "rpModelViewMatrix");
+		uniformLocations[fhUniform::ProjectionMatrix] = glGetUniformLocation(program, "rpProjectionMatrix");
+		uniformLocations[fhUniform::LocalLightOrigin] = glGetUniformLocation(program, "rpLocalLightOrigin");
+		uniformLocations[fhUniform::LocalViewOrigin] = glGetUniformLocation(program, "rpLocalViewOrigin");
+		uniformLocations[fhUniform::LightProjectionMatrixS] = glGetUniformLocation(program, "rpLightProjectionS");
+		uniformLocations[fhUniform::LightProjectionMatrixT] = glGetUniformLocation(program, "rpLightProjectionT");
+		uniformLocations[fhUniform::LightProjectionMatrixQ] = glGetUniformLocation(program, "rpLightProjectionQ");
+		uniformLocations[fhUniform::LightFallOff] = glGetUniformLocation(program, "rpLightFallOff");
+		uniformLocations[fhUniform::BumpMatrixS] = glGetUniformLocation(program, "rpBumpMatrixS");
+		uniformLocations[fhUniform::BumpMatrixT] = glGetUniformLocation(program, "rpBumpMatrixT");
+		uniformLocations[fhUniform::DiffuseMatrixS] = glGetUniformLocation( program, "rpDiffuseMatrixS" );
+		uniformLocations[fhUniform::DiffuseMatrixT] = glGetUniformLocation( program, "rpDiffuseMatrixT" );
+		uniformLocations[fhUniform::SpecularMatrixS] = glGetUniformLocation( program, "rpSpecularMatrixS" );
+		uniformLocations[fhUniform::SpecularMatrixT] = glGetUniformLocation( program, "rpSpecularMatrixT" );
+		uniformLocations[fhUniform::ColorModulate] = glGetUniformLocation( program, "rpColorModulate" );
+		uniformLocations[fhUniform::ColorAdd] = glGetUniformLocation( program, "rpColorAdd" );
+		uniformLocations[fhUniform::DiffuseColor] = glGetUniformLocation( program, "rpDiffuseColor" );
+		uniformLocations[fhUniform::SpecularColor] = glGetUniformLocation( program, "rpSpecularColor" );
+		uniformLocations[fhUniform::ShaderParm0] = glGetUniformLocation( program, "shaderParm0" );
+		uniformLocations[fhUniform::ShaderParm1] = glGetUniformLocation( program, "shaderParm1" );
+		uniformLocations[fhUniform::ShaderParm2] = glGetUniformLocation( program, "shaderParm2" );
+		uniformLocations[fhUniform::ShaderParm3] = glGetUniformLocation( program, "shaderParm3" );
+		uniformLocations[fhUniform::TextureMatrix0] = glGetUniformLocation( program, "textureMatrix0" );
+		uniformLocations[fhUniform::AlphaTestEnabled] = glGetUniformLocation( program, "rpAlphaTestEnabled" );
+		uniformLocations[fhUniform::AlphaTestThreshold] = glGetUniformLocation( program, "rpAlphaTestThreshold" );
+		uniformLocations[fhUniform::CurrentRenderSize] = glGetUniformLocation( program, "rpCurrentRenderSize" );
+		uniformLocations[fhUniform::ClipRange] = glGetUniformLocation( program, "rpClipRange" );
+		uniformLocations[fhUniform::DepthBlendMode] = glGetUniformLocation( program, "rpDepthBlendMode" );
+		uniformLocations[fhUniform::DepthBlendRange] = glGetUniformLocation( program, "rpDepthBlendRange" );
+		uniformLocations[fhUniform::PomMaxHeight] = glGetUniformLocation( program, "rpPomMaxHeight" );
+		uniformLocations[fhUniform::Shading] = glGetUniformLocation( program, "rpShading" );
+		uniformLocations[fhUniform::specularExp] = glGetUniformLocation( program, "rpSpecularExp" );
+		uniformLocations[fhUniform::ShadowMappingMode] = glGetUniformLocation( program, "rpShadowMappingMode" );
+		uniformLocations[fhUniform::SpotLightProjection] = glGetUniformLocation( program, "rpSpotlightProjection" );
+		uniformLocations[fhUniform::PointLightProjection] = glGetUniformLocation( program, "rpPointlightProjection" );
+		uniformLocations[fhUniform::GlobalLightOrigin] = glGetUniformLocation( program, "rpGlobalLightOrigin" );
+		uniformLocations[fhUniform::ShadowParams] = glGetUniformLocation( program, "rpShadowParams" );
+	} else {
+		for(int i=0; i<fhUniform::NUM; ++i) {
+			uniformLocations[i] = -1;
+		}
 	}
 
 	ident = program;
-
 }
 
 void fhRenderProgram::Reload() {
@@ -378,10 +436,11 @@ void fhRenderProgram::Purge() {
 	ident = 0;
 }
 
-void fhRenderProgram::Bind() const {
-	if(currentProgram != ident) {
+void fhRenderProgram::Bind(bool force) const {
+	if(currentProgram != ident || force) {
 		glUseProgram( ident );
 		currentProgram = ident;
+		currentUniformLocations = &this->uniformLocations[0];
 	}
 }
 
@@ -389,6 +448,7 @@ void fhRenderProgram::Unbind() {
 	if(currentProgram) {
 		glUseProgram( 0 );
 		currentProgram = 0;
+		currentUniformLocations = &defaultUniformLocations[0];
 	}	
 }
 
@@ -417,6 +477,11 @@ void fhRenderProgram::PurgeAll() {
 }
 
 void fhRenderProgram::Init() {
+	for(int i=0; i<fhUniform::NUM; ++i) {
+		defaultUniformLocations[i] = -1;
+	}
+	currentUniformLocations = defaultUniformLocations;
+
 	fogLightProgram = R_FindGlslProgram( "fogLight.vp", "fogLight.fp" );
 	blendLightProgram = R_FindGlslProgram( "blendLight.vp", "blendLight.fp" );
 	shadowProgram = R_FindGlslProgram( "shadow.vp", "shadow.fp" );

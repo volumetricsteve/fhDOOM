@@ -18,8 +18,8 @@ GL_SelectTextureNoClient
 */
 static void GL_SelectTextureNoClient(int unit) {
   backEnd.glState.currenttmu = unit;
-  glActiveTextureARB(GL_TEXTURE0_ARB + unit);
-  RB_LogComment("glActiveTextureARB( %i )\n", unit);
+  glActiveTexture(GL_TEXTURE0 + unit);
+  RB_LogComment("glActiveTexture( %i )\n", unit);
 }
 
 /*
@@ -46,8 +46,8 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
 
   tri = surf->geo;
 
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
   if (backEnd.currentSpace != surf->space) {
     idPlane	lightProject[4];
@@ -57,10 +57,9 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
       R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i]);
     }
 
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, lightProject[0].ToFloatPtr());
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, lightProject[1].ToFloatPtr());
-    glUniform4fv(fhRenderProgram::uniform_specularMatrixS, 1, lightProject[2].ToFloatPtr());
-    glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, lightProject[3].ToFloatPtr());
+	fhRenderProgram::SetBumpMatrix(lightProject[0].ToVec4(), lightProject[1].ToVec4());
+	fhRenderProgram::SetSpecularMatrix(lightProject[2].ToVec4(), idVec4());
+	fhRenderProgram::SetDiffuseMatrix(lightProject[3].ToVec4(), idVec4());
 /*
     GL_SelectTexture(0);
     glTexGenfv(GL_S, GL_OBJECT_PLANE, lightProject[0].ToFloatPtr());
@@ -153,7 +152,7 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
     backEnd.lightColor[1] = regs[stage->color.registers[1]];
     backEnd.lightColor[2] = regs[stage->color.registers[2]];
     backEnd.lightColor[3] = regs[stage->color.registers[3]];
-    glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, backEnd.lightColor);
+	fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));    
 
     RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BlendLight);
     RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BlendLight);
@@ -256,8 +255,8 @@ RB_T_BasicFog
 =====================
 */
 static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
   if (backEnd.currentSpace != surf->space) {
     idPlane	local;
@@ -266,26 +265,25 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
     local[3] += 0.5;
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, local.ToFloatPtr());
-    //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
+	const idVec4 bumpMatrixS = local.ToVec4();    
 
-    //		R_GlobalPlaneToLocal( surf->space->modelMatrix, fogPlanes[1], local );
-    //		local[3] += 0.5;
     local[0] = local[1] = local[2] = 0; local[3] = 0.5;
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, local.ToFloatPtr());
-    //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
+
+	const idVec4 bumpMatrixT = local.ToVec4();
+    fhRenderProgram::SetBumpMatrix(bumpMatrixS, bumpMatrixT);
 
     GL_SelectTexture(1);
 
     // GL_S is constant per viewer
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
     local[3] += FOG_ENTER;
-    glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, local.ToFloatPtr());
-    //glTexGenfv(GL_T, GL_OBJECT_PLANE, local.ToFloatPtr());
-
+	const idVec4 diffuseMatrixT = local.ToVec4();   
+	
     R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
-    glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, local.ToFloatPtr());
-    //glTexGenfv(GL_S, GL_OBJECT_PLANE, local.ToFloatPtr());
+	const idVec4 diffuseMatrixS = local.ToVec4();
+
+	fhRenderProgram::SetDiffuseMatrix(diffuseMatrixS, diffuseMatrixT);
+    
   }
 
   RB_GLSL_RenderTriangleSurface(surf->geo);
@@ -342,7 +340,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   backEnd.lightColor[2] = regs[stage->color.registers[2]];
   backEnd.lightColor[3] = regs[stage->color.registers[3]];
   
-  glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, backEnd.lightColor);
+  fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));
 
   // calculate the falloff planes
   float	a;
@@ -440,9 +438,9 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
     localLight.w = 0.0f;
 
     assert(shadowProgram);
-    glUniform4fv(fhRenderProgram::uniform_localLightOrigin, 1, localLight.ToFloatPtr());
-    glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
-    glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
+    fhRenderProgram::SetLocalLightOrigin(localLight);
+    fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+    fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
   }
 
   tri = surf->geo;
@@ -729,8 +727,8 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
   const auto offset = vertexCache.Bind(tri->ambientCache);
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
   bool drawSolid = false;
 
@@ -770,11 +768,11 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
       }
 
       // bind the texture
-      pStage->texture.image->Bind();
-      
-      glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 1);
-      glUniform1f(fhRenderProgram::uniform_alphaTestThreshold, regs[pStage->alphaTestRegister]);
-      glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, color);
+      pStage->texture.image->Bind();      
+
+	  fhRenderProgram::SetAlphaTestEnabled(true);
+	  fhRenderProgram::SetAlphaTestThreshold(regs[pStage->alphaTestRegister]);      
+      fhRenderProgram::SetDiffuseColor(idVec4(color));
 
       // set texture matrix and texGens      
 
@@ -786,8 +784,7 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
       if (pStage->texture.hasMatrix) {
         idVec4 textureMatrix[2];
         RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
+		fhRenderProgram::SetDiffuseMatrix(textureMatrix[0],  textureMatrix[1]);
       }
       
 
@@ -800,19 +797,8 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
           glDisable(GL_POLYGON_OFFSET_FILL);
         }
 
-        idVec4 textureMatrix[2];
-        textureMatrix[0][0] = 1;
-        textureMatrix[0][1] = 0;
-        textureMatrix[0][2] = 0;
-        textureMatrix[0][3] = 0;
-        textureMatrix[1][0] = 0;
-        textureMatrix[1][1] = 1;
-        textureMatrix[1][2] = 0;
-        textureMatrix[1][3] = 0;
-        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, textureMatrix[0].ToFloatPtr());
-        glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, textureMatrix[1].ToFloatPtr());
-
-        glUniform1i(fhRenderProgram::uniform_alphaTestEnabled, 0);
+		fhRenderProgram::SetDiffuseMatrix(idVec4::identityS, idVec4::identityT);
+		fhRenderProgram::SetAlphaTestEnabled(false);
       }
     }
     //glDisable(GL_ALPHA_TEST);
@@ -823,8 +809,7 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
 
   // draw the entire surface solid
   if (drawSolid) {
-    glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, color);
-    //    glColor4fv(color);
+    fhRenderProgram::SetDiffuseColor(idVec4(color));    
     globalImages->whiteImage->Bind();
 
     // draw it
@@ -934,27 +919,25 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   GL_UseProgram(glslStage->program);
 
   for (int i = 0; i < glslStage->numShaderParms; i++) {
-    float	parm[4];
+    idVec4 parm;
     parm[0] = regs[glslStage->shaderParms[i][0]];
     parm[1] = regs[glslStage->shaderParms[i][1]];
     parm[2] = regs[glslStage->shaderParms[i][2]];
     parm[3] = regs[glslStage->shaderParms[i][3]];
-    glUniform4fv(fhRenderProgram::uniform_shaderparm0 + i, 1, parm);
+	fhRenderProgram::SetShaderParm(i, parm);    
   }
 
 //  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
   // current render
   const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
   const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-  float currentRenderSize[4];
-  currentRenderSize[0] = globalImages->currentRenderImage->uploadWidth;
-  currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
-  currentRenderSize[2] = w;
-  currentRenderSize[3] = h;
-  glUniform4fv(fhRenderProgram::uniform_currentRenderSize, 1, currentRenderSize);
+
+  fhRenderProgram::SetCurrentRenderSize(
+	  idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
+	  idVec2(w, h));
 
   // set textures
   for (int i = 0; i < glslStage->numShaderMaps; i++) {
@@ -1043,8 +1026,8 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     idVec4 localViewOrigin;
     R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
     localViewOrigin[3] = 1.0f;
-    glUniform4fv(fhRenderProgram::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
-    glUniformMatrix4fv(fhRenderProgram::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
+    fhRenderProgram::SetLocalViewOrigin(localViewOrigin);
+	fhRenderProgram::SetTextureMatrix(textureMatrix.ToFloatPtr());    
 
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);    
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
@@ -1067,8 +1050,8 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     idVec4 localViewOrigin;
     R_GlobalPointToLocal(surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3());
     localViewOrigin[3] = 1.0f;
-    glUniform4fv(fhRenderProgram::uniform_localViewOrigin, 1, localViewOrigin.ToFloatPtr());
-    glUniformMatrix4fv(fhRenderProgram::uniform_textureMatrix0, 1, false, textureMatrix.ToFloatPtr());
+	fhRenderProgram::SetLocalViewOrigin(localViewOrigin);        
+	fhRenderProgram::SetTextureMatrix(textureMatrix.ToFloatPtr());
 
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
     glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
@@ -1107,9 +1090,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     }
     GL_SelectTextureNoClient(0);
 
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, textureMatrixST[0].ToFloatPtr());
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, textureMatrixST[1].ToFloatPtr());
-
+	fhRenderProgram::SetBumpMatrix(textureMatrixST[0], textureMatrixST[1]);
   }
   else {    
 
@@ -1139,11 +1120,9 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
       GL_SelectTexture(7);
       globalImages->currentDepthImage->Bind();
 
-      glUniform1f(fhRenderProgram::uniform_depthBlendRange, depthBlendRange);
-      glUniform1i(fhRenderProgram::uniform_depthBlendMode, static_cast<int>(depthBlendMode));
-
-      float clipRange[] = { backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance() };
-      glUniform2fv(fhRenderProgram::uniform_clipRange, 1, clipRange);
+      fhRenderProgram::SetDepthBlendRange(depthBlendRange);
+      fhRenderProgram::SetDepthBlendMode(static_cast<int>(depthBlendMode));      
+	  fhRenderProgram::SetClipRange(backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance());      
     }
     else {
       GL_UseProgram(defaultProgram);
@@ -1167,38 +1146,31 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   // set the state
   GL_State(pStage->drawStateBits);
 
-  static const float zero[4] = { 0, 0, 0, 0 };
-  static const float one[4] = { 1, 1, 1, 1 };
-  static const float negOne[4] = { -1, -1, -1, -1 };
-
   switch (pStage->vertexColor) {
   case SVC_IGNORE:
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, zero);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
+	fhRenderProgram::SetColorModulate(idVec4::zero);
+	fhRenderProgram::SetColorAdd(idVec4::one);
     break;
   case SVC_MODULATE:
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, one);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, zero);
+	fhRenderProgram::SetColorModulate(idVec4::one);
+	fhRenderProgram::SetColorAdd(idVec4::zero);
     break;
   case SVC_INVERSE_MODULATE:
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, negOne);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
+	fhRenderProgram::SetColorModulate(idVec4::negOne);
+	fhRenderProgram::SetColorAdd(idVec4::one);
     break;
   }  
-
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+  
+  fhRenderProgram::SetModelMatrix(surf->space->modelMatrix);
+  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
   // current render
   const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
   const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-  float currentRenderSize[4];
-  currentRenderSize[0] = globalImages->currentRenderImage->uploadWidth;
-  currentRenderSize[1] = globalImages->currentRenderImage->uploadHeight;
-  currentRenderSize[2] = w;
-  currentRenderSize[3] = h;
-  glUniform4fv(fhRenderProgram::uniform_currentRenderSize, 1, currentRenderSize);
+  fhRenderProgram::SetCurrentRenderSize(
+	  idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight), 
+	  idVec2(w,h));  
 
   // set privatePolygonOffset if necessary
   if (pStage->privatePolygonOffset) {
@@ -1217,17 +1189,18 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     textureMatrix[1][1] = 1;
     textureMatrix[1][2] = 0;
     textureMatrix[1][3] = 0;
-    if(pStage->texture.hasMatrix)
+    if(pStage->texture.hasMatrix) {
       RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, textureMatrix[0].ToFloatPtr());
-    glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, textureMatrix[1].ToFloatPtr());    
+	}
+
+	fhRenderProgram::SetBumpMatrix(textureMatrix[0], textureMatrix[1]);
   
     GL_SelectTextureNoClient(1);
     pStage->texture.image->Bind();
     GL_SelectTextureNoClient(0);
   }
 
-  glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, color);
+  fhRenderProgram::SetDiffuseColor(idVec4(color));
 
   // draw it
   RB_DrawElementsWithCounters(surf->geo);
@@ -1249,53 +1222,43 @@ RB_GLSL_DrawInteraction
 */
 void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
 
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelMatrix, 1, false, din->surf->space->modelMatrix);
-  glUniformMatrix4fv(fhRenderProgram::uniform_modelViewMatrix, 1, false, GL_ModelViewMatrix.Top());
-  glUniformMatrix4fv(fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetModelMatrix(din->surf->space->modelMatrix);
+	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+	fhRenderProgram::SetLocalLightOrigin(din->localLightOrigin);
+	fhRenderProgram::SetLocalViewOrigin(din->localViewOrigin);  
+	fhRenderProgram::SetLightProjectionMatrix( din->lightProjection[0], din->lightProjection[1], din->lightProjection[2] );
+	fhRenderProgram::SetLightFallOff(din->lightProjection[3]);
+	fhRenderProgram::SetBumpMatrix(din->bumpMatrix[0], din->bumpMatrix[1]);
+	fhRenderProgram::SetDiffuseMatrix(din->diffuseMatrix[0], din->diffuseMatrix[1]);
+	fhRenderProgram::SetSpecularMatrix(din->specularMatrix[0], din->specularMatrix[1]);
 
-  glUniform4fv(fhRenderProgram::uniform_localLightOrigin, 1, din->localLightOrigin.ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_localViewOrigin, 1, din->localViewOrigin.ToFloatPtr());
-  
-  glUniform4fv(fhRenderProgram::uniform_lightProjectionMatrixS, 1, din->lightProjection[0].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_lightProjectionMatrixT, 1, din->lightProjection[1].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_lightProjectionMatrixQ, 1, din->lightProjection[2].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_lightFallOffS, 1, din->lightProjection[3].ToFloatPtr());
-
-  glUniform4fv(fhRenderProgram::uniform_bumpMatrixS, 1, din->bumpMatrix[0].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_bumpMatrixT, 1, din->bumpMatrix[1].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_diffuseMatrixS, 1, din->diffuseMatrix[0].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_diffuseMatrixT, 1, din->diffuseMatrix[1].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_specularMatrixS, 1, din->specularMatrix[0].ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_specularMatrixT, 1, din->specularMatrix[1].ToFloatPtr());
-
-  static const float zero[4] = { 0, 0, 0, 0 };
-  static const float one[4] = { 1, 1, 1, 1 };
-  static const float negOne[4] = { -1, -1, -1, -1 };
 
   switch (din->vertexColor) {
   case SVC_IGNORE:
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, zero);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
-    break;
+	  fhRenderProgram::SetColorModulate( idVec4::zero );
+	  fhRenderProgram::SetColorAdd( idVec4::one );
+	  break;
   case SVC_MODULATE:
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, one);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, zero);
-    break;
+	  fhRenderProgram::SetColorModulate( idVec4::one );
+	  fhRenderProgram::SetColorAdd( idVec4::zero );
+	  break;
   case SVC_INVERSE_MODULATE:
-    glUniform4fv(fhRenderProgram::uniform_color_modulate, 1, negOne);
-    glUniform4fv(fhRenderProgram::uniform_color_add, 1, one);
-    break;
+	  fhRenderProgram::SetColorModulate( idVec4::negOne );
+	  fhRenderProgram::SetColorAdd( idVec4::one );
+	  break;
   }
 
-  glUniform4fv(fhRenderProgram::uniform_diffuse_color, 1, din->diffuseColor.ToFloatPtr());
-  glUniform4fv(fhRenderProgram::uniform_specular_color, 1, din->specularColor.ToFloatPtr());    
+  fhRenderProgram::SetDiffuseColor(din->diffuseColor);
+  fhRenderProgram::SetSpecularColor(din->specularColor * r_specularScale.GetFloat());
 
   if( r_pomEnabled.GetBool() && din->specularImage->hasAlpha ) {
-	  glUniform1f(fhRenderProgram::uniform_pomMaxHeight, r_pomMaxHeight.GetFloat());	   
+	  fhRenderProgram::SetPomMaxHeight(r_pomMaxHeight.GetFloat());
   } else {
-	  glUniform1f(fhRenderProgram::uniform_pomMaxHeight, -1);
+	  fhRenderProgram::SetPomMaxHeight(-1);	  
   }  
-  
+
+
   // texture 1 will be the per-surface bump map
   GL_SelectTextureNoClient(1);
   din->bumpImage->Bind();
@@ -1336,54 +1299,61 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   // perform setup here that will be constant for all interactions
   GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);  
 
-  // bind the vertex program
-  //glDisable(GL_VERTEX_PROGRAM_ARB);
-  //glDisable(GL_FRAGMENT_PROGRAM_ARB);
-  GL_UseProgram(interactionProgram);
-
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
   glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
-  
-  glUniform1i(fhRenderProgram::uniform_shading, r_shading.GetInteger());
-  glUniform1f(fhRenderProgram::uniform_specularExp, r_specularExp.GetFloat());
-  glUniform1f(fhRenderProgram::uniform_specularScale, r_specularScale.GetFloat());  
 
-  glUniformMatrix4fv( fhRenderProgram::uniform_projectionMatrix, 1, false, GL_ProjectionMatrix.Top() );
+  auto configureInteractionProgram = [&](){
+	  GL_UseProgram( interactionProgram );
 
-  if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
-	  const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
-	  glUniform4fv( fhRenderProgram::uniform_globalLightOrigin, 1, globalLightOrigin.ToFloatPtr() );
+	  fhRenderProgram::SetShading( r_shading.GetInteger() );
+	  fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
+	  fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
 
-	  const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
-	  const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-	  glUniform4f( fhRenderProgram::uniform_shadowParams, shadowSoftness, shadowBrightness, 0, 0);
+	  if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
+		  const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
+		  fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
 
-	  const int numSamples = 3;
-	  glUniform1i( fhRenderProgram::uniform_shadowSamples, numSamples );
+		  const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
+		  const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
+		  fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
 
-	  if (backEnd.vLight->lightDef->parms.pointLight) {
-		  //point light
-		  glUniform1i( fhRenderProgram::uniform_shadowMappingMode, 1 );
-		  glUniformMatrix4fv( fhRenderProgram::uniform_pointlightProjection, 6, false, &backEnd.shadowViewProjection[0][0] );
-	  } else {
-		  //projected light
-		  glUniform1i( fhRenderProgram::uniform_shadowMappingMode, 2 );
-		  glUniformMatrix4fv( fhRenderProgram::uniform_spotlightProjection, 1, false, backEnd.testProjectionMatrix );
+		  if (backEnd.vLight->lightDef->parms.pointLight) {
+			  //point light
+			  fhRenderProgram::SetShadowMappingMode( 1 );
+			  fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+		  }
+		  else {
+			  //projected light
+			  fhRenderProgram::SetShadowMappingMode( 2 );
+			  fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
+		  }
 	  }
-  } else {
-	  //no shadows
-	  glUniform1i( fhRenderProgram::uniform_shadowMappingMode, 0 );
-  }
+	  else {
+		  //no shadows
+		  fhRenderProgram::SetShadowMappingMode( 0 );
+	  }
+  };  
+
+  configureInteractionProgram();
 
   for (; surf; surf = surf->nextOnLight) {
     // perform setup here that will not change over multiple interaction passes
 
     // set the vertex pointers
     const auto offset = vertexCache.Bind(surf->geo->ambientCache);
+
+	//TODO(johl): WARNING: this is hacky workaround for AMD drivers.
+	//            Why do we have to re-configure the program between multiple interaction draws?
+	//            is this a AMD driver bug or do we do something stupid here?
+	//            Works fine on nVidia without this hack... what about Intel?
+	if(glConfig.vendorisAMD && !r_ignore.GetBool()) {
+		GL_UseProgram( nullptr );
+		configureInteractionProgram();
+	}
 
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
@@ -1396,7 +1366,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
     // times with different colors and images if the surface or light have multiple layers
     RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
   }
-
+  
   glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
   glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
   glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
