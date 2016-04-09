@@ -978,8 +978,9 @@ IF(MSVC)
   source_group(Tools\\Sound tools/sound/.*)  
   source_group(Ui ui/.*)  
 
+ 
+  SET(WINSDK_LIB_DIR "$ENV{ProgramFiles}/Windows Kits/8.1/Lib/winv6.3/um/x86")
 
-  SET(WINSDK_LIB_DIR "C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x86")
   SET(EXTERNAL_LIBS
     opengl32.lib 
     Glu32.lib
