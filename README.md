@@ -68,36 +68,7 @@ fhDOOM is one of my little side projects. I am working on this because its fun a
 
 ### Screenshots
 
-<div style="text-align:center">
-Shadow Mapping
-<br/>
-[(https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off.jpg)
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_on.jpg)
-<br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_off.jpg)
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_on.jpg)
-<br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_off.jpg)
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_on.jpg)
-<br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_off.jpg)
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_on.jpg)
-<br/>
-Soft Particles
-<br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_off.jpg)
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_on.jpg)
-<br/>
-Parallax Occlusion Mapping
-<br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/pom_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/pom_off.jpg)
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/pom_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/pom_on.jpg)
-<br/>
-Enhanced Light Editor (Qt based)
-<br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/lighteditor_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/lighteditor.jpg)
-
-</div>
+![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off_tn.jpg "Logo Title Text 1")
 
 ### Installation
 
