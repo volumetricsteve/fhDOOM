@@ -96,6 +96,8 @@ Enhanced Light Editor (Qt based)
 
 [![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/lighteditor_tn.jpg "Parallax Occlusion Mapping Off")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/lighteditor.jpg)
 
+All Screenshots were taken with HD textures installed (Wulfen, Monoxead, xio).
+
 ### Installation
 
  * Download Binaries here: http://www.facinghell.com/fhdoom/fhDOOM-1.5.0-1405.zip
@@ -108,7 +110,6 @@ Enhanced Light Editor (Qt based)
     * pak004.pk4
  * Start game by clicking on fhDOOM.exe
  * Don't forget to change the game's resolution (fhDOOM does not yet select your native resolution automatically).
-
 
 ### Benchmarks
 System:
