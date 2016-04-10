@@ -150,6 +150,11 @@ fhDOOM added and changed a couple of cvars. This list of cvars might be interest
     * 0: force shadows off
     * 1: use stencil shadows
     * 2: use shadow mapping
+  * r_specularScale <float>: scale specularity globally
+  * r_specularExp <float>: sharpness of specular reflections
+  * r_shading <0|1>: shading model
+    * 0: Blinn-Phong
+    * 1: Phong
   * r_pomEnabled <0|1>: enable/disable parallax occlusion mapping, requires special specular maps with height information in alpha channel
   * r_pomMaxHeight <float>: adjust max displacement
   * r_smBrightness <float>: adjust default brightness of soft shadows
