@@ -133,6 +133,46 @@ time demo (demo1.demo) results with HD textures (shadow mapping enabled):
   * POM disabled: ~180
   * POM enabled: ~160
 
+## cvars
+
+fhDOOM added and changed a couple of cvars. This list of cvars might be interesting:
+
+  * r_mode <0..15>: set resolution and aspect ratio. Resolution can also be set via GUI.
+    * 0..8: (unchanged, 4:3)
+    * 9: 1280x720 (16:9)
+    * 10: 1366x768 (16:9)
+    * 11: 1440x900 (16:10)
+    * 12: 1600x900 (16:9)
+    * 13: 1680x1050 (16:10)
+    * 14: 1920x1080 (16:9)
+    * 15: 1920x1200 (16:10)
+  * r_shadows <0|1|2>: default shadow mode, can also be selected via GUI.
+    * 0: force shadows off
+    * 1: use stencil shadows
+    * 2: use shadow mapping
+  * r_pomEnabled <0|1>: enable/disable parallax occlusion mapping, requires special specular maps with height information in alpha channel
+  * r_pomMaxHeight <float>: adjust max displacement
+  * r_smBrightness <float>: adjust default brightness of soft shadows
+  * r_smSoftness <float>: scale default softness of soft shadows (higher values will lead to artifacts)
+  * r_smPolyOffsetFactor <float>: depth-offset of shadow maps (increasing this will fix artifacts from high softness, but will also increase light bleeding)
+  * r_smQuality <-1|0|1|2>: set quality/size of shadow maps
+    * -1: choose dynamically based on light size and distance from viewer
+    * 0: high quality (1024x1024)
+    * 1: mid quality (512x512)
+    * 2: low quality (256x256)
+  * r_glCoreProfile <0|1>: enable/disable opengl core profile (requires full restart of the game)
+  * r_glDebugOutput <0|1|2>: OpenGL debug messages, requires core profile
+    * 0: No debug message
+    * 1: async debug messages
+    * 2: sync debug messages   
+  * con_fontScale <float>: scale font size in console
+  * con_size <float>: scale console (not immediately visible, close and re-open the console to see it)
+  * r_amdWorkaround <0|1|2>: enable temporary workaround for AMD hardware
+    * 0: workaround disabled
+    * 1: workaround enabled only on AMD hardware
+    * 2: workaround always enabled
+
+
 ### Notes
   * Only fully tested on nVidia hardware. Unfortunately a quick test on AMD hardware revealed some serious issues. There is a workaround in place, but it causes a pretty big performance hit (the workaround is only enabled for AMD, nVidia users won't suffer from it).
     I am going to investigate these issues more closely to find an actual solution and enable full performance for AMD.
