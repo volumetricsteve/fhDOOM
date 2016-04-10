@@ -71,7 +71,7 @@ fhDOOM is one of my little side projects. I am working on this because its fun a
 <div style="text-align:center">
 Shadow Mapping
 <br/>
-[![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off.jpg)
+[(https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off.jpg)
 [![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_on_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_on.jpg)
 <br/>
 [![Foo](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_off_tn.jpg)](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_off.jpg)
