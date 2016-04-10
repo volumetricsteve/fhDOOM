@@ -72,6 +72,20 @@ Shadow Mapping
 [![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_off.jpg)
 [![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_on_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping1_on.jpg)
 
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_off_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_off.jpg)
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_on_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping2_on.jpg)
+
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_off_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_off.jpg)
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_on_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping3_on.jpg)
+
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_off_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_off.jpg)
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_on_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/shadowmapping4_on.jpg)
+
+Soft Particles
+
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_off_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_off.jpg)
+[![alt text](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_on_tn.jpg "Logo Title Text 1")](https://github.com/existence/fhDOOM/raw/master/doc/screenshots/softparticles_on.jpg)
+
 ### Installation
 
  * Download Binaries here: http://www.facinghell.com/fhdoom/fhDOOM-1.5.0-1405.zip
