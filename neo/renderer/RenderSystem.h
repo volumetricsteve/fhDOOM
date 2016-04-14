@@ -45,7 +45,6 @@ typedef struct glconfig_s {
 	const char			*renderer_string;
 	const char			*vendor_string;
 	const char			*version_string;
-	const char			*extensions_string;
 	const char			*wgl_extensions_string;
 
 	bool				vendorisAMD;
@@ -66,17 +65,12 @@ typedef struct glconfig_s {
 	bool				textureLODBiasAvailable;
 	bool				textureEnvAddAvailable;
 	bool				cubeMapAvailable;
-	bool				envDot3Available;
-	bool				texture3DAvailable;
-	bool				sharedTexturePaletteAvailable;
-	bool				ARBVertexBufferObjectAvailable;
-	bool				ARBVertexProgramAvailable;
-	bool				ARBFragmentProgramAvailable;
+	bool				envDot3Available;		
 	bool				textureNonPowerOfTwoAvailable;
 	bool				depthBoundsTestAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
-  int         vidAspectRatio;
+	int					vidAspectRatio;
 
 	int					displayFrequency;
 

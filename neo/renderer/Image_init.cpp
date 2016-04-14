@@ -1379,6 +1379,8 @@ void idImageManager::SetNormalPalette( void ) {
 	temptable[255*3+1] =
 	temptable[255*3+2] = 128;
 
+	//TODO(johl): remove this function completely?
+/*
 	if ( !glConfig.sharedTexturePaletteAvailable ) {
 		return;
 	}
@@ -1391,6 +1393,7 @@ void idImageManager::SetNormalPalette( void ) {
 					   temptable );
 
 	glEnable( GL_SHARED_TEXTURE_PALETTE_EXT );
+*/
 }
 
 /*

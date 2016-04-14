@@ -632,7 +632,9 @@ int idMaterial::ParseTerm( idLexer &src ) {
 		return EXP_REG_GLOBAL7;
 	}
 	if ( !token.Icmp( "fragmentPrograms" ) ) {
-		return GetExpressionConstant( (float) glConfig.ARBFragmentProgramAvailable );
+		//TODO(johl): remove this completely? where is it used?
+		//return GetExpressionConstant( (float) glConfig.ARBFragmentProgramAvailable );
+		return GetExpressionConstant( (float) true );
 	}
 
 	if ( !token.Icmp( "sound" ) ) {
