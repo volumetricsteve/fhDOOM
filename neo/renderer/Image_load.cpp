@@ -328,10 +328,7 @@ GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, in
 		if ( minimumDepth != TD_HIGH_QUALITY && glConfig.textureCompressionAvailable ) {
 			return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;	// one byte
 		}
-    if(r_glCoreProfile.GetBool())
-      return GL_RGBA8;
-    else
-      return GL_INTENSITY8;	// single byte for all channels
+		return GL_RGBA8;
 	}
 
 #if 0
@@ -1726,29 +1723,7 @@ void idImage::Bind() {
 	frameUsed = backEnd.frameCount;
 	bindCount++;
 
-	tmu_t			*tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
-
-  if(!r_glCoreProfile.GetBool()) {
-	  // enable or disable apropriate texture modes
-	  if ( tmu->textureType != type && ( backEnd.glState.currenttmu <	glConfig.maxTextureUnits ) ) {
-		  if ( tmu->textureType == TT_CUBIC ) {
-			  glDisable( GL_TEXTURE_CUBE_MAP );
-		  } else if ( tmu->textureType == TT_3D ) {
-			  glDisable( GL_TEXTURE_3D );
-		  } else if ( tmu->textureType == TT_2D ) {
-			  glDisable( GL_TEXTURE_2D );
-		  }
-
-		  if ( type == TT_CUBIC ) {
-			  glEnable( GL_TEXTURE_CUBE_MAP );
-		  } else if ( type == TT_3D ) {
-			  glEnable( GL_TEXTURE_3D );
-		  } else if ( type == TT_2D ) {
-			  glEnable( GL_TEXTURE_2D );
-		  }
-		  tmu->textureType = type;
-	  }
-  }
+	tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
 
 	// bind the texture
 	if ( type == TT_2D ) {

@@ -91,8 +91,6 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
 	fhRenderProgram::SetColorAdd(colorAdd);
 	fhRenderProgram::SetColorModulate(colorModulate);
 	fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
-	
-	GL_SetVertexLayout(fhVertexLayout::Simple);
 
     int verticesCommitted = 0;
     while (verticesCommitted < verticesUsed)
@@ -102,9 +100,7 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
 
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::texcoordOffset));
+	  GL_SetupVertexAttributes(fhVertexLayout::Simple, offset);
 
       glDrawElements(GL_TRIANGLES,
         verticesToCommit,
@@ -113,8 +109,6 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
 
       verticesCommitted += verticesToCommit;
     }
-
-	GL_SetVertexLayout(fhVertexLayout::None);
   }
 }
 
@@ -261,8 +255,6 @@ void fhPointBuffer::entry_t::Commit() {
 	fhRenderProgram::SetColorAdd(idVec4(0,0,0,0));
 	fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));
 
-	GL_SetVertexLayout(fhVertexLayout::DrawPosColorOnly);
-
     int verticesCommitted = 0;
     while (verticesCommitted < verticesUsed)
     {
@@ -271,8 +263,7 @@ void fhPointBuffer::entry_t::Commit() {
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
 
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, fhSimpleVert::xyzOffset));
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (void*)fhSimpleVert::colorOffset));
+	  GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorOnly, offset);
 
       glDrawElements(GL_POINTS,
         verticesToCommit,
@@ -282,7 +273,6 @@ void fhPointBuffer::entry_t::Commit() {
       verticesCommitted += verticesToCommit;
     }
 
-    GL_SetVertexLayout(fhVertexLayout::None);
     glPointSize(1);
   }
 }

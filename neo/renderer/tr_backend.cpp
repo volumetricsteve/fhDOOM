@@ -114,9 +114,6 @@ void GL_SelectTexture( int unit ) {
 	}
 
 	glActiveTexture( GL_TEXTURE0 + unit );
-	if (!r_glCoreProfile.GetBool()) {
-		glClientActiveTexture( GL_TEXTURE0 + unit );
-	}
 	RB_LogComment( "glActiveTexture( %i );\n", unit );
 
 	backEnd.glState.currenttmu = unit;
@@ -346,6 +343,40 @@ void  GL_UseProgram( const fhRenderProgram* program ) {
   }  
 }
 
+
+static const unsigned vertexLayoutAttributes[] = {
+	//None:
+	0,
+	//Shadow:
+	(1 << fhRenderProgram::vertex_attrib_position_shadow),
+	//ShadowSilhouette:
+	(1 << fhRenderProgram::vertex_attrib_position),
+	//Simple
+	(1 << fhRenderProgram::vertex_attrib_position)
+	| (1 << fhRenderProgram::vertex_attrib_texcoord)
+	| (1 << fhRenderProgram::vertex_attrib_color),
+	//Draw
+	(1 << fhRenderProgram::vertex_attrib_position)
+	| (1 << fhRenderProgram::vertex_attrib_texcoord)
+	| (1 << fhRenderProgram::vertex_attrib_normal)
+	| (1 << fhRenderProgram::vertex_attrib_color)
+	| (1 << fhRenderProgram::vertex_attrib_binormal)
+	| (1 << fhRenderProgram::vertex_attrib_tangent),
+	//DrawPosOnly
+	(1 << fhRenderProgram::vertex_attrib_position),
+	//DrawPosTexOnly
+	(1 << fhRenderProgram::vertex_attrib_position)
+	| (1 << fhRenderProgram::vertex_attrib_texcoord),
+	//DrawPosColorOnly
+	(1 << fhRenderProgram::vertex_attrib_position)
+	| (1 << fhRenderProgram::vertex_attrib_color),
+	//DrawPosColorTexOnly
+	(1 << fhRenderProgram::vertex_attrib_position)
+	| (1 << fhRenderProgram::vertex_attrib_texcoord)
+	| (1 << fhRenderProgram::vertex_attrib_color)
+};
+static_assert(sizeof(vertexLayoutAttributes)/sizeof(vertexLayoutAttributes[0]) == (size_t)fhVertexLayout::COUNT, "");
+
 static fhVertexLayout currentVertexLayout = fhVertexLayout::None;
 
 void GL_SetVertexLayout( fhVertexLayout layout ) {
@@ -353,8 +384,8 @@ void GL_SetVertexLayout( fhVertexLayout layout ) {
 		return;
 	}
 
-	const unsigned current = (unsigned)currentVertexLayout;
-	const unsigned target = (unsigned)layout;
+	const unsigned current = vertexLayoutAttributes[(int)currentVertexLayout];
+	const unsigned target = vertexLayoutAttributes[(int)layout];
 
 	for (unsigned i = 0; i < 7 ; ++i) {
 		const unsigned bit = (1 << i);
@@ -372,13 +403,70 @@ void GL_SetVertexLayout( fhVertexLayout layout ) {
 	currentVertexLayout = layout;
 }
 
+template<typename T>
+static const void* attributeOffset( T offset, const void* attributeOffset )
+{
+	return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
+}
+
+template<typename T>
+static const void* attributeOffset( T offset, int attributeOffset )
+{
+	return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
+}
+
+
+
+void GL_SetupVertexAttributes( fhVertexLayout layout, int offset ) {
+	GL_SetVertexLayout( layout );
+
+	switch(currentVertexLayout) {
+	case fhVertexLayout::None:
+		break;
+	case fhVertexLayout::Shadow:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0) );
+		break;
+	case fhVertexLayout::ShadowSilhouette:
+		glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
+		break;
+	case fhVertexLayout::Simple:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), attributeOffset( offset, fhSimpleVert::xyzOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), attributeOffset( offset, fhSimpleVert::texcoordOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), attributeOffset( offset, fhSimpleVert::colorOffset ) );
+		break;
+	case fhVertexLayout::DrawPosOnly:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset) );
+		break;
+	case fhVertexLayout::DrawPosColorOnly:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::colorOffset ) );
+		break;
+	case fhVertexLayout::DrawPosColorTexOnly:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::colorOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+		break;
+	case fhVertexLayout::DrawPosTexOnly:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+		break;
+	case fhVertexLayout::Draw:
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_normal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::normalOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::colorOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_binormal, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::binormalOffset ) );
+		glVertexAttribPointer( fhRenderProgram::vertex_attrib_tangent, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::tangentOffset ) );
+		break;
+	}
+}
+
 joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
   LoadIdentity();
 }
 
 void joGLMatrixStack::Load(const float* m) { 
   memcpy(Data(size), m, sizeof(Matrix));
-  Upload();
 }
 
 void joGLMatrixStack::LoadIdentity() {
@@ -401,7 +489,6 @@ void joGLMatrixStack::Push() {
 void joGLMatrixStack::Pop() {
   if(size > 0) {
     size--;
-    Upload();
   }
 }
 
@@ -497,13 +584,6 @@ void joGLMatrixStack::Translate(float x, float y, float z) {
 
 void joGLMatrixStack::Get(float* dst) const {
   memcpy(dst, Data(size), sizeof(Matrix));   
-}
-
-void joGLMatrixStack::Upload() const {
-  if(!r_glCoreProfile.GetBool()) {
-    glMatrixMode(matrixmode);
-    glLoadMatrixf(Data(size));
-  }
 }
 
 float* joGLMatrixStack::Data(int StackIndex) {

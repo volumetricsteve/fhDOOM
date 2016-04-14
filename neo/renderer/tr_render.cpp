@@ -155,14 +155,9 @@ void RB_RenderTriangleSurface( const srfTriangles_t *tri ) {
 	}
 
     const int offset = vertexCache.Bind(tri->ambientCache);
-	GL_SetVertexLayout(fhVertexLayout::Simple);
-    glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
-    glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
-    glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
-	
-	RB_DrawElementsWithCounters( tri );
+	GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
 
-    GL_SetVertexLayout(fhVertexLayout::None);
+	RB_DrawElementsWithCounters( tri );
 }
 
 /*

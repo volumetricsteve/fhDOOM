@@ -522,21 +522,15 @@ static const int vertex_attrib_position_shadow = 6;
 
 enum class fhVertexLayout {
 	None = 0,
-	Shadow = (1 << fhRenderProgram::vertex_attrib_position_shadow),
-	Simple = (1 << fhRenderProgram::vertex_attrib_position)
-	       | (1 << fhRenderProgram::vertex_attrib_texcoord)
-           | (1 << fhRenderProgram::vertex_attrib_color),
-	Draw  = (1 << fhRenderProgram::vertex_attrib_position) 
-	      | (1 << fhRenderProgram::vertex_attrib_texcoord) 
-		  | (1 << fhRenderProgram::vertex_attrib_normal) 
-		  | (1 << fhRenderProgram::vertex_attrib_color) 
-		  | (1 << fhRenderProgram::vertex_attrib_binormal) 
-		  | (1 << fhRenderProgram::vertex_attrib_tangent) ,
-	DrawPosOnly = (1 << fhRenderProgram::vertex_attrib_position),		  
-	DrawPosTexOnly = (1 << fhRenderProgram::vertex_attrib_position)
-		           | (1 << fhRenderProgram::vertex_attrib_texcoord),
-	DrawPosColorOnly = (1 << fhRenderProgram::vertex_attrib_position)
-				     | (1 << fhRenderProgram::vertex_attrib_color)	
+	Shadow,
+	ShadowSilhouette,
+	Simple,
+	Draw,
+	DrawPosOnly,
+	DrawPosTexOnly,
+	DrawPosColorOnly,
+	DrawPosColorTexOnly,
+	COUNT
 };
 
 
@@ -1043,6 +1037,7 @@ void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
 void	GL_UseProgram( const fhRenderProgram* program );
 void    GL_SetVertexLayout( fhVertexLayout layout );
+void    GL_SetupVertexAttributes( fhVertexLayout layout, int offset );
 
 /*
 ====================
@@ -1075,8 +1070,6 @@ public:
   void Get(float* dst) const;
 
   const float* Top() const { return Data(size); }
-
-  void Upload() const;
 
 private:
   float* Data(int StackIndex);

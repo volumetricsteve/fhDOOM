@@ -572,9 +572,8 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 					}
 				}
 
-				const auto offset = vertexCache.Bind( tri->ambientCache );			
-				glVertexAttribPointer( fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::xyzOffset ) );
-				glVertexAttribPointer( fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset( offset, idDrawVert::texcoordOffset ) );
+				const auto offset = vertexCache.Bind( tri->ambientCache );		
+				GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
 
 				fhRenderProgram::SetModelMatrix(fhRenderMatrix::identity.ToFloatPtr());				
 				fhRenderProgram::SetAlphaTestEnabled( false );				
@@ -619,8 +618,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			}
 
 			const auto offset = vertexCache.Bind(tri->ambientCache);
-			glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
-			glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
+			GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
 			fhRenderProgram::SetModelMatrix(inter->entityDef->modelMatrix);		
 
 			bool didDraw = false;
@@ -937,7 +935,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	viewLightAxialSize = R_EXP_CalcLightAxialSize(vLight);
 
 	GL_UseProgram(shadowmapProgram);
-	GL_SetVertexLayout(fhVertexLayout::DrawPosTexOnly);
 
 	const float polygonOffsetBias = vLight->lightDef->ShadowPolygonOffsetBias();
 	const float polygonOffsetFactor = vLight->lightDef->ShadowPolygonOffsetFactor();
@@ -976,7 +973,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
-	GL_SetVertexLayout(fhVertexLayout::None);
 	GL_UseProgram(nullptr);
 
 	globalImages->defaultFramebuffer->Bind();

@@ -770,9 +770,7 @@ void setGLMode(int mode) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			globalImages->BindNull();
 			glDisable(GL_BLEND);
-			glDisable(GL_DEPTH_TEST);
-      if(!r_glCoreProfile.GetBool())
-			  glColor3f( 1.0f, 1.0f, 1.0f );
+			glDisable(GL_DEPTH_TEST);			
 			break;
 
 		case cd_solid:
