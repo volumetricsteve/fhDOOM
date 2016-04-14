@@ -349,7 +349,7 @@ void  GL_UseProgram( const fhRenderProgram* program ) {
 static fhVertexLayout currentVertexLayout = fhVertexLayout::None;
 
 void GL_SetVertexLayout( fhVertexLayout layout ) {
-	if(currentVertexLayout == layout) {
+	if(currentVertexLayout == layout || layout == fhVertexLayout::None) {
 		return;
 	}
 
