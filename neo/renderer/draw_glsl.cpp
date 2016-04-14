@@ -15,17 +15,6 @@ idCVar r_amdWorkaround("r_amdWorkaround", "1", CVAR_ARCHIVE | CVAR_RENDERER | CV
 
 /*
 ====================
-GL_SelectTextureNoClient
-====================
-*/
-static void GL_SelectTextureNoClient(int unit) {
-  backEnd.glState.currenttmu = unit;
-  glActiveTexture(GL_TEXTURE0 + unit);
-  RB_LogComment("glActiveTexture( %i )\n", unit);
-}
-
-/*
-====================
 attributeOffset
 
 Calculate attribute offset by a (global) offset and (local) per-attribute offset
@@ -1044,7 +1033,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     textureMatrixST[1][3] = 0;
 
     // see if there is also a bump map specified
-    GL_SelectTextureNoClient(2);
+    GL_SelectTexture(2);
     if(const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
       RB_GetShaderTextureMatrix(surf->shaderRegisters, &bumpStage->texture, textureMatrixST);
 
@@ -1053,7 +1042,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     } else {
       globalImages->flatNormalMap->Bind();
     }
-    GL_SelectTextureNoClient(0);
+    GL_SelectTexture(0);
 
 	fhRenderProgram::SetBumpMatrix(textureMatrixST[0], textureMatrixST[1]);
   }
@@ -1157,9 +1146,9 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
 	fhRenderProgram::SetBumpMatrix(textureMatrix[0], textureMatrix[1]);
   
-    GL_SelectTextureNoClient(1);
+    GL_SelectTexture(1);
     pStage->texture.image->Bind();
-    GL_SelectTextureNoClient(0);
+    GL_SelectTexture(0);
   }
 
   fhRenderProgram::SetDiffuseColor(idVec4(color));
@@ -1217,23 +1206,23 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 
 
   // texture 1 will be the per-surface bump map
-  GL_SelectTextureNoClient(1);
+  GL_SelectTexture(1);
   din->bumpImage->Bind();
 
   // texture 2 will be the light falloff texture
-  GL_SelectTextureNoClient(2);
+  GL_SelectTexture(2);
   din->lightFalloffImage->Bind();
 
   // texture 3 will be the light projection texture
-  GL_SelectTextureNoClient(3);
+  GL_SelectTexture(3);
   din->lightImage->Bind();
 
   // texture 4 is the per-surface diffuse map
-  GL_SelectTextureNoClient(4);
+  GL_SelectTexture(4);
   din->diffuseImage->Bind();
 
   // texture 5 is the per-surface specular map
-  GL_SelectTextureNoClient(5);
+  GL_SelectTexture(5);
   din->specularImage->Bind();
 
   // draw it
@@ -1322,19 +1311,19 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
   GL_SetVertexLayout(fhVertexLayout::None);
 
-  GL_SelectTextureNoClient(5);
+  GL_SelectTexture(5);
   globalImages->BindNull();
 
-  GL_SelectTextureNoClient(4);
+  GL_SelectTexture(4);
   globalImages->BindNull();
 
-  GL_SelectTextureNoClient(3);
+  GL_SelectTexture(3);
   globalImages->BindNull();
 
-  GL_SelectTextureNoClient(2);
+  GL_SelectTexture(2);
   globalImages->BindNull();
 
-  GL_SelectTextureNoClient(1);
+  GL_SelectTexture(1);
   globalImages->BindNull();
 
   backEnd.glState.currenttmu = -1;
