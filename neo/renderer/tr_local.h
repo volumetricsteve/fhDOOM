@@ -1039,19 +1039,6 @@ void	GL_UseProgram( const fhRenderProgram* program );
 void    GL_SetVertexLayout( fhVertexLayout layout );
 void    GL_SetupVertexAttributes( fhVertexLayout layout, int offset );
 
-/*
-====================
-attributeOffset
-
-Calculate attribute offset by a (global) offset and (local) per-attribute offset
-====================
-*/
-template<typename T>
-const void* GL_AttributeOffset(T offset, const void* attributeOffset)
-{
-  return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
-}
-
 class joGLMatrixStack {
 public:
   explicit joGLMatrixStack(int mode);

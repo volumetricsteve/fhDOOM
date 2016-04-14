@@ -320,16 +320,6 @@ static fhRenderMatrix mul(const fhRenderMatrix& a, const fhRenderMatrix& b) {
 }
 
 
-/*
-====================
-GL_SelectTextureNoClient
-====================
-*/
-static void GL_SelectTextureNoClient(int unit) {
-	backEnd.glState.currenttmu = unit;
-	glActiveTextureARB(GL_TEXTURE0 + unit);
-	RB_LogComment("glActiveTexture( %i )\n", unit);
-}
 
 static float	s_flipMatrix[16] = {
 	// convert from our coordinate system (looking down X)
@@ -339,13 +329,6 @@ static float	s_flipMatrix[16] = {
 	0, 1, 0, 0,
 	0, 0, 0, 1
 };
-
-template<typename T>
-static const void* attributeOffset(T offset, const void* attributeOffset)
-{
-	return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
-}
-
 
 static void RB_CreateOrthographicProjectionMatrix( const viewLight_t* vlight, float* m )
 {
@@ -991,21 +974,21 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1);
 		backEnd.currentScissor = backEnd.viewDef->scissor;
 
-	GL_SelectTextureNoClient(6);
+	GL_SelectTexture(6);
 	globalImages->GetShadowMapImage(0, lod)->Bind();
 
-	GL_SelectTextureNoClient(7);
+	GL_SelectTexture(7);
 	globalImages->GetShadowMapImage(1, lod)->Bind();
 
-	GL_SelectTextureNoClient(8);
+	GL_SelectTexture(8);
 	globalImages->GetShadowMapImage(2, lod)->Bind();
 
-	GL_SelectTextureNoClient(9);
+	GL_SelectTexture(9);
 	globalImages->GetShadowMapImage(3, lod)->Bind();
 
-	GL_SelectTextureNoClient(10);
+	GL_SelectTexture(10);
 	globalImages->GetShadowMapImage(4, lod)->Bind();
 
-	GL_SelectTextureNoClient(11);
+	GL_SelectTexture(11);
 	globalImages->GetShadowMapImage(5, lod)->Bind();
 }

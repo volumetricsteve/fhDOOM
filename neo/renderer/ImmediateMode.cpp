@@ -116,10 +116,7 @@ void fhImmediateMode::End()
 		fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 	}
 
-	GL_SetVertexLayout(fhVertexLayout::Simple);
-	glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-	glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-	glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+	GL_SetupVertexAttributes(fhVertexLayout::Simple, offset);
 
 	GLenum mode = currentMode;
 
@@ -318,10 +315,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   fhRenderProgram::SetDiffuseColor(idVec4::one);
   fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-  GL_SetVertexLayout(fhVertexLayout::Simple);
-  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-  glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-  glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+  GL_SetupVertexAttributes(fhVertexLayout::Simple, offset);
 
   glDrawElements(GL_TRIANGLES,
     indexNum,
@@ -408,7 +402,6 @@ void fhLineBuffer::Commit()
 	fhRenderProgram::SetColorModulate(idVec4::one);
 	fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-	GL_SetVertexLayout(fhVertexLayout::Simple);
     int verticesCommitted = 0;
     while(verticesCommitted < verticesUsed)
     {
@@ -419,9 +412,7 @@ void fhLineBuffer::Commit()
       auto vert = vertexCache.AllocFrameTemp(&vertices[verticesCommitted], verticesToCommit * sizeof(fhSimpleVert));
       int offset = vertexCache.Bind(vert);
 
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
-      glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
+	  GL_SetupVertexAttributes(fhVertexLayout::Simple, offset);
 
       glDrawElements(GL_LINES,
         verticesToCommit,
@@ -430,8 +421,6 @@ void fhLineBuffer::Commit()
 
       verticesCommitted += verticesToCommit;
     }
-
-	GL_SetVertexLayout(fhVertexLayout::None);
   }
 
   verticesUsed = 0;
