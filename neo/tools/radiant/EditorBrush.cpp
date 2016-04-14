@@ -90,18 +90,14 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
       fhRenderProgram::SetDiffuseColor(idVec4::one);
 	  fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-      glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-      glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-      glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	  GL_SetVertexLayout(fhVertexLayout::Simple);
       glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::xyzOffset));
       glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::colorOffset));
       glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), GL_AttributeOffset(offset, idDrawVert::texcoordOffset));
       
       glDrawElements(GL_TRIANGLES, surf->geometry->numIndexes,  GL_INDEX_TYPE, surf->geometry->indexes);
 
-      glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-      glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-      glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+      GL_SetVertexLayout(fhVertexLayout::None);
       GL_UseProgram(nullptr);
 
       

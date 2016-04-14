@@ -527,9 +527,7 @@ void RB_ShowLightCount(void) {
 
 
 	GL_UseProgram(vertexColorProgram);
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-
+	GL_SetVertexLayout(fhVertexLayout::DrawPosColorOnly);
 
 	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
 		for (i = 0; i < 2; i++) {
@@ -552,11 +550,8 @@ void RB_ShowLightCount(void) {
 		}
 	}
 
-
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+	GL_SetVertexLayout(fhVertexLayout::None);
 	GL_UseProgram(nullptr);
-
 
 	// display the results
 	R_ColorByStencilBuffer();
@@ -647,7 +642,8 @@ void RB_ShowSilhouette(void) {
 				fhRenderProgram::SetDiffuseColor(idVec4(0.5f, 0, 0, 1));
 
 				const int offset = vertexCache.Bind(tri->shadowCache);
-				glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+
+				GL_SetVertexLayout(fhVertexLayout::DrawPosOnly);				
 				glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(shadowCache_t), GL_AttributeOffset(offset, 0));
 
 				glDrawElements(GL_LINES,
@@ -655,7 +651,7 @@ void RB_ShowSilhouette(void) {
 					GL_UNSIGNED_SHORT,
 					indices);
 
-				glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+				GL_SetVertexLayout(fhVertexLayout::None);
 			}
 		}
 	}

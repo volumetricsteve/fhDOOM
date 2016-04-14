@@ -62,42 +62,25 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
 	fhRenderProgram::SetBumpMatrix(lightProject[0].ToVec4(), lightProject[1].ToVec4());
 	fhRenderProgram::SetSpecularMatrix(lightProject[2].ToVec4(), idVec4());
 	fhRenderProgram::SetDiffuseMatrix(lightProject[3].ToVec4(), idVec4());
-/*
-    GL_SelectTexture(0);
-    glTexGenfv(GL_S, GL_OBJECT_PLANE, lightProject[0].ToFloatPtr());
-    glTexGenfv(GL_T, GL_OBJECT_PLANE, lightProject[1].ToFloatPtr());
-    glTexGenfv(GL_Q, GL_OBJECT_PLANE, lightProject[2].ToFloatPtr());
-
-    GL_SelectTexture(1);
-    glTexGenfv(GL_S, GL_OBJECT_PLANE, lightProject[3].ToFloatPtr());
-*/
   }
 
   // this gets used for both blend lights and shadow draws
   if (tri->ambientCache) {
-    //idDrawVert	*ac = (idDrawVert *)vertexCache.Position(tri->ambientCache);
-    //glVertexPointer(3, GL_FLOAT, sizeof(idDrawVert), ac->xyz.ToFloatPtr());
-    //     
     int offset = vertexCache.Bind(tri->ambientCache);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+	GL_SetVertexLayout(fhVertexLayout::DrawPosOnly);    
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
   }
   else if (tri->shadowCache) {
     //shadowCache_t	*sc = (shadowCache_t *)vertexCache.Position(tri->shadowCache);
     //glVertexPointer(3, GL_FLOAT, sizeof(shadowCache_t), sc->xyz.ToFloatPtr());
     int offset = vertexCache.Bind(tri->shadowCache);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
+	GL_SetVertexLayout(fhVertexLayout::Shadow);    
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_position_shadow, 3, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
   }
 
   RB_DrawElementsWithCounters(tri);
 
-  if (tri->ambientCache) {   
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  }
-  else if (tri->shadowCache) {
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
-  }
+  GL_SetVertexLayout(fhVertexLayout::None);
 }
 
 
@@ -242,10 +225,10 @@ static void RB_GLSL_RenderTriangleSurface(const srfTriangles_t *tri) {
 
   auto offset = vertexCache.Bind(tri->ambientCache);
 
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  GL_SetVertexLayout(fhVertexLayout::DrawPosOnly);  
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, 0));
   RB_DrawElementsWithCounters(tri);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
+  GL_SetVertexLayout(fhVertexLayout::None);
 }
 
 static idPlane	fogPlanes[4];
@@ -452,7 +435,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
   }
 
   const auto offset = vertexCache.Bind(tri->shadowCache);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
+  GL_SetVertexLayout(fhVertexLayout::Shadow);  
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
 
   // we always draw the sil planes, but we may not need to draw the front or rear caps
@@ -533,9 +516,8 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
     GL_Cull(CT_TWO_SIDED);
     RB_DrawShadowElementsWithCounters(tri, numIndexes);
     GL_Cull(CT_FRONT_SIDED);
-    glEnable(GL_STENCIL_TEST);
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
-
+    glEnable(GL_STENCIL_TEST);    
+	GL_SetVertexLayout(fhVertexLayout::None);
     return;
   }
 
@@ -560,7 +542,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
   GL_Cull(CT_BACK_SIDED);
   RB_DrawShadowElementsWithCounters(tri, numIndexes);
 
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position_shadow);
+  GL_SetVertexLayout(fhVertexLayout::None);    
 }
 
 
@@ -874,13 +856,11 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
   glStencilFunc(GL_ALWAYS, 1, 255);
 
   GL_UseProgram(depthProgram);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  GL_SetVertexLayout(fhVertexLayout::DrawPosTexOnly);
 
   RB_RenderDrawSurfListWithFunction(drawSurfs, numDrawSurfs, RB_GLSL_FillDepthBuffer);
 
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  GL_SetVertexLayout(fhVertexLayout::None);
   GL_UseProgram(nullptr);
 
   if (backEnd.viewDef->numClipPlanes) {
@@ -903,12 +883,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
 
   const auto offset = vertexCache.Bind(tri->ambientCache);
 
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
+  GL_SetVertexLayout(fhVertexLayout::Draw);
 
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
@@ -962,12 +937,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   GL_UseProgram(nullptr);
   GL_SelectTexture(0);
 
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
+  GL_SetVertexLayout(fhVertexLayout::None);
 }
 
 
@@ -1031,9 +1001,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     fhRenderProgram::SetLocalViewOrigin(localViewOrigin);
 	fhRenderProgram::SetTextureMatrix(textureMatrix.ToFloatPtr());    
 
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);    
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-
+	GL_SetVertexLayout(fhVertexLayout::DrawPosColorOnly);
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));    
   }
@@ -1055,12 +1023,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 	fhRenderProgram::SetLocalViewOrigin(localViewOrigin);        
 	fhRenderProgram::SetTextureMatrix(textureMatrix.ToFloatPtr());
 
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
+	GL_SetVertexLayout(fhVertexLayout::Draw);
 
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
@@ -1130,10 +1093,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
       GL_UseProgram(defaultProgram);
     }
 
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-
+	GL_SetVertexLayout(fhVertexLayout::Simple);
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::xyzOffset));
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::texcoordOffset));
     glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(idDrawVert), attributeOffset(offset, idDrawVert::colorOffset));
@@ -1207,12 +1167,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   // draw it
   RB_DrawElementsWithCounters(surf->geo);
 
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
+  GL_SetVertexLayout(fhVertexLayout::None);
   GL_UseProgram(nullptr);
 }
 
@@ -1301,12 +1256,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
   // perform setup here that will be constant for all interactions
   GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);  
 
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
+  GL_SetVertexLayout(fhVertexLayout::Draw);
 
   auto configureInteractionProgram = [&](){
 	  GL_UseProgram( interactionProgram );
@@ -1368,20 +1318,9 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
     // this may cause RB_ARB2_DrawInteraction to be exacuted multiple
     // times with different colors and images if the surface or light have multiple layers
     RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
-  }
-  
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_normal);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_binormal);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_tangent);
+  }  
 
-  // disable features
-#if 0
-  GL_SelectTextureNoClient(6);
-  globalImages->BindNull();
-#endif
+  GL_SetVertexLayout(fhVertexLayout::None);
 
   GL_SelectTextureNoClient(5);
   globalImages->BindNull();

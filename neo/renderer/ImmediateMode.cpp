@@ -116,9 +116,7 @@ void fhImmediateMode::End()
 		fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 	}
 
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::Simple);
 	glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
 	glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
 	glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
@@ -135,9 +133,7 @@ void fhImmediateMode::End()
 
 	drawCallCount++;
 
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::None);
 
 	if (!geometryOnly) {
 		GL_UseProgram(nullptr);
@@ -322,9 +318,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   fhRenderProgram::SetDiffuseColor(idVec4::one);
   fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+  GL_SetVertexLayout(fhVertexLayout::Simple);
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_position, 3, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::xyzOffset));
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_color, 4, GL_UNSIGNED_BYTE, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::colorOffset));
   glVertexAttribPointer(fhRenderProgram::vertex_attrib_texcoord, 2, GL_FLOAT, false, sizeof(fhSimpleVert), GL_AttributeOffset(offset, (const void*)fhSimpleVert::texcoordOffset));
@@ -334,10 +328,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
     GL_UNSIGNED_SHORT,
     sphereIndices);
 
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-  glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-  
+  GL_SetVertexLayout(fhVertexLayout::None);  
   GL_UseProgram(nullptr);
 }
 
@@ -417,10 +408,7 @@ void fhLineBuffer::Commit()
 	fhRenderProgram::SetColorModulate(idVec4::one);
 	fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
-
+	GL_SetVertexLayout(fhVertexLayout::Simple);
     int verticesCommitted = 0;
     while(verticesCommitted < verticesUsed)
     {
@@ -443,10 +431,7 @@ void fhLineBuffer::Commit()
       verticesCommitted += verticesToCommit;
     }
 
-
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::None);
   }
 
   verticesUsed = 0;

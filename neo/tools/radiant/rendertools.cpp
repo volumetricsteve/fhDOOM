@@ -92,9 +92,7 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
 	fhRenderProgram::SetColorModulate(colorModulate);
 	fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 	
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::Simple);
 
     int verticesCommitted = 0;
     while (verticesCommitted < verticesUsed)
@@ -116,9 +114,7 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
       verticesCommitted += verticesToCommit;
     }
 
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::None);
   }
 }
 
@@ -265,8 +261,7 @@ void fhPointBuffer::entry_t::Commit() {
 	fhRenderProgram::SetColorAdd(idVec4(0,0,0,0));
 	fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));
 
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+	GL_SetVertexLayout(fhVertexLayout::DrawPosColorOnly);
 
     int verticesCommitted = 0;
     while (verticesCommitted < verticesUsed)
@@ -287,8 +282,7 @@ void fhPointBuffer::entry_t::Commit() {
       verticesCommitted += verticesToCommit;
     }
 
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-    glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_color);
+    GL_SetVertexLayout(fhVertexLayout::None);
     glPointSize(1);
   }
 }

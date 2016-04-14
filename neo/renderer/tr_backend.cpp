@@ -346,6 +346,32 @@ void  GL_UseProgram( const fhRenderProgram* program ) {
   }  
 }
 
+static fhVertexLayout currentVertexLayout = fhVertexLayout::None;
+
+void GL_SetVertexLayout( fhVertexLayout layout ) {
+	if(currentVertexLayout == layout) {
+		return;
+	}
+
+	const unsigned current = (unsigned)currentVertexLayout;
+	const unsigned target = (unsigned)layout;
+
+	for (unsigned i = 0; i < 7 ; ++i) {
+		const unsigned bit = (1 << i);
+		const bool isEnabled = (current & bit) != 0;
+		const bool shouldBeEnabled = (target & bit) != 0;
+
+		if (shouldBeEnabled && !isEnabled) {
+			glEnableVertexAttribArray(i);			
+		}
+		else if (!shouldBeEnabled && isEnabled) {
+			glDisableVertexAttribArray(i);			
+		}
+	}
+
+	currentVertexLayout = layout;
+}
+
 joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
   LoadIdentity();
 }

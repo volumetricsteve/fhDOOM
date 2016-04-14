@@ -937,8 +937,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	viewLightAxialSize = R_EXP_CalcLightAxialSize(vLight);
 
 	GL_UseProgram(shadowmapProgram);
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-	glEnableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::DrawPosTexOnly);
 
 	const float polygonOffsetBias = vLight->lightDef->ShadowPolygonOffsetBias();
 	const float polygonOffsetFactor = vLight->lightDef->ShadowPolygonOffsetFactor();
@@ -977,8 +976,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_position);
-	glDisableVertexAttribArray(fhRenderProgram::vertex_attrib_texcoord);
+	GL_SetVertexLayout(fhVertexLayout::None);
 	GL_UseProgram(nullptr);
 
 	globalImages->defaultFramebuffer->Bind();
