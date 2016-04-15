@@ -2557,7 +2557,9 @@ void CXYWnd::XY_DrawGrid() {
 			if (g_pParentWnd->GetZWnd()->m_pZClip->IsEnabled())
 			{
 				im.Color3f(ZCLIP_COLOUR);
-				glLineWidth(2);
+
+				//TODO(johl): linewidth>1 is deprecated. WTF?
+				glLineWidth( 1 /*2*/ );
 				im.Begin (GL_LINES);
 
 				im.Vertex2f (xb, g_pParentWnd->GetZWnd()->m_pZClip->GetTop());

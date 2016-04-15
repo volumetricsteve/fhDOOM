@@ -3615,8 +3615,10 @@ void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle) {
 	VectorMA(tip1, -dist, ( particle ) ? forward : up, tip1);
 	VectorMA(tip1, 2 * dist, ( particle ) ? forward : up, tip2);
 	globalImages->BindNull();
-  glLineWidth(2);
-  fhImmediateMode im;
+
+	//TODO(johl): linewidth should be 2, but linewidth>1 is deprecated. WTF?
+    glLineWidth(1);
+    fhImmediateMode im;
 	im.Color4f(1, 1, 1, 1);	
 	im.Begin(GL_LINES);
 	im.Vertex3fv(start.ToFloatPtr());
@@ -4009,134 +4011,33 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	else {
 		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 	}
-#if 0
-  idMat3 axis;
-  idAngles angles;
 
-	idRenderModel *model = b->modelHandle;
-	if ( model == NULL ) {
-		model = b->owner->eclass->entityModel;
+	editorModel_t editorModel = Brush_GetEditorModel(b);
+	assert(editorModel.model);
+
+	const idVec3 color = bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : b->owner->eclass->color;
+
+	if(editorModel.drawBounds) {
+	idVec3 center = editorModel.bounds.GetCenter();
+		glBox(idVec4(color.x, color.y, color.z, 1.0f), b->owner->origin + center, editorModel.bounds.GetRadius(center));
 	}
-	if ( model ) {
-		idRenderModel *model2; 
-
-		model2 = NULL;
-		bool fixedBounds = false;
-
-		if ( model->IsDynamicModel() != DM_STATIC ) {
-			if ( dynamic_cast<idRenderModelMD5 *>( model ) ) {
-				const char *classname = ValueForKey( b->owner, "classname" );
-				if (stricmp(classname, "func_static") == 0) {
-					classname = ValueForKey(b->owner, "animclass");
-				}
-				const char *anim = ValueForKey( b->owner, "anim" );
-				int frame = IntForKey( b->owner, "frame" ) + 1;
-				if ( frame < 1 ) {
-					frame = 1;
-				}
-				if ( !anim || !anim[ 0 ] ) {
-					anim = "idle";
-				}
-        common->Printf("instantiate dynamic model '%s'\n", classname);
-				model2 = gameEdit->ANIM_CreateMeshForAnim( model, classname, anim, frame, false );
-        if(!model2) {
-          int foo = 0;
-        }
-			} else if ( dynamic_cast<idRenderModelPrt*>( model ) || dynamic_cast<idRenderModelLiquid*>( model ) ) {
-				fixedBounds = true;
-			}
-
-			if ( !model2 ) {
-				idBounds bounds;
-				if (fixedBounds) {
-					bounds.Zero();
-					bounds.ExpandSelf(12.0f);
-				} else {
-					bounds = model->Bounds( NULL );
-				}
-				idVec4 color;
-				color.w = 1.0f;
-				if (bSelected) {
-					color.x = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x;
-					color.y = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y;
-					color.z = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z;
-				} else {
-					color.x = b->owner->eclass->color.x;
-					color.y = b->owner->eclass->color.y;
-					color.z = b->owner->eclass->color.z;
-				}
-				idVec3 center = bounds.GetCenter();
-				glBox(color, b->owner->origin + center, bounds.GetRadius( center ) );
-				model = renderModelManager->DefaultModel();
-			} else {
-				model = model2;
-			}
-		}
-
-		Entity_GetRotationMatrixAngles( b->owner, axis, angles );
-
-    assert(b);
-    assert(b->owner);
-    assert(b->owner->eclass);
-    idVec3 color =  b->owner->eclass->color; //g_qeglobals.d_savedinfo.colors[COLOR_STATICMODEL];
-    if (bSelected) {
-      color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
-    }
-
-    DrawRenderModel(model, b->owner->origin, axis, camera, color);
-
-    if ( bSelected && camera )
-    {
-      //draw white triangle outlines
-      globalImages->BindNull();
-
-      glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-      glDisable( GL_BLEND );
-      glDisable( GL_DEPTH_TEST );
-      glPolygonOffset(1.0f, 3.0f);
-      DrawRenderModel(model, b->owner->origin, axis, false, idVec3(1,1,1));
-      glEnable( GL_DEPTH_TEST );
-    }
-
-		if ( model2 ) {
-			delete model2;
-			model2 = NULL;
-		}
-	}
-  else {
-    common->Printf("no model!?\n");
-  }
-#else
-  editorModel_t editorModel = Brush_GetEditorModel(b);
-  assert(editorModel.model);
-
-  const idVec3 color = bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : b->owner->eclass->color;
-
-  if(editorModel.drawBounds) {
-    idVec3 center = editorModel.bounds.GetCenter();
-    glBox(idVec4(color.x, color.y, color.z, 1.0f), b->owner->origin + center, editorModel.bounds.GetRadius(center));
-  }
   
-  idMat3 axis;
-  idAngles angles;
-  Entity_GetRotationMatrixAngles( b->owner, axis, angles );
-  DrawRenderModel(editorModel.model, b->owner->origin, axis, camera, color);
+	idMat3 axis;
+	idAngles angles;
+	Entity_GetRotationMatrixAngles( b->owner, axis, angles );
+	DrawRenderModel(editorModel.model, b->owner->origin, axis, camera, color);
 
-  if (bSelected && camera)
-  {
-    //draw white triangle outlines
-    globalImages->BindNull();
+	if (bSelected && camera) {
+		//draw white triangle outlines
+		globalImages->BindNull();
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDisable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glPolygonOffset(1.0f, 3.0f);
-    DrawRenderModel(editorModel.model, b->owner->origin, axis, false, idVec3(1, 1, 1));
-    glEnable(GL_DEPTH_TEST);
-  }
-
-
-#endif
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glPolygonOffset(1.0f, 3.0f);
+		DrawRenderModel(editorModel.model, b->owner->origin, axis, false, idVec3(1, 1, 1));
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	if ( bSelected && camera ) {
 		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
@@ -4146,8 +4047,8 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	}
 
 	if ( g_bPatchShowBounds ) {
-    fhImmediateMode im;
-    im.Begin(GL_LINES);
+		fhImmediateMode im;
+		im.Begin(GL_LINES);
     
 		for ( face_t *face = b->brush_faces; face; face = face->next ) {
 			// only draw polygons facing in a direction we care about
@@ -4162,14 +4063,13 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 			//
 			for (int i = 0; i < (w->GetNumPoints() - 1); i++) {
 				im.Vertex3fv( (*w)[i].ToFloatPtr() );
-        im.Vertex3fv( (*w)[i+1].ToFloatPtr() );
+				im.Vertex3fv( (*w)[i+1].ToFloatPtr() );
 			}
-      im.Vertex3fv((*w)[w->GetNumPoints() - 1].ToFloatPtr());
-      im.Vertex3fv((*w)[0].ToFloatPtr());
-
+			im.Vertex3fv((*w)[w->GetNumPoints() - 1].ToFloatPtr());
+			im.Vertex3fv((*w)[0].ToFloatPtr());
 		}
 
-    im.End();
+	    im.End();
 	}
 }
 
@@ -4317,17 +4217,7 @@ Brush_DrawModelInfo
 */
 void Brush_DrawModelInfo(const brush_t *b, bool selected) {
 	if (b->modelHandle > 0) {
-		GLfloat color[4];
-		glGetFloatv(GL_CURRENT_COLOR, &color[0]);
-		if (selected) {
-			glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
-		}
-		else {
-			glColor3fv(b->owner->eclass->color.ToFloatPtr());
-		}
-
 		Brush_DrawModel(b, true, selected);
-		glColor4fv(color);
 
 		if ( selected ) {
 			Brush_DrawAxis(b);
@@ -4387,27 +4277,11 @@ void Brush_DrawEnv( const brush_t *b, bool cameraView, bool bSelected ) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 		}
 
-		idVec4	colorSave;
-    if(!r_glCoreProfile.GetBool()) {
-		  glGetFloatv(GL_CURRENT_COLOR, colorSave.ToFloatPtr());
-
-      if (bSelected) {
-        glColor3fv(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].ToFloatPtr());
-      }
-      else {
-        glColor3f(1.f, 1.f, 1.f);
-      }
-    }
-
-    DrawRenderModel(model, origin, axis, true, bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : idVec3(1,1,1));
+		DrawRenderModel(model, origin, axis, true, bSelected ? g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] : idVec3(1,1,1));
 
 		globalImages->BindNull();
 		delete model;
 		model = NULL;
-
-    if(!r_glCoreProfile.GetBool()) {
-		  glColor4fv( colorSave.ToFloatPtr() );
-    }
 	}
 }
 

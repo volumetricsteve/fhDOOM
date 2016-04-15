@@ -775,8 +775,7 @@ void setGLMode(int mode) {
 
 		case cd_solid:
 			glCullFace(GL_FRONT);
-			glEnable(GL_CULL_FACE);
-			glShadeModel(GL_FLAT);
+			glEnable(GL_CULL_FACE);			
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			globalImages->BindNull();
 			glDisable(GL_BLEND);
@@ -786,8 +785,7 @@ void setGLMode(int mode) {
 
 		case cd_texture:
 			glCullFace(GL_FRONT);
-			glEnable(GL_CULL_FACE);
-			glShadeModel(GL_FLAT);
+			glEnable(GL_CULL_FACE);			
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			glDisable(GL_BLEND);
 			glEnable(GL_DEPTH_TEST);

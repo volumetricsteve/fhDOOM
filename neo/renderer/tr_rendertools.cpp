@@ -1950,7 +1950,8 @@ void RB_ShowDebugText( void ) {
 
 	// draw lines
 	GL_State( GLS_POLYMODE_LINE );
-	glLineWidth( width );
+	//TODO(johl): linewidth>1 is deprecated. WTF?
+	glLineWidth( 1 /*width*/ );
 
 	if ( !r_debugLineDepthTest.GetBool() ) {
 		glDisable( GL_DEPTH_TEST );
@@ -2056,7 +2057,9 @@ void RB_ShowDebugLines( void ) {
 
 	// draw lines
 	GL_State( GLS_POLYMODE_LINE );//| GLS_DEPTHMASK ); //| GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
-	glLineWidth( width );
+
+	//TODO(johl): linewidth>1 is deprecated. WTF?
+	glLineWidth( 1 /*width*/ );
 
 	if ( !r_debugLineDepthTest.GetBool() ) {
 		glDisable( GL_DEPTH_TEST );
