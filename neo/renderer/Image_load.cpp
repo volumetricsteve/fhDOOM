@@ -385,9 +385,7 @@ void idImage::SetImageFilterAndRepeat() const {
 			glSamplerParameterf( samplernum, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );;
 		}
 	}
-	if ( glConfig.textureLODBiasAvailable ) {
-		glSamplerParameterf(samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
-	}
+	glSamplerParameterf(samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
 
 	// set the wrap/clamp modes
 	switch( repeat ) {

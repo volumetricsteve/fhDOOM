@@ -885,9 +885,8 @@ static filterName_t textureFilters[] = {
 		if ( glConfig.anisotropicAvailable ) {
 			glSamplerParameterf( glt->samplernum, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy );
 		}	
-		if ( glConfig.textureLODBiasAvailable ) {
-			glSamplerParameterf( glt->samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
-		}
+
+		glSamplerParameterf( glt->samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
 	}
 }
 

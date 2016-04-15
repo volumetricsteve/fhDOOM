@@ -316,20 +316,6 @@ static void R_CheckPortableExtensions( void ) {
 		glConfig.maxTextureAnisotropy = 1;
 	}
 
-	// GL_EXT_texture_lod_bias
-	// The actual extension is broken as specificed, storing the state in the texture unit instead
-	// of the texture object.  The behavior in GL 1.4 is the behavior we use.
-	/*
-	if ( glConfig.glVersion >= 1.4 || R_DoubleCheckExtension( "GL_EXT_texture_lod" ) ) {
-	common->Printf( "...using %s\n", "GL_1.4_texture_lod_bias" );
-	glConfig.textureLODBiasAvailable = true;
-	} else {
-	common->Printf( "X..%s not found\n", "GL_1.4_texture_lod_bias" );
-	glConfig.textureLODBiasAvailable = false;
-	}
-	*/
-	glConfig.textureLODBiasAvailable = true; //just assume to available, core since GL 2.0
-
 	// GL_EXT_depth_bounds_test
 	glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );
 }
