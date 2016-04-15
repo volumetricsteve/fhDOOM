@@ -1532,9 +1532,8 @@ void idImage::PurgeImage() {
 
 	// clear all the current binding caches, so the next bind will do a real one
 	for ( int i = 0 ; i < MAX_MULTITEXTURE_UNITS ; i++ ) {
-		backEnd.glState.tmu[i].current2DMap = -1;
-		backEnd.glState.tmu[i].current3DMap = -1;
-		backEnd.glState.tmu[i].currentCubeMap = -1;
+		backEnd.glState.tmu[i].currentTexture = TEXTURE_NOT_LOADED;
+		backEnd.glState.tmu[i].currentTextureType = TT_2D;
 	}
 }
 
@@ -1585,26 +1584,47 @@ void idImage::Bind(int textureUnit) {
 
 	// bump our statistic counters
 	frameUsed = backEnd.frameCount;
-	bindCount++;
+	bindCount++;	
 
-	if(textureUnit != -1) {
-		GL_SelectTexture(textureUnit);
+	if (textureUnit != -1) {
+		tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
+
+		if(tmu->currentTexture != texnum) {
+			GL_SelectTexture( textureUnit );
+
+			if (type == TT_2D) {
+				glBindTexture( GL_TEXTURE_2D, texnum );
+			}
+			else if (type == TT_CUBIC) {
+				glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
+			}
+			else {
+				assert(false);
+			}
+
+			tmu->currentTexture = texnum;
+			tmu->currentTextureType = type;
+		}
+	} else {
+		tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
+
+		if (tmu->currentTexture != texnum) {
+			if (type == TT_2D) {
+				glBindTexture( GL_TEXTURE_2D, texnum );
+			}
+			else if (type == TT_CUBIC) {
+				glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
+			}
+			else {
+				assert( false );
+			}
+
+			tmu->currentTexture = texnum;
+			tmu->currentTextureType = type;
+		}
 	}
 
-	tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
 
-	// bind the texture
-	if ( type == TT_2D ) {
-		if ( tmu->current2DMap != texnum ) {
-			tmu->current2DMap = texnum;
-			glBindTexture( GL_TEXTURE_2D, texnum );
-		}
-	} else if ( type == TT_CUBIC ) {
-		if ( tmu->currentCubeMap != texnum ) {
-			tmu->currentCubeMap = texnum;
-			glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
-		}
-	}
 
 	if ( com_purgeAll.GetBool() ) {
 		GLclampf priority = 1.0f;

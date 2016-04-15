@@ -625,14 +625,11 @@ typedef struct {
 
 
 typedef struct {
-	int		current2DMap;
-	int		current3DMap;
-	int		currentCubeMap;
-	int		texEnv;
-	textureType_t	textureType;
+	int		currentTexture;
+	textureType_t	currentTextureType;
 } tmu_t;
 
-const int MAX_MULTITEXTURE_UNITS =	8;
+const int MAX_MULTITEXTURE_UNITS =	16;
 typedef struct {
 	tmu_t		tmu[MAX_MULTITEXTURE_UNITS];
 	int			currenttmu;
@@ -1033,7 +1030,6 @@ GL wrapper/helper functions
 void	GL_SelectTexture( int unit );
 void	GL_CheckErrors( void );
 void	GL_State( int stateVector );
-void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
 void	GL_UseProgram( const fhRenderProgram* program );
 void    GL_SetVertexLayout( fhVertexLayout layout );

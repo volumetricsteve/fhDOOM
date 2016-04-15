@@ -987,7 +987,7 @@ static filterName_t textureFilters[] = {
 		if ( glt->texnum == idImage::TEXTURE_NOT_LOADED ) {
 			continue;
 		}
-		glt->Bind();
+		glt->Bind(0);
 		if ( glt->filter == TF_DEFAULT ) {
 			glTexParameterf(texEnum, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
 			glTexParameterf(texEnum, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
@@ -1920,20 +1920,45 @@ BindNull
 ===============
 */
 void idImageManager::BindNull(int textureUnit) {
-	if(textureUnit != -1) {
-		GL_SelectTexture(textureUnit);
-	}
+	if (textureUnit != -1) {
+		tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
 
-	tmu_t* tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
+		if (tmu->currentTexture != 0) {
+			GL_SelectTexture( textureUnit );
 
-	RB_LogComment( "BindNull()\n" );
-	if ( tmu->textureType == TT_CUBIC ) {
-		glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
-		tmu->currentCubeMap = 0;
+			RB_LogComment( "BindNull()\n" );
+
+			if (tmu->currentTextureType == TT_2D) {
+				glBindTexture( GL_TEXTURE_2D, 0 );
+			}
+			else if (tmu->currentTextureType == TT_CUBIC) {
+				glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+			}
+			else {
+				assert( false );
+			}
+
+			tmu->currentTexture = 0;
+		}
 	}
-	else if ( tmu->textureType == TT_2D ) {
-		glBindTexture( GL_TEXTURE_2D, 0 );
-		tmu->current2DMap = 0;
+	else {
+		tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
+
+		if (tmu->currentTexture != 0) {
+			RB_LogComment( "BindNull()\n" );
+
+			if (tmu->currentTextureType == TT_2D) {
+				glBindTexture( GL_TEXTURE_2D, 0 );
+			}
+			else if (tmu->currentTextureType == TT_CUBIC) {
+				glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+			}
+			else {
+				assert( false );
+			}
+
+			tmu->currentTexture = 0;
+		}
 	}
 }
 

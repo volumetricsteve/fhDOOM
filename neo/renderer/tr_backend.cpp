@@ -160,36 +160,6 @@ void GL_Cull( int cullType ) {
 
 /*
 ====================
-GL_TexEnv
-====================
-*/
-void GL_TexEnv( int env ) {
-	tmu_t	*tmu;
-
-	tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
-	if ( env == tmu->texEnv ) {
-		return;
-	}
-
-	tmu->texEnv = env;
-
-	switch ( env ) {
-	case GL_COMBINE_EXT:
-	case GL_MODULATE:
-	case GL_REPLACE:
-	case GL_DECAL:
-	case GL_ADD:
-		glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, env );
-		break;
-	default:
-		common->Error( "GL_TexEnv: invalid env '%d' passed\n", env );
-		break;
-	}
-}
-
-
-/*
-====================
 GL_State
 
 This routine is responsible for setting the most commonly changed state
@@ -841,7 +811,7 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 
 	// go back to the default texture so the editor doesn't mess up a bound image
 	glBindTexture( GL_TEXTURE_2D, 0 );
-	backEnd.glState.tmu[0].current2DMap = -1;
+	backEnd.glState.tmu[0].currentTexture = 0;
 
 	// stop rendering on this thread
 	backEndFinishTime = Sys_Milliseconds();

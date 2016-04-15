@@ -96,8 +96,7 @@ void fhImmediateMode::End()
 
 	if (!geometryOnly) {
 		if (currentTexture) {
-			GL_SelectTexture(1);
-			currentTexture->Bind();
+			currentTexture->Bind(1);
 			if (currentTexture->type == TT_CUBIC)
 				GL_UseProgram(skyboxProgram);
 			else
