@@ -628,7 +628,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 					}
 
 					// bind the texture
-					pStage->texture.image->Bind();
+					pStage->texture.image->Bind(0);
 
 					fhRenderProgram::SetAlphaTestEnabled(true);
 					fhRenderProgram::SetAlphaTestThreshold(0.5f);
@@ -907,13 +907,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		return;
 	}
 
-	globalImages->BindNull( 6 );
-	globalImages->BindNull( 7 );
-	globalImages->BindNull( 8 );
-	globalImages->BindNull( 9 );
-	globalImages->BindNull( 10 );
-	globalImages->BindNull( 11 );
-
 	int lod = vLight->shadowMapLod;
 	if(r_smLod.GetInteger() >= 0) {
 		lod = r_smLod.GetInteger();
@@ -947,16 +940,29 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		break;
 	}
 
+
+	static const int firstShadowMapTextureUnit = 6;
+
 	if(vLight->lightDef->parms.pointLight) {
 		for (int side=0; side < 6; side++) {
-			RB_RenderPointLightShadowBuffer(vLight, side, lod);		
+			const int textureUnit = firstShadowMapTextureUnit + side;
+
+			globalImages->BindNull( textureUnit );
+			RB_RenderPointLightShadowBuffer(vLight, side, lod);
+			globalImages->GetShadowMapImage( side, lod )->Bind( textureUnit );
 		}
 	} else if (vLight->lightDef->parms.parallel) {
+		globalImages->BindNull( firstShadowMapTextureUnit );
 		RB_RenderParallelShadowBuffer(vLight, lod);		
+		globalImages->GetShadowMapImage( 0, lod )->Bind( firstShadowMapTextureUnit );
 	}
-	else {
-		RB_RenderProjectedShadowBuffer( vLight, lod );
+	else {	
+		globalImages->BindNull( firstShadowMapTextureUnit );
+		RB_RenderProjectedShadowBuffer( vLight, lod );		
+		globalImages->GetShadowMapImage( 0, lod )->Bind( firstShadowMapTextureUnit );
 	}
+
+	GL_SelectTexture( 0 );
 
 	glPolygonOffset( 0, 0 );
 	glDisable( GL_POLYGON_OFFSET_FILL );
@@ -980,11 +986,4 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.viewDef->scissor.x2 + 1 - backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1);
 		backEnd.currentScissor = backEnd.viewDef->scissor;
-
-	globalImages->GetShadowMapImage(0, lod)->Bind(6);
-	globalImages->GetShadowMapImage(1, lod)->Bind(7);
-	globalImages->GetShadowMapImage(2, lod)->Bind(8);
-	globalImages->GetShadowMapImage(3, lod)->Bind(9);
-	globalImages->GetShadowMapImage(4, lod)->Bind(10);
-	globalImages->GetShadowMapImage(5, lod)->Bind(11);
 }
