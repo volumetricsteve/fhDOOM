@@ -1189,82 +1189,78 @@ RB_GLSL_CreateDrawInteractions
 =============
 */
 void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
-  assert(interactionProgram);
+	assert(interactionProgram);
 
-  if (!surf) {
-    return;
-  }
-
-  // perform setup here that will be constant for all interactions
-  GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);    
-
-  auto configureInteractionProgram = [&](){
-	  GL_UseProgram( interactionProgram );
-
-	  fhRenderProgram::SetShading( r_shading.GetInteger() );
-	  fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
-	  fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
-
-	  if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
-		  const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
-		  fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
-
-		  const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
-		  const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-		  fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
-
-		  if (backEnd.vLight->lightDef->parms.pointLight) {
-			  //point light
-			  fhRenderProgram::SetShadowMappingMode( 1 );
-			  fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
-		  }
-		  else {
-			  //projected light
-			  fhRenderProgram::SetShadowMappingMode( 2 );
-			  fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
-		  }
-	  }
-	  else {
-		  //no shadows
-		  fhRenderProgram::SetShadowMappingMode( 0 );
-	  }
-  };  
-
-  configureInteractionProgram();
-
-  for (; surf; surf = surf->nextOnLight) {
-    // perform setup here that will not change over multiple interaction passes
-
-    // set the vertex pointers
-    const auto offset = vertexCache.Bind(surf->geo->ambientCache);
-
-	//TODO(johl): WARNING: this is hacky workaround for AMD drivers.
-	//            Why do we have to re-configure the program between multiple interaction draws?
-	//            is this a AMD driver bug or do we do something stupid here?
-	//            Works fine on nVidia without this hack... what about Intel?
-	const int amdWorkaround = r_amdWorkaround.GetInteger();
-	if((glConfig.vendorisAMD && amdWorkaround == 1) || amdWorkaround == 2) {
-		GL_UseProgram( nullptr );
-		configureInteractionProgram();
+	if (!surf) {
+		return;
 	}
 
-	GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
+	// perform setup here that will be constant for all interactions
+	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);
+  
+	GL_UseProgram( interactionProgram );
 
-    // this may cause RB_ARB2_DrawInteraction to be exacuted multiple
-    // times with different colors and images if the surface or light have multiple layers
-    RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
-  }  
+	fhRenderProgram::SetShading( r_shading.GetInteger() );
+	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
+	fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
 
-  globalImages->BindNull(5);
-  globalImages->BindNull(4);
-  globalImages->BindNull(3);
-  globalImages->BindNull(2);
-  globalImages->BindNull(1);
+	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
+		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
+		fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
 
-  backEnd.glState.currenttmu = -1;
-  GL_SelectTexture(0);
+		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
+		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
+		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
 
-  GL_UseProgram(nullptr);
+		if (backEnd.vLight->lightDef->parms.pointLight) {
+			//point light
+			fhRenderProgram::SetShadowMappingMode( 1 );
+			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+		}
+		else {
+			//projected light
+			fhRenderProgram::SetShadowMappingMode( 2 );
+			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
+		}
+	}
+	else {
+		//no shadows
+		fhRenderProgram::SetShadowMappingMode( 0 );
+	}
+
+	for (; surf; surf = surf->nextOnLight) {
+		// perform setup here that will not change over multiple interaction passes
+
+		// set the vertex pointers
+		const auto offset = vertexCache.Bind(surf->geo->ambientCache);
+
+		//TODO(johl): WARNING: this is hacky workaround for AMD drivers.
+		//            Why do we have to re-configure the program between multiple interaction draws?
+		//            is this a AMD driver bug or do we do something stupid here?
+		//            Works fine on nVidia without this hack... what about Intel?
+		const int amdWorkaround = r_amdWorkaround.GetInteger();
+
+		if((glConfig.vendorisAMD && amdWorkaround == 1) || amdWorkaround == 2) {
+			GL_UseProgram( nullptr );		
+			GL_UseProgram(interactionProgram);		
+		}
+
+		GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
+
+		// this may cause RB_ARB2_DrawInteraction to be exacuted multiple
+		// times with different colors and images if the surface or light have multiple layers
+		RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
+	}  
+
+	globalImages->BindNull(5);
+	globalImages->BindNull(4);
+	globalImages->BindNull(3);
+	globalImages->BindNull(2);
+	globalImages->BindNull(1);
+
+	GL_SelectTexture(0);
+
+	GL_UseProgram(nullptr);
 }
 
 
