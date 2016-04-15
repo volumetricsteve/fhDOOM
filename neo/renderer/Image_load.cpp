@@ -362,16 +362,16 @@ void idImage::SetImageFilterAndRepeat() const {
 	// set the minimize / maximize filtering
 	switch( filter ) {
 	case TF_DEFAULT:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
 		break;
 	case TF_LINEAR:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 		break;
 	case TF_NEAREST:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 		break;
 	default:
 		common->FatalError( "R_CreateImage: bad texture filter" );
@@ -380,30 +380,30 @@ void idImage::SetImageFilterAndRepeat() const {
 	if ( glConfig.anisotropicAvailable ) {
 		// only do aniso filtering on mip mapped images
 		if ( filter == TF_DEFAULT ) {
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy );
+			glSamplerParameterf( samplernum, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy  );
 		} else {
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
+			glSamplerParameterf( samplernum, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );;
 		}
 	}
 	if ( glConfig.textureLODBiasAvailable ) {
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS_EXT, globalImages->textureLODBias );
+		glSamplerParameterf(samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
 	}
 
 	// set the wrap/clamp modes
 	switch( repeat ) {
 	case TR_REPEAT:
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_REPEAT );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_REPEAT );
 		break;
 	case TR_CLAMP_TO_BORDER:
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
 		break;
 	case TR_CLAMP_TO_ZERO:
 	case TR_CLAMP_TO_ZERO_ALPHA:
 	case TR_CLAMP:
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		break;
 	default:
 		common->FatalError( "R_CreateImage: bad texture repeat" );
@@ -542,6 +542,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 
 	// generate the texture number
 	glGenTextures( 1, &texnum );
+	glGenSamplers( 1, &samplernum );
 
 	// select proper internal format before we resample
 	hasAlpha = false;
@@ -747,6 +748,7 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 
 	// generate the texture number
 	glGenTextures( 1, &texnum );
+	glGenSamplers( 1, &samplernum );
 
 	// select proper internal format before we resample
 	hasAlpha = false;
@@ -762,22 +764,22 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	Bind();
 
 	// no other clamp mode makes sense
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glSamplerParameteri(samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// set the minimize / maximize filtering
 	switch( filter ) {
 	case TF_DEFAULT:
-		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
-		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
+		glSamplerParameteri(samplernum, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
+		glSamplerParameteri(samplernum, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
 		break;
 	case TF_LINEAR:
-		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri(samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri(samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 		break;
 	case TF_NEAREST:
-		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+		glSamplerParameteri(samplernum, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+		glSamplerParameteri(samplernum, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 		break;
 	default:
 		common->FatalError( "R_CreateImage: bad texture filter" );
@@ -1312,6 +1314,7 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 
 	// generate the texture number
 	glGenTextures( 1, &texnum );
+	glGenSamplers( 1, &samplernum );
 
 	int externalFormat = 0;
 
@@ -1530,6 +1533,11 @@ void idImage::PurgeImage() {
 		texnum = TEXTURE_NOT_LOADED;
 	}
 
+	if (samplernum != TEXTURE_NOT_LOADED) {
+		glDeleteSamplers( 1, &samplernum );	// this should be the ONLY place it is ever called!
+		samplernum = TEXTURE_NOT_LOADED;
+	}
+
 	// clear all the current binding caches, so the next bind will do a real one
 	for ( int i = 0 ; i < MAX_MULTITEXTURE_UNITS ; i++ ) {
 		backEnd.glState.tmu[i].currentTexture = TEXTURE_NOT_LOADED;
@@ -1586,6 +1594,10 @@ void idImage::Bind(int textureUnit) {
 	frameUsed = backEnd.frameCount;
 	bindCount++;	
 
+	if(textureUnit > 7) {
+		int wtf = 0;
+	}
+
 	if (textureUnit != -1) {
 		tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
 
@@ -1602,6 +1614,9 @@ void idImage::Bind(int textureUnit) {
 				assert(false);
 			}
 
+			if(samplernum != TEXTURE_NOT_LOADED) {
+				glBindSampler(textureUnit, samplernum);
+			}
 			tmu->currentTexture = texnum;
 			tmu->currentTextureType = type;
 		}
@@ -1619,6 +1634,9 @@ void idImage::Bind(int textureUnit) {
 				assert( false );
 			}
 
+			if(samplernum != TEXTURE_NOT_LOADED) {
+				glBindSampler(backEnd.glState.currenttmu, samplernum);
+			}
 			tmu->currentTexture = texnum;
 			tmu->currentTextureType = type;
 		}
@@ -1648,11 +1666,11 @@ void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bo
 		uploadHeight = imageHeight;
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	}
 
 	glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
@@ -1676,11 +1694,11 @@ void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
 		uploadHeight = imageHeight;
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	}
 
 	glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
@@ -1697,11 +1715,11 @@ void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
 
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	}
 
 	glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texnum, 0 );
@@ -1716,11 +1734,11 @@ void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
 
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	}
 
 	glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texnum, 0 );
@@ -1764,11 +1782,12 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 					GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows*4*i );
 			}
 		}
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
 		// no other clamp mode makes sense
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	} else {
 		// otherwise, it is a 2D image
 		if ( type != TT_2D ) {
@@ -1788,17 +1807,17 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 			// it and don't try and do a texture compression
 			glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
 		}
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glSamplerParameteri( samplernum, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 		// these probably should be clamp, but we have a lot of issues with editor
 		// geometry coming out with texcoords slightly off one side, resulting in
 		// a smear across the entire polygon
 #if 1
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );	
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_REPEAT );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_REPEAT );
 #else
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );	
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glSamplerParameteri( samplernum, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );	
 #endif
 	}
 }

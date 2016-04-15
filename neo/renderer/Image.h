@@ -210,6 +210,7 @@ public:
 
 	// data commonly accessed is grouped here
 	static const int TEXTURE_NOT_LOADED = -1;
+	GLuint              samplernum;             // gl sampler object
 	GLuint				texnum;					// gl texture binding, will be TEXTURE_NOT_LOADED if not loaded
 	textureType_t		type;
 	int					frameUsed;				// for texture usage in frame statistics
@@ -256,6 +257,7 @@ public:
 
 ID_INLINE idImage::idImage() {
 	texnum = TEXTURE_NOT_LOADED;
+	samplernum = TEXTURE_NOT_LOADED;
 	partialImage = NULL;
 	type = TT_DISABLED;
 	isPartialImage = false;

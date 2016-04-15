@@ -292,7 +292,7 @@ static void R_BorderClampImage( idImage *image ) {
 	// explicit zero border
 	float	color[4];
 	color[0] = color[1] = color[2] = color[3] = 0;
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color );
+	//glSamplerParameterfv(image->samplernum, GL_TEXTURE_BORDER_COLOR, color );	
 }
 
 static void R_RGBA8Image( idImage *image ) {
@@ -876,16 +876,17 @@ static filterName_t textureFilters[] = {
 		if ( glt->texnum == idImage::TEXTURE_NOT_LOADED ) {
 			continue;
 		}
+
 		glt->Bind(0);
 		if ( glt->filter == TF_DEFAULT ) {
-			glTexParameterf(texEnum, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
-			glTexParameterf(texEnum, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
+			glSamplerParameteri( glt->samplernum, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
+			glSamplerParameteri( glt->samplernum, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
 		}
 		if ( glConfig.anisotropicAvailable ) {
-			glTexParameterf(texEnum, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy );
+			glSamplerParameterf( glt->samplernum, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy );
 		}	
 		if ( glConfig.textureLODBiasAvailable ) {
-			glTexParameterf(texEnum, GL_TEXTURE_LOD_BIAS_EXT, globalImages->textureLODBias );
+			glSamplerParameterf( glt->samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
 		}
 	}
 }
