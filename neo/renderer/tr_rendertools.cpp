@@ -2357,7 +2357,7 @@ void RB_TestImage( void ) {
 
 		cin = tr.testVideo->ImageForTime( (int)(1000 * ( backEnd.viewDef->floatTime - tr.testVideoStartTime ) ) );
 		if ( cin.image ) {
-			image->UploadScratch( cin.image, cin.imageWidth, cin.imageHeight );
+			image->UploadScratch( 0, cin.image, cin.imageWidth, cin.imageHeight );
 		} else {
 			tr.testImage = NULL;
 			return;
@@ -2373,16 +2373,16 @@ void RB_TestImage( void ) {
 		w *= (float)glConfig.vidHeight / glConfig.vidWidth;
 	}
 
-  GL_ModelViewMatrix.LoadIdentity();	
+	GL_ModelViewMatrix.LoadIdentity();	
 	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
-  GL_ProjectionMatrix.Push();
-  GL_ProjectionMatrix.LoadIdentity();  
+	GL_ProjectionMatrix.Push();
+	GL_ProjectionMatrix.LoadIdentity();  
 	
 	GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
   
-  fhImmediateMode im;
-  im.SetTexture(tr.testImage);
-  im.Color3f(1,1,1);
+	fhImmediateMode im;
+	im.SetTexture( tr.testImage );
+	im.Color3f( 1, 1, 1 );
 	im.Begin( GL_QUADS );
 	
 	im.TexCoord2f( 0, 1 );

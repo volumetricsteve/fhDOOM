@@ -174,7 +174,7 @@ public:
   void    AttachColorToFramebuffer(fhFramebuffer* framebuffer);
   void    AttachDepthToFramebuffer(fhFramebuffer* framebuffer);
 
-	void		UploadScratch( const byte *pic, int width, int height );
+	void		UploadScratch( int textureUnit, const byte *pic, int width, int height );
 
 	// just for resource tracking
 	void		SetClassification( int tag );

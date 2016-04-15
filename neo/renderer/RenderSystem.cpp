@@ -1009,7 +1009,7 @@ bool idRenderSystemLocal::UploadImage( const char *imageName, const byte *data, 
 	if ( !image ) {
 		return false;
 	}
-	image->UploadScratch( data, width, height );
+	image->UploadScratch( 0, data, width, height );
 	image->SetImageFilterAndRepeat();
 	return true;
 }

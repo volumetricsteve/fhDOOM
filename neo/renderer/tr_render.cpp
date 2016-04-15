@@ -401,40 +401,6 @@ void RB_LoadShaderTextureMatrix( const float *shaderRegisters, const textureStag
 	GL_TextureMatrix.Load( matrix );
 }
 
-/*
-======================
-RB_BindVariableStageImage
-
-Handles generating a cinematic frame if needed
-======================
-*/
-void RB_BindVariableStageImage( const textureStage_t *texture, const float *shaderRegisters ) {
-	if ( texture->cinematic ) {
-		cinData_t	cin;
-
-		if ( r_skipDynamicTextures.GetBool() ) {
-			globalImages->defaultImage->Bind();
-			return;
-		}
-
-		// offset time by shaderParm[7] (FIXME: make the time offset a parameter of the shader?)
-		// We make no attempt to optimize for multiple identical cinematics being in view, or
-		// for cinematics going at a lower framerate than the renderer.
-		cin = texture->cinematic->ImageForTime( (int)(1000 * ( backEnd.viewDef->floatTime + backEnd.viewDef->renderView.shaderParms[11] ) ) );
-
-		if ( cin.image ) {
-			globalImages->cinematicImage->UploadScratch( cin.image, cin.imageWidth, cin.imageHeight );
-		} else {
-			globalImages->blackImage->Bind();
-		}
-	} else {
-		//FIXME: see why image is invalid
-		if (texture->image) {
-			texture->image->Bind();
-		}
-	}
-}
-
 
 //=============================================================================================
 

@@ -1781,7 +1781,7 @@ RB_UploadScratchImage
 if rows = cols * 6, assume it is a cube map animation
 =============
 */
-void idImage::UploadScratch( const byte *data, int cols, int rows ) {
+void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int rows ) {
 	int			i;
 
 	// if rows = cols * 6, assume it is a cube map animation
@@ -1791,7 +1791,7 @@ void idImage::UploadScratch( const byte *data, int cols, int rows ) {
 			uploadWidth = -1;	// for a non-sub upload
 		}
 
-		Bind();
+		Bind(textureUnit);
 
 		rows /= 6;
 		// if the scratchImage isn't in the format we want, specify it as a new texture
@@ -1824,7 +1824,7 @@ void idImage::UploadScratch( const byte *data, int cols, int rows ) {
 			uploadWidth = -1;	// for a non-sub upload
 		}
 
-		Bind();
+		Bind(textureUnit);
 
 		// if the scratchImage isn't in the format we want, specify it as a new texture
 		if ( cols != uploadWidth || rows != uploadHeight ) {

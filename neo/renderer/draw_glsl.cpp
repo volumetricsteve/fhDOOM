@@ -863,8 +863,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
   // set textures
   for (int i = 0; i < glslStage->numShaderMaps; i++) {
     if (glslStage->shaderMap[i]) {
-      GL_SelectTexture(i);
-      glslStage->shaderMap[i]->Bind();
+      glslStage->shaderMap[i]->Bind(i);
     }
   }
 
@@ -873,8 +872,7 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
 
   for (int i = 0; i < glslStage->numShaderMaps; i++) {
     if (glslStage->shaderMap[i]) {
-      GL_SelectTexture(i);
-      globalImages->BindNull();
+      globalImages->BindNull(i);
     }
   }
 
@@ -977,16 +975,14 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     textureMatrixST[1][3] = 0;
 
     // see if there is also a bump map specified
-    GL_SelectTexture(2);
     if(const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
       RB_GetShaderTextureMatrix(surf->shaderRegisters, &bumpStage->texture, textureMatrixST);
 
       //void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
-      bumpStage->texture.image->Bind();
+      bumpStage->texture.image->Bind(2);
     } else {
-      globalImages->flatNormalMap->Bind();
+      globalImages->flatNormalMap->Bind(2);
     }
-    GL_SelectTexture(0);
 
 	fhRenderProgram::SetBumpMatrix(textureMatrixST[0], textureMatrixST[1]);
   }
@@ -1015,6 +1011,10 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
     if(depthBlendMode != DBM_OFF && depthBlendRange > 0.0f) {
       GL_UseProgram(depthblendProgram);
+
+	  //TODO(johl): texture unit 7 is also used for shadow maps.
+	  //            Not an issue currently, because particles are not affected by
+	  //            light and shadows.
       globalImages->currentDepthImage->Bind(7);
 
       fhRenderProgram::SetDepthBlendRange(depthBlendRange);
@@ -1028,12 +1028,32 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 	GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
   }
 
-  GL_SelectTexture(1);
-
   // bind the texture
-  RB_BindVariableStageImage(&pStage->texture, surf->shaderRegisters);
-  GL_SelectTexture(0);
+  if (pStage->texture.cinematic) {
+	  if (r_skipDynamicTextures.GetBool()) {
+		  globalImages->defaultImage->Bind(1);		  
+	  }
+	  else {
+		  // offset time by shaderParm[7] (FIXME: make the time offset a parameter of the shader?)
+		  // We make no attempt to optimize for multiple identical cinematics being in view, or
+		  // for cinematics going at a lower framerate than the renderer.
+		  cinData_t	cin = pStage->texture.cinematic->ImageForTime( (int)(1000 * (backEnd.viewDef->floatTime + backEnd.viewDef->renderView.shaderParms[11])) );
 
+		  if (cin.image) {
+			  globalImages->cinematicImage->UploadScratch( 1, cin.image, cin.imageWidth, cin.imageHeight );
+		  }
+		  else {
+			  globalImages->blackImage->Bind(1);
+		  }
+	  }
+  }
+  else {
+	  //FIXME: see why image is invalid
+	  if (pStage->texture.image) {
+		  pStage->texture.image->Bind(1);
+	  }
+  }
+  
   // set the state
   GL_State(pStage->drawStateBits);
 
@@ -1086,8 +1106,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
 	fhRenderProgram::SetBumpMatrix(textureMatrix[0], textureMatrix[1]);  
 
-    pStage->texture.image->Bind(1);
-    GL_SelectTexture(0);
+    pStage->texture.image->Bind(1);    
   }
 
   fhRenderProgram::SetDiffuseColor(idVec4(color));
@@ -1096,6 +1115,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   RB_DrawElementsWithCounters(surf->geo);
   
   GL_UseProgram(nullptr);
+  GL_SelectTexture(0);
 }
 
 
