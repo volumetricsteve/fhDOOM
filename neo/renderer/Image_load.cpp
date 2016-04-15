@@ -1639,7 +1639,6 @@ CopyFramebuffer
 ====================
 */
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
-#if 1
 	Bind();
 
 	glReadBuffer( GL_BACK );
@@ -1658,73 +1657,6 @@ void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bo
 
 	glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
 	backEnd.c_copyFrameBuffer++;
-#else
-	Bind();
-
-	if ( cvarSystem->GetCVarBool( "g_lowresFullscreenFX" ) ) {
-		imageWidth = 512;
-		imageHeight = 512;
-	}
-
-	// if the size isn't a power of 2, the image must be increased in size
-	int	potWidth, potHeight;
-
-	potWidth = MakePowerOfTwo( imageWidth );
-	potHeight = MakePowerOfTwo( imageHeight );
-
-	GetDownsize( imageWidth, imageHeight );
-	GetDownsize( potWidth, potHeight );
-
-	glReadBuffer( GL_BACK );
-
-	// only resize if the current dimensions can't hold it at all,
-	// otherwise subview renderings could thrash this
-	if ( ( useOversizedBuffer && ( uploadWidth < potWidth || uploadHeight < potHeight ) )
-		|| ( !useOversizedBuffer && ( uploadWidth != potWidth || uploadHeight != potHeight ) ) ) {
-		uploadWidth = potWidth;
-		uploadHeight = potHeight;
-		if ( potWidth == imageWidth && potHeight == imageHeight ) {
-			glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
-		} else {
-			byte	*junk;
-			// we need to create a dummy image with power of two dimensions,
-			// then do a glCopyTexSubImage2D of the data we want
-			// this might be a 16+ meg allocation, which could fail on _alloca
-			junk = (byte *)Mem_Alloc( potWidth * potHeight * 4 );
-			memset( junk, 0, potWidth * potHeight * 4 );		//!@#
-#if 0 // Disabling because it's unnecessary and introduces a green strip on edge of _currentRender
-			for ( int i = 0 ; i < potWidth * potHeight * 4 ; i+=4 ) {
-				junk[i+1] = 255;
-			}
-#endif
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, potWidth, potHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, junk );
-			Mem_Free( junk );
-
-			glCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, x, y, imageWidth, imageHeight );
-		}
-	} else {
-		// otherwise, just subimage upload it so that drivers can tell we are going to be changing
-		// it and don't try and do a texture compression or some other silliness
-		glCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, x, y, imageWidth, imageHeight );
-	}
-
-	// if the image isn't a full power of two, duplicate an extra row and/or column to fix bilerps
-	if ( imageWidth != potWidth ) {
-		glCopyTexSubImage2D( GL_TEXTURE_2D, 0, imageWidth, 0, x+imageWidth-1, y, 1, imageHeight );
-	}
-	if ( imageHeight != potHeight ) {
-		glCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, imageHeight, x, y+imageHeight-1, imageWidth, 1 );
-	}
-
-
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-
-	backEnd.c_copyFrameBuffer++;
-#endif
 }
 
 /*

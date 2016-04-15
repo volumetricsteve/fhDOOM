@@ -459,7 +459,6 @@ public:
 	idImage *			alphaNotchImage;			// 2x1 texture with just 1110 and 1111 with point sampling
 	idImage *			whiteImage;					// full of 0xff
 	idImage *			blackImage;					// full of 0x00
-	idImage *			normalCubeMapImage;			// cube map to normalize STR into RGB
 	idImage *			noFalloffImage;				// all 255, but zero clamped
 	idImage *			fogImage;					// increasing alpha is denser fog
 	idImage *			fogEnterImage;				// adjust fogImage alpha based on terminator plane
@@ -469,9 +468,6 @@ public:
 	idImage *			accumImage;
 	idImage *			currentRenderImage;			// for SS_POST_PROCESS shaders
 	idImage *			currentDepthImage;
-	idImage *			scratchCubeMapImage;
-	idImage *			specularTableImage;			// 1D intensity texture with our specular function
-	idImage *			specular2DTableImage;		// 2D intensity texture with our specular function with variable specularity
 	idImage *			borderClampImage;			// white inside, black outside
 
 	fhFramebuffer*		defaultFramebuffer;

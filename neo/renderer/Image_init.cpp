@@ -146,78 +146,6 @@ static void R_RampImage( idImage *image ) {
 
 /*
 ================
-R_SpecularTableImage
-
-Creates a ramp that matches our fudged specular calculation
-================
-*/
-static void R_SpecularTableImage( idImage *image ) {
-	int		x;
-	byte	data[256][4];
-
-	for (x=0 ; x<256 ; x++) {
-		float f = x/255.f;
-#if 0
-		f = pow(f, 16);
-#else
-		// this is the behavior of the hacked up fragment programs that
-		// can't really do a power function
-		f = (f-0.75)*4;
-		if ( f < 0 ) {
-			f = 0;
-		}
-		f = f * f;
-#endif
-		int		b = (int)(f * 255);
-
-		data[x][0] = 
-		data[x][1] = 
-		data[x][2] = 
-		data[x][3] = b;
-	}
-
-	image->GenerateImage( (byte *)data, 256, 1, 
-		TF_LINEAR, false, TR_CLAMP, TD_HIGH_QUALITY );
-}
-
-
-/*
-================
-R_Specular2DTableImage
-
-Create a 2D table that calculates ( reflection dot , specularity )
-================
-*/
-static void R_Specular2DTableImage( idImage *image ) {
-	int		x, y;
-	byte	data[256][256][4];
-
-	memset( data, 0, sizeof( data ) );
-		for ( x = 0 ; x < 256 ; x++ ) {
-			float f = x / 255.0f;
-		for ( y = 0; y < 256; y++ ) {
-
-			int b = (int)( pow( f, y ) * 255.0f );
-			if ( b == 0 ) {
-				// as soon as b equals zero all remaining values in this column are going to be zero
-				// we early out to avoid pow() underflows
-				break;
-			}
-
-			data[y][x][0] = 
-			data[y][x][1] = 
-			data[y][x][2] = 
-			data[y][x][3] = b;
-		}
-	}
-
-	image->GenerateImage( (byte *)data, 256, 256, TF_LINEAR, false, TR_CLAMP, TD_HIGH_QUALITY );
-}
-
-
-
-/*
-================
 R_AlphaRampImage
 
 Creates a 0-255 ramp image
@@ -237,8 +165,6 @@ static void R_AlphaRampImage( idImage *image ) {
 	image->GenerateImage( (byte *)data, 256, 1, 
 		TF_NEAREST, false, TR_CLAMP, TD_HIGH_QUALITY );
 }
-
-
 
 /*
 ==================
@@ -639,43 +565,6 @@ static void getCubeVector(int i, int cubesize, int x, int y, float *vector) {
   vector[1] *= mag;
   vector[2] *= mag;
 }
-
-/* Initialize a cube map texture object that generates RGB values
- * that when expanded to a [-1,1] range in the register combiners
- * form a normalized vector matching the per-pixel vector used to
- * access the cube map.
- */
-static void makeNormalizeVectorCubeMap( idImage *image ) {
-	float vector[3];
-	int i, x, y;
-	byte	*pixels[6];
-	int		size;
-
-	size = NORMAL_MAP_SIZE;
-
-	pixels[0] = (GLubyte*) Mem_Alloc(size*size*4*6);
-
-	for (i = 0; i < 6; i++) {
-		pixels[i] = pixels[0] + i*size*size*4;
-		for (y = 0; y < size; y++) {
-		  for (x = 0; x < size; x++) {
-			getCubeVector(i, size, x, y, vector);
-			pixels[i][4*(y*size+x) + 0] = (byte)(128 + 127*vector[0]);
-			pixels[i][4*(y*size+x) + 1] = (byte)(128 + 127*vector[1]);
-			pixels[i][4*(y*size+x) + 2] = (byte)(128 + 127*vector[2]);
-			pixels[i][4*(y*size+x) + 3] = 255;
-		  }
-		}
-	}
-
-	image->GenerateCubeImage( (const byte **)pixels, size,
-						   TF_LINEAR, false, TD_HIGH_QUALITY ); 
-
-	Mem_Free(pixels[0]);
-}
-
-
-
 
 /*
 ================
@@ -1993,9 +1882,6 @@ void idImageManager::Init() {
 
 	if(!r_glCoreProfile.GetBool()) {
 		borderClampImage = ImageFromFunction( "_borderClamp", R_BorderClampImage ); //MegaTexture
-		specularTableImage = ImageFromFunction( "_specularTable", R_SpecularTableImage );
-		specular2DTableImage = ImageFromFunction( "_specular2DTable", R_Specular2DTableImage );
-		normalCubeMapImage = ImageFromFunction("_normalCubeMap", makeNormalizeVectorCubeMap);
 	}
 
 	rampImage = ImageFromFunction("_ramp", R_RampImage);
@@ -2008,7 +1894,6 @@ void idImageManager::Init() {
 	scratchImage = ImageFromFunction("_scratch", R_RGBA8Image );
 	scratchImage2 = ImageFromFunction("_scratch2", R_RGBA8Image );
 	accumImage = ImageFromFunction("_accum", R_RGBA8Image );
-	scratchCubeMapImage = ImageFromFunction("_scratchCubeMap", makeNormalizeVectorCubeMap );
 	currentRenderImage = ImageFromFunction("_currentRender", R_RGBA8Image );
 	currentDepthImage = ImageFromFunction("_currentDepth", R_Depth );
 
