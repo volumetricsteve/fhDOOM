@@ -10,7 +10,6 @@ idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | 
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
-idCVar r_amdWorkaround("r_amdWorkaround", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "temporary: enable workaround for AMD driver issues: 0=Off, 1=Enabled for AMD, 2=Always enabled");
 
 /*
 =====================
@@ -45,12 +44,8 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
 	GL_SetupVertexAttributes(fhVertexLayout::DrawPosOnly, offset);
   }
   else if (tri->shadowCache) {
-    //shadowCache_t	*sc = (shadowCache_t *)vertexCache.Position(tri->shadowCache);
-    //glVertexPointer(3, GL_FLOAT, sizeof(shadowCache_t), sc->xyz.ToFloatPtr());
     int offset = vertexCache.Bind(tri->shadowCache);
 	GL_SetupVertexAttributes(fhVertexLayout::Shadow, offset);
-//	GL_SetVertexLayout(fhVertexLayout::Shadow);    
-//  glVertexAttribPointer(fhRenderProgram::vertex_attrib_position_shadow, 3, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
   }
 
   RB_DrawElementsWithCounters(tri);
@@ -1233,18 +1228,6 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
 		// set the vertex pointers
 		const auto offset = vertexCache.Bind(surf->geo->ambientCache);
-
-		//TODO(johl): WARNING: this is hacky workaround for AMD drivers.
-		//            Why do we have to re-configure the program between multiple interaction draws?
-		//            is this a AMD driver bug or do we do something stupid here?
-		//            Works fine on nVidia without this hack... what about Intel?
-		const int amdWorkaround = r_amdWorkaround.GetInteger();
-
-		if((glConfig.vendorisAMD && amdWorkaround == 1) || amdWorkaround == 2) {
-			GL_UseProgram( nullptr );		
-			GL_UseProgram(interactionProgram);		
-		}
-
 		GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
 
 		// this may cause RB_ARB2_DrawInteraction to be exacuted multiple
