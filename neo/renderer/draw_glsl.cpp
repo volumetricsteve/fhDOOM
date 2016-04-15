@@ -754,7 +754,7 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
   // draw the entire surface solid
   if (drawSolid) {
     fhRenderProgram::SetDiffuseColor(idVec4(color));    
-    globalImages->whiteImage->Bind();
+    globalImages->whiteImage->Bind(0);
 
     // draw it
     RB_DrawElementsWithCounters(tri);
@@ -794,15 +794,11 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 
   // enable the second texture for mirror plane clipping if needed
   if (backEnd.viewDef->numClipPlanes) {
-    GL_SelectTexture(1);
-    globalImages->alphaNotchImage->Bind();
+    globalImages->alphaNotchImage->Bind(1);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_TEXTURE_GEN_S);
     glTexCoord2f(1, 0.5);
   }
-
-  // the first texture will be used for alpha tested surfaces
-  GL_SelectTexture(0);
 
   // decal surfaces may enable polygon offset
   glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat());
@@ -822,8 +818,7 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
   GL_UseProgram(nullptr);
 
   if (backEnd.viewDef->numClipPlanes) {
-    GL_SelectTexture(1);
-    globalImages->BindNull();
+    globalImages->BindNull(1);
     glDisable(GL_TEXTURE_GEN_S);
     GL_SelectTexture(0);
   }
