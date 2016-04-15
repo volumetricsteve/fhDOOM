@@ -12,20 +12,6 @@ idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
 idCVar r_amdWorkaround("r_amdWorkaround", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "temporary: enable workaround for AMD driver issues: 0=Off, 1=Enabled for AMD, 2=Always enabled");
 
-
-/*
-====================
-attributeOffset
-
-Calculate attribute offset by a (global) offset and (local) per-attribute offset
-====================
-*/
-template<typename T>
-static const void* attributeOffset(T offset, const void* attributeOffset)
-{
-  return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
-}
-
 /*
 =====================
 RB_GLSL_BlendLight
@@ -99,8 +85,7 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
   regs = backEnd.vLight->shaderRegisters;
 
   // texture 1 will get the falloff texture
-  GL_SelectTexture(1);  
-  backEnd.vLight->falloffImage->Bind();
+  backEnd.vLight->falloffImage->Bind(1);
 
   for (i = 0; i < lightShader->GetNumStages(); i++) {
     stage = lightShader->GetStage(i);
@@ -112,8 +97,7 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
     GL_State(GLS_DEPTHMASK | stage->drawStateBits | GLS_DEPTHFUNC_EQUAL);
 
     // texture 0 will get the projected texture
-    GL_SelectTexture(0);
-    stage->texture.image->Bind();
+    stage->texture.image->Bind(0);
 
     if (stage->texture.hasMatrix) {
       RB_LoadShaderTextureMatrix(regs, &stage->texture);
@@ -253,7 +237,6 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 	const idVec4 diffuseMatrixS = local.ToVec4();
 
 	fhRenderProgram::SetDiffuseMatrix(diffuseMatrixS, diffuseMatrixT);
-    
   }
 
   RB_GLSL_RenderTriangleSurface(surf->geo);
@@ -325,8 +308,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   }  
 
   // texture 0 is the falloff image
-  GL_SelectTexture(0);
-  globalImages->fogImage->Bind();
+  globalImages->fogImage->Bind(0);
 
   fogPlanes[0][0] = a * backEnd.viewDef->worldSpace.modelViewMatrix[2];
   fogPlanes[0][1] = a * backEnd.viewDef->worldSpace.modelViewMatrix[6];
@@ -339,8 +321,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   fogPlanes[1][3] = a * backEnd.viewDef->worldSpace.modelViewMatrix[12];
 
   // texture 1 is the entering plane fade correction
-  GL_SelectTexture(1);
-  globalImages->fogEnterImage->Bind();
+  globalImages->fogEnterImage->Bind(1);
 
   // T will get a texgen for the fade plane, which is always the "top" plane on unrotated lights
   fogPlanes[2][0] = 0.001f * backEnd.vLight->fogPlane[0];
@@ -369,8 +350,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   RB_RenderDrawSurfChainWithFunction(&ds, RB_GLSL_BasicFog);
   GL_Cull(CT_FRONT_SIDED);
 
-  GL_SelectTexture(1);
-  globalImages->BindNull();
+  globalImages->BindNull(1);
 
   GL_SelectTexture(0);
   
@@ -626,14 +606,9 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
 
   // update the clip plane if needed
   if (backEnd.viewDef->numClipPlanes && surf->space != backEnd.currentSpace) {
-    GL_SelectTexture(1);
-
     idPlane	plane;
-
     R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.viewDef->clipPlanes[0], plane);
     plane[3] += 0.5;	// the notch is in the middle
-    glTexGenfv(GL_S, GL_OBJECT_PLANE, plane.ToFloatPtr());
-    GL_SelectTexture(0);
   }
 
   if (!shader->IsDrawn()) {
@@ -737,7 +712,7 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
       }
 
       // bind the texture
-      pStage->texture.image->Bind();      
+      pStage->texture.image->Bind(0);      
 
 	  fhRenderProgram::SetAlphaTestEnabled(true);
 	  fhRenderProgram::SetAlphaTestThreshold(regs[pStage->alphaTestRegister]);      
@@ -852,7 +827,6 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
     glDisable(GL_TEXTURE_GEN_S);
     GL_SelectTexture(0);
   }
-
 }
 
 
@@ -1046,8 +1020,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 
     if(depthBlendMode != DBM_OFF && depthBlendRange > 0.0f) {
       GL_UseProgram(depthblendProgram);
-      GL_SelectTexture(7);
-      globalImages->currentDepthImage->Bind();
+      globalImages->currentDepthImage->Bind(7);
 
       fhRenderProgram::SetDepthBlendRange(depthBlendRange);
       fhRenderProgram::SetDepthBlendMode(static_cast<int>(depthBlendMode));      
@@ -1116,10 +1089,9 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
       RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
 	}
 
-	fhRenderProgram::SetBumpMatrix(textureMatrix[0], textureMatrix[1]);
-  
-    GL_SelectTexture(1);
-    pStage->texture.image->Bind();
+	fhRenderProgram::SetBumpMatrix(textureMatrix[0], textureMatrix[1]);  
+
+    pStage->texture.image->Bind(1);
     GL_SelectTexture(0);
   }
 
@@ -1176,25 +1148,20 @@ void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
   }  
 
 
-  // texture 1 will be the per-surface bump map
-  GL_SelectTexture(1);
-  din->bumpImage->Bind();
+  // texture 1 will be the per-surface bump map  
+  din->bumpImage->Bind(1);
 
-  // texture 2 will be the light falloff texture
-  GL_SelectTexture(2);
-  din->lightFalloffImage->Bind();
+  // texture 2 will be the light falloff texture  
+  din->lightFalloffImage->Bind(2);
 
-  // texture 3 will be the light projection texture
-  GL_SelectTexture(3);
-  din->lightImage->Bind();
+  // texture 3 will be the light projection texture  
+  din->lightImage->Bind(3);
 
-  // texture 4 is the per-surface diffuse map
-  GL_SelectTexture(4);
-  din->diffuseImage->Bind();
+  // texture 4 is the per-surface diffuse map  
+  din->diffuseImage->Bind(4);
 
-  // texture 5 is the per-surface specular map
-  GL_SelectTexture(5);
-  din->specularImage->Bind();
+  // texture 5 is the per-surface specular map  
+  din->specularImage->Bind(5);
 
   // draw it
   RB_DrawElementsWithCounters(din->surf->geo);
@@ -1273,20 +1240,11 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
     RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
   }  
 
-  GL_SelectTexture(5);
-  globalImages->BindNull();
-
-  GL_SelectTexture(4);
-  globalImages->BindNull();
-
-  GL_SelectTexture(3);
-  globalImages->BindNull();
-
-  GL_SelectTexture(2);
-  globalImages->BindNull();
-
-  GL_SelectTexture(1);
-  globalImages->BindNull();
+  globalImages->BindNull(5);
+  globalImages->BindNull(4);
+  globalImages->BindNull(3);
+  globalImages->BindNull(2);
+  globalImages->BindNull(1);
 
   backEnd.glState.currenttmu = -1;
   GL_SelectTexture(0);

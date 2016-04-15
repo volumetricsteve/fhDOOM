@@ -2282,15 +2282,12 @@ void RB_TestGamma( void ) {
 	GL_ModelViewMatrix.LoadIdentity();
 	GL_ProjectionMatrix.Push();
 	GL_ProjectionMatrix.LoadIdentity();
-	GL_State( GLS_DEPTHFUNC_ALWAYS );	
-	glDisable( GL_TEXTURE_2D );
+	GL_State( GLS_DEPTHFUNC_ALWAYS );		
 	GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
 
 	GL_ProjectionMatrix.Pop();
-	
-	glEnable( GL_TEXTURE_2D );	
 }
 
 
@@ -2332,12 +2329,10 @@ static void RB_TestGammaBias( void ) {
 	GL_ProjectionMatrix.Push();
 	GL_ProjectionMatrix.LoadIdentity();
 	GL_State( GLS_DEPTHFUNC_ALWAYS );	
-	glDisable( GL_TEXTURE_2D );
 	GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
 	GL_ProjectionMatrix.Pop();
-	glEnable( GL_TEXTURE_2D );	
 }
 
 /*

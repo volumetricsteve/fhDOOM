@@ -907,6 +907,13 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		return;
 	}
 
+	globalImages->BindNull( 6 );
+	globalImages->BindNull( 7 );
+	globalImages->BindNull( 8 );
+	globalImages->BindNull( 9 );
+	globalImages->BindNull( 10 );
+	globalImages->BindNull( 11 );
+
 	int lod = vLight->shadowMapLod;
 	if(r_smLod.GetInteger() >= 0) {
 		lod = r_smLod.GetInteger();
@@ -974,21 +981,10 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1);
 		backEnd.currentScissor = backEnd.viewDef->scissor;
 
-	GL_SelectTexture(6);
-	globalImages->GetShadowMapImage(0, lod)->Bind();
-
-	GL_SelectTexture(7);
-	globalImages->GetShadowMapImage(1, lod)->Bind();
-
-	GL_SelectTexture(8);
-	globalImages->GetShadowMapImage(2, lod)->Bind();
-
-	GL_SelectTexture(9);
-	globalImages->GetShadowMapImage(3, lod)->Bind();
-
-	GL_SelectTexture(10);
-	globalImages->GetShadowMapImage(4, lod)->Bind();
-
-	GL_SelectTexture(11);
-	globalImages->GetShadowMapImage(5, lod)->Bind();
+	globalImages->GetShadowMapImage(0, lod)->Bind(6);
+	globalImages->GetShadowMapImage(1, lod)->Bind(7);
+	globalImages->GetShadowMapImage(2, lod)->Bind(8);
+	globalImages->GetShadowMapImage(3, lod)->Bind(9);
+	globalImages->GetShadowMapImage(4, lod)->Bind(10);
+	globalImages->GetShadowMapImage(5, lod)->Bind(11);
 }

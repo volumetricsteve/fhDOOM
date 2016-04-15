@@ -130,9 +130,7 @@ typedef enum {
 typedef enum {
 	TT_DISABLED,
 	TT_2D,
-	TT_3D,
-	TT_CUBIC,
-	TT_RECT
+	TT_CUBIC
 } textureType_t;
 
 typedef enum {
@@ -153,7 +151,7 @@ public:
 	// automatically enables or disables cube mapping or texture3D
 	// May perform file loading if the image was not preloaded.
 	// May start a background image read.
-	void		Bind();
+	void		Bind(int textureUnit = -1);
 
 	// deletes the texture object, but leaves the structure so it can be reloaded
 	void		PurgeImage();
@@ -165,9 +163,6 @@ public:
 	void		GenerateImage( const byte *pic, int width, int height, 
 					   textureFilter_t filter, bool allowDownSize, 
 					   textureRepeat_t repeat, textureDepth_t depth );
-	void		Generate3DImage( const byte *pic, int width, int height, int depth,
-						textureFilter_t filter, bool allowDownSize, 
-						textureRepeat_t repeat, textureDepth_t minDepth );
 	void		GenerateCubeImage( const byte *pic[6], int size, 
 						textureFilter_t filter, bool allowDownSize, 
 						textureDepth_t depth );
@@ -403,7 +398,7 @@ public:
 	void				ReloadAllImages();
 
 	// disable the active texture unit
-	void				BindNull();
+	void				BindNull(int textureUnit = -1);
 
 	// Mark all file based images as currently unused,
 	// but don't free anything.  Calls to ImageFromFile() will

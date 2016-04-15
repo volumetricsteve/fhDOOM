@@ -978,9 +978,6 @@ static filterName_t textureFilters[] = {
 		case TT_2D:
 			texEnum = GL_TEXTURE_2D;
 			break;
-		case TT_3D:
-			texEnum = GL_TEXTURE_3D;
-			break;
 		case TT_CUBIC:
 			texEnum = GL_TEXTURE_CUBE_MAP;
 			break;
@@ -1922,20 +1919,22 @@ int idImageManager::SumOfUsedImages() {
 BindNull
 ===============
 */
-void idImageManager::BindNull() {
-	tmu_t			*tmu;
+void idImageManager::BindNull(int textureUnit) {
+	if(textureUnit != -1) {
+		GL_SelectTexture(textureUnit);
+	}
 
-	tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
+	tmu_t* tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
 
 	RB_LogComment( "BindNull()\n" );
 	if ( tmu->textureType == TT_CUBIC ) {
-		glDisable( GL_TEXTURE_CUBE_MAP_EXT );
-	} else if ( tmu->textureType == TT_3D ) {
-		glDisable( GL_TEXTURE_3D );
-	} else if ( tmu->textureType == TT_2D ) {
-		glDisable( GL_TEXTURE_2D );
+		glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+		tmu->currentCubeMap = 0;
 	}
-	tmu->textureType = TT_DISABLED;
+	else if ( tmu->textureType == TT_2D ) {
+		glBindTexture( GL_TEXTURE_2D, 0 );
+		tmu->current2DMap = 0;
+	}
 }
 
 /*
