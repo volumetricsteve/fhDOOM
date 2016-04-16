@@ -373,19 +373,6 @@ void RB_GetShaderTextureMatrix( const float *shaderRegisters,
   matrix[1][3] = m[13];
 }
 
-/*
-======================
-RB_LoadShaderTextureMatrix
-======================
-*/
-void RB_LoadShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture ) {
-	float	matrix[16];
-
-	RB_GetShaderTextureMatrix( shaderRegisters, texture, matrix );
-	GL_TextureMatrix.Load( matrix );
-}
-
-
 //=============================================================================================
 
 

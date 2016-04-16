@@ -1071,9 +1071,6 @@ private:
 
 extern joGLMatrixStack GL_ProjectionMatrix;
 extern joGLMatrixStack GL_ModelViewMatrix;
-extern joGLMatrixStack GL_TextureMatrix;
-
-
 
 const int GLS_SRCBLEND_ZERO						= 0x00000001;
 const int GLS_SRCBLEND_ONE						= 0x0;
@@ -1312,7 +1309,6 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 					  void (*triFunc_)( const drawSurf_t *) );
 void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs, 
 										void (*triFunc_)( const drawSurf_t *) );
-void RB_LoadShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, float matrix[16] );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
 void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInteraction)(const drawInteraction_t *) );

@@ -566,7 +566,6 @@ const float* joGLMatrixStack::Data(int StackIndex) const {
 
 joGLMatrixStack GL_ProjectionMatrix(GL_PROJECTION);
 joGLMatrixStack GL_ModelViewMatrix(GL_MODELVIEW);
-joGLMatrixStack GL_TextureMatrix(GL_TEXTURE);
 
 /*
 ============================================================================

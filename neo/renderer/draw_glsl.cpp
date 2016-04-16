@@ -89,10 +89,6 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
     // texture 0 will get the projected texture
     stage->texture.image->Bind(0);
 
-    if (stage->texture.hasMatrix) {
-      RB_LoadShaderTextureMatrix(regs, &stage->texture);
-    }
-
     // get the modulate values from the light, including alpha, unlike normal lights
     backEnd.lightColor[0] = regs[stage->color.registers[0]];
     backEnd.lightColor[1] = regs[stage->color.registers[1]];
@@ -102,11 +98,6 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
 
     RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BlendLight);
     RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BlendLight);
-
-    if (stage->texture.hasMatrix) {
-      GL_SelectTexture(0);
-      GL_TextureMatrix.LoadIdentity();
-    }
   }
 }
 
