@@ -58,25 +58,6 @@ public:
 
 	fhRenderMatrix operator*(const fhRenderMatrix& rhs) const {
 		fhRenderMatrix ret;
-#if 1
-#if 0 //old
-		ret[0] = m[0]*rhs[0] + m[1]*rhs[4] + m[2]*rhs[8] + m[3]*rhs[12];
-		ret[1] = m[0]*rhs[1] + m[1]*rhs[5] + m[2]*rhs[9] + m[3]*rhs[13];
-		ret[2] = m[0]*rhs[2] + m[1]*rhs[6] + m[2]*rhs[10] + m[3]*rhs[14];
-		ret[3] = m[0]*rhs[3] + m[1]*rhs[7] + m[2]*rhs[11] + m[3]*rhs[15];
-		ret[4] = m[4] * rhs[0] + m[5] * rhs[4] + m[6] * rhs[8] + m[7] * rhs[12];
-		ret[5] = m[4] * rhs[1] + m[5] * rhs[5] + m[6] * rhs[9] + m[7] * rhs[13];
-		ret[6] = m[4] * rhs[2] + m[5] * rhs[6] + m[6] * rhs[10] + m[7] * rhs[14];
-		ret[7] = m[4] * rhs[3] + m[5] * rhs[7] + m[6] * rhs[11] + m[7] * rhs[15];
-		ret[8] = m[8] * rhs[0] + m[9] * rhs[4] + m[10] * rhs[8] + m[11] * rhs[12];
-		ret[9] = m[8] * rhs[1] + m[9] * rhs[5] + m[10] * rhs[9] + m[11] * rhs[13];
-		ret[10] = m[8] * rhs[2] + m[9] * rhs[6] + m[10] * rhs[10] + m[11] * rhs[14];
-		ret[11] = m[8] * rhs[3] + m[9] * rhs[7] + m[10] * rhs[11] + m[11] * rhs[15];
-		ret[12] = m[12] * rhs[0] + m[13] * rhs[4] + m[14] * rhs[8] + m[15] * rhs[12];
-		ret[13] = m[12] * rhs[1] + m[13] * rhs[5] + m[14] * rhs[9] + m[15] * rhs[13];
-		ret[14] = m[12] * rhs[2] + m[13] * rhs[6] + m[14] * rhs[10] + m[15] * rhs[14];
-		ret[15] = m[12] * rhs[3] + m[13] * rhs[7] + m[14] * rhs[11] + m[15] * rhs[15];
-#else
 
 		const float* l = ToFloatPtr();
 		const float* r = rhs.ToFloatPtr();
@@ -100,11 +81,6 @@ public:
 		ret[14] = l[2] * r[12] + l[6] * r[13] + l[10] * r[14] + l[14] * r[15];
 		ret[15] = l[3] * r[12] + l[7] * r[13] + l[11] * r[14] + l[15] * r[15];
 
-//		myGlMultMatrix(rhs.ToFloatPtr(), ToFloatPtr(), ret.ToFloatPtr());
-#endif
-#else
-		myGlMultMatrix(ToFloatPtr(), rhs.ToFloatPtr(), ret.ToFloatPtr());
-#endif
 		return ret;
 	}
 
@@ -236,55 +212,6 @@ public:
 
 		static const fhRenderMatrix m( flipMatrix );
 		return m;
-	}
-
-	static void test()
-	{
-		fhRenderMatrix a,b;
-
-		a[0] = 1;
-		a[1] = 2;
-		a[2] = 3;
-		a[3] = 4;
-		a[4] = 1;
-		a[5] = 2;
-		a[6] = 3;
-		a[7] = 4;
-		a[8] = 1;
-		a[9] = 2;
-		a[10] = 3;
-		a[11] = 4;
-		a[12] = 1;
-		a[13] = 2;
-		a[14] = 3;
-		a[15] = 4;
-
-		b[0] = 5;
-		b[1] = 6;
-		b[2] = 7;
-		b[3] = 8;
-		b[4] = 5;
-		b[5] = 6;
-		b[6] = 7;
-		b[7] = 8;
-		b[8] = 5;
-		b[9] = 6;
-		b[10] = 7;
-		b[11] = 8;
-		b[12] = 5;
-		b[13] = 6;
-		b[14] = 7;
-		b[15] = 8;
-
-		auto c = a*b;
-
-		float d[16];
-		myGlMultMatrix(a.ToFloatPtr(), b.ToFloatPtr(), d);
-
-		float e[16];
-		myGlMultMatrix( b.ToFloatPtr(), a.ToFloatPtr(), e );
-
-
 	}	
 
 	static const fhRenderMatrix identity;
@@ -293,33 +220,6 @@ private:
 };
 
 const fhRenderMatrix fhRenderMatrix::identity;
-
-
-static fhRenderMatrix mul(const fhRenderMatrix& a, const fhRenderMatrix& b) {
-	const fhRenderMatrix& m = a;
-	const fhRenderMatrix& rhs = b;
-
-	fhRenderMatrix ret;
-	ret[0] = m[0] * rhs[0] + m[1] * rhs[4] + m[2] * rhs[8] + m[3] * rhs[12];
-	ret[1] = m[0] * rhs[1] + m[1] * rhs[5] + m[2] * rhs[9] + m[3] * rhs[13];
-	ret[2] = m[0] * rhs[2] + m[1] * rhs[6] + m[2] * rhs[10] + m[3] * rhs[14];
-	ret[3] = m[0] * rhs[3] + m[1] * rhs[7] + m[2] * rhs[11] + m[3] * rhs[15];
-	ret[4] = m[4] * rhs[0] + m[5] * rhs[4] + m[6] * rhs[8] + m[7] * rhs[12];
-	ret[5] = m[4] * rhs[1] + m[5] * rhs[5] + m[6] * rhs[9] + m[7] * rhs[13];
-	ret[6] = m[4] * rhs[2] + m[5] * rhs[6] + m[6] * rhs[10] + m[7] * rhs[14];
-	ret[7] = m[4] * rhs[3] + m[5] * rhs[7] + m[6] * rhs[11] + m[7] * rhs[15];
-	ret[8] = m[8] * rhs[0] + m[9] * rhs[4] + m[10] * rhs[8] + m[11] * rhs[12];
-	ret[9] = m[8] * rhs[1] + m[9] * rhs[5] + m[10] * rhs[9] + m[11] * rhs[13];
-	ret[10] = m[8] * rhs[2] + m[9] * rhs[6] + m[10] * rhs[10] + m[11] * rhs[14];
-	ret[11] = m[8] * rhs[3] + m[9] * rhs[7] + m[10] * rhs[11] + m[11] * rhs[15];
-	ret[12] = m[12] * rhs[0] + m[13] * rhs[4] + m[14] * rhs[8] + m[15] * rhs[12];
-	ret[13] = m[12] * rhs[1] + m[13] * rhs[5] + m[14] * rhs[9] + m[15] * rhs[13];
-	ret[14] = m[12] * rhs[2] + m[13] * rhs[6] + m[14] * rhs[10] + m[15] * rhs[14];
-	ret[15] = m[12] * rhs[3] + m[13] * rhs[7] + m[14] * rhs[11] + m[15] * rhs[15];
-	return ret;
-}
-
-
 
 static float	s_flipMatrix[16] = {
 	// convert from our coordinate system (looking down X)
@@ -757,7 +657,6 @@ static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int lod ) {
 
 
 static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
-	fhRenderMatrix::test();
 
 	//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
 	idVec3 origin = vLight->lightDef->parms.origin;
@@ -786,10 +685,7 @@ static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
 	glClearDepth( 1.0 );
 	glClear( GL_DEPTH_BUFFER_BIT );
 
-	backEnd.currentSpace = NULL;
-
-	//myGlMultMatrix(viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), &backEnd.shadowViewProjection[0][0]);	
-
+	backEnd.currentSpace = NULL;	
 	auto viewProjection = projectionMatrix * viewMatrix;
 
 	memcpy(&backEnd.shadowViewProjection[0][0], viewProjection.ToFloatPtr(), sizeof(float)*16);
@@ -940,7 +836,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		break;
 	}
 
-
 	static const int firstShadowMapTextureUnit = 6;
 
 	if(vLight->lightDef->parms.pointLight) {
@@ -961,8 +856,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		RB_RenderProjectedShadowBuffer( vLight, lod );		
 		globalImages->GetShadowMapImage( 0, lod )->Bind( firstShadowMapTextureUnit );
 	}
-
-	GL_SelectTexture( 0 );
 
 	glPolygonOffset( 0, 0 );
 	glDisable( GL_POLYGON_OFFSET_FILL );
