@@ -18,17 +18,15 @@ RB_GLSL_BlendLight
 =====================
 */
 static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
-  const srfTriangles_t *tri;
+	const srfTriangles_t*  tri = surf->geo;
 
-  tri = surf->geo;
+  //TODO8johl): this needs to be executed just once after each backEnd.viewDef->space change... how?
+  {
+	idPlane	lightProject[4];
 
-  if (backEnd.currentSpace != surf->space) {
-    idPlane	lightProject[4];
-    int		i;
-
-    for (i = 0; i < 4; i++) {
-      R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i]);
-    }
+	for (int i = 0; i < 4; i++) {
+		R_GlobalPlaneToLocal(surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i]);
+	}
 
 	fhRenderProgram::SetBumpMatrix(lightProject[0].ToVec4(), lightProject[1].ToVec4());
 	fhRenderProgram::SetSpecularMatrix(lightProject[2].ToVec4(), idVec4());
