@@ -112,6 +112,18 @@ public:
 	static void SetGlobalLightOrigin(const idVec4& v);
 
 private:
+	static bool dirty[fhUniform::NUM];
+	static idVec4 currentColorModulate;
+	static idVec4 currentColorAdd;
+	static idVec4 currentDiffuseColor;
+	static idVec4 currentSpecularColor;
+	static idVec4 currentDiffuseMatrix[2];
+	static idVec4 currentSpecularMatrix[2];
+	static idVec4 currentBumpMatrix[2];
+	static bool   currentAlphaTestEnabled;
+	static float  currentAlphaTestThreshold;
+	static float  currentPomMaxHeight;
+
 	static const GLint* currentUniformLocations;
 	void Load();
 
@@ -171,18 +183,36 @@ ID_INLINE void fhRenderProgram::SetLightFallOff( const idVec4& v ) {
 }
 
 ID_INLINE void fhRenderProgram::SetBumpMatrix( const idVec4& s, const idVec4& t ) {
-	glUniform4fv( currentUniformLocations[fhUniform::BumpMatrixS], 1, s.ToFloatPtr() );
-	glUniform4fv( currentUniformLocations[fhUniform::BumpMatrixT], 1, t.ToFloatPtr() );
+	if (dirty[fhUniform::BumpMatrixS] || !currentBumpMatrix[0].Compare( s, 0.001 ) || !currentBumpMatrix[1].Compare( t, 0.001 )) {
+		glUniform4fv( currentUniformLocations[fhUniform::BumpMatrixS], 1, s.ToFloatPtr() );
+		glUniform4fv( currentUniformLocations[fhUniform::BumpMatrixT], 1, t.ToFloatPtr() );
+
+		currentBumpMatrix[0] = s;
+		currentBumpMatrix[1] = t;
+		dirty[fhUniform::BumpMatrixS] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetDiffuseMatrix( const idVec4& s, const idVec4& t ) {
-	glUniform4fv( currentUniformLocations[fhUniform::DiffuseMatrixS], 1, s.ToFloatPtr() );
-	glUniform4fv( currentUniformLocations[fhUniform::DiffuseMatrixT], 1, t.ToFloatPtr() );
+	if (dirty[fhUniform::DiffuseMatrixS] || !currentDiffuseMatrix[0].Compare( s, 0.001 ) || !currentDiffuseMatrix[1].Compare( t, 0.001 )) {
+		glUniform4fv( currentUniformLocations[fhUniform::DiffuseMatrixS], 1, s.ToFloatPtr() );
+		glUniform4fv( currentUniformLocations[fhUniform::DiffuseMatrixT], 1, t.ToFloatPtr() );
+
+		currentDiffuseMatrix[0] = s;
+		currentDiffuseMatrix[1] = t;
+		dirty[fhUniform::DiffuseMatrixS] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetSpecularMatrix( const idVec4& s, const idVec4& t ) {
-	glUniform4fv( currentUniformLocations[fhUniform::SpecularMatrixS], 1, s.ToFloatPtr() );
-	glUniform4fv( currentUniformLocations[fhUniform::SpecularMatrixT], 1, t.ToFloatPtr() );
+	if (dirty[fhUniform::SpecularMatrixS] || !currentSpecularMatrix[0].Compare( s, 0.001 ) || !currentSpecularMatrix[1].Compare( t, 0.001 )) {
+		glUniform4fv( currentUniformLocations[fhUniform::SpecularMatrixS], 1, s.ToFloatPtr() );
+		glUniform4fv( currentUniformLocations[fhUniform::SpecularMatrixT], 1, t.ToFloatPtr() );
+
+		currentSpecularMatrix[0] = s;
+		currentSpecularMatrix[1] = t;
+		dirty[fhUniform::SpecularMatrixS] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetTextureMatrix( const float* m ) {
@@ -190,19 +220,35 @@ ID_INLINE void fhRenderProgram::SetTextureMatrix( const float* m ) {
 }
 
 ID_INLINE void fhRenderProgram::SetColorModulate( const idVec4& c ) {
-	glUniform4fv( currentUniformLocations[fhUniform::ColorModulate], 1, c.ToFloatPtr() );
+	if(dirty[fhUniform::ColorModulate] || !currentColorModulate.Compare(c, 0.001)) {
+		glUniform4fv( currentUniformLocations[fhUniform::ColorModulate], 1, c.ToFloatPtr() );
+		currentColorModulate = c;
+		dirty[fhUniform::ColorModulate] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetColorAdd( const idVec4& c ) {
-	glUniform4fv( currentUniformLocations[fhUniform::ColorAdd], 1, c.ToFloatPtr() );
+	if (dirty[fhUniform::ColorAdd] || !currentColorAdd.Compare( c, 0.001 )) {
+		glUniform4fv( currentUniformLocations[fhUniform::ColorAdd], 1, c.ToFloatPtr() );		
+		currentColorAdd = c;
+		dirty[fhUniform::ColorAdd] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetDiffuseColor( const idVec4& c ) {
-	glUniform4fv( currentUniformLocations[fhUniform::DiffuseColor], 1, c.ToFloatPtr() );
+	if (dirty[fhUniform::DiffuseColor] || !currentDiffuseColor.Compare( c, 0.001 )) {
+		glUniform4fv( currentUniformLocations[fhUniform::DiffuseColor], 1, c.ToFloatPtr() );
+		currentDiffuseColor = c;
+		dirty[fhUniform::DiffuseColor] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetSpecularColor( const idVec4& c ) {
-	glUniform4fv( currentUniformLocations[fhUniform::SpecularColor], 1, c.ToFloatPtr() );
+	if (dirty[fhUniform::SpecularColor] || !currentSpecularColor.Compare( c, 0.001 )) {
+		glUniform4fv( currentUniformLocations[fhUniform::SpecularColor], 1, c.ToFloatPtr() );
+		currentSpecularColor = c;
+		dirty[fhUniform::SpecularColor] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetShaderParm( int index, const idVec4& v ) {
@@ -211,11 +257,19 @@ ID_INLINE void fhRenderProgram::SetShaderParm( int index, const idVec4& v ) {
 }
 
 ID_INLINE void fhRenderProgram::SetAlphaTestEnabled( bool enabled ) {
-	glUniform1i(currentUniformLocations[fhUniform::AlphaTestEnabled], static_cast<int>(enabled));
+	if (dirty[fhUniform::AlphaTestEnabled] || currentAlphaTestEnabled != enabled) {
+		glUniform1i(currentUniformLocations[fhUniform::AlphaTestEnabled], static_cast<int>(enabled));
+		currentAlphaTestEnabled = enabled;
+		dirty[fhUniform::AlphaTestEnabled] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetAlphaTestThreshold( float threshold ) {
-	glUniform1f(currentUniformLocations[fhUniform::AlphaTestThreshold], threshold);
+	if (dirty[fhUniform::AlphaTestThreshold] || std::abs(currentAlphaTestThreshold - threshold) > 0.001) {
+		glUniform1f(currentUniformLocations[fhUniform::AlphaTestThreshold], threshold);
+		currentAlphaTestThreshold = threshold;
+		dirty[fhUniform::AlphaTestThreshold] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetCurrentRenderSize( const idVec2& uploadSize, const idVec2& viewportSize ) {
@@ -235,7 +289,11 @@ ID_INLINE void fhRenderProgram::SetDepthBlendRange( float range ) {
 }
 
 ID_INLINE void fhRenderProgram::SetPomMaxHeight( float h ) {
-	glUniform1f(currentUniformLocations[fhUniform::PomMaxHeight], h);
+	if (dirty[fhUniform::PomMaxHeight] || std::abs( currentPomMaxHeight - h ) > 0.001) {
+		glUniform1f( currentUniformLocations[fhUniform::PomMaxHeight], h );
+		currentPomMaxHeight = h;
+		dirty[fhUniform::PomMaxHeight] = false;
+	}
 }
 
 ID_INLINE void fhRenderProgram::SetShading( int shading ) {

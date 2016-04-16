@@ -7,6 +7,17 @@ static GLuint currentProgram = 0;
 static GLint defaultUniformLocations[fhUniform::NUM];
 
 const GLint* fhRenderProgram::currentUniformLocations = &defaultUniformLocations[0];
+bool fhRenderProgram::dirty[fhUniform::NUM];
+idVec4 fhRenderProgram::currentColorModulate;
+idVec4 fhRenderProgram::currentColorAdd;
+idVec4 fhRenderProgram::currentDiffuseColor;
+idVec4 fhRenderProgram::currentSpecularColor;
+idVec4 fhRenderProgram::currentDiffuseMatrix[2];
+idVec4 fhRenderProgram::currentSpecularMatrix[2];
+idVec4 fhRenderProgram::currentBumpMatrix[2];
+bool   fhRenderProgram::currentAlphaTestEnabled;
+float  fhRenderProgram::currentAlphaTestThreshold;
+float  fhRenderProgram::currentPomMaxHeight;
 
 #define MAX_GLPROGS 128
 static fhRenderProgram glslPrograms[MAX_GLPROGS];// = { 0 };
@@ -441,6 +452,10 @@ void fhRenderProgram::Bind(bool force) const {
 		glUseProgram( ident );
 		currentProgram = ident;
 		currentUniformLocations = &this->uniformLocations[0];
+
+		for (int i = 0; i < fhUniform::NUM; ++i) {		
+			dirty[i] = true;
+		}
 	}
 }
 
@@ -479,6 +494,7 @@ void fhRenderProgram::PurgeAll() {
 void fhRenderProgram::Init() {
 	for(int i=0; i<fhUniform::NUM; ++i) {
 		defaultUniformLocations[i] = -1;
+		dirty[i] = true;
 	}
 	currentUniformLocations = defaultUniformLocations;
 

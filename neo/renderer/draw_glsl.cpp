@@ -22,9 +22,6 @@ static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
 
   tri = surf->geo;
 
-  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-
   if (backEnd.currentSpace != surf->space) {
     idPlane	lightProject[4];
     int		i;
@@ -204,37 +201,33 @@ RB_T_BasicFog
 =====================
 */
 static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
-  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
-  if (backEnd.currentSpace != surf->space) {
-    idPlane	local;
+	//TODO(johl): this must be executed only once each time backEnd.viewDef->space
+	// changed... how can we achieve that? w/o screwing up too much...
+	{
+		idPlane	local;
 
-    GL_SelectTexture(0);
+		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
+		local[3] += 0.5;
+		const idVec4 bumpMatrixS = local.ToVec4();    
 
-    R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
-    local[3] += 0.5;
-	const idVec4 bumpMatrixS = local.ToVec4();    
+		local[0] = local[1] = local[2] = 0; local[3] = 0.5;
 
-    local[0] = local[1] = local[2] = 0; local[3] = 0.5;
+		const idVec4 bumpMatrixT = local.ToVec4();
+		fhRenderProgram::SetBumpMatrix(bumpMatrixS, bumpMatrixT);
 
-	const idVec4 bumpMatrixT = local.ToVec4();
-    fhRenderProgram::SetBumpMatrix(bumpMatrixS, bumpMatrixT);
-
-    GL_SelectTexture(1);
-
-    // GL_S is constant per viewer
-    R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
-    local[3] += FOG_ENTER;
-	const idVec4 diffuseMatrixT = local.ToVec4();   
+		// GL_S is constant per viewer
+		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
+		local[3] += FOG_ENTER;
+		const idVec4 diffuseMatrixT = local.ToVec4();   
 	
-    R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
-	const idVec4 diffuseMatrixS = local.ToVec4();
+		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
+		const idVec4 diffuseMatrixS = local.ToVec4();
 
-	fhRenderProgram::SetDiffuseMatrix(diffuseMatrixS, diffuseMatrixT);
-  }
+		fhRenderProgram::SetDiffuseMatrix(diffuseMatrixS, diffuseMatrixT);
+	}
 
-  RB_GLSL_RenderTriangleSurface(surf->geo);
+	RB_GLSL_RenderTriangleSurface(surf->geo);
 }
 
 /*
@@ -666,8 +659,8 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
   const auto offset = vertexCache.Bind(tri->ambientCache);
   GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
 
-  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+  //fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+  //fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 
   bool drawSolid = false;
 
@@ -807,6 +800,8 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
   glStencilFunc(GL_ALWAYS, 1, 255);
 
   GL_UseProgram(depthProgram);  
+
+  fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
 
   RB_RenderDrawSurfListWithFunction(drawSurfs, numDrawSurfs, RB_GLSL_FillDepthBuffer);
   
@@ -1119,62 +1114,75 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 RB_GLSL_DrawInteraction
 ==================
 */
-void	RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
+void RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
 
-	fhRenderProgram::SetModelMatrix(din->surf->space->modelMatrix);
-	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-	fhRenderProgram::SetLocalLightOrigin(din->localLightOrigin);
-	fhRenderProgram::SetLocalViewOrigin(din->localViewOrigin);  
+	// change the matrix and light projection vectors if needed
+	if (din->surf->space != backEnd.currentSpace) {		
+		fhRenderProgram::SetModelViewMatrix( din->surf->space->modelViewMatrix );
+		fhRenderProgram::SetModelMatrix(din->surf->space->modelMatrix);				
+
+		if (din->surf->space->modelDepthHack != 0.0f) {
+			RB_EnterModelDepthHack( din->surf->space->modelDepthHack );
+		}
+		else 	if (din->surf->space->weaponDepthHack) {
+			RB_EnterWeaponDepthHack();
+		}
+		else if (!backEnd.currentSpace || backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack) {
+			RB_LeaveDepthHack();
+		}
+
+		backEnd.currentSpace = din->surf->space;
+	}
+
+	fhRenderProgram::SetLocalViewOrigin( din->localViewOrigin );
+	fhRenderProgram::SetLocalLightOrigin( din->localLightOrigin );
 	fhRenderProgram::SetLightProjectionMatrix( din->lightProjection[0], din->lightProjection[1], din->lightProjection[2] );
-	fhRenderProgram::SetLightFallOff(din->lightProjection[3]);
+	fhRenderProgram::SetLightFallOff( din->lightProjection[3] );	
 	fhRenderProgram::SetBumpMatrix(din->bumpMatrix[0], din->bumpMatrix[1]);
 	fhRenderProgram::SetDiffuseMatrix(din->diffuseMatrix[0], din->diffuseMatrix[1]);
 	fhRenderProgram::SetSpecularMatrix(din->specularMatrix[0], din->specularMatrix[1]);
 
+	switch (din->vertexColor) {
+	case SVC_IGNORE:
+		fhRenderProgram::SetColorModulate( idVec4::zero );
+		fhRenderProgram::SetColorAdd( idVec4::one );
+		break;
+	case SVC_MODULATE:
+		fhRenderProgram::SetColorModulate( idVec4::one );
+		fhRenderProgram::SetColorAdd( idVec4::zero );
+		break;
+	case SVC_INVERSE_MODULATE:
+		fhRenderProgram::SetColorModulate( idVec4::negOne );
+		fhRenderProgram::SetColorAdd( idVec4::one );
+		break;
+	}
 
-  switch (din->vertexColor) {
-  case SVC_IGNORE:
-	  fhRenderProgram::SetColorModulate( idVec4::zero );
-	  fhRenderProgram::SetColorAdd( idVec4::one );
-	  break;
-  case SVC_MODULATE:
-	  fhRenderProgram::SetColorModulate( idVec4::one );
-	  fhRenderProgram::SetColorAdd( idVec4::zero );
-	  break;
-  case SVC_INVERSE_MODULATE:
-	  fhRenderProgram::SetColorModulate( idVec4::negOne );
-	  fhRenderProgram::SetColorAdd( idVec4::one );
-	  break;
-  }
+	fhRenderProgram::SetDiffuseColor(din->diffuseColor);
+	fhRenderProgram::SetSpecularColor(din->specularColor * r_specularScale.GetFloat());
 
-  fhRenderProgram::SetDiffuseColor(din->diffuseColor);
-  fhRenderProgram::SetSpecularColor(din->specularColor * r_specularScale.GetFloat());
+	if( r_pomEnabled.GetBool() && din->specularImage->hasAlpha ) {
+		fhRenderProgram::SetPomMaxHeight(r_pomMaxHeight.GetFloat());
+	} else {
+		fhRenderProgram::SetPomMaxHeight(-1);	  
+	}
 
-  if( r_pomEnabled.GetBool() && din->specularImage->hasAlpha ) {
-	  fhRenderProgram::SetPomMaxHeight(r_pomMaxHeight.GetFloat());
-  } else {
-	  fhRenderProgram::SetPomMaxHeight(-1);	  
-  }  
+	// texture 1 will be the per-surface bump map  
+	din->bumpImage->Bind(1);
 
+	// texture 2 will be the light falloff texture  
+	din->lightFalloffImage->Bind(2);
 
-  // texture 1 will be the per-surface bump map  
-  din->bumpImage->Bind(1);
+	// texture 3 will be the light projection texture  
+	din->lightImage->Bind(3);
 
-  // texture 2 will be the light falloff texture  
-  din->lightFalloffImage->Bind(2);
+	// texture 4 is the per-surface diffuse map  
+	din->diffuseImage->Bind(4);
 
-  // texture 3 will be the light projection texture  
-  din->lightImage->Bind(3);
+	// texture 5 is the per-surface specular map  
+	din->specularImage->Bind(5);
 
-  // texture 4 is the per-surface diffuse map  
-  din->diffuseImage->Bind(4);
-
-  // texture 5 is the per-surface specular map  
-  din->specularImage->Bind(5);
-
-  // draw it
-  RB_DrawElementsWithCounters(din->surf->geo);
+	// draw it
+	RB_DrawElementsWithCounters(din->surf->geo);
 }
 
 /*
@@ -1197,7 +1205,6 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
 	fhRenderProgram::SetShading( r_shading.GetInteger() );
 	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
-	fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
 
 	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
@@ -1223,6 +1230,7 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 		fhRenderProgram::SetShadowMappingMode( 0 );
 	}
 
+	backEnd.currentSpace = nullptr;
 	for (; surf; surf = surf->nextOnLight) {
 		// perform setup here that will not change over multiple interaction passes
 
@@ -1254,33 +1262,28 @@ RB_GLSL_DrawInteractions
 ==================
 */
 void RB_GLSL_DrawInteractions(void) {
-  viewLight_t		*vLight;
-  const idMaterial	*lightShader;
-
   //
   // for each light, perform adding and shadowing
   //
-  for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+  for (viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
     backEnd.vLight = vLight;
 
     // do fogging later
     if (vLight->lightShader->IsFogLight()) {
-      continue;
-    }
-    if (vLight->lightShader->IsBlendLight()) {
-      continue;
+		continue;
     }
 
-    if (!vLight->localInteractions && !vLight->globalInteractions
-      && !vLight->translucentInteractions) {
-      continue;
+    if (vLight->lightShader->IsBlendLight()) {
+		continue;
+    }
+
+    if (!vLight->localInteractions && !vLight->globalInteractions && !vLight->translucentInteractions) {
+		continue;
     }	
 
-	if(vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap)
+	if(vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 		RB_RenderShadowMaps(vLight);
-
-	
-    lightShader = vLight->lightShader;
+	}
 
     // clear the stencil buffer if needed
     if (vLight->globalShadows || vLight->localShadows) {
