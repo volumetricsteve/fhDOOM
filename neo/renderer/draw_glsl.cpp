@@ -1226,16 +1226,6 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 		RB_LeaveDepthHack();		
 	}
 	backEnd.currentSpace = nullptr;	
-
-	globalImages->BindNull(5);
-	globalImages->BindNull(4);
-	globalImages->BindNull(3);
-	globalImages->BindNull(2);
-	globalImages->BindNull(1);
-
-	GL_SelectTexture(0);
-
-	GL_UseProgram(nullptr);
 }
 
 
