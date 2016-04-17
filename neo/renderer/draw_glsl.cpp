@@ -1243,6 +1243,12 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 		RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
 	}  
 
+	//just make sure no depth hack is active anymore.
+	if (backEnd.currentSpace && (backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack)) {
+		RB_LeaveDepthHack();		
+	}
+	backEnd.currentSpace = nullptr;	
+
 	globalImages->BindNull(5);
 	globalImages->BindNull(4);
 	globalImages->BindNull(3);
