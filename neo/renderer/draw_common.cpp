@@ -91,14 +91,9 @@ This is also called for the generated 2D rendering
 ==================
 */
 void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
-	int			stage;
-	const idMaterial	*shader;
-	const shaderStage_t *pStage;
-	const float	*regs;
-	const srfTriangles_t	*tri;
 
-	tri = surf->geo;
-	shader = surf->material;
+	const srfTriangles_t* tri = surf->geo;
+	const idMaterial* shader = surf->material;
 
 	if ( !shader->HasAmbient() ) {
 		return;
@@ -106,12 +101,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 
 	if ( shader->IsPortalSky() ) {
 		return;
-	}
-
-	// change the matrix if needed
-	if ( surf->space != backEnd.currentSpace ) {
-		GL_ModelViewMatrix.Load( surf->space->modelViewMatrix );
-		backEnd.currentSpace = surf->space;
 	}
 
 	// change the scissor if needed
@@ -134,7 +123,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 	}
 
 	// get the expressions for conditionals / color / texcoords
-	regs = surf->shaderRegisters;
+	const float	*regs = surf->shaderRegisters;
 
 	// set face culling appropriately
 	GL_Cull( shader->GetCullType() );
@@ -144,17 +133,9 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 		glEnable( GL_POLYGON_OFFSET_FILL );
 		glPolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * shader->GetPolygonOffset() );
 	}
-	
-	if ( surf->space->weaponDepthHack ) {
-		RB_EnterWeaponDepthHack();
-	}
 
-	if ( surf->space->modelDepthHack != 0.0f ) {
-		RB_EnterModelDepthHack( surf->space->modelDepthHack );
-	}
-
-	for ( stage = 0; stage < shader->GetNumStages() ; stage++ ) {		
-		pStage = shader->GetStage(stage);
+	for ( int stage = 0; stage < shader->GetNumStages() ; stage++ ) {		
+		const shaderStage_t *pStage = shader->GetStage(stage);
 
 		// check the enable condition
 		if ( regs[ pStage->conditionRegister ] == 0 ) {
@@ -184,7 +165,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			if (!pStage->glslStage || !pStage->glslStage->program)
 				continue;
 
-			RB_GLSL_RenderSpecialShaderStage( regs, pStage, pStage->glslStage, tri );
+			RB_GLSL_RenderSpecialShaderStage( regs, pStage, pStage->glslStage, surf );
 		}
 		else if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
 
@@ -194,7 +175,7 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 			if (!glslStage->program)
 				continue;
 
-			RB_GLSL_RenderSpecialShaderStage( regs, pStage, glslStage, tri );
+			RB_GLSL_RenderSpecialShaderStage( regs, pStage, glslStage, surf );
 		}
 		else {
 			RB_GLSL_RenderShaderStage( surf, pStage );
@@ -204,9 +185,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 	// reset polygon offset
 	if ( shader->TestMaterialFlag(MF_POLYGONOFFSET) ) {
 		glDisable( GL_POLYGON_OFFSET_FILL );
-	}
-	if ( surf->space->weaponDepthHack || surf->space->modelDepthHack != 0.0f ) {
-		RB_LeaveDepthHack();
 	}
 }
 

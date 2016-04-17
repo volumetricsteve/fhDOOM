@@ -326,12 +326,6 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   GL_Cull(CT_BACK_SIDED);
   RB_RenderDrawSurfChainWithFunction(&ds, RB_GLSL_BasicFog);
   GL_Cull(CT_FRONT_SIDED);
-
-  globalImages->BindNull(1);
-
-  GL_SelectTexture(0);
-  
-  GL_UseProgram(nullptr);
 }
 
 
@@ -510,13 +504,9 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
     return;
   }
 
-  //glDisable(GL_VERTEX_PROGRAM_ARB);
-  //glDisable(GL_FRAGMENT_PROGRAM_ARB);
   GL_UseProgram(shadowProgram);
 
   RB_LogComment("---------- RB_StencilShadowPass ----------\n");
-
-  globalImages->BindNull();
 
   // for visualizing the shadows
   if (r_showShadows.GetInteger()) {
@@ -559,8 +549,6 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
 
   glStencilFunc(GL_GEQUAL, 128, 255);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-  GL_UseProgram(nullptr);
 }
 
 
@@ -772,9 +760,6 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
   // enable the second texture for mirror plane clipping if needed
   if (backEnd.viewDef->numClipPlanes) {
     globalImages->alphaNotchImage->Bind(1);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnable(GL_TEXTURE_GEN_S);
-    glTexCoord2f(1, 0.5);
   }
 
   // decal surfaces may enable polygon offset
@@ -794,13 +779,7 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 
   RB_RenderDrawSurfListWithFunction(drawSurfs, numDrawSurfs, RB_GLSL_FillDepthBuffer);
   
-  GL_UseProgram(nullptr);
 
-  if (backEnd.viewDef->numClipPlanes) {
-    globalImages->BindNull(1);
-    glDisable(GL_TEXTURE_GEN_S);
-    GL_SelectTexture(0);
-  }
 }
 
 
@@ -810,53 +789,53 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 RB_GLSL_RenderSpecialShaderStage
 =====================
 */
-void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const srfTriangles_t	*tri) {  
+void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const drawSurf_t *surf) {  
+	assert(surf);
+	const srfTriangles_t* tri = surf->geo;
+	GL_State(pStage->drawStateBits);
+	GL_UseProgram(glslStage->program);
 
-  GL_State(pStage->drawStateBits);
-  GL_UseProgram(glslStage->program);
+	const auto offset = vertexCache.Bind(tri->ambientCache);  
+	GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
 
-  const auto offset = vertexCache.Bind(tri->ambientCache);  
-  GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
+	fhRenderProgram::SetModelViewMatrix(surf->space->modelViewMatrix);	
 
-  for (int i = 0; i < glslStage->numShaderParms; i++) {
-    idVec4 parm;
-    parm[0] = regs[glslStage->shaderParms[i][0]];
-    parm[1] = regs[glslStage->shaderParms[i][1]];
-    parm[2] = regs[glslStage->shaderParms[i][2]];
-    parm[3] = regs[glslStage->shaderParms[i][3]];
-	fhRenderProgram::SetShaderParm(i, parm);    
-  }
+	if (surf->space->modelDepthHack != 0.0f) {
+		RB_EnterModelDepthHack( surf->space->modelDepthHack );
+	}
+	else if (surf->space->weaponDepthHack) {
+		RB_EnterWeaponDepthHack();
+	}
+	else {
+		fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
+	}
 
-//  glUniformMatrix4fv(glslProgramDef_t::uniform_modelMatrix, 1, false, surf->space->modelMatrix);
-  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+	for (int i = 0; i < glslStage->numShaderParms; i++) {
+		idVec4 parm;
+		parm[0] = regs[glslStage->shaderParms[i][0]];
+		parm[1] = regs[glslStage->shaderParms[i][1]];
+		parm[2] = regs[glslStage->shaderParms[i][2]];
+		parm[3] = regs[glslStage->shaderParms[i][3]];
+		fhRenderProgram::SetShaderParm(i, parm);    
+	}
 
-  // current render
-  const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-  const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+	// current render
+	const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+	const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
 
-  fhRenderProgram::SetCurrentRenderSize(
-	  idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
-	  idVec2(w, h));
+	fhRenderProgram::SetCurrentRenderSize(
+		idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
+		idVec2(w, h));
 
-  // set textures
-  for (int i = 0; i < glslStage->numShaderMaps; i++) {
-    if (glslStage->shaderMap[i]) {
-      glslStage->shaderMap[i]->Bind(i);
-    }
-  }
+	// set textures
+	for (int i = 0; i < glslStage->numShaderMaps; i++) {
+		if (glslStage->shaderMap[i]) {
+			glslStage->shaderMap[i]->Bind(i);
+		}
+	}
 
-  // draw it
-  RB_DrawElementsWithCounters(tri);
-
-  for (int i = 0; i < glslStage->numShaderMaps; i++) {
-    if (glslStage->shaderMap[i]) {
-      globalImages->BindNull(i);
-    }
-  }
-
-  GL_UseProgram(nullptr);
-  GL_SelectTexture(0);
+	// draw it
+	RB_DrawElementsWithCounters(tri);
 }
 
 
@@ -1036,6 +1015,17 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   // set the state
   GL_State(pStage->drawStateBits);
 
+
+  if (surf->space->modelDepthHack != 0.0f) {
+	  RB_EnterModelDepthHack( surf->space->modelDepthHack );
+  }
+  else if (surf->space->weaponDepthHack) {
+	  RB_EnterWeaponDepthHack();
+  }
+  else {
+	  fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
+  }
+
   switch (pStage->vertexColor) {
   case SVC_IGNORE:
 	fhRenderProgram::SetColorModulate(idVec4::zero);
@@ -1052,8 +1042,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   }  
   
   fhRenderProgram::SetModelMatrix(surf->space->modelMatrix);
-  fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
-  fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+  fhRenderProgram::SetModelViewMatrix(surf->space->modelViewMatrix);
 
   // current render
   const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
