@@ -305,12 +305,13 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
-void  GL_UseProgram( const fhRenderProgram* program ) {
+bool  GL_UseProgram( const fhRenderProgram* program ) {
   if(program) {
-	  program->Bind();
-  } else {
-	  fhRenderProgram::Unbind();
-  }  
+	  return program->Bind();
+  } 
+
+  fhRenderProgram::Unbind();
+  return false;  
 }
 
 

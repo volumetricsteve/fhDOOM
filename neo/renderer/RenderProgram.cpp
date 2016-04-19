@@ -447,7 +447,7 @@ void fhRenderProgram::Purge() {
 	ident = 0;
 }
 
-void fhRenderProgram::Bind(bool force) const {
+bool fhRenderProgram::Bind(bool force) const {
 	if(currentProgram != ident || force) {
 		glUseProgram( ident );
 		currentProgram = ident;
@@ -456,7 +456,11 @@ void fhRenderProgram::Bind(bool force) const {
 		for (int i = 0; i < fhUniform::NUM; ++i) {		
 			dirty[i] = true;
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 void fhRenderProgram::Unbind() {

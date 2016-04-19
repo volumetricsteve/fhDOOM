@@ -1031,7 +1031,7 @@ void	GL_SelectTexture( int unit );
 void	GL_CheckErrors( void );
 void	GL_State( int stateVector );
 void	GL_Cull( int cullType );
-void	GL_UseProgram( const fhRenderProgram* program );
+bool	GL_UseProgram( const fhRenderProgram* program );
 void    GL_SetVertexLayout( fhVertexLayout layout );
 void    GL_SetupVertexAttributes( fhVertexLayout layout, int offset );
 

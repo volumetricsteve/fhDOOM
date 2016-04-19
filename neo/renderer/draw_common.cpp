@@ -196,7 +196,6 @@ Draw non-light dependent passes
 =====================
 */
 int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
-	int				i;
 
 	// only obey skipAmbient if we are rendering a view
 	if ( backEnd.viewDef->viewEntitys && r_skipAmbient.GetBool() ) {
@@ -221,16 +220,12 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		backEnd.currentRenderCopied = true;
 	}
 
-	GL_SelectTexture( 1 );
-	globalImages->BindNull();
-
-	GL_SelectTexture( 0 );
-
 	// we don't use RB_RenderDrawSurfListWithFunction()
 	// because we want to defer the matrix load because many
 	// surfaces won't draw any ambient passes
 	backEnd.currentSpace = NULL;
-	for (i = 0  ; i < numDrawSurfs ; i++ ) {
+	int i = 0;
+	for (; i < numDrawSurfs ; i++ ) {
 		if ( drawSurfs[i]->material->SuppressInSubview() ) {
 			continue;
 		}
@@ -247,9 +242,13 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			break;
 		}
     
-		RB_STD_T_RenderShaderPasses( drawSurfs[i] );    
-	}  
+		RB_STD_T_RenderShaderPasses( drawSurfs[i] );   
 
+		backEnd.currentSpace = drawSurfs[i]->space;
+	}  
+	backEnd.currentSpace = NULL;
+	GL_SelectTexture(0);
+	RB_LeaveDepthHack();
 	GL_Cull( CT_FRONT_SIDED );
 
 	return i;

@@ -835,6 +835,10 @@ void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pS
 
 	// draw it
 	RB_DrawElementsWithCounters(tri);
+
+	if (surf->space->modelDepthHack != 0.0f || surf->space->weaponDepthHack) {
+		RB_LeaveDepthHack();
+	}
 }
 
 
@@ -880,12 +884,13 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   
   const auto offset = vertexCache.Bind(surf->geo->ambientCache); 
 
+  bool programWasReset = false;
 
   if (pStage->texture.texgen == TG_DIFFUSE_CUBE) {
     return;
   }
   else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
-    GL_UseProgram(skyboxProgram);    
+    programWasReset = GL_UseProgram(skyboxProgram);    
 
     idMat4 textureMatrix = mat4_identity;
     if (pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
@@ -908,7 +913,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   }
   else if (pStage->texture.texgen == TG_REFLECT_CUBE) {
 
-    GL_UseProgram(bumpyEnvProgram);
+    programWasReset = GL_UseProgram(bumpyEnvProgram);
 
     idMat4 textureMatrix = mat4_identity;
 
@@ -967,7 +972,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     }
 
     if(depthBlendMode != DBM_OFF && depthBlendRange > 0.0f) {
-      GL_UseProgram(depthblendProgram);
+      programWasReset = GL_UseProgram(depthblendProgram);
 
 	  //TODO(johl): texture unit 7 is also used for shadow maps.
 	  //            Not an issue currently, because particles are not affected by
@@ -979,7 +984,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 	  fhRenderProgram::SetClipRange(backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance());      
     }
     else {
-      GL_UseProgram(defaultProgram);
+      programWasReset = GL_UseProgram(defaultProgram);
     }
 
 	GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
@@ -1012,18 +1017,31 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   }
   
   // set the state
-  GL_State(pStage->drawStateBits);
+  GL_State(pStage->drawStateBits);  
 
+	if(programWasReset) {
+		// current render
+		const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+		const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+		fhRenderProgram::SetCurrentRenderSize(
+			idVec2( globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight ),
+			idVec2( w, h ) );
+	}
+  
+	if (surf->space->modelDepthHack != 0.0f) {
+		RB_EnterModelDepthHack( surf->space->modelDepthHack );
+	}
+	else if (surf->space->weaponDepthHack) {
+		RB_EnterWeaponDepthHack();
+	}
+	else if (programWasReset) {
+		fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
+	}
 
-  if (surf->space->modelDepthHack != 0.0f) {
-	  RB_EnterModelDepthHack( surf->space->modelDepthHack );
-  }
-  else if (surf->space->weaponDepthHack) {
-	  RB_EnterWeaponDepthHack();
-  }
-  else {
-	  fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
-  }
+	if(surf->space != backEnd.currentSpace || programWasReset) {
+		fhRenderProgram::SetModelMatrix( surf->space->modelMatrix );
+		fhRenderProgram::SetModelViewMatrix( surf->space->modelViewMatrix );	
+	}  
 
   switch (pStage->vertexColor) {
   case SVC_IGNORE:
@@ -1038,17 +1056,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
 	fhRenderProgram::SetColorModulate(idVec4::negOne);
 	fhRenderProgram::SetColorAdd(idVec4::one);
     break;
-  }  
-  
-  fhRenderProgram::SetModelMatrix(surf->space->modelMatrix);
-  fhRenderProgram::SetModelViewMatrix(surf->space->modelViewMatrix);
-
-  // current render
-  const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-  const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-  fhRenderProgram::SetCurrentRenderSize(
-	  idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight), 
-	  idVec2(w,h));  
+  }     
 
   // set privatePolygonOffset if necessary
   if (pStage->privatePolygonOffset) {
@@ -1079,10 +1087,11 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
   fhRenderProgram::SetDiffuseColor(idVec4(color));
 
   // draw it
-  RB_DrawElementsWithCounters(surf->geo);
-  
-  GL_UseProgram(nullptr);
-  GL_SelectTexture(0);
+  RB_DrawElementsWithCounters(surf->geo);  
+
+  if (surf->space->modelDepthHack != 0.0f || surf->space->weaponDepthHack) {
+	  RB_LeaveDepthHack();
+  }
 }
 
 

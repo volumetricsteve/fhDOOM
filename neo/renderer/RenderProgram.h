@@ -65,7 +65,7 @@ public:
 	void Load(const char* vertexShader, const char* fragmentShader);
 	void Reload();
 	void Purge();
-	void Bind(bool force = false) const;	
+	bool Bind(bool force = false) const;	
 
 	const char* vertexShader() const;
 	const char* fragmentShader() const;

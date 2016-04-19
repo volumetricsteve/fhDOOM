@@ -648,7 +648,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 		}
 	}
 	// upload the main image level
-	Bind();
+	Bind(0);
 
 
 	if ( internalFormat == GL_COLOR_INDEX8_EXT ) {
@@ -759,7 +759,7 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	uploadHeight = scaled_height;
 	uploadWidth = scaled_width;
 
-	Bind();
+	Bind(0);
 
 	// no other clamp mode makes sense
 	glSamplerParameteri(samplernum, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1071,7 +1071,7 @@ void idImage::WritePrecompressedImage() {
 	f->Write( &header, sizeof(header) );
 
 	// bind to the image so we can read back the contents
-	Bind();
+	Bind(0);
 
 	glPixelStorei( GL_PACK_ALIGNMENT, 1 );	// otherwise small rows get padded to 32 bits
 
@@ -1371,7 +1371,7 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 
 	type = TT_2D;			// FIXME: we may want to support pre-compressed cube maps in the future
 
-	Bind();
+	Bind(0);
 
 	int numMipmaps = 1;
 	if ( header->dwFlags & DDSF_MIPMAPCOUNT ) {
@@ -1655,7 +1655,7 @@ CopyFramebuffer
 ====================
 */
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
-	Bind();
+	Bind(0);
 
 	glReadBuffer( GL_BACK );
 
@@ -1683,7 +1683,7 @@ This should just be part of copyFramebuffer once we have a proper image type fie
 ====================
 */
 void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
-	Bind();
+	Bind(0);
 
 	glReadBuffer( GL_BACK );
 
@@ -1705,7 +1705,7 @@ void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
 }
 
 void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
-	Bind();
+	Bind(0);
 
 	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
 		uploadWidth = framebuffer->GetWidth();
@@ -1724,7 +1724,7 @@ void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
 }
 
 void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
-	Bind();
+	Bind(0);
 
 	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
 		uploadWidth = framebuffer->GetWidth();
