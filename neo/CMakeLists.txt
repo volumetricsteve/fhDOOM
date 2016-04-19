@@ -380,6 +380,8 @@ SET(SOURCES
   renderer/RenderWorld_load.cpp
   renderer/RenderWorld_local.h
   renderer/RenderWorld_portals.cpp
+  renderer/Sampler.h
+  renderer/Sampler.cpp
   renderer/simplex.h
   renderer/tr_backend.cpp
   renderer/tr_deform.cpp
@@ -1093,14 +1095,5 @@ IF(WIN32)
 
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base"
   )
-
-#  add_custom_target(make_zip 
-#    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "fhDOOM.zip" --format=zip "fhDOOM"
-#    DEPENDS copy_game_files
-#    WORKING_DIRECTORY "${DIST_DIR}"
-#  )
-
-#  set_target_properties(copy_game_files PROPERTIES EXCLUDE_FROM_ALL TRUE)
-#  set_target_properties(make_zip PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 ENDIF()

@@ -242,9 +242,7 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 				RB_EnterWeaponDepthHack();
 			} else if(!backEnd.currentSpace || backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack ) {
 				RB_LeaveDepthHack();
-			}
-
-			backEnd.currentSpace = drawSurf->space;
+			}			
 		}
 
 		// change the scissor if needed
@@ -258,6 +256,8 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 
 		// render it
 		triFunc_( drawSurf );
+
+		backEnd.currentSpace = drawSurf->space;
 	}
 }
 
@@ -284,9 +284,7 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 			}
 			else if (!backEnd.currentSpace || backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack) {
 				RB_LeaveDepthHack();
-			}
-
-			backEnd.currentSpace = drawSurf->space;
+			}			
 		}
 
 		// change the scissor if needed
@@ -307,6 +305,8 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 
 		// render it
 		triFunc_( drawSurf );
+
+		backEnd.currentSpace = drawSurf->space;
 	}
 }
 

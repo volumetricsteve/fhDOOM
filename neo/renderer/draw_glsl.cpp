@@ -20,7 +20,7 @@ RB_GLSL_BlendLight
 static void RB_GLSL_BlendLight(const drawSurf_t *surf) {
 	const srfTriangles_t*  tri = surf->geo;
 
-  //TODO8johl): this needs to be executed just once after each backEnd.viewDef->space change... how?
+  if(backEnd.currentSpace != surf->space)
   {
 	idPlane	lightProject[4];
 
@@ -191,8 +191,7 @@ RB_T_BasicFog
 */
 static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 
-	//TODO(johl): this must be executed only once each time backEnd.viewDef->space
-	// changed... how can we achieve that? w/o screwing up too much...
+	if(backEnd.currentSpace != surf->space)
 	{
 		idPlane	local;
 
@@ -360,8 +359,8 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
 
     assert(shadowProgram);
     fhRenderProgram::SetLocalLightOrigin(localLight);
-    fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-    fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+    fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
+    fhRenderProgram::SetModelViewMatrix(surf->space->modelViewMatrix);
   }
 
   tri = surf->geo;
