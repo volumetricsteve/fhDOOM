@@ -38,3 +38,15 @@ private:
 	int capacity;
 	int size;
 };
+
+struct drawDepth_t {
+	const drawSurf_t*  surf;
+	idImage*           texture;
+	idVec4             textureMatrix[2];
+	float              polygonOffset;
+	bool               isSubView;	
+	float              alphaTestThreshold;
+	idVec4             color;
+};
+
+using DepthRenderList = fhRenderList<drawDepth_t>;

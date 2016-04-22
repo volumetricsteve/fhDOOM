@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "ImmediateMode.h"
-
+#include "RenderList.h"
 /*
 =====================
 RB_BakeTextureMatrixIntoTexgen
@@ -414,7 +414,7 @@ void	RB_STD_DrawView( void ) {
 	RB_DetermineLightScale();
 
 	// fill the depth buffer and clear color buffer to black except on
-	// subviews
+	// subviews	
 	RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
 
 	if (backEnd.viewDef->viewEntitys) {
