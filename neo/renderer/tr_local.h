@@ -468,6 +468,9 @@ typedef struct {
 	idVec4				bumpMatrix[2];
 	idVec4				diffuseMatrix[2];
 	idVec4				specularMatrix[2];
+	bool                hasBumpMatrix;
+	bool                hasDiffuseMatrix;
+	bool                hasSpecularMatrix;
 } drawInteraction_t;
 
 

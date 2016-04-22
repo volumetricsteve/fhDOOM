@@ -1555,6 +1555,7 @@ void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& in
 		const idMaterial	*lightShader = vLight->lightShader;
 		const float			*lightRegs = vLight->shaderRegisters;
 		drawInteraction_t	inter;
+		inter.hasBumpMatrix = inter.hasDiffuseMatrix = inter.hasSpecularMatrix = false;
 
 		if (!surf->geo || !surf->geo->ambientCache) {
 			continue;
@@ -1626,6 +1627,7 @@ void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& in
 					inter.diffuseImage = NULL;
 					inter.specularImage = NULL;
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.bumpImage, inter.bumpMatrix, NULL );
+					inter.hasBumpMatrix = surfaceStage->texture.hasMatrix;
 					break;
 				}
 				case SL_DIFFUSE: {
@@ -1643,6 +1645,7 @@ void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& in
 					inter.diffuseColor[2] *= lightColor[2];
 					inter.diffuseColor[3] *= lightColor[3];
 					inter.vertexColor = surfaceStage->vertexColor;
+					inter.hasDiffuseMatrix = surfaceStage->texture.hasMatrix;
 					break;
 				}
 				case SL_SPECULAR: {
@@ -1659,7 +1662,9 @@ void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& in
 					inter.specularColor[1] *= lightColor[1];
 					inter.specularColor[2] *= lightColor[2];
 					inter.specularColor[3] *= lightColor[3];
+					inter.specularColor *= r_specularScale.GetFloat();
 					inter.vertexColor = surfaceStage->vertexColor;
+					inter.hasSpecularMatrix = surfaceStage->texture.hasMatrix;
 					break;
 				}
 				}
@@ -1709,13 +1714,24 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 
 	fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
 	fhRenderProgram::SetPomMaxHeight( -1 );
-
 	
 	const viewEntity_t* currentSpace = nullptr;
 	stageVertexColor_t currentVertexColor = (stageVertexColor_t)-1;
 	bool currentPomEnabled = false;
 	idScreenRect currentScissor;
 	bool depthHackActive = false;
+	bool currentHasBumpMatrix = false;
+	bool currentHasDiffuseMatrix = false;
+	bool currentHasSpecularMatrix = false;
+	idVec4 currentDiffuseColor = idVec4(1,1,1,1);
+	idVec4 currentSpecularColor = idVec4(1,1,1,1);
+
+	fhRenderProgram::SetDiffuseColor( currentDiffuseColor );
+	fhRenderProgram::SetSpecularColor( currentSpecularColor );
+	fhRenderProgram::SetBumpMatrix( idVec4::identityS, idVec4::identityT );
+	fhRenderProgram::SetSpecularMatrix( idVec4::identityS, idVec4::identityT );
+	fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
+
 
 	if (r_useScissor.GetBool()) {
 		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
@@ -1768,9 +1784,33 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 		fhRenderProgram::SetLocalViewOrigin( din.localViewOrigin );
 		fhRenderProgram::SetLightProjectionMatrix( din.lightProjection[0], din.lightProjection[1], din.lightProjection[2] );
 		fhRenderProgram::SetLightFallOff( din.lightProjection[3] );
-		fhRenderProgram::SetBumpMatrix( din.bumpMatrix[0], din.bumpMatrix[1] );
-		fhRenderProgram::SetDiffuseMatrix( din.diffuseMatrix[0], din.diffuseMatrix[1] );
-		fhRenderProgram::SetSpecularMatrix( din.specularMatrix[0], din.specularMatrix[1] );
+
+		if(din.hasBumpMatrix) {
+			fhRenderProgram::SetBumpMatrix( din.bumpMatrix[0], din.bumpMatrix[1] );
+			currentHasBumpMatrix = true;
+		}
+		else if(currentHasBumpMatrix) {
+			fhRenderProgram::SetBumpMatrix( idVec4::identityS, idVec4::identityT );
+			currentHasBumpMatrix = false;
+		}
+		
+		if(din.hasDiffuseMatrix) {
+			fhRenderProgram::SetDiffuseMatrix( din.diffuseMatrix[0], din.diffuseMatrix[1] );
+			currentHasDiffuseMatrix = true;
+		}
+		else if(currentHasDiffuseMatrix) {
+			fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
+			currentHasDiffuseMatrix = false;
+		}
+		
+		if(din.hasSpecularMatrix) {
+			fhRenderProgram::SetSpecularMatrix( din.specularMatrix[0], din.specularMatrix[1] );
+			currentHasSpecularMatrix = false;
+		}
+		else if(currentHasSpecularMatrix) {
+			fhRenderProgram::SetSpecularMatrix( idVec4::identityS, idVec4::identityT );
+			currentHasSpecularMatrix = false;
+		}
 
 		if(currentVertexColor != din.vertexColor) {
 			switch (din.vertexColor) {
@@ -1790,8 +1830,15 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 			currentVertexColor = din.vertexColor;
 		}
 
-		fhRenderProgram::SetDiffuseColor( din.diffuseColor );
-		fhRenderProgram::SetSpecularColor( din.specularColor * r_specularScale.GetFloat() );
+		if(din.diffuseColor != currentDiffuseColor) {
+			fhRenderProgram::SetDiffuseColor( din.diffuseColor );
+			currentDiffuseColor = din.diffuseColor;
+		}
+
+		if (din.specularColor != currentSpecularColor) {
+			fhRenderProgram::SetSpecularColor( din.specularColor );
+			currentSpecularColor = din.specularColor;
+		}		
 
 		const bool pomEnabled = r_pomEnabled.GetBool() && din.specularImage->hasAlpha;
 		if (pomEnabled != currentPomEnabled) {
