@@ -368,6 +368,7 @@ SET(SOURCES
   renderer/Model_prt.cpp
   renderer/Model_sprite.cpp
   renderer/qgl.h
+  renderer/RenderList.h
   renderer/RenderEntity.cpp
   renderer/RenderSystem.cpp
   renderer/RenderSystem.h

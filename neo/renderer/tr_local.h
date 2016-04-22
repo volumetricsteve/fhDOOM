@@ -1244,6 +1244,8 @@ bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting );
 void R_CreatePrivateShadowCache( srfTriangles_t *tri );
 void R_CreateVertexProgramShadowCache( srfTriangles_t *tri );
 
+
+void R_SetDrawInteraction( const shaderStage_t *surfaceStage, const float *surfaceRegs, idImage **image, idVec4 matrix[2], float color[4] );
 /*
 ============================================================
 

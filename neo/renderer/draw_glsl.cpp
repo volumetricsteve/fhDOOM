@@ -4,12 +4,17 @@
 #include "tr_local.h"
 #include "RenderProgram.h"
 #include "ImmediateMode.h"
+#include "RenderList.h"
 
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
+idCVar r_renderList("r_renderlist", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "use render list");
+
+
+using InteractionList = fhRenderList<drawInteraction_t>;
 
 /*
 =====================
@@ -1249,6 +1254,296 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
 
 /*
+=================
+RB_SubmittInteraction
+=================
+*/
+static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList ) {
+	if (!din->bumpImage) {
+		return;
+	}
+
+	if (!din->diffuseImage || r_skipDiffuse.GetBool()) {
+		din->diffuseImage = globalImages->blackImage;
+	}
+	if (!din->specularImage || r_skipSpecular.GetBool() || din->ambientLight) {
+		din->specularImage = globalImages->blackImage;
+	}
+	if (!din->bumpImage || r_skipBump.GetBool()) {
+		din->bumpImage = globalImages->flatNormalMap;
+	}
+
+	// if we wouldn't draw anything, don't call the Draw function
+	if (
+		((din->diffuseColor[0] > 0 ||
+		din->diffuseColor[1] > 0 ||
+		din->diffuseColor[2] > 0) && din->diffuseImage != globalImages->blackImage)
+		|| ((din->specularColor[0] > 0 ||
+		din->specularColor[1] > 0 ||
+		din->specularColor[2] > 0) && din->specularImage != globalImages->blackImage)) {
+
+		interactionList.Append(*din);
+	}
+}
+
+
+/*
+=============
+RB_GLSL_CreateDrawInteractions
+
+=============
+*/
+void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& interactionList ) {
+
+	if (r_skipInteractions.GetBool()) {
+		return;
+	}
+
+	for (; surf; surf = surf->nextOnLight) {
+		const idMaterial	*surfaceShader = surf->material;
+		const float			*surfaceRegs = surf->shaderRegisters;
+		const viewLight_t	*vLight = backEnd.vLight;
+		const idMaterial	*lightShader = vLight->lightShader;
+		const float			*lightRegs = vLight->shaderRegisters;
+		drawInteraction_t	inter;
+
+		if (!surf->geo || !surf->geo->ambientCache) {
+			continue;
+		}
+
+		inter.surf = surf;
+		inter.lightFalloffImage = vLight->falloffImage;
+
+		R_GlobalPointToLocal( surf->space->modelMatrix, vLight->globalLightOrigin, inter.localLightOrigin.ToVec3() );
+		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, inter.localViewOrigin.ToVec3() );
+		inter.localLightOrigin[3] = 0;
+		inter.localViewOrigin[3] = 1;
+		inter.ambientLight = lightShader->IsAmbientLight();
+
+		// the base projections may be modified by texture matrix on light stages
+		idPlane lightProject[4];
+		for (int i = 0; i < 4; i++) {
+			R_GlobalPlaneToLocal( surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i] );
+		}
+
+		for (int lightStageNum = 0; lightStageNum < lightShader->GetNumStages(); lightStageNum++) {
+			const shaderStage_t	*lightStage = lightShader->GetStage( lightStageNum );
+
+			// ignore stages that fail the condition
+			if (!lightRegs[lightStage->conditionRegister]) {
+				continue;
+			}
+
+			inter.lightImage = lightStage->texture.image;
+
+			memcpy( inter.lightProjection, lightProject, sizeof(inter.lightProjection) );
+			// now multiply the texgen by the light texture matrix
+			if (lightStage->texture.hasMatrix) {
+				RB_GetShaderTextureMatrix( lightRegs, &lightStage->texture, backEnd.lightTextureMatrix );
+				RB_BakeTextureMatrixIntoTexgen( reinterpret_cast<class idPlane *>(inter.lightProjection), backEnd.lightTextureMatrix );
+			}
+
+			inter.bumpImage = NULL;
+			inter.specularImage = NULL;
+			inter.diffuseImage = NULL;
+			inter.diffuseColor[0] = inter.diffuseColor[1] = inter.diffuseColor[2] = inter.diffuseColor[3] = 0;
+			inter.specularColor[0] = inter.specularColor[1] = inter.specularColor[2] = inter.specularColor[3] = 0;
+
+			float lightColor[4];
+
+			// backEnd.lightScale is calculated so that lightColor[] will never exceed
+			// tr.backEndRendererMaxLight
+			lightColor[0] = backEnd.lightScale * lightRegs[lightStage->color.registers[0]];
+			lightColor[1] = backEnd.lightScale * lightRegs[lightStage->color.registers[1]];
+			lightColor[2] = backEnd.lightScale * lightRegs[lightStage->color.registers[2]];
+			lightColor[3] = lightRegs[lightStage->color.registers[3]];
+
+			// go through the individual stages
+			for (int surfaceStageNum = 0; surfaceStageNum < surfaceShader->GetNumStages(); surfaceStageNum++) {
+				const shaderStage_t	*surfaceStage = surfaceShader->GetStage( surfaceStageNum );
+
+				switch (surfaceStage->lighting) {
+				case SL_AMBIENT: {
+					// ignore ambient stages while drawing interactions
+					break;
+				}
+				case SL_BUMP: {
+					// ignore stage that fails the condition
+					if (!surfaceRegs[surfaceStage->conditionRegister]) {
+						break;
+					}
+					// draw any previous interaction
+					RB_SubmittInteraction( &inter, interactionList );
+					inter.diffuseImage = NULL;
+					inter.specularImage = NULL;
+					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.bumpImage, inter.bumpMatrix, NULL );
+					break;
+				}
+				case SL_DIFFUSE: {
+					// ignore stage that fails the condition
+					if (!surfaceRegs[surfaceStage->conditionRegister]) {
+						break;
+					}
+					if (inter.diffuseImage) {
+						RB_SubmittInteraction( &inter, interactionList );
+					}
+					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.diffuseImage,
+						inter.diffuseMatrix, inter.diffuseColor.ToFloatPtr() );
+					inter.diffuseColor[0] *= lightColor[0];
+					inter.diffuseColor[1] *= lightColor[1];
+					inter.diffuseColor[2] *= lightColor[2];
+					inter.diffuseColor[3] *= lightColor[3];
+					inter.vertexColor = surfaceStage->vertexColor;
+					break;
+				}
+				case SL_SPECULAR: {
+					// ignore stage that fails the condition
+					if (!surfaceRegs[surfaceStage->conditionRegister]) {
+						break;
+					}
+					if (inter.specularImage) {
+						RB_SubmittInteraction( &inter, interactionList );
+					}
+					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.specularImage,
+						inter.specularMatrix, inter.specularColor.ToFloatPtr() );
+					inter.specularColor[0] *= lightColor[0];
+					inter.specularColor[1] *= lightColor[1];
+					inter.specularColor[2] *= lightColor[2];
+					inter.specularColor[3] *= lightColor[3];
+					inter.vertexColor = surfaceStage->vertexColor;
+					break;
+				}
+				}
+			}
+
+			// draw the final interaction
+			RB_SubmittInteraction( &inter, interactionList );
+		}
+
+		// this may cause RB_ARB2_DrawInteraction to be exacuted multiple
+		// times with different colors and images if the surface or light have multiple layers
+		//RB_CreateSingleDrawInteractions( surf, RB_GLSL_DrawInteraction );
+	}
+}
+
+
+void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
+
+	// perform setup here that will be constant for all interactions
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc );
+
+	GL_UseProgram( interactionProgram );
+
+	fhRenderProgram::SetShading( r_shading.GetInteger() );
+	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
+	fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+
+	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
+		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
+		fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
+
+		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
+		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
+		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
+
+		if (backEnd.vLight->lightDef->parms.pointLight) {
+			//point light
+			fhRenderProgram::SetShadowMappingMode( 1 );
+			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+		}
+		else {
+			//projected light
+			fhRenderProgram::SetShadowMappingMode( 2 );
+			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
+		}
+	}
+	else {
+		//no shadows
+		fhRenderProgram::SetShadowMappingMode( 0 );
+	}
+
+	const int num = interactionList.Num();
+	for(int i = 0; i < num; ++i) {
+		const auto& din = interactionList[i];
+
+		const auto offset = vertexCache.Bind( din.surf->geo->ambientCache );
+		GL_SetupVertexAttributes( fhVertexLayout::Draw, offset );
+
+		// change the scissor if needed
+		if (r_useScissor.GetBool() && !backEnd.currentScissor.Equals( din.surf->scissorRect )) {
+			backEnd.currentScissor = din.surf->scissorRect;
+			glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
+				backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
+				backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
+				backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
+		}
+
+		fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
+
+		// hack depth range if needed
+		if (din.surf->space->weaponDepthHack) {
+			RB_EnterWeaponDepthHack();
+			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+		}
+
+		if (din.surf->space->modelDepthHack) {
+			RB_EnterModelDepthHack( din.surf->space->modelDepthHack );
+			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+		}
+
+		fhRenderProgram::SetModelMatrix( din.surf->space->modelMatrix );
+		fhRenderProgram::SetModelViewMatrix( din.surf->space->modelViewMatrix );		
+		fhRenderProgram::SetLocalLightOrigin( din.localLightOrigin );
+		fhRenderProgram::SetLocalViewOrigin( din.localViewOrigin );
+		fhRenderProgram::SetLightProjectionMatrix( din.lightProjection[0], din.lightProjection[1], din.lightProjection[2] );
+		fhRenderProgram::SetLightFallOff( din.lightProjection[3] );
+		fhRenderProgram::SetBumpMatrix( din.bumpMatrix[0], din.bumpMatrix[1] );
+		fhRenderProgram::SetDiffuseMatrix( din.diffuseMatrix[0], din.diffuseMatrix[1] );
+		fhRenderProgram::SetSpecularMatrix( din.specularMatrix[0], din.specularMatrix[1] );
+
+		switch (din.vertexColor) {
+		case SVC_IGNORE:
+			fhRenderProgram::SetColorModulate( idVec4::zero );
+			fhRenderProgram::SetColorAdd( idVec4::one );
+			break;
+		case SVC_MODULATE:
+			fhRenderProgram::SetColorModulate( idVec4::one );
+			fhRenderProgram::SetColorAdd( idVec4::zero );
+			break;
+		case SVC_INVERSE_MODULATE:
+			fhRenderProgram::SetColorModulate( idVec4::negOne );
+			fhRenderProgram::SetColorAdd( idVec4::one );
+			break;
+		}
+
+		fhRenderProgram::SetDiffuseColor( din.diffuseColor );
+		fhRenderProgram::SetSpecularColor( din.specularColor * r_specularScale.GetFloat() );
+
+		if (r_pomEnabled.GetBool() && din.specularImage->hasAlpha) {
+			fhRenderProgram::SetPomMaxHeight( r_pomMaxHeight.GetFloat() );
+		}
+		else {
+			fhRenderProgram::SetPomMaxHeight( -1 );
+		}
+		
+		din.bumpImage->Bind( 1 );		
+		din.lightFalloffImage->Bind( 2 );
+		din.lightImage->Bind( 3 );
+		din.diffuseImage->Bind( 4 );
+		din.specularImage->Bind( 5 );
+
+		// draw it
+		RB_DrawElementsWithCounters( din.surf->geo );
+
+		// hack depth range if needed
+		if (din.surf->space->weaponDepthHack || din.surf->space->modelDepthHack) {
+			RB_LeaveDepthHack();
+			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+		}
+	}
+}
+
+/*
 ==================
 RB_GLSL_DrawInteractions
 ==================
@@ -1256,6 +1551,8 @@ RB_GLSL_DrawInteractions
 void RB_GLSL_DrawInteractions(void) {
   viewLight_t		*vLight;
   const idMaterial	*lightShader;
+
+  InteractionList interactionList;
 
   //
   // for each light, perform adding and shadowing
@@ -1300,11 +1597,24 @@ void RB_GLSL_DrawInteractions(void) {
       glStencilFunc(GL_ALWAYS, 128, 255);
     }
 
-	RB_GLSL_StencilShadowPass(vLight->globalShadows);
-	RB_GLSL_CreateDrawInteractions(vLight->localInteractions);
-	RB_GLSL_StencilShadowPass(vLight->localShadows);
-	RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
-
+	if(r_renderList.GetBool()) {
+		RB_GLSL_StencilShadowPass( vLight->globalShadows );
+		interactionList.Clear();
+		RB_GLSL_CreateDrawInteractions( vLight->localInteractions, interactionList );
+		RB_GLSL_SubmitDrawInteractions(interactionList);
+				
+		RB_GLSL_StencilShadowPass( vLight->localShadows );
+		interactionList.Clear();
+		RB_GLSL_CreateDrawInteractions( vLight->globalInteractions, interactionList );
+		RB_GLSL_SubmitDrawInteractions( interactionList );		
+	}
+	else {
+		RB_GLSL_StencilShadowPass( vLight->globalShadows );
+		RB_GLSL_CreateDrawInteractions( vLight->localInteractions );
+		RB_GLSL_StencilShadowPass( vLight->localShadows );
+		RB_GLSL_CreateDrawInteractions( vLight->globalInteractions );
+	}
+	
     // translucent surfaces never get stencil shadowed
     if (r_skipTranslucent.GetBool()) {
       continue;
