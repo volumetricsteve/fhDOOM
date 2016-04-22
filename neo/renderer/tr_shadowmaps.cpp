@@ -544,25 +544,25 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 		bool staticOccluderModelWasRendered = false;
 		if(r_smUseStaticOccluderModel.GetBool() && entityDef->staticOccluderModel) {
-			if(!r_ignore2.GetBool()) {
-				assert(entityDef->staticOccluderModel->NumSurfaces() > 0);
 
-				srfTriangles_t* tri = entityDef->staticOccluderModel->Surface(0)->geometry;
+			assert(entityDef->staticOccluderModel->NumSurfaces() > 0);
 
-				if (!tri->ambientCache) {
-					if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
-						common->Error( "RB_RenderShadowCasters: Failed to alloc ambient cache" );
-					}
+			srfTriangles_t* tri = entityDef->staticOccluderModel->Surface(0)->geometry;
+
+			if (!tri->ambientCache) {
+				if (!R_CreateAmbientCache( const_cast<srfTriangles_t *>(tri), false )) {
+					common->Error( "RB_RenderShadowCasters: Failed to alloc ambient cache" );
 				}
-
-				const auto offset = vertexCache.Bind( tri->ambientCache );		
-				GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
-
-				fhRenderProgram::SetModelMatrix(fhRenderMatrix::identity.ToFloatPtr());				
-				fhRenderProgram::SetAlphaTestEnabled( false );				
-				RB_DrawElementsWithCounters( tri );
-				backEnd.pc.c_shadowMapDraws++;
 			}
+
+			const auto offset = vertexCache.Bind( tri->ambientCache );		
+			GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
+
+			fhRenderProgram::SetModelMatrix(fhRenderMatrix::identity.ToFloatPtr());				
+			fhRenderProgram::SetAlphaTestEnabled( false );				
+			RB_DrawElementsWithCounters( tri );
+			backEnd.pc.c_shadowMapDraws++;
+
 			staticOccluderModelWasRendered = true;
 		}		
 

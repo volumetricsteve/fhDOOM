@@ -1426,8 +1426,9 @@ void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& in
 	}
 }
 
-
 void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
+	if(interactionList.IsEmpty())
+		return;
 
 	// perform setup here that will be constant for all interactions
 	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc );
@@ -1436,7 +1437,6 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 
 	fhRenderProgram::SetShading( r_shading.GetInteger() );
 	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
-	fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
 
 	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
@@ -1462,37 +1462,63 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 		fhRenderProgram::SetShadowMappingMode( 0 );
 	}
 
+	fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
+	fhRenderProgram::SetPomMaxHeight( -1 );
+
+	
+	const viewEntity_t* currentSpace = nullptr;
+	stageVertexColor_t currentVertexColor = (stageVertexColor_t)-1;
+	bool currentPomEnabled = false;
+	idScreenRect currentScissor;
+	bool depthHackActive = false;
+
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		currentScissor.x1 = 0;
+		currentScissor.y1 = 0;
+		currentScissor.x2 = glConfig.vidWidth;
+		currentScissor.y2 = glConfig.vidHeight;
+	}
+
 	const int num = interactionList.Num();
 	for(int i = 0; i < num; ++i) {
 		const auto& din = interactionList[i];
 
 		const auto offset = vertexCache.Bind( din.surf->geo->ambientCache );
-		GL_SetupVertexAttributes( fhVertexLayout::Draw, offset );
+		GL_SetupVertexAttributes( fhVertexLayout::Draw, offset );				
 
-		// change the scissor if needed
-		if (r_useScissor.GetBool() && !backEnd.currentScissor.Equals( din.surf->scissorRect )) {
-			backEnd.currentScissor = din.surf->scissorRect;
-			glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
-				backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
-				backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
-				backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
+		if(currentSpace != din.surf->space) {
+			fhRenderProgram::SetModelMatrix( din.surf->space->modelMatrix );
+			fhRenderProgram::SetModelViewMatrix( din.surf->space->modelViewMatrix );
+
+			if (din.surf->space->modelDepthHack) {
+				RB_EnterModelDepthHack( din.surf->space->modelDepthHack );
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = true;
+			}
+			else if (din.surf->space->weaponDepthHack) {
+				RB_EnterWeaponDepthHack();
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = true;
+			}
+			else if ( depthHackActive ) {
+				RB_LeaveDepthHack();
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = false;
+			}
+
+			// change the scissor if needed
+			if (r_useScissor.GetBool() && !currentScissor.Equals( din.surf->scissorRect )) {
+				currentScissor = din.surf->scissorRect;
+				glScissor( backEnd.viewDef->viewport.x1 + currentScissor.x1,
+					backEnd.viewDef->viewport.y1 + currentScissor.y1,
+					currentScissor.x2 + 1 - currentScissor.x1,
+					currentScissor.y2 + 1 - currentScissor.y1 );
+			}
+
+			currentSpace = din.surf->space;
 		}
 
-		fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
-
-		// hack depth range if needed
-		if (din.surf->space->weaponDepthHack) {
-			RB_EnterWeaponDepthHack();
-			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
-		}
-
-		if (din.surf->space->modelDepthHack) {
-			RB_EnterModelDepthHack( din.surf->space->modelDepthHack );
-			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
-		}
-
-		fhRenderProgram::SetModelMatrix( din.surf->space->modelMatrix );
-		fhRenderProgram::SetModelViewMatrix( din.surf->space->modelViewMatrix );		
 		fhRenderProgram::SetLocalLightOrigin( din.localLightOrigin );
 		fhRenderProgram::SetLocalViewOrigin( din.localViewOrigin );
 		fhRenderProgram::SetLightProjectionMatrix( din.lightProjection[0], din.lightProjection[1], din.lightProjection[2] );
@@ -1501,29 +1527,35 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 		fhRenderProgram::SetDiffuseMatrix( din.diffuseMatrix[0], din.diffuseMatrix[1] );
 		fhRenderProgram::SetSpecularMatrix( din.specularMatrix[0], din.specularMatrix[1] );
 
-		switch (din.vertexColor) {
-		case SVC_IGNORE:
-			fhRenderProgram::SetColorModulate( idVec4::zero );
-			fhRenderProgram::SetColorAdd( idVec4::one );
-			break;
-		case SVC_MODULATE:
-			fhRenderProgram::SetColorModulate( idVec4::one );
-			fhRenderProgram::SetColorAdd( idVec4::zero );
-			break;
-		case SVC_INVERSE_MODULATE:
-			fhRenderProgram::SetColorModulate( idVec4::negOne );
-			fhRenderProgram::SetColorAdd( idVec4::one );
-			break;
+		if(currentVertexColor != din.vertexColor) {
+			switch (din.vertexColor) {
+			case SVC_IGNORE:
+				fhRenderProgram::SetColorModulate( idVec4::zero );
+				fhRenderProgram::SetColorAdd( idVec4::one );
+				break;
+			case SVC_MODULATE:
+				fhRenderProgram::SetColorModulate( idVec4::one );
+				fhRenderProgram::SetColorAdd( idVec4::zero );
+				break;
+			case SVC_INVERSE_MODULATE:
+				fhRenderProgram::SetColorModulate( idVec4::negOne );
+				fhRenderProgram::SetColorAdd( idVec4::one );
+				break;
+			}
+			currentVertexColor = din.vertexColor;
 		}
 
 		fhRenderProgram::SetDiffuseColor( din.diffuseColor );
 		fhRenderProgram::SetSpecularColor( din.specularColor * r_specularScale.GetFloat() );
 
-		if (r_pomEnabled.GetBool() && din.specularImage->hasAlpha) {
-			fhRenderProgram::SetPomMaxHeight( r_pomMaxHeight.GetFloat() );
-		}
-		else {
-			fhRenderProgram::SetPomMaxHeight( -1 );
+		const bool pomEnabled = r_pomEnabled.GetBool() && din.specularImage->hasAlpha;
+		if (pomEnabled != currentPomEnabled) {
+			if(pomEnabled) {
+				fhRenderProgram::SetPomMaxHeight( r_pomMaxHeight.GetFloat() );
+			} 
+			else {
+				fhRenderProgram::SetPomMaxHeight( -1 );
+			}
 		}
 		
 		din.bumpImage->Bind( 1 );		
@@ -1534,12 +1566,19 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 
 		// draw it
 		RB_DrawElementsWithCounters( din.surf->geo );
+	}
 
-		// hack depth range if needed
-		if (din.surf->space->weaponDepthHack || din.surf->space->modelDepthHack) {
-			RB_LeaveDepthHack();
-			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
-		}
+	if(depthHackActive) {
+		RB_LeaveDepthHack();
+		fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+	}
+
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		backEnd.currentScissor.x1 = 0;
+		backEnd.currentScissor.y1 = 0;
+		backEnd.currentScissor.x2 = glConfig.vidWidth;
+		backEnd.currentScissor.y2 = glConfig.vidHeight;
 	}
 }
 
@@ -1575,7 +1614,6 @@ void RB_GLSL_DrawInteractions(void) {
 
 	if(vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap)
 		RB_RenderShadowMaps(vLight);
-
 	
     lightShader = vLight->lightShader;
 
@@ -1623,7 +1661,15 @@ void RB_GLSL_DrawInteractions(void) {
     glStencilFunc(GL_ALWAYS, 128, 255);
 
     backEnd.depthFunc = GLS_DEPTHFUNC_LESS;
-    RB_GLSL_CreateDrawInteractions(vLight->translucentInteractions);
+
+	if(r_renderList.GetBool()) {
+		interactionList.Clear();
+		RB_GLSL_CreateDrawInteractions( vLight->translucentInteractions, interactionList );
+		RB_GLSL_SubmitDrawInteractions( interactionList );
+	}
+	else {
+		RB_GLSL_CreateDrawInteractions(vLight->translucentInteractions);
+	}
 
     backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
   }

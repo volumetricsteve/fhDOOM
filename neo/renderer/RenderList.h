@@ -24,6 +24,10 @@ public:
 		return size;
 	}
 
+	bool IsEmpty() const {
+		return Num() == 0;
+	}
+
 	const T& operator[](int i) const {
 		assert(i < size);
 		return array[i];
