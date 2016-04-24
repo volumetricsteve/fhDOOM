@@ -528,7 +528,11 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 	
 	fhRenderProgram::SetProjectionMatrix( shadowProjectionMatrix );
 	fhRenderProgram::SetViewMatrix( shadowViewMatrix );		
+	fhRenderProgram::SetAlphaTestEnabled(false);
 
+	const idRenderEntityLocal *currentEntity = nullptr;
+	bool currentAlphaTest = false;
+	
 	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 		const idRenderEntityLocal *entityDef = inter->entityDef;
 
@@ -559,12 +563,18 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
 
 			fhRenderProgram::SetModelMatrix(fhRenderMatrix::identity.ToFloatPtr());				
-			fhRenderProgram::SetAlphaTestEnabled( false );				
+			if(currentAlphaTest) {
+				fhRenderProgram::SetAlphaTestEnabled( false );				
+				currentAlphaTest = false;
+			}
+			
+			currentEntity = nullptr;
+			
 			RB_DrawElementsWithCounters( tri );
 			backEnd.pc.c_shadowMapDraws++;
 
 			staticOccluderModelWasRendered = true;
-		}		
+		}				
 
 		// draw each surface
 		for (int i = 0; i < inter->numSurfaces; i++) {
@@ -601,8 +611,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			}
 
 			const auto offset = vertexCache.Bind(tri->ambientCache);
-			GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);
-			fhRenderProgram::SetModelMatrix(inter->entityDef->modelMatrix);		
+			GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);			
 
 			bool didDraw = false;
 			
@@ -632,12 +641,18 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 					fhRenderProgram::SetAlphaTestEnabled(true);
 					fhRenderProgram::SetAlphaTestThreshold(0.5f);
+					currentAlphaTest = true;
 
 					idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};
 					if (pStage->texture.hasMatrix) {						
 						RB_GetShaderTextureMatrix(regs, &pStage->texture, textureMatrix);
 					}
 					fhRenderProgram::SetDiffuseMatrix(textureMatrix[0], textureMatrix[1]);
+
+					if(currentEntity != entityDef) {
+						fhRenderProgram::SetModelMatrix(entityDef->modelMatrix);		
+						currentEntity = entityDef;
+					}
 
 					// draw it
 					RB_DrawElementsWithCounters(tri);
@@ -648,7 +663,16 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			}
 			
 			if(!didDraw) {
-				fhRenderProgram::SetAlphaTestEnabled(false);
+				if (currentAlphaTest) {
+					fhRenderProgram::SetAlphaTestEnabled( false );
+					currentAlphaTest = false;
+				}			
+
+				if (currentEntity != entityDef) {
+					fhRenderProgram::SetModelMatrix( entityDef->modelMatrix );
+					currentEntity = entityDef;
+				}
+
 				// draw it
 				RB_DrawElementsWithCounters(tri);
 				backEnd.pc.c_shadowMapDraws++;

@@ -49,4 +49,26 @@ struct drawDepth_t {
 	idVec4             color;
 };
 
+struct drawStage_t {
+	const drawSurf_t* surf;
+	const fhRenderProgram*  program;
+	idImage*          textures[4];
+	idCinematic*      cinematic;
+	float             textureMatrix[16];
+	bool              hasBumpMatrix;
+	idVec4            bumpMatrix[2];
+	depthBlendMode_t  depthBlendMode;
+	float             depthBlendRange;
+	stageVertexColor_t vertexColor;
+	float             polygonOffset;
+	idVec4            localViewOrigin;
+	idVec4            diffuseColor;
+	cullType_t        cullType;
+	int               drawStateBits;
+	idVec4            shaderparms[4];
+	int               numShaderparms;
+	fhVertexLayout    vertexLayout;
+};
+
 using DepthRenderList = fhRenderList<drawDepth_t>;
+using StageRenderList = fhRenderList<drawStage_t>;
