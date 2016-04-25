@@ -55,6 +55,8 @@ glDisable( GL_TEXTURE_* )
 ====================================================================
 */
 
+#pragma once
+
 typedef enum {
 	IS_UNLOADED,	// no gl texture number
 	IS_PARTIAL,		// has a texture number and the low mip levels loaded
@@ -168,11 +170,10 @@ public:
 						textureDepth_t depth );
 
 	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
-
 	void		CopyDepthbuffer( int x, int y, int width, int height );
 
-  void    AttachColorToFramebuffer(fhFramebuffer* framebuffer);
-  void    AttachDepthToFramebuffer(fhFramebuffer* framebuffer);
+	void		AttachColorToFramebuffer(fhFramebuffer* framebuffer);
+	void		AttachDepthToFramebuffer(fhFramebuffer* framebuffer);
 
 	void		UploadScratch( int textureUnit, const byte *pic, int width, int height );
 

@@ -637,6 +637,7 @@ typedef struct {
 
 typedef struct {
 	int		currentTexture;
+	int     currentSampler;
 	textureType_t	currentTextureType;
 } tmu_t;
 

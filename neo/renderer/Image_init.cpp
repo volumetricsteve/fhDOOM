@@ -877,16 +877,9 @@ static filterName_t textureFilters[] = {
 			continue;
 		}
 
+		//TODO(johl): do we need this bind? does some caller rely on the image being bound to 0 after calling this fucntion?
 		glt->Bind(0);
-		if ( glt->filter == TF_DEFAULT ) {
-			glSamplerParameteri( glt->samplernum, GL_TEXTURE_MIN_FILTER, globalImages->textureMinFilter );
-			glSamplerParameteri( glt->samplernum, GL_TEXTURE_MAG_FILTER, globalImages->textureMaxFilter );
-		}
-		if ( glConfig.anisotropicAvailable ) {
-			glSamplerParameterf( glt->samplernum, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalImages->textureAnisotropy );
-		}	
-
-		glSamplerParameterf( glt->samplernum, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
+		glt->SetImageFilterAndRepeat();
 	}
 }
 

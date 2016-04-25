@@ -381,6 +381,8 @@ SET(SOURCES
   renderer/RenderWorld_load.cpp
   renderer/RenderWorld_local.h
   renderer/RenderWorld_portals.cpp
+  renderer/Sampler.h
+  renderer/Sampler.cpp
   renderer/simplex.h
   renderer/tr_backend.cpp
   renderer/tr_deform.cpp
