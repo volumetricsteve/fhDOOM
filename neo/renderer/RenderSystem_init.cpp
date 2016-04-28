@@ -318,6 +318,9 @@ static void R_CheckPortableExtensions( void ) {
 
 	// GL_EXT_depth_bounds_test
 	glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );
+
+	glConfig.extDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_EXT_direct_state_access" );
+	glConfig.arbDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_ARB_direct_state_access" );
 }
 
 

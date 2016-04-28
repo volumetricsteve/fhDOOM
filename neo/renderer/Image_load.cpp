@@ -501,11 +501,6 @@ There is no way to specify explicit mip map levels
 void idImage::GenerateImage( const byte *pic, int width, int height, 
 					   textureFilter_t filterParm, bool allowDownSizeParm, 
 					   textureRepeat_t repeatParm, textureDepth_t depthParm ) {
-	bool	preserveBorder;
-	byte		*scaledBuffer;
-	int			scaled_width, scaled_height;
-	byte		*shrunk;
-
 	PurgeImage();
 
 	filter = filterParm;
@@ -522,15 +517,11 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	}
 
 	// don't let mip mapping smear the texture into the clamped border
-	if ( repeat == TR_CLAMP_TO_ZERO ) {
-		preserveBorder = true;
-	} else {
-		preserveBorder = false;
-	}
+	const bool preserveBorder = ( repeat == TR_CLAMP_TO_ZERO );
 
 	// make sure it is a power of 2
-	scaled_width = MakePowerOfTwo( width );
-	scaled_height = MakePowerOfTwo( height );
+	int scaled_width = MakePowerOfTwo( width );
+	int scaled_height = MakePowerOfTwo( height );
 
 	if ( scaled_width != width || scaled_height != height ) {
 		common->Error( "R_CreateImage: not a power of 2 image" );
@@ -539,11 +530,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	// Optionally modify our width/height based on options/hardware
 	GetDownsize( scaled_width, scaled_height );
 
-	scaledBuffer = NULL;
-
-	// generate the texture number
-	glGenTextures( 1, &texnum );
-	glGenSamplers( 1, &samplernum );
+	byte* scaledBuffer = NULL;
 
 	// select proper internal format before we resample
 	hasAlpha = false;
@@ -569,7 +556,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 		}
 
 		while ( width > scaled_width || height > scaled_height ) {
-			shrunk = R_MipMap( scaledBuffer, width, height, preserveBorder );
+			byte* shrunk = R_MipMap( scaledBuffer, width, height, preserveBorder );
 			R_StaticFree( scaledBuffer );
 			scaledBuffer = shrunk;
 
@@ -650,31 +637,23 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 			scaledBuffer[ i ] = 0;
 		}
 	}
+
+
+	// generate the texture number
+	glGenTextures( 1, &texnum );
+	glGenSamplers( 1, &samplernum );
+
 	// upload the main image level
-	Bind(0);
+	Bind();
+	assert(internalFormat != GL_COLOR_INDEX8_EXT);
 
-
-	if ( internalFormat == GL_COLOR_INDEX8_EXT ) {
-		/*
-		if ( depth == TD_BUMP ) {
-			for ( int i = 0; i < scaled_width * scaled_height * 4; i += 4 ) {
-				scaledBuffer[ i ] = scaledBuffer[ i + 3 ];
-				scaledBuffer[ i + 3 ] = 0;
-			}
-		}
-		*/
-		UploadCompressedNormalMap( scaled_width, scaled_height, scaledBuffer, 0 );
-	} else {
-		glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
-	}
-
+	glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+	
 	// create and upload the mip map levels, which we do in all cases, even if we don't think they are needed
-	int		miplevel;
-
-	miplevel = 0;
+	int miplevel = 0;
 	while ( scaled_width > 1 || scaled_height > 1 ) {
 		// preserve the border after mip map unless repeating
-		shrunk = R_MipMap( scaledBuffer, scaled_width, scaled_height, preserveBorder );
+		byte* shrunk = R_MipMap( scaledBuffer, scaled_width, scaled_height, preserveBorder );
 		R_StaticFree( scaledBuffer );
 		scaledBuffer = shrunk;
 
@@ -697,12 +676,8 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 		}
 
 		// upload the mip map
-		if ( internalFormat == GL_COLOR_INDEX8_EXT ) {
-			UploadCompressedNormalMap( scaled_width, scaled_height, scaledBuffer, miplevel );
-		} else {
-			glTexImage2D( GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 
+		glTexImage2D( GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 
 				0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
-		}
 	}
 
 	if ( scaledBuffer != 0 ) {

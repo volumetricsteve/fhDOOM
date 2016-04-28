@@ -67,6 +67,8 @@ typedef struct glconfig_s {
 	bool				envDot3Available;		
 	bool				textureNonPowerOfTwoAvailable;
 	bool				depthBoundsTestAvailable;
+	bool                extDirectStateAccessAvailable;
+	bool                arbDirectStateAccessAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
 	int					vidAspectRatio;
