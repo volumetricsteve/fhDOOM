@@ -1792,7 +1792,7 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 		
 		if(din.hasSpecularMatrix) {
 			fhRenderProgram::SetSpecularMatrix( din.specularMatrix[0], din.specularMatrix[1] );
-			currentHasSpecularMatrix = false;
+			currentHasSpecularMatrix = true;
 		}
 		else if(currentHasSpecularMatrix) {
 			fhRenderProgram::SetSpecularMatrix( idVec4::identityS, idVec4::identityT );
@@ -1917,7 +1917,7 @@ void RB_GLSL_DrawInteractions(void) {
       glStencilFunc(GL_ALWAYS, 128, 255);
     }
 
-	if(r_renderList.GetBool()) {
+	if(r_renderList.GetBool() && !r_ignore.GetBool()) {
 		RB_GLSL_StencilShadowPass( vLight->globalShadows );
 		interactionList.Clear();
 		RB_GLSL_CreateDrawInteractions( vLight->localInteractions, interactionList );
@@ -2019,11 +2019,14 @@ static bool RB_GLSL_CreateShaderStage(const drawSurf_t* surf, const shaderStage_
 
 		// see if there is also a bump map specified
 		if (const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
-			RB_GetShaderTextureMatrix( surf->shaderRegisters, &bumpStage->texture, drawStage.bumpMatrix );
-			drawStage.hasBumpMatrix = true;
+			//RB_GetShaderTextureMatrix( surf->shaderRegisters, &bumpStage->texture, drawStage.bumpMatrix );			
+			//drawStage.hasBumpMatrix = true;
 			drawStage.textures[2] = bumpStage->texture.image;
 		}
 		else {
+			//drawStage.hasBumpMatrix = true;
+			//drawStage.bumpMatrix[0] = idVec4::identityS;
+			//drawStage.bumpMatrix[1] = idVec4::identityT;
 			drawStage.textures[2] = globalImages->flatNormalMap;
 		}
 
@@ -2190,9 +2193,28 @@ void RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist) {
 	bool currentBumpMatrix = true;
 	idScreenRect currentScissor;
 
+
 	const int num = renderlist.Num();
+	bool currentRenderCopied = false;
+
 	for(int i = 0; i < num; ++i) {
 		const drawStage_t& drawstage = renderlist[i];
+
+		// if we are about to draw the first surface that needs
+		// the rendering in a texture, copy it over
+		if (drawstage.surf->material->GetSort() >= SS_POST_PROCESS && !currentRenderCopied) {
+			if (r_skipPostProcess.GetBool()) {
+				continue;
+			}
+
+			// only dump if in a 3d view
+			if (backEnd.viewDef->viewEntitys) {
+				globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
+					backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+					backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true );
+			}
+			currentRenderCopied = true;
+		}
 
 		if(currentProgram != drawstage.program) {
 			GL_UseProgram(drawstage.program);
@@ -2260,6 +2282,10 @@ void RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist) {
 		fhRenderProgram::SetTextureMatrix(drawstage.textureMatrix);
 		fhRenderProgram::SetDepthBlendRange( drawstage.depthBlendRange );
 		fhRenderProgram::SetDepthBlendMode( static_cast<int>(drawstage.depthBlendMode) );		
+		fhRenderProgram::SetShaderParm(0, drawstage.shaderparms[0]);
+		fhRenderProgram::SetShaderParm(1, drawstage.shaderparms[1]);
+		fhRenderProgram::SetShaderParm(2, drawstage.shaderparms[2]);
+		fhRenderProgram::SetShaderParm(3, drawstage.shaderparms[3]);
 
 		if(currentVertexColor != drawstage.vertexColor) {
 			switch (drawstage.vertexColor) {
@@ -2329,9 +2355,7 @@ void RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist) {
 	GL_SelectTexture( 0 );
 }
 
-int RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist) {
-	int				i;
-
+int RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist, int maxSort) {
 	// only obey skipAmbient if we are rendering a view
 	if (backEnd.viewDef->viewEntitys && r_skipAmbient.GetBool()) {
 		return numDrawSurfs;
@@ -2339,23 +2363,8 @@ int RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, Stag
 
 	RB_LogComment( "---------- RB_GLSL_CreateStageRenderList ----------\n" );
 
-	// if we are about to draw the first surface that needs
-	// the rendering in a texture, copy it over
-	if (drawSurfs[0]->material->GetSort() >= SS_POST_PROCESS) {
-		if (r_skipPostProcess.GetBool()) {
-			return 0;
-		}
-
-		// only dump if in a 3d view
-		if (backEnd.viewDef->viewEntitys) {
-			globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
-				backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
-				backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true );
-		}
-		backEnd.currentRenderCopied = true;
-	}
-
-	for (i = 0; i < numDrawSurfs; i++) {
+	int i = 0;
+	for (; i < numDrawSurfs; i++) {
 		if (drawSurfs[i]->material->SuppressInSubview()) {
 			continue;
 		}
@@ -2367,8 +2376,7 @@ int RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, Stag
 		}
 
 		// we need to draw the post process shaders after we have drawn the fog lights
-		if (drawSurfs[i]->material->GetSort() >= SS_POST_PROCESS
-			&& !backEnd.currentRenderCopied) {
+		if (drawSurfs[i]->material->GetSort() >= maxSort) {
 			break;
 		}
 

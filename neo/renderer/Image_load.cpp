@@ -1571,11 +1571,13 @@ void idImage::Bind(int textureUnit) {
 				assert(false);
 			}
 
-			if(samplernum != TEXTURE_NOT_LOADED) {
-				glBindSampler(textureUnit, samplernum);
-			}
 			tmu->currentTexture = texnum;
 			tmu->currentTextureType = type;
+		}
+
+		if (samplernum != TEXTURE_NOT_LOADED && tmu->currentSampler != samplernum) {
+			glBindSampler( textureUnit, samplernum );
+			tmu->currentSampler = samplernum;
 		}
 	} else {
 		tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
@@ -1591,11 +1593,13 @@ void idImage::Bind(int textureUnit) {
 				assert( false );
 			}
 
-			if(samplernum != TEXTURE_NOT_LOADED) {
-				glBindSampler(backEnd.glState.currenttmu, samplernum);
-			}
 			tmu->currentTexture = texnum;
 			tmu->currentTextureType = type;
+		}
+
+		if (samplernum != TEXTURE_NOT_LOADED && tmu->currentSampler != samplernum) {
+			glBindSampler( textureUnit, samplernum );
+			tmu->currentSampler = samplernum;
 		}
 	}
 

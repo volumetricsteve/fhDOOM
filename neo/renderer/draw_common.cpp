@@ -410,7 +410,7 @@ void	RB_STD_DrawView( void ) {
 	// uplight the entire screen to crutch up not having better blending range
 	RB_STD_LightScale();  
 
-	if(!r_renderList.GetBool()) {
+	if(!r_renderList.GetBool()  || r_ignore2.GetBool()) {
 		// now draw any non-light dependent shading passes
 		int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );
 
@@ -426,7 +426,7 @@ void	RB_STD_DrawView( void ) {
 		StageRenderList stageRenderlist;
 
 		// now draw any non-light dependent shading passes
-		int	processed = RB_GLSL_CreateStageRenderList( drawSurfs, numDrawSurfs, stageRenderlist );
+		int	processed = RB_GLSL_CreateStageRenderList( drawSurfs, numDrawSurfs, stageRenderlist, SS_POST_PROCESS );
 		RB_GLSL_SubmitStageRenderList(stageRenderlist);
 
 		// fob and blend lights
@@ -435,7 +435,7 @@ void	RB_STD_DrawView( void ) {
 		// now draw any post-processing effects using _currentRender
 		if (processed < numDrawSurfs) {
 			stageRenderlist.Clear();
-			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist );
+			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist, INT_MAX );
 			RB_GLSL_SubmitStageRenderList(stageRenderlist);
 		}
 	}

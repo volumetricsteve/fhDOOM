@@ -1373,7 +1373,7 @@ void	RB_GLSL_RenderShaderStage( const drawSurf_t *surf, const shaderStage_t* pSt
 void	RB_GLSL_FogPass( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
 void	RB_GLSL_BlendLight( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
 
-int     RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist);
+int     RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist, int maxSort);
 void    RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist);
 
 typedef enum {
