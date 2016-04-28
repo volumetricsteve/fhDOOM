@@ -144,6 +144,7 @@ typedef enum {
 #define	MAX_IMAGE_NAME	256
 
 class fhFramebuffer;
+class fhSampler;
 
 class idImage {
 public:
@@ -195,7 +196,7 @@ public:
 
 	void		GetDownsize( int &scaled_width, int &scaled_height ) const;
 	void		MakeDefault();	// fill with a grid pattern
-	void		SetImageFilterAndRepeat() const;
+	void		SetImageFilterAndRepeat();
 	bool		ShouldImageBePartialCached();
 	void		WritePrecompressedImage();
 	bool		CheckPrecompressedImage( bool fullLoad );
@@ -211,7 +212,8 @@ public:
 
 	// data commonly accessed is grouped here
 	static const int TEXTURE_NOT_LOADED = -1;
-	GLuint              samplernum;             // gl sampler object
+	fhSampler*          sampler;
+	//GLuint              samplernum;             // gl sampler object
 	GLuint				texnum;					// gl texture binding, will be TEXTURE_NOT_LOADED if not loaded
 	textureType_t		type;
 	int					frameUsed;				// for texture usage in frame statistics
@@ -258,7 +260,7 @@ public:
 
 ID_INLINE idImage::idImage() {
 	texnum = TEXTURE_NOT_LOADED;
-	samplernum = TEXTURE_NOT_LOADED;
+	sampler = nullptr;
 	partialImage = NULL;
 	type = TT_DISABLED;
 	isPartialImage = false;

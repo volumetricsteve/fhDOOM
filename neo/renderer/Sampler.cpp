@@ -125,7 +125,7 @@ void fhSampler::Init() {
 	}
 	
 	
-/*
+
 	if (glConfig.anisotropicAvailable) {
 		// only do aniso filtering on mip mapped images
 		if (filter == TF_DEFAULT && useAf) {
@@ -141,7 +141,6 @@ void fhSampler::Init() {
 	} else {
 		glSamplerParameterf( num, GL_TEXTURE_LOD_BIAS, 0 );
 	}
-*/	
 }
 
 void fhSampler::SetParams(textureFilter_t filter, textureRepeat_t repeat, bool useAf, bool useLodBias) {

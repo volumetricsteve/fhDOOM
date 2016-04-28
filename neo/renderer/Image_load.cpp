@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "Sampler.h"
 
 /*
 PROBLEM: compressed textures may break the zero clamp rule!
@@ -358,7 +359,10 @@ GLenum idImage::SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, in
 SetImageFilterAndRepeat
 ==================
 */
-void idImage::SetImageFilterAndRepeat() const {
+void idImage::SetImageFilterAndRepeat() {
+	sampler = fhSampler::GetSampler(filter, repeat, true, true);
+
+#if 0
 	// set the minimize / maximize filtering
 	switch (filter) {
 	case TF_DEFAULT:
@@ -409,6 +413,7 @@ void idImage::SetImageFilterAndRepeat() const {
 	default:
 		common->FatalError( "R_CreateImage: bad texture repeat" );
 	}
+#endif
 }
 
 /*
@@ -640,8 +645,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 
 
 	// generate the texture number
-	glGenTextures( 1, &texnum );
-	glGenSamplers( 1, &samplernum );
+	glGenTextures( 1, &texnum );	
 
 	assert(internalFormat != GL_COLOR_INDEX8_EXT);
 
@@ -743,7 +747,6 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 
 	// generate the texture number
 	glGenTextures( 1, &texnum );
-	glGenSamplers( 1, &samplernum );
 
 	if(glConfig.extDirectStateAccessAvailable) {
 		for (i = 0; i < 6; i++) {
@@ -1290,7 +1293,6 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 
 	// generate the texture number
 	glGenTextures( 1, &texnum );
-	glGenSamplers( 1, &samplernum );
 
 	int externalFormat = 0;
 
@@ -1521,11 +1523,6 @@ void idImage::PurgeImage() {
 		texnum = TEXTURE_NOT_LOADED;
 	}
 
-	if (samplernum != TEXTURE_NOT_LOADED) {
-		glDeleteSamplers( 1, &samplernum );	// this should be the ONLY place it is ever called!
-		samplernum = TEXTURE_NOT_LOADED;
-	}
-
 	// clear all the current binding caches, so the next bind will do a real one
 	for ( int i = 0 ; i < MAX_MULTITEXTURE_UNITS ; i++ ) {
 		backEnd.glState.tmu[i].currentTexture = TEXTURE_NOT_LOADED;
@@ -1612,9 +1609,8 @@ void idImage::Bind(int textureUnit) {
 		tmu->currentTextureType = type;
 	}
 
-	if (samplernum != TEXTURE_NOT_LOADED && tmu->currentSampler != samplernum) {
-		glBindSampler( textureUnit, samplernum );
-		tmu->currentSampler = samplernum;
+	if(sampler) {
+		sampler->Bind(textureUnit);
 	}
 
 	if ( com_purgeAll.GetBool() ) {
