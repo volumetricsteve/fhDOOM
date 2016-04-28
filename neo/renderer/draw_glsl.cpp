@@ -1917,7 +1917,7 @@ void RB_GLSL_DrawInteractions(void) {
       glStencilFunc(GL_ALWAYS, 128, 255);
     }
 
-	if(r_renderList.GetBool() && !r_ignore.GetBool()) {
+	if(r_renderList.GetBool()) {
 		RB_GLSL_StencilShadowPass( vLight->globalShadows );
 		interactionList.Clear();
 		RB_GLSL_CreateDrawInteractions( vLight->localInteractions, interactionList );
@@ -2352,7 +2352,6 @@ void RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist) {
 	}
 
 	GL_UseProgram( nullptr );
-	GL_SelectTexture( 0 );
 }
 
 int RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist, int maxSort) {

@@ -97,8 +97,8 @@ void RB_ARB2_RenderSpecialShaderStage( const float* regs, const shaderStage_t* p
 
 	for (int i = 0; i < newStage->numFragmentProgramImages; i++) {
 		if (newStage->fragmentProgramImages[i]) {
-			GL_SelectTexture( i );
-			newStage->fragmentProgramImages[i]->Bind();
+			//GL_SelectTexture( i );
+			newStage->fragmentProgramImages[i]->Bind(i);
 		}
 	}	
 

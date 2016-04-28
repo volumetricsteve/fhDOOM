@@ -153,7 +153,7 @@ public:
 	// automatically enables or disables cube mapping or texture3D
 	// May perform file loading if the image was not preloaded.
 	// May start a background image read.
-	void		Bind(int textureUnit = -1);
+	void		Bind(int textureUnit);
 
 	// deletes the texture object, but leaves the structure so it can be reloaded
 	void		PurgeImage();

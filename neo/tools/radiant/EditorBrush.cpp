@@ -74,7 +74,6 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
       if (cameraView && (nDrawMode == cd_texture) && material) {
         GL_UseProgram(defaultProgram);   
         material->GetEditorImage()->Bind(1);
-        GL_SelectTexture(0);
         
 		fhRenderProgram::SetColorAdd(idVec4(color * 0.25, 1));
 		fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));

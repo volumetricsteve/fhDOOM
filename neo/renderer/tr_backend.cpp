@@ -113,8 +113,13 @@ void GL_SelectTexture( int unit ) {
 		return;
 	}
 
-	glActiveTexture( GL_TEXTURE0 + unit );
-	RB_LogComment( "glActiveTexture( %i );\n", unit );
+	if(glConfig.extDirectStateAccessAvailable) {
+		RB_LogComment( "ignore GL_SelectTexture( %i );\n", unit );
+	}
+	else {
+		glActiveTexture( GL_TEXTURE0 + unit );
+		RB_LogComment( "glActiveTexture( %i );\n", unit );
+	}
 
 	backEnd.glState.currenttmu = unit;
 }
@@ -810,7 +815,7 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 	}
 
 	// go back to the default texture so the editor doesn't mess up a bound image
-	glBindTexture( GL_TEXTURE_2D, 0 );
+	//glBindTexture( GL_TEXTURE_2D, 0 );
 	backEnd.glState.tmu[0].currentTexture = 0;
 
 	// stop rendering on this thread

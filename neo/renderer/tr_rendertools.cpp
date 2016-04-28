@@ -413,8 +413,7 @@ void RB_ShowIntensity( void ) {
 		idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
 		idVec2(backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,	backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1));
 
-    GL_SelectTexture(0);
-    globalImages->currentRenderImage->Bind();    
+    globalImages->currentRenderImage->Bind(0);    
 
     fhImmediateMode im(true);    
     im.Color3f(1, 1, 1);
@@ -522,7 +521,7 @@ void RB_ShowLightCount(void) {
 
 	glStencilFunc(GL_ALWAYS, 1, 255);
 
-	globalImages->defaultImage->Bind();
+	globalImages->defaultImage->Bind(0);
 
 
 	GL_UseProgram(vertexColorProgram);	
@@ -685,7 +684,7 @@ static void RB_ShowShadowCount( void ) {
 
 	glStencilFunc( GL_ALWAYS, 1, 255 );
 
-	globalImages->defaultImage->Bind();
+	globalImages->defaultImage->Bind(0);
 
 	// draw both sides
 	GL_Cull( CT_TWO_SIDED );
@@ -1575,9 +1574,8 @@ void RB_ShowLights2( void ) {
 	fhRenderProgram::SetColorModulate(idVec4::zero);
 	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
 	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-	GL_SelectTexture( 1 );
-	globalImages->whiteImage->Bind();
-	GL_SelectTexture( 0 );
+
+	globalImages->whiteImage->Bind(1);
 
 
 	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
@@ -1670,9 +1668,7 @@ void RB_ShowLights( void ) {
 	fhRenderProgram::SetColorModulate(idVec4::zero);	
 	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
 	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
-	GL_SelectTexture(1);
-	globalImages->whiteImage->Bind();
-	GL_SelectTexture(0);
+	globalImages->whiteImage->Bind(1);
 
 	count = 0;
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {

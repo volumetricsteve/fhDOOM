@@ -97,11 +97,11 @@ void fhImmediateMode::End()
 	if (!geometryOnly) {
 		if (currentTexture) {
 			currentTexture->Bind(1);
+
 			if (currentTexture->type == TT_CUBIC)
 				GL_UseProgram(skyboxProgram);
 			else
 				GL_UseProgram(defaultProgram);
-			GL_SelectTexture(0);
 		}
 		else {
 			GL_UseProgram(vertexColorProgram);

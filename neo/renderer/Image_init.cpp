@@ -1802,45 +1802,36 @@ BindNull
 ===============
 */
 void idImageManager::BindNull(int textureUnit) {
-	if (textureUnit != -1) {
-		tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
 
-		if (tmu->currentTexture != 0) {
+	if(textureUnit == -1) {
+		textureUnit = backEnd.glState.currenttmu;
+	}
+
+	tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
+
+
+	if (tmu->currentTexture != 0) {
+		RB_LogComment( "BindNull()\n" );
+
+		if(glConfig.extDirectStateAccessAvailable) {
+			if (tmu->currentTextureType == TT_2D) {
+				glBindMultiTextureEXT(GL_TEXTURE0 +  textureUnit, GL_TEXTURE_2D, 0 );				
+			}
+			else if (tmu->currentTextureType == TT_CUBIC) {
+				glBindMultiTextureEXT(GL_TEXTURE0 +  textureUnit, GL_TEXTURE_CUBE_MAP, 0 );
+			}
+		} else {
 			GL_SelectTexture( textureUnit );
 
-			RB_LogComment( "BindNull()\n" );
-
 			if (tmu->currentTextureType == TT_2D) {
 				glBindTexture( GL_TEXTURE_2D, 0 );
 			}
 			else if (tmu->currentTextureType == TT_CUBIC) {
 				glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
 			}
-			else {
-				assert( false );
-			}
-
-			tmu->currentTexture = 0;
 		}
-	}
-	else {
-		tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
 
-		if (tmu->currentTexture != 0) {
-			RB_LogComment( "BindNull()\n" );
-
-			if (tmu->currentTextureType == TT_2D) {
-				glBindTexture( GL_TEXTURE_2D, 0 );
-			}
-			else if (tmu->currentTextureType == TT_CUBIC) {
-				glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
-			}
-			else {
-				assert( false );
-			}
-
-			tmu->currentTexture = 0;
-		}
+		tmu->currentTexture = 0;
 	}
 }
 

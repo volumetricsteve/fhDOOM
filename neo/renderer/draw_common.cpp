@@ -247,7 +247,6 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		backEnd.currentSpace = drawSurfs[i]->space;
 	}  
 	backEnd.currentSpace = NULL;
-	GL_SelectTexture(0);
 	RB_LeaveDepthHack();
 	GL_Cull( CT_FRONT_SIDED );
 
@@ -336,7 +335,7 @@ void RB_STD_LightScale( void ) {
 
 	GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_SRC_COLOR );
 	GL_Cull( CT_TWO_SIDED );	// so mirror views also get it
-	globalImages->BindNull();
+	globalImages->BindNull(0);
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_STENCIL_TEST );
 
@@ -438,8 +437,7 @@ void	RB_STD_DrawView( void ) {
 			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist, INT_MAX );
 			RB_GLSL_SubmitStageRenderList(stageRenderlist);
 		}
-	}
+	}	
 	
-
-	RB_RenderDebugTools( drawSurfs, numDrawSurfs );  
+	RB_RenderDebugTools( drawSurfs, numDrawSurfs ); 
 }

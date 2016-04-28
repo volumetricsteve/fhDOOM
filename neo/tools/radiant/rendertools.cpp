@@ -73,13 +73,11 @@ void fhTrisBuffer::Commit(idImage* texture, const idVec4& colorModulate, const i
   if (verticesUsed > 0)
   {
     if (texture) {
-      GL_SelectTexture(1);
-      texture->Bind();
+      texture->Bind(1);
       if (texture->type == TT_CUBIC)
         GL_UseProgram(skyboxProgram);
       else
         GL_UseProgram(defaultProgram);
-      GL_SelectTexture(0);
     }
     else {
       GL_UseProgram(vertexColorProgram);

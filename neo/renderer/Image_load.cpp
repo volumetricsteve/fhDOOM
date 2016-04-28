@@ -643,42 +643,48 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	glGenTextures( 1, &texnum );
 	glGenSamplers( 1, &samplernum );
 
-	// upload the main image level
-	Bind();
 	assert(internalFormat != GL_COLOR_INDEX8_EXT);
 
-	glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
-	
-	// create and upload the mip map levels, which we do in all cases, even if we don't think they are needed
-	int miplevel = 0;
-	while ( scaled_width > 1 || scaled_height > 1 ) {
-		// preserve the border after mip map unless repeating
-		byte* shrunk = R_MipMap( scaledBuffer, scaled_width, scaled_height, preserveBorder );
-		R_StaticFree( scaledBuffer );
-		scaledBuffer = shrunk;
-
-		scaled_width >>= 1;
-		scaled_height >>= 1;
-		if ( scaled_width < 1 ) {
-			scaled_width = 1;
-		}
-		if ( scaled_height < 1 ) {
-			scaled_height = 1;
-		}
-		miplevel++;
-
-		// this is a visualization tool that shades each mip map
-		// level with a different color so you can see the
-		// rasterizer's texture level selection algorithm
-		// Changing the color doesn't help with lumminance/alpha/intensity formats...
-		if ( depth == TD_DIFFUSE && globalImages->image_colorMipLevels.GetBool() ) {
-			R_BlendOverTexture( (byte *)scaledBuffer, scaled_width * scaled_height, mipBlendColors[miplevel] );
-		}
-
-		// upload the mip map
-		glTexImage2D( GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height, 
-				0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+	// upload the main image level
+	if(glConfig.extDirectStateAccessAvailable) {
+		glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+		glGenerateTextureMipmapEXT( texnum, GL_TEXTURE_2D );
 	}
+	else {
+		Bind(0);
+		glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+
+		// create and upload the mip map levels, which we do in all cases, even if we don't think they are needed
+		int miplevel = 0;
+		while (scaled_width > 1 || scaled_height > 1) {
+			// preserve the border after mip map unless repeating
+			byte* shrunk = R_MipMap( scaledBuffer, scaled_width, scaled_height, preserveBorder );
+			R_StaticFree( scaledBuffer );
+			scaledBuffer = shrunk;
+
+			scaled_width >>= 1;
+			scaled_height >>= 1;
+			if (scaled_width < 1) {
+				scaled_width = 1;
+			}
+			if (scaled_height < 1) {
+				scaled_height = 1;
+			}
+			miplevel++;
+
+			// this is a visualization tool that shades each mip map
+			// level with a different color so you can see the
+			// rasterizer's texture level selection algorithm
+			// Changing the color doesn't help with lumminance/alpha/intensity formats...
+			if (depth == TD_DIFFUSE && globalImages->image_colorMipLevels.GetBool()) {
+				R_BlendOverTexture( (byte *)scaledBuffer, scaled_width * scaled_height, mipBlendColors[miplevel] );
+			}
+
+			// upload the mip map
+			glTexImage2D( GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height,
+				0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
+		}
+	}	
 
 	if ( scaledBuffer != 0 ) {
 		R_StaticFree( scaledBuffer );
@@ -722,9 +728,6 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 
 	width = height = size;
 
-	// generate the texture number
-	glGenTextures( 1, &texnum );
-	glGenSamplers( 1, &samplernum );
 
 	// select proper internal format before we resample
 	hasAlpha = false;
@@ -737,50 +740,66 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	uploadHeight = scaled_height;
 	uploadWidth = scaled_width;
 
-	Bind(0);
+
+	// generate the texture number
+	glGenTextures( 1, &texnum );
+	glGenSamplers( 1, &samplernum );
+
+	if(glConfig.extDirectStateAccessAvailable) {
+		for (i = 0; i < 6; i++) {
+			glTextureImage2DEXT( texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, scaled_width, scaled_height, 0,
+				GL_RGBA, GL_UNSIGNED_BYTE, pic[i] );
+		}
+
+		glGenerateTextureMipmapEXT( texnum, GL_TEXTURE_CUBE_MAP );
+	}
+	else {
+		Bind( 0 );
+
+		// upload the base level
+		// FIXME: support GL_COLOR_INDEX8_EXT?
+		for (i = 0; i < 6; i++) {
+			glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, scaled_width, scaled_height, 0,
+				GL_RGBA, GL_UNSIGNED_BYTE, pic[i] );
+		}
+
+
+		// create and upload the mip map levels
+		int		miplevel;
+		byte	*shrunk[6];
+
+		for (i = 0; i < 6; i++) {
+			shrunk[i] = R_MipMap( pic[i], scaled_width, scaled_height, false );
+		}
+
+		miplevel = 1;
+		while (scaled_width > 1) {
+			for (i = 0; i < 6; i++) {
+				byte	*shrunken;
+
+				glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, miplevel, internalFormat,
+					scaled_width / 2, scaled_height / 2, 0,
+					GL_RGBA, GL_UNSIGNED_BYTE, shrunk[i] );
+
+				if (scaled_width > 2) {
+					shrunken = R_MipMap( shrunk[i], scaled_width / 2, scaled_height / 2, false );
+				}
+				else {
+					shrunken = NULL;
+				}
+
+				R_StaticFree( shrunk[i] );
+				shrunk[i] = shrunken;
+			}
+
+			scaled_width >>= 1;
+			scaled_height >>= 1;
+			miplevel++;
+		}
+	}	
 
 	repeat = TR_CLAMP;
 	SetImageFilterAndRepeat();
-
-	// upload the base level
-	// FIXME: support GL_COLOR_INDEX8_EXT?
-	for ( i = 0 ; i < 6 ; i++ ) {
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, 0, internalFormat, scaled_width, scaled_height, 0, 
-			GL_RGBA, GL_UNSIGNED_BYTE, pic[i] );
-	}
-
-
-	// create and upload the mip map levels
-	int		miplevel;
-	byte	*shrunk[6];
-
-	for ( i = 0 ; i < 6 ; i++ ) {
-		shrunk[i] = R_MipMap( pic[i], scaled_width, scaled_height, false );
-	}
-
-	miplevel = 1;
-	while ( scaled_width > 1 ) {
-		for ( i = 0 ; i < 6 ; i++ ) {
-			byte	*shrunken;
-
-			glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X+i, miplevel, internalFormat, 
-				scaled_width / 2, scaled_height / 2, 0, 
-				GL_RGBA, GL_UNSIGNED_BYTE, shrunk[i] );
-
-			if ( scaled_width > 2 ) {
-				shrunken = R_MipMap( shrunk[i], scaled_width/2, scaled_height/2, false );
-			} else {
-				shrunken = NULL;
-			}
-
-			R_StaticFree( shrunk[i] );
-			shrunk[i] = shrunken;
-		}
-
-		scaled_width >>= 1;
-		scaled_height >>= 1;
-		miplevel++;
-	}
 
 	// see if we messed anything up
 	GL_CheckErrors();
@@ -1330,7 +1349,9 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 
 	type = TT_2D;			// FIXME: we may want to support pre-compressed cube maps in the future
 
-	Bind(0);
+	if(!glConfig.extDirectStateAccessAvailable) {
+		Bind(0);
+	}
 
 	int numMipmaps = 1;
 	if ( header->dwFlags & DDSF_MIPMAPCOUNT ) {
@@ -1359,9 +1380,19 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 			skipMip++;
 		} else {
 			if ( FormatIsDXT( internalFormat ) ) {
-				glCompressedTexImage2DARB( GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, size, imagedata );
+				if(glConfig.extDirectStateAccessAvailable) {
+					glCompressedTextureImage2DEXT( texnum, GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, size, imagedata );
+				} 
+				else {
+					glCompressedTexImage2DARB( GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, size, imagedata );
+				}
 			} else {
-				glTexImage2D( GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, externalFormat, GL_UNSIGNED_BYTE, imagedata );
+				if(glConfig.extDirectStateAccessAvailable) {
+					glTextureImage2DEXT( texnum, GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, externalFormat, GL_UNSIGNED_BYTE, imagedata );
+				}
+				else {
+					glTexImage2D( GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, externalFormat, GL_UNSIGNED_BYTE, imagedata );
+				}
 			}
 		}
 
@@ -1551,14 +1582,22 @@ void idImage::Bind(int textureUnit) {
 	frameUsed = backEnd.frameCount;
 	bindCount++;	
 
-	if(textureUnit > 7) {
-		int wtf = 0;
+	if(textureUnit == -1) {
+		textureUnit = backEnd.glState.currenttmu;
 	}
+	
+	tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
 
-	if (textureUnit != -1) {
-		tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
-
-		if(tmu->currentTexture != texnum) {
+	if(tmu->currentTexture != texnum) {
+		if(glConfig.extDirectStateAccessAvailable) {
+			if (type == TT_2D) {
+				glBindMultiTextureEXT(GL_TEXTURE0 + textureUnit, GL_TEXTURE_2D, texnum);
+			}
+			else if (type == TT_CUBIC) {
+				glBindMultiTextureEXT(GL_TEXTURE0 + textureUnit, GL_TEXTURE_CUBE_MAP, texnum);
+			}
+		}
+		else {
 			GL_SelectTexture( textureUnit );
 
 			if (type == TT_2D) {
@@ -1567,43 +1606,16 @@ void idImage::Bind(int textureUnit) {
 			else if (type == TT_CUBIC) {
 				glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
 			}
-			else {
-				assert(false);
-			}
-
-			tmu->currentTexture = texnum;
-			tmu->currentTextureType = type;
 		}
 
-		if (samplernum != TEXTURE_NOT_LOADED && tmu->currentSampler != samplernum) {
-			glBindSampler( textureUnit, samplernum );
-			tmu->currentSampler = samplernum;
-		}
-	} else {
-		tmu_t *tmu = &backEnd.glState.tmu[backEnd.glState.currenttmu];
-
-		if (tmu->currentTexture != texnum) {
-			if (type == TT_2D) {
-				glBindTexture( GL_TEXTURE_2D, texnum );
-			}
-			else if (type == TT_CUBIC) {
-				glBindTexture( GL_TEXTURE_CUBE_MAP, texnum );
-			}
-			else {
-				assert( false );
-			}
-
-			tmu->currentTexture = texnum;
-			tmu->currentTextureType = type;
-		}
-
-		if (samplernum != TEXTURE_NOT_LOADED && tmu->currentSampler != samplernum) {
-			glBindSampler( textureUnit, samplernum );
-			tmu->currentSampler = samplernum;
-		}
+		tmu->currentTexture = texnum;
+		tmu->currentTextureType = type;
 	}
 
-
+	if (samplernum != TEXTURE_NOT_LOADED && tmu->currentSampler != samplernum) {
+		glBindSampler( textureUnit, samplernum );
+		tmu->currentSampler = samplernum;
+	}
 
 	if ( com_purgeAll.GetBool() ) {
 		GLclampf priority = 1.0f;
@@ -1618,20 +1630,38 @@ CopyFramebuffer
 ====================
 */
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
-	Bind(0);
 
-	glReadBuffer( GL_BACK );
+	if(glConfig.extDirectStateAccessAvailable) {
+		glReadBuffer( GL_BACK );
 
-	if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-		uploadWidth = imageWidth;
-		uploadHeight = imageHeight;
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		SetImageFilterAndRepeat();
+		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
+			uploadWidth = imageWidth;
+			uploadHeight = imageHeight;
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
+
+		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
+	}
+	else {
+		Bind( 0 );
+
+		glReadBuffer( GL_BACK );
+
+		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
+			uploadWidth = imageWidth;
+			uploadHeight = imageHeight;
+			glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
+
+		glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
 	}
 
-	glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
 	backEnd.c_copyFrameBuffer++;
 }
 
@@ -1643,51 +1673,100 @@ This should just be part of copyFramebuffer once we have a proper image type fie
 ====================
 */
 void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
-	Bind(0);
 
-	glReadBuffer( GL_BACK );
+	if(glConfig.extDirectStateAccessAvailable) {
+	
+		glReadBuffer( GL_BACK );
 
-	if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-		uploadWidth = imageWidth;
-		uploadHeight = imageHeight;
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		SetImageFilterAndRepeat();
+		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
+			uploadWidth = imageWidth;
+			uploadHeight = imageHeight;
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
+
+		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
+	}
+	else {
+		Bind( 0 );
+
+		glReadBuffer( GL_BACK );
+
+		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
+			uploadWidth = imageWidth;
+			uploadHeight = imageHeight;
+			glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
+
+		glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
 	}
 
-	glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
 
 	backEnd.c_copyFrameBuffer++;
 }
 
 void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
-	Bind(0);
 
-	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
-		uploadWidth = framebuffer->GetWidth();
-		uploadHeight = framebuffer->GetHeight();
+	Bind( 0 );
 
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		SetImageFilterAndRepeat();
+	if(glConfig.extDirectStateAccessAvailable) {
+		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
+			uploadWidth = framebuffer->GetWidth();
+			uploadHeight = framebuffer->GetHeight();
+
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
+	}
+	else {	
+
+		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
+			uploadWidth = framebuffer->GetWidth();
+			uploadHeight = framebuffer->GetHeight();
+
+			glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
 	}
 
 	glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texnum, 0 );
 }
 
 void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
-	Bind(0);
 
-	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
-		uploadWidth = framebuffer->GetWidth();
-		uploadHeight = framebuffer->GetHeight();
+	Bind( 0 );
 
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		SetImageFilterAndRepeat();
+	if(glConfig.extDirectStateAccessAvailable) {
+		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
+			uploadWidth = framebuffer->GetWidth();
+			uploadHeight = framebuffer->GetHeight();
+
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
+	}
+	else {	
+
+		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
+			uploadWidth = framebuffer->GetWidth();
+			uploadHeight = framebuffer->GetHeight();
+
+			glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+			filter = TF_LINEAR;
+			repeat = TR_CLAMP;
+			SetImageFilterAndRepeat();
+		}
 	}
 
 	glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texnum, 0 );
@@ -1710,27 +1789,57 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 			uploadWidth = -1;	// for a non-sub upload
 		}
 
-		Bind(textureUnit);
-
 		rows /= 6;
-		// if the scratchImage isn't in the format we want, specify it as a new texture
-		if ( cols != uploadWidth || rows != uploadHeight ) {
-			uploadWidth = cols;
-			uploadHeight = rows;
 
-			// upload the base level
-			for ( i = 0 ; i < 6 ; i++ ) {
-				glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT+i, 0, GL_RGB8, cols, rows, 0, 
-					GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows*4*i );
+		if(glConfig.extDirectStateAccessAvailable) {
+			// if the scratchImage isn't in the format we want, specify it as a new texture
+			if (cols != uploadWidth || rows != uploadHeight) {
+				uploadWidth = cols;
+				uploadHeight = rows;
+
+				// upload the base level
+				for (i = 0; i < 6; i++) {
+					glTextureImage2DEXT( texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT + i, 0, GL_RGB8, cols, rows, 0,
+						GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows * 4 * i );
+				}
 			}
-		} else {
-			// otherwise, just subimage upload it so that drivers can tell we are going to be changing
-			// it and don't try and do a texture compression
-			for ( i = 0 ; i < 6 ; i++ ) {
-				glTexSubImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT+i, 0, 0, 0, cols, rows, 
-					GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows*4*i );
+			else {
+				// otherwise, just subimage upload it so that drivers can tell we are going to be changing
+				// it and don't try and do a texture compression
+				for (i = 0; i < 6; i++) {
+					glTextureSubImage2DEXT( texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT + i, 0, 0, 0, cols, rows,
+						GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows * 4 * i );
+				}
+			}
+
+			//TODO(johl): this bind is not strictly required, but the caller relies on this image being bound after
+			Bind( textureUnit );
+		}
+		else {
+			Bind( textureUnit );
+
+			// if the scratchImage isn't in the format we want, specify it as a new texture
+			if (cols != uploadWidth || rows != uploadHeight) {
+				uploadWidth = cols;
+				uploadHeight = rows;
+
+				// upload the base level
+				for (i = 0; i < 6; i++) {
+					glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT + i, 0, GL_RGB8, cols, rows, 0,
+						GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows * 4 * i );
+				}
+			}
+			else {
+				// otherwise, just subimage upload it so that drivers can tell we are going to be changing
+				// it and don't try and do a texture compression
+				for (i = 0; i < 6; i++) {
+					glTexSubImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_EXT + i, 0, 0, 0, cols, rows,
+						GL_RGBA, GL_UNSIGNED_BYTE, data + cols*rows * 4 * i );
+				}
 			}
 		}
+
+
 
 		filter = TF_LINEAR;
 		repeat = TR_CLAMP;
@@ -1741,18 +1850,36 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 			uploadWidth = -1;	// for a non-sub upload
 		}
 
-		Bind(textureUnit);
+		if(glConfig.extDirectStateAccessAvailable) {
+			if (cols != uploadWidth || rows != uploadHeight) {
+				uploadWidth = cols;
+				uploadHeight = rows;
+				glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			}
+			else {
+				// otherwise, just subimage upload it so that drivers can tell we are going to be changing
+				// it and don't try and do a texture compression
+				glTextureSubImage2DEXT( texnum, GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			}
 
-		// if the scratchImage isn't in the format we want, specify it as a new texture
-		if ( cols != uploadWidth || rows != uploadHeight ) {
-			uploadWidth = cols;
-			uploadHeight = rows;
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		} else {
-			// otherwise, just subimage upload it so that drivers can tell we are going to be changing
-			// it and don't try and do a texture compression
-			glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			//TODO(johl): this bind is not strictly required, but the caller relies on this image being bound after
+			Bind( textureUnit );
 		}
+		else {
+			Bind( textureUnit );
+			// if the scratchImage isn't in the format we want, specify it as a new texture
+			if (cols != uploadWidth || rows != uploadHeight) {
+				uploadWidth = cols;
+				uploadHeight = rows;
+				glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			}
+			else {
+				// otherwise, just subimage upload it so that drivers can tell we are going to be changing
+				// it and don't try and do a texture compression
+				glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			}
+		}
+
 
 		filter = TF_LINEAR;
 		repeat = TR_REPEAT;		
