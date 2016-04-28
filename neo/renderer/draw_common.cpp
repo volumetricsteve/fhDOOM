@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "ImmediateMode.h"
-
+#include "RenderList.h"
 /*
 =====================
 RB_BakeTextureMatrixIntoTexgen
@@ -391,7 +391,7 @@ void	RB_STD_DrawView( void ) {
 	RB_DetermineLightScale();
 
 	// fill the depth buffer and clear color buffer to black except on
-	// subviews
+	// subviews	
 	RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
 
 	if (backEnd.viewDef->viewEntitys) {
@@ -410,16 +410,36 @@ void	RB_STD_DrawView( void ) {
 	// uplight the entire screen to crutch up not having better blending range
 	RB_STD_LightScale();  
 
-	// now draw any non-light dependent shading passes
-	int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );  
+	if(!r_renderList.GetBool()) {
+		// now draw any non-light dependent shading passes
+		int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );
 
-	// fob and blend lights
-	RB_STD_FogAllLights();
+		// fob and blend lights
+		RB_STD_FogAllLights();
 
-	// now draw any post-processing effects using _currentRender
-	if ( processed < numDrawSurfs ) {
-		RB_STD_DrawShaderPasses( drawSurfs+processed, numDrawSurfs-processed );
+		// now draw any post-processing effects using _currentRender
+		if (processed < numDrawSurfs) {
+			RB_STD_DrawShaderPasses( drawSurfs + processed, numDrawSurfs - processed );
+		}
 	}
+	else {
+		StageRenderList stageRenderlist;
+
+		// now draw any non-light dependent shading passes
+		int	processed = RB_GLSL_CreateStageRenderList( drawSurfs, numDrawSurfs, stageRenderlist );
+		RB_GLSL_SubmitStageRenderList(stageRenderlist);
+
+		// fob and blend lights
+		RB_STD_FogAllLights();
+
+		// now draw any post-processing effects using _currentRender
+		if (processed < numDrawSurfs) {
+			stageRenderlist.Clear();
+			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist );
+			RB_GLSL_SubmitStageRenderList(stageRenderlist);
+		}
+	}
+	
 
 	RB_RenderDebugTools( drawSurfs, numDrawSurfs );  
 }

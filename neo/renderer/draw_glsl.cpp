@@ -4,12 +4,17 @@
 #include "tr_local.h"
 #include "RenderProgram.h"
 #include "ImmediateMode.h"
+#include "RenderList.h"
 
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
+idCVar r_renderList("r_renderlist", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "use render list");
+
+
+using InteractionList = fhRenderList<drawInteraction_t>;
 
 /*
 =====================
@@ -737,6 +742,248 @@ void RB_GLSL_FillDepthBuffer(const drawSurf_t *surf) {
 
 }
 
+void RB_GLSL_SubmitFillDepthRenderList( const DepthRenderList& renderlist ) {
+	assert( depthProgram );
+
+	// if we are just doing 2D rendering, no need to fill the depth buffer
+	if (!backEnd.viewDef->viewEntitys) {
+		return;
+	}
+
+	RB_LogComment( "---------- RB_GLSL_SubmitFillDepthRenderList ----------\n" );
+
+	// enable the second texture for mirror plane clipping if needed
+	if (backEnd.viewDef->numClipPlanes) {
+		globalImages->alphaNotchImage->Bind( 1 );
+	}
+
+	// decal surfaces may enable polygon offset
+	glPolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() );
+
+	GL_State( GLS_DEPTHFUNC_LESS );
+
+	// Enable stencil test if we are going to be using it for shadows.
+	// If we didn't do this, it would be legal behavior to get z fighting
+	// from the ambient pass and the light passes.
+	glEnable( GL_STENCIL_TEST );
+	glStencilFunc( GL_ALWAYS, 1, 255 );
+
+	GL_UseProgram( depthProgram );
+
+	const viewEntity_t* currentSpace = nullptr;
+	bool depthHackActive = false;
+	bool alphatestEnabled = false;
+	idScreenRect currentScissor;
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		currentScissor.x1 = 0;
+		currentScissor.y1 = 0;
+		currentScissor.x2 = glConfig.vidWidth;
+		currentScissor.y2 = glConfig.vidHeight;
+	}
+
+	fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
+	fhRenderProgram::SetAlphaTestEnabled(false);
+
+	const int num = renderlist.Num();
+	for(int i = 0; i < num; ++i) {
+		const auto& drawdepth = renderlist[i];
+
+		const auto offset = vertexCache.Bind( drawdepth.surf->geo->ambientCache );
+		GL_SetupVertexAttributes( fhVertexLayout::Draw, offset );
+
+		if (currentSpace != drawdepth.surf->space) {
+			fhRenderProgram::SetModelMatrix( drawdepth.surf->space->modelMatrix );
+			fhRenderProgram::SetModelViewMatrix( drawdepth.surf->space->modelViewMatrix );
+
+			if (drawdepth.surf->space->modelDepthHack) {
+				RB_EnterModelDepthHack( drawdepth.surf->space->modelDepthHack );
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = true;
+			}
+			else if (drawdepth.surf->space->weaponDepthHack) {
+				RB_EnterWeaponDepthHack();
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = true;
+			}
+			else if (depthHackActive) {
+				RB_LeaveDepthHack();
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = false;
+			}
+
+			// change the scissor if needed
+			if (r_useScissor.GetBool() && !currentScissor.Equals( drawdepth.surf->scissorRect )) {
+				currentScissor = drawdepth.surf->scissorRect;
+				glScissor( backEnd.viewDef->viewport.x1 + currentScissor.x1,
+					backEnd.viewDef->viewport.y1 + currentScissor.y1,
+					currentScissor.x2 + 1 - currentScissor.x1,
+					currentScissor.y2 + 1 - currentScissor.y1 );
+			}
+
+			currentSpace = drawdepth.surf->space;
+		}
+
+		if(drawdepth.polygonOffset) {
+			glEnable( GL_POLYGON_OFFSET_FILL );
+			glPolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * drawdepth.polygonOffset );
+		}
+
+		if(drawdepth.isSubView) {
+			GL_State(GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO | GLS_DEPTHFUNC_LESS);
+		}
+
+		if(drawdepth.texture) {
+			fhRenderProgram::SetAlphaTestEnabled(true);
+			fhRenderProgram::SetAlphaTestThreshold(drawdepth.alphaTestThreshold);		
+			fhRenderProgram::SetDiffuseMatrix(drawdepth.textureMatrix[0], drawdepth.textureMatrix[1]);
+			drawdepth.texture->Bind(0);
+			alphatestEnabled = true;
+		} else {
+			if(alphatestEnabled) {
+				globalImages->whiteImage->Bind(0);
+				fhRenderProgram::SetAlphaTestEnabled(false);
+				alphatestEnabled = false;;
+			}
+		}
+
+		RB_DrawElementsWithCounters(drawdepth.surf->geo);
+
+		if (drawdepth.polygonOffset) {
+			glDisable( GL_POLYGON_OFFSET_FILL );
+		}
+
+		if (drawdepth.isSubView) {
+			GL_State(GLS_DEPTHFUNC_LESS);
+		}
+	}
+
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		backEnd.currentScissor.x1 = 0;
+		backEnd.currentScissor.y1 = 0;
+		backEnd.currentScissor.x2 = glConfig.vidWidth;
+		backEnd.currentScissor.y2 = glConfig.vidHeight;
+	}
+}
+
+void RB_GLSL_CreateFillDepthRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, DepthRenderList& renderlist ) {
+	for (int i = 0; i < numDrawSurfs; i++) {
+		drawDepth_t drawdepth;
+
+		const drawSurf_t* surf = drawSurfs[i];		
+		const srfTriangles_t* tri = surf->geo;
+		const idMaterial* shader = surf->material;
+
+		if (!shader->IsDrawn()) {
+			continue;
+		}
+
+		// some deforms may disable themselves by setting numIndexes = 0
+		if (!tri->numIndexes) {
+			continue;
+		}
+
+		// translucent surfaces don't put anything in the depth buffer and don't
+		// test against it, which makes them fail the mirror clip plane operation
+		if (shader->Coverage() == MC_TRANSLUCENT) {
+			continue;
+		}
+
+		if (!tri->ambientCache) {
+			common->Printf( "RB_T_FillDepthBuffer: !tri->ambientCache\n" );
+			continue;
+		}
+
+		// get the expressions for conditionals / color / texcoords
+		const float	* regs = surf->shaderRegisters;
+
+		// if all stages of a material have been conditioned off, don't do anything
+		int stage = 0;
+		for (; stage < shader->GetNumStages(); stage++) {
+			const shaderStage_t* pStage = shader->GetStage( stage );
+			// check the stage enable condition
+			if (regs[pStage->conditionRegister] != 0) {
+				break;
+			}
+		}
+		if (stage == shader->GetNumStages()) {
+			continue;
+		}
+
+		// set polygon offset if necessary
+		if (shader->TestMaterialFlag( MF_POLYGONOFFSET )) {
+			drawdepth.polygonOffset = shader->GetPolygonOffset();
+		}
+		else {
+			drawdepth.polygonOffset = 0;
+		}
+
+		// subviews will just down-modulate the color buffer by overbright		
+		if (shader->GetSort() == SS_SUBVIEW) {
+			drawdepth.isSubView = true;
+			drawdepth.color[0] = drawdepth.color[1] = drawdepth.color[2] = (1.0 / backEnd.overBright);
+			drawdepth.color[3] = 1;
+		}
+		else {
+			drawdepth.isSubView = false;
+			drawdepth.color[0] = drawdepth.color[1] = drawdepth.color[2] = 0;
+			drawdepth.color[3] = 1;
+		}
+
+		drawdepth.surf = surf;
+		drawdepth.texture = nullptr;
+
+		// we may have multiple alpha tested stages
+		if (shader->Coverage() == MC_PERFORATED) {
+			// if the only alpha tested stages are condition register omitted,
+			// draw a normal opaque surface
+			bool	didDraw = false;
+
+			// perforated surfaces may have multiple alpha tested stages
+			for (stage = 0; stage < shader->GetNumStages(); stage++) {
+				const shaderStage_t* pStage = shader->GetStage( stage );
+
+				if (!pStage->hasAlphaTest) {
+					continue;
+				}
+
+				// check the stage enable condition
+				if (regs[pStage->conditionRegister] == 0) {
+					continue;
+				}
+
+				// set the alpha modulate
+				drawdepth.color[3] = regs[pStage->color.registers[3]];
+
+				// skip the entire stage if alpha would be black
+				if (drawdepth.color[3] <= 0) {
+					continue;
+				}
+
+				// bind the texture
+				drawdepth.texture = pStage->texture.image;
+				drawdepth.alphaTestThreshold = regs[pStage->alphaTestRegister];
+
+				// set texture matrix and texGens      
+
+				if (pStage->privatePolygonOffset && !surf->material->TestMaterialFlag( MF_POLYGONOFFSET )) {
+					drawdepth.polygonOffset = pStage->privatePolygonOffset;
+				}
+
+				if (pStage->texture.hasMatrix) {
+					RB_GetShaderTextureMatrix( surf->shaderRegisters, &pStage->texture, drawdepth.textureMatrix );
+				}
+				else {
+					drawdepth.textureMatrix[0] = idVec4::identityS;
+					drawdepth.textureMatrix[1] = idVec4::identityT;
+				}
+			}
+		}
+
+		renderlist.Append(drawdepth);
+	}
+}
 
 /*
 =====================
@@ -747,6 +994,13 @@ to force the alpha test to fail when behind that clip plane
 =====================
 */
 void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
+	if (r_renderList.GetBool()) {
+		DepthRenderList depthRenderList;
+		RB_GLSL_CreateFillDepthRenderList( drawSurfs, numDrawSurfs, depthRenderList );
+		RB_GLSL_SubmitFillDepthRenderList( depthRenderList );
+		return;
+	}
+
   assert(depthProgram);
 
   // if we are just doing 2D rendering, no need to fill the depth buffer
@@ -974,10 +1228,7 @@ void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pSta
     if(depthBlendMode != DBM_OFF && depthBlendRange > 0.0f) {
       programWasReset = GL_UseProgram(depthblendProgram);
 
-	  //TODO(johl): texture unit 7 is also used for shadow maps.
-	  //            Not an issue currently, because particles are not affected by
-	  //            light and shadows.
-      globalImages->currentDepthImage->Bind(7);
+      globalImages->currentDepthImage->Bind(2);
 
       fhRenderProgram::SetDepthBlendRange(depthBlendRange);
       fhRenderProgram::SetDepthBlendMode(static_cast<int>(depthBlendMode));      
@@ -1239,11 +1490,388 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
 
 /*
+=================
+RB_SubmittInteraction
+=================
+*/
+static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList ) {
+	if (!din->bumpImage) {
+		return;
+	}
+
+	if (!din->diffuseImage || r_skipDiffuse.GetBool()) {
+		din->diffuseImage = globalImages->blackImage;
+	}
+	if (!din->specularImage || r_skipSpecular.GetBool() || din->ambientLight) {
+		din->specularImage = globalImages->blackImage;
+	}
+	if (!din->bumpImage || r_skipBump.GetBool()) {
+		din->bumpImage = globalImages->flatNormalMap;
+	}
+
+	// if we wouldn't draw anything, don't call the Draw function
+	if (
+		((din->diffuseColor[0] > 0 ||
+		din->diffuseColor[1] > 0 ||
+		din->diffuseColor[2] > 0) && din->diffuseImage != globalImages->blackImage)
+		|| ((din->specularColor[0] > 0 ||
+		din->specularColor[1] > 0 ||
+		din->specularColor[2] > 0) && din->specularImage != globalImages->blackImage)) {
+
+		interactionList.Append(*din);
+	}
+}
+
+
+/*
+=============
+RB_GLSL_CreateDrawInteractions
+
+=============
+*/
+void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionList& interactionList ) {
+
+	if (r_skipInteractions.GetBool()) {
+		return;
+	}
+
+	for (; surf; surf = surf->nextOnLight) {
+		const idMaterial	*surfaceShader = surf->material;
+		const float			*surfaceRegs = surf->shaderRegisters;
+		const viewLight_t	*vLight = backEnd.vLight;
+		const idMaterial	*lightShader = vLight->lightShader;
+		const float			*lightRegs = vLight->shaderRegisters;
+		drawInteraction_t	inter;
+		inter.hasBumpMatrix = inter.hasDiffuseMatrix = inter.hasSpecularMatrix = false;
+
+		if (!surf->geo || !surf->geo->ambientCache) {
+			continue;
+		}
+
+		inter.surf = surf;
+		inter.lightFalloffImage = vLight->falloffImage;
+
+		R_GlobalPointToLocal( surf->space->modelMatrix, vLight->globalLightOrigin, inter.localLightOrigin.ToVec3() );
+		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, inter.localViewOrigin.ToVec3() );
+		inter.localLightOrigin[3] = 0;
+		inter.localViewOrigin[3] = 1;
+		inter.ambientLight = lightShader->IsAmbientLight();
+
+		// the base projections may be modified by texture matrix on light stages
+		idPlane lightProject[4];
+		for (int i = 0; i < 4; i++) {
+			R_GlobalPlaneToLocal( surf->space->modelMatrix, backEnd.vLight->lightProject[i], lightProject[i] );
+		}
+
+		for (int lightStageNum = 0; lightStageNum < lightShader->GetNumStages(); lightStageNum++) {
+			const shaderStage_t	*lightStage = lightShader->GetStage( lightStageNum );
+
+			// ignore stages that fail the condition
+			if (!lightRegs[lightStage->conditionRegister]) {
+				continue;
+			}
+
+			inter.lightImage = lightStage->texture.image;
+
+			memcpy( inter.lightProjection, lightProject, sizeof(inter.lightProjection) );
+			// now multiply the texgen by the light texture matrix
+			if (lightStage->texture.hasMatrix) {
+				RB_GetShaderTextureMatrix( lightRegs, &lightStage->texture, backEnd.lightTextureMatrix );
+				RB_BakeTextureMatrixIntoTexgen( reinterpret_cast<class idPlane *>(inter.lightProjection), backEnd.lightTextureMatrix );
+			}
+
+			inter.bumpImage = NULL;
+			inter.specularImage = NULL;
+			inter.diffuseImage = NULL;
+			inter.diffuseColor[0] = inter.diffuseColor[1] = inter.diffuseColor[2] = inter.diffuseColor[3] = 0;
+			inter.specularColor[0] = inter.specularColor[1] = inter.specularColor[2] = inter.specularColor[3] = 0;
+
+			float lightColor[4];
+
+			// backEnd.lightScale is calculated so that lightColor[] will never exceed
+			// tr.backEndRendererMaxLight
+			lightColor[0] = backEnd.lightScale * lightRegs[lightStage->color.registers[0]];
+			lightColor[1] = backEnd.lightScale * lightRegs[lightStage->color.registers[1]];
+			lightColor[2] = backEnd.lightScale * lightRegs[lightStage->color.registers[2]];
+			lightColor[3] = lightRegs[lightStage->color.registers[3]];
+
+			// go through the individual stages
+			for (int surfaceStageNum = 0; surfaceStageNum < surfaceShader->GetNumStages(); surfaceStageNum++) {
+				const shaderStage_t	*surfaceStage = surfaceShader->GetStage( surfaceStageNum );
+
+				switch (surfaceStage->lighting) {
+				case SL_AMBIENT: {
+					// ignore ambient stages while drawing interactions
+					break;
+				}
+				case SL_BUMP: {
+					// ignore stage that fails the condition
+					if (!surfaceRegs[surfaceStage->conditionRegister]) {
+						break;
+					}
+					// draw any previous interaction
+					RB_SubmittInteraction( &inter, interactionList );
+					inter.diffuseImage = NULL;
+					inter.specularImage = NULL;
+					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.bumpImage, inter.bumpMatrix, NULL );
+					inter.hasBumpMatrix = surfaceStage->texture.hasMatrix;
+					break;
+				}
+				case SL_DIFFUSE: {
+					// ignore stage that fails the condition
+					if (!surfaceRegs[surfaceStage->conditionRegister]) {
+						break;
+					}
+					if (inter.diffuseImage) {
+						RB_SubmittInteraction( &inter, interactionList );
+					}
+					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.diffuseImage,
+						inter.diffuseMatrix, inter.diffuseColor.ToFloatPtr() );
+					inter.diffuseColor[0] *= lightColor[0];
+					inter.diffuseColor[1] *= lightColor[1];
+					inter.diffuseColor[2] *= lightColor[2];
+					inter.diffuseColor[3] *= lightColor[3];
+					inter.vertexColor = surfaceStage->vertexColor;
+					inter.hasDiffuseMatrix = surfaceStage->texture.hasMatrix;
+					break;
+				}
+				case SL_SPECULAR: {
+					// ignore stage that fails the condition
+					if (!surfaceRegs[surfaceStage->conditionRegister]) {
+						break;
+					}
+					if (inter.specularImage) {
+						RB_SubmittInteraction( &inter, interactionList );
+					}
+					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.specularImage,
+						inter.specularMatrix, inter.specularColor.ToFloatPtr() );
+					inter.specularColor[0] *= lightColor[0];
+					inter.specularColor[1] *= lightColor[1];
+					inter.specularColor[2] *= lightColor[2];
+					inter.specularColor[3] *= lightColor[3];
+					inter.specularColor *= r_specularScale.GetFloat();
+					inter.vertexColor = surfaceStage->vertexColor;
+					inter.hasSpecularMatrix = surfaceStage->texture.hasMatrix;
+					break;
+				}
+				}
+			}
+
+			// draw the final interaction
+			RB_SubmittInteraction( &inter, interactionList );
+		}
+	}
+}
+
+void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
+	if(interactionList.IsEmpty())
+		return;
+
+	// perform setup here that will be constant for all interactions
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc );
+
+	GL_UseProgram( interactionProgram );
+
+	fhRenderProgram::SetShading( r_shading.GetInteger() );
+	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
+
+	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
+		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
+		fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
+
+		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
+		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
+		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
+
+		if (backEnd.vLight->lightDef->parms.pointLight) {
+			//point light
+			fhRenderProgram::SetShadowMappingMode( 1 );
+			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+		}
+		else {
+			//projected light
+			fhRenderProgram::SetShadowMappingMode( 2 );
+			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
+		}
+	}
+	else {
+		//no shadows
+		fhRenderProgram::SetShadowMappingMode( 0 );
+	}
+
+	fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
+	fhRenderProgram::SetPomMaxHeight( -1 );
+	
+	const viewEntity_t* currentSpace = nullptr;
+	stageVertexColor_t currentVertexColor = (stageVertexColor_t)-1;
+	bool currentPomEnabled = false;
+	idScreenRect currentScissor;
+	bool depthHackActive = false;
+	bool currentHasBumpMatrix = false;
+	bool currentHasDiffuseMatrix = false;
+	bool currentHasSpecularMatrix = false;
+	idVec4 currentDiffuseColor = idVec4(1,1,1,1);
+	idVec4 currentSpecularColor = idVec4(1,1,1,1);
+
+	fhRenderProgram::SetDiffuseColor( currentDiffuseColor );
+	fhRenderProgram::SetSpecularColor( currentSpecularColor );
+	fhRenderProgram::SetBumpMatrix( idVec4::identityS, idVec4::identityT );
+	fhRenderProgram::SetSpecularMatrix( idVec4::identityS, idVec4::identityT );
+	fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
+
+
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		currentScissor.x1 = 0;
+		currentScissor.y1 = 0;
+		currentScissor.x2 = glConfig.vidWidth;
+		currentScissor.y2 = glConfig.vidHeight;
+	}
+
+	const int num = interactionList.Num();
+	for(int i = 0; i < num; ++i) {
+		const auto& din = interactionList[i];
+
+		const auto offset = vertexCache.Bind( din.surf->geo->ambientCache );
+		GL_SetupVertexAttributes( fhVertexLayout::Draw, offset );				
+
+		if(currentSpace != din.surf->space) {
+			fhRenderProgram::SetModelMatrix( din.surf->space->modelMatrix );
+			fhRenderProgram::SetModelViewMatrix( din.surf->space->modelViewMatrix );
+
+			if (din.surf->space->modelDepthHack) {
+				RB_EnterModelDepthHack( din.surf->space->modelDepthHack );
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = true;
+			}
+			else if (din.surf->space->weaponDepthHack) {
+				RB_EnterWeaponDepthHack();
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = true;
+			}
+			else if ( depthHackActive ) {
+				RB_LeaveDepthHack();
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				depthHackActive = false;
+			}
+
+			// change the scissor if needed
+			if (r_useScissor.GetBool() && !currentScissor.Equals( din.surf->scissorRect )) {
+				currentScissor = din.surf->scissorRect;
+				glScissor( backEnd.viewDef->viewport.x1 + currentScissor.x1,
+					backEnd.viewDef->viewport.y1 + currentScissor.y1,
+					currentScissor.x2 + 1 - currentScissor.x1,
+					currentScissor.y2 + 1 - currentScissor.y1 );
+			}
+
+			currentSpace = din.surf->space;
+		}
+
+		fhRenderProgram::SetLocalLightOrigin( din.localLightOrigin );
+		fhRenderProgram::SetLocalViewOrigin( din.localViewOrigin );
+		fhRenderProgram::SetLightProjectionMatrix( din.lightProjection[0], din.lightProjection[1], din.lightProjection[2] );
+		fhRenderProgram::SetLightFallOff( din.lightProjection[3] );
+
+		if(din.hasBumpMatrix) {
+			fhRenderProgram::SetBumpMatrix( din.bumpMatrix[0], din.bumpMatrix[1] );
+			currentHasBumpMatrix = true;
+		}
+		else if(currentHasBumpMatrix) {
+			fhRenderProgram::SetBumpMatrix( idVec4::identityS, idVec4::identityT );
+			currentHasBumpMatrix = false;
+		}
+		
+		if(din.hasDiffuseMatrix) {
+			fhRenderProgram::SetDiffuseMatrix( din.diffuseMatrix[0], din.diffuseMatrix[1] );
+			currentHasDiffuseMatrix = true;
+		}
+		else if(currentHasDiffuseMatrix) {
+			fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
+			currentHasDiffuseMatrix = false;
+		}
+		
+		if(din.hasSpecularMatrix) {
+			fhRenderProgram::SetSpecularMatrix( din.specularMatrix[0], din.specularMatrix[1] );
+			currentHasSpecularMatrix = false;
+		}
+		else if(currentHasSpecularMatrix) {
+			fhRenderProgram::SetSpecularMatrix( idVec4::identityS, idVec4::identityT );
+			currentHasSpecularMatrix = false;
+		}
+
+		if(currentVertexColor != din.vertexColor) {
+			switch (din.vertexColor) {
+			case SVC_IGNORE:
+				fhRenderProgram::SetColorModulate( idVec4::zero );
+				fhRenderProgram::SetColorAdd( idVec4::one );
+				break;
+			case SVC_MODULATE:
+				fhRenderProgram::SetColorModulate( idVec4::one );
+				fhRenderProgram::SetColorAdd( idVec4::zero );
+				break;
+			case SVC_INVERSE_MODULATE:
+				fhRenderProgram::SetColorModulate( idVec4::negOne );
+				fhRenderProgram::SetColorAdd( idVec4::one );
+				break;
+			}
+			currentVertexColor = din.vertexColor;
+		}
+
+		if(din.diffuseColor != currentDiffuseColor) {
+			fhRenderProgram::SetDiffuseColor( din.diffuseColor );
+			currentDiffuseColor = din.diffuseColor;
+		}
+
+		if (din.specularColor != currentSpecularColor) {
+			fhRenderProgram::SetSpecularColor( din.specularColor );
+			currentSpecularColor = din.specularColor;
+		}		
+
+		const bool pomEnabled = r_pomEnabled.GetBool() && din.specularImage->hasAlpha;
+		if (pomEnabled != currentPomEnabled) {
+			if(pomEnabled) {
+				fhRenderProgram::SetPomMaxHeight( r_pomMaxHeight.GetFloat() );
+			} 
+			else {
+				fhRenderProgram::SetPomMaxHeight( -1 );
+			}
+		}
+		
+		din.bumpImage->Bind( 1 );		
+		din.lightFalloffImage->Bind( 2 );
+		din.lightImage->Bind( 3 );
+		din.diffuseImage->Bind( 4 );
+		din.specularImage->Bind( 5 );
+
+		// draw it
+		RB_DrawElementsWithCounters( din.surf->geo );
+	}
+
+	if(depthHackActive) {
+		RB_LeaveDepthHack();
+		fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+	}
+
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		backEnd.currentScissor.x1 = 0;
+		backEnd.currentScissor.y1 = 0;
+		backEnd.currentScissor.x2 = glConfig.vidWidth;
+		backEnd.currentScissor.y2 = glConfig.vidHeight;
+	}
+}
+
+/*
 ==================
 RB_GLSL_DrawInteractions
 ==================
 */
 void RB_GLSL_DrawInteractions(void) {
+  viewLight_t		*vLight;
+  const idMaterial	*lightShader;
+
+  InteractionList interactionList;
+
   //
   // for each light, perform adding and shadowing
   //
@@ -1265,7 +1893,11 @@ void RB_GLSL_DrawInteractions(void) {
 
 	if(vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 		RB_RenderShadowMaps(vLight);
+
 	}
+	
+    lightShader = vLight->lightShader;
+
 
     // clear the stencil buffer if needed
     if (vLight->globalShadows || vLight->localShadows) {
@@ -1285,11 +1917,24 @@ void RB_GLSL_DrawInteractions(void) {
       glStencilFunc(GL_ALWAYS, 128, 255);
     }
 
-	RB_GLSL_StencilShadowPass(vLight->globalShadows);
-	RB_GLSL_CreateDrawInteractions(vLight->localInteractions);
-	RB_GLSL_StencilShadowPass(vLight->localShadows);
-	RB_GLSL_CreateDrawInteractions(vLight->globalInteractions);
-
+	if(r_renderList.GetBool()) {
+		RB_GLSL_StencilShadowPass( vLight->globalShadows );
+		interactionList.Clear();
+		RB_GLSL_CreateDrawInteractions( vLight->localInteractions, interactionList );
+		RB_GLSL_SubmitDrawInteractions(interactionList);
+				
+		RB_GLSL_StencilShadowPass( vLight->localShadows );
+		interactionList.Clear();
+		RB_GLSL_CreateDrawInteractions( vLight->globalInteractions, interactionList );
+		RB_GLSL_SubmitDrawInteractions( interactionList );		
+	}
+	else {
+		RB_GLSL_StencilShadowPass( vLight->globalShadows );
+		RB_GLSL_CreateDrawInteractions( vLight->localInteractions );
+		RB_GLSL_StencilShadowPass( vLight->localShadows );
+		RB_GLSL_CreateDrawInteractions( vLight->globalInteractions );
+	}
+	
     // translucent surfaces never get stencil shadowed
     if (r_skipTranslucent.GetBool()) {
       continue;
@@ -1298,7 +1943,15 @@ void RB_GLSL_DrawInteractions(void) {
     glStencilFunc(GL_ALWAYS, 128, 255);
 
     backEnd.depthFunc = GLS_DEPTHFUNC_LESS;
-    RB_GLSL_CreateDrawInteractions(vLight->translucentInteractions);
+
+	if(r_renderList.GetBool()) {
+		interactionList.Clear();
+		RB_GLSL_CreateDrawInteractions( vLight->translucentInteractions, interactionList );
+		RB_GLSL_SubmitDrawInteractions( interactionList );
+	}
+	else {
+		RB_GLSL_CreateDrawInteractions(vLight->translucentInteractions);
+	}
 
     backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
   }
@@ -1308,3 +1961,419 @@ void RB_GLSL_DrawInteractions(void) {
 }
 
 
+
+static bool RB_GLSL_CreateShaderStage(const drawSurf_t* surf, const shaderStage_t* pStage, drawStage_t& drawStage) {
+	// set the color  
+	float color[4];
+	color[0] = surf->shaderRegisters[pStage->color.registers[0]];
+	color[1] = surf->shaderRegisters[pStage->color.registers[1]];
+	color[2] = surf->shaderRegisters[pStage->color.registers[2]];
+	color[3] = surf->shaderRegisters[pStage->color.registers[3]];
+
+	// skip the entire stage if an add would be black
+	if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE)
+		&& color[0] <= 0 && color[1] <= 0 && color[2] <= 0) {
+		return false;
+	}
+
+	// skip the entire stage if a blend would be completely transparent
+	if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
+		&& color[3] <= 0) {
+		return false;
+	}
+
+	if (pStage->texture.texgen == TG_DIFFUSE_CUBE) {
+		return false;
+	}
+	else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
+		drawStage.program = skyboxProgram;
+		
+		if (pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
+			R_CreateWobbleskyTexMatrix( surf, backEnd.viewDef->floatTime, drawStage.textureMatrix );
+		}
+
+		idVec4 localViewOrigin;
+		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
+		localViewOrigin[3] = 1.0f;
+
+		drawStage.localViewOrigin = localViewOrigin;
+		drawStage.vertexLayout = fhVertexLayout::DrawPosColorOnly;
+	}
+	else if (pStage->texture.texgen == TG_SCREEN) {
+		return false;
+	}
+	else if (pStage->texture.texgen == TG_GLASSWARP) {
+		return false;
+	}
+	else if (pStage->texture.texgen == TG_REFLECT_CUBE) {
+		drawStage.program = bumpyEnvProgram;
+
+		idVec4 localViewOrigin;
+		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
+		localViewOrigin[3] = 1.0f;
+
+		drawStage.localViewOrigin = localViewOrigin;
+		
+		//TODO(johl): do we really need this? bumpyenv.vp uses the texture matrix, but it's always the identiy matrix anyway?
+		memcpy(drawStage.textureMatrix, &mat4_identity, sizeof(mat4_identity));
+
+		// see if there is also a bump map specified
+		if (const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
+			RB_GetShaderTextureMatrix( surf->shaderRegisters, &bumpStage->texture, drawStage.bumpMatrix );
+			drawStage.hasBumpMatrix = true;
+			drawStage.textures[2] = bumpStage->texture.image;
+		}
+		else {
+			drawStage.textures[2] = globalImages->flatNormalMap;
+		}
+
+		drawStage.vertexLayout = fhVertexLayout::Draw;
+	}
+	else {
+
+		//prefer depth blend settings from material. If material does not define a 
+		// depth blend mode, look at the geometry for depth blend settings (usually
+		// set by particle systems for soft particles)
+
+		drawStage.depthBlendMode = pStage->depthBlendMode;
+		drawStage.depthBlendRange = pStage->depthBlendRange;
+
+		if (drawStage.depthBlendMode == DBM_UNDEFINED) {
+			drawStage.depthBlendMode = surf->geo->depthBlendMode;
+			drawStage.depthBlendRange = surf->geo->depthBlendRange;
+		}
+
+		if (drawStage.depthBlendMode == DBM_AUTO) {
+			if (pStage->drawStateBits & (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE))
+				drawStage.depthBlendMode = DBM_COLORALPHA_ZERO;
+			else if (pStage->drawStateBits & (GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO))
+				drawStage.depthBlendMode = DBM_COLORALPHA_ONE;
+			else
+				drawStage.depthBlendMode = DBM_OFF;
+		}
+
+		if (drawStage.depthBlendMode != DBM_OFF && drawStage.depthBlendRange > 0.0f) {
+			drawStage.program = depthblendProgram;
+			drawStage.textures[2] = globalImages->currentDepthImage;
+		}
+		else {
+			drawStage.program = defaultProgram;
+		}
+
+		drawStage.vertexLayout = fhVertexLayout::DrawPosColorTexOnly;
+	}
+
+	drawStage.cinematic = pStage->texture.cinematic;
+
+	// set the state
+	drawStage.drawStateBits = pStage->drawStateBits;
+	drawStage.vertexColor = pStage->vertexColor;
+	
+	// set privatePolygonOffset if necessary
+	if (pStage->privatePolygonOffset) {
+		drawStage.polygonOffset = pStage->privatePolygonOffset;
+	}
+
+	if (pStage->texture.image) {
+		if (pStage->texture.hasMatrix) {
+			RB_GetShaderTextureMatrix( surf->shaderRegisters, &pStage->texture, drawStage.bumpMatrix );
+			drawStage.hasBumpMatrix = true;
+		}
+
+		drawStage.textures[1] = pStage->texture.image;		
+	}
+
+	drawStage.diffuseColor = idVec4(color);
+	return true;
+}
+
+
+static void RB_GLSL_CreateShaderPasses(const drawSurf_t* surf, StageRenderList& renderlist) {
+	const srfTriangles_t* tri = surf->geo;
+	const idMaterial* shader = surf->material;
+
+	if (!shader->HasAmbient()) {
+		return;
+	}
+
+	if (shader->IsPortalSky()) {
+		return;
+	}
+
+	// some deforms may disable themselves by setting numIndexes = 0
+	if (!tri->numIndexes) {
+		return;
+	}
+
+	if (!tri->ambientCache) {
+		common->Printf( "RB_T_RenderShaderPasses: !tri->ambientCache\n" );
+		return;
+	}
+
+	// get the expressions for conditionals / color / texcoords
+	const float	*regs = surf->shaderRegisters;
+
+	// get polygon offset if necessary
+	const float polygonOffset = shader->TestMaterialFlag( MF_POLYGONOFFSET ) ? shader->GetPolygonOffset() : 0;
+	
+
+	for (int stage = 0; stage < shader->GetNumStages(); stage++) {
+		const shaderStage_t* pStage = shader->GetStage( stage );
+
+		// check the enable condition
+		if (regs[pStage->conditionRegister] == 0) {
+			continue;
+		}
+
+		// skip the stages involved in lighting
+		if (pStage->lighting != SL_AMBIENT) {
+			continue;
+		}
+
+		// skip if the stage is ( GL_ZERO, GL_ONE ), which is used for some alpha masks
+		if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_ZERO | GLS_DSTBLEND_ONE)) {
+			continue;
+		}
+
+		drawStage_t drawstage;
+		memset( &drawstage, 0, sizeof(drawstage) );
+		drawstage.surf = surf;
+		drawstage.cullType = shader->GetCullType();
+		drawstage.polygonOffset = polygonOffset;
+		drawstage.depthBlendMode = DBM_OFF;
+		drawstage.bumpMatrix[0] = idVec4::identityS;
+		drawstage.bumpMatrix[1] = idVec4::identityT;
+		drawstage.hasBumpMatrix = false;
+		memcpy(drawstage.textureMatrix, &mat4_identity, sizeof(mat4_identity));
+
+		if (glslShaderStage_t *glslStage = pStage->glslStage) { // see if we are a glsl-style stage
+
+			if (r_skipGlsl.GetBool())
+				continue;
+
+			if (!glslStage->program)
+				continue;
+
+			drawstage.program = glslStage->program;
+			drawstage.drawStateBits = pStage->drawStateBits;
+			drawstage.numShaderparms = Min(glslStage->numShaderParms, 4);
+			for (int i = 0; i < drawstage.numShaderparms; i++) {
+				idVec4& parm = drawstage.shaderparms[i];
+				parm[0] = regs[glslStage->shaderParms[i][0]];
+				parm[1] = regs[glslStage->shaderParms[i][1]];
+				parm[2] = regs[glslStage->shaderParms[i][2]];
+				parm[3] = regs[glslStage->shaderParms[i][3]];
+			}
+
+			// set textures
+			for (int i = 0; i < glslStage->numShaderMaps && i < 4; i++) {
+				drawstage.textures[i] = glslStage->shaderMap[i];
+			}
+
+			drawstage.vertexLayout = fhVertexLayout::Draw;
+
+			renderlist.Append(drawstage);
+		}
+		else {
+			if( RB_GLSL_CreateShaderStage(surf, pStage, drawstage) ) {
+				renderlist.Append(drawstage);
+			}
+		}
+	}
+}
+
+void RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist) {
+
+	const fhRenderProgram* currentProgram = nullptr;
+	const viewEntity_t* currentSpace = nullptr;
+	stageVertexColor_t currentVertexColor = (stageVertexColor_t)-1;
+	bool currentBumpMatrix = true;
+	idScreenRect currentScissor;
+
+	const int num = renderlist.Num();
+	for(int i = 0; i < num; ++i) {
+		const drawStage_t& drawstage = renderlist[i];
+
+		if(currentProgram != drawstage.program) {
+			GL_UseProgram(drawstage.program);
+			fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
+			fhRenderProgram::SetClipRange( backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance() );
+
+			// current render
+			const int w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+			const int h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+			fhRenderProgram::SetCurrentRenderSize(
+				idVec2( globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight ),
+				idVec2( w, h ) );
+
+			currentProgram = drawstage.program;
+			currentSpace = nullptr;
+			currentVertexColor = (stageVertexColor_t)-1;
+			currentBumpMatrix = true;
+		}
+
+		if(currentSpace != drawstage.surf->space) {			
+			fhRenderProgram::SetModelViewMatrix(drawstage.surf->space->modelViewMatrix);
+			fhRenderProgram::SetModelMatrix(drawstage.surf->space->modelMatrix);
+
+			if (r_useScissor.GetBool() && !backEnd.currentScissor.Equals( drawstage.surf->scissorRect )) {
+				currentScissor = drawstage.surf->scissorRect;
+				glScissor( backEnd.viewDef->viewport.x1 + currentScissor.x1,
+					backEnd.viewDef->viewport.y1 + currentScissor.y1,
+					currentScissor.x2 + 1 - currentScissor.x1,
+					currentScissor.y2 + 1 - currentScissor.y1 );
+			}
+
+			currentSpace = drawstage.surf->space;
+		}
+
+		const auto offset = vertexCache.Bind(drawstage.surf->geo->ambientCache); 
+		GL_SetupVertexAttributes(drawstage.vertexLayout, offset);
+
+		GL_Cull(drawstage.cullType);
+
+		if(drawstage.polygonOffset) {
+			glEnable( GL_POLYGON_OFFSET_FILL );
+			glPolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * drawstage.polygonOffset );
+		}
+
+		if (drawstage.surf->space->weaponDepthHack) {
+			RB_EnterWeaponDepthHack();
+			fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+		}
+
+		if (drawstage.surf->space->modelDepthHack != 0.0f) {
+			RB_EnterModelDepthHack( drawstage.surf->space->modelDepthHack );
+			fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+		}
+
+		if(drawstage.hasBumpMatrix) {
+			fhRenderProgram::SetBumpMatrix(drawstage.bumpMatrix[0], drawstage.bumpMatrix[1]);  
+			currentBumpMatrix = true;
+		} else if(currentBumpMatrix) {
+			fhRenderProgram::SetBumpMatrix(idVec4::identityS, idVec4::identityT);  
+			currentBumpMatrix = false;
+		}
+
+		fhRenderProgram::SetLocalViewOrigin(drawstage.localViewOrigin);
+		fhRenderProgram::SetDiffuseColor(drawstage.diffuseColor);		
+		fhRenderProgram::SetTextureMatrix(drawstage.textureMatrix);
+		fhRenderProgram::SetDepthBlendRange( drawstage.depthBlendRange );
+		fhRenderProgram::SetDepthBlendMode( static_cast<int>(drawstage.depthBlendMode) );		
+
+		if(currentVertexColor != drawstage.vertexColor) {
+			switch (drawstage.vertexColor) {
+			case SVC_IGNORE:
+				fhRenderProgram::SetColorModulate( idVec4::zero );
+				fhRenderProgram::SetColorAdd( idVec4::one );
+				break;
+			case SVC_MODULATE:
+				fhRenderProgram::SetColorModulate( idVec4::one );
+				fhRenderProgram::SetColorAdd( idVec4::zero );
+				break;
+			case SVC_INVERSE_MODULATE:
+				fhRenderProgram::SetColorModulate( idVec4::negOne );
+				fhRenderProgram::SetColorAdd( idVec4::one );
+				break;
+			}
+			currentVertexColor = drawstage.vertexColor;
+		}
+
+		for(int i = 0; i < 4; ++i) {			
+			if(drawstage.textures[i])
+				drawstage.textures[i]->Bind(i);
+		}	
+
+		if(drawstage.cinematic) {
+			if (r_skipDynamicTextures.GetBool()) {
+				globalImages->defaultImage->Bind( 1 );
+			}
+			else {
+				// offset time by shaderParm[7] (FIXME: make the time offset a parameter of the shader?)
+				// We make no attempt to optimize for multiple identical cinematics being in view, or
+				// for cinematics going at a lower framerate than the renderer.
+				cinData_t cin = drawstage.cinematic->ImageForTime( (int)(1000 * (backEnd.viewDef->floatTime + backEnd.viewDef->renderView.shaderParms[11])) );
+
+				if (cin.image) {
+					globalImages->cinematicImage->UploadScratch( 1, cin.image, cin.imageWidth, cin.imageHeight );
+				}
+				else {
+					globalImages->blackImage->Bind( 1 );
+				}
+			}
+		}
+
+		GL_State(drawstage.drawStateBits);
+
+		RB_DrawElementsWithCounters(drawstage.surf->geo);
+
+		if (drawstage.polygonOffset) {
+			glDisable( GL_POLYGON_OFFSET_FILL );
+		}
+
+		if (drawstage.surf->space->weaponDepthHack || drawstage.surf->space->modelDepthHack != 0.0f) {
+			RB_LeaveDepthHack();
+			fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+		}
+	}
+
+	if (r_useScissor.GetBool()) {
+		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		backEnd.currentScissor.x1 = 0;
+		backEnd.currentScissor.y1 = 0;
+		backEnd.currentScissor.x2 = glConfig.vidWidth;
+		backEnd.currentScissor.y2 = glConfig.vidHeight;
+	}
+
+	GL_UseProgram( nullptr );
+	GL_SelectTexture( 0 );
+}
+
+int RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist) {
+	int				i;
+
+	// only obey skipAmbient if we are rendering a view
+	if (backEnd.viewDef->viewEntitys && r_skipAmbient.GetBool()) {
+		return numDrawSurfs;
+	}
+
+	RB_LogComment( "---------- RB_GLSL_CreateStageRenderList ----------\n" );
+
+	// if we are about to draw the first surface that needs
+	// the rendering in a texture, copy it over
+	if (drawSurfs[0]->material->GetSort() >= SS_POST_PROCESS) {
+		if (r_skipPostProcess.GetBool()) {
+			return 0;
+		}
+
+		// only dump if in a 3d view
+		if (backEnd.viewDef->viewEntitys) {
+			globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
+				backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+				backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true );
+		}
+		backEnd.currentRenderCopied = true;
+	}
+
+	for (i = 0; i < numDrawSurfs; i++) {
+		if (drawSurfs[i]->material->SuppressInSubview()) {
+			continue;
+		}
+
+		if (backEnd.viewDef->isXraySubview && drawSurfs[i]->space->entityDef) {
+			if (drawSurfs[i]->space->entityDef->parms.xrayIndex != 2) {
+				continue;
+			}
+		}
+
+		// we need to draw the post process shaders after we have drawn the fog lights
+		if (drawSurfs[i]->material->GetSort() >= SS_POST_PROCESS
+			&& !backEnd.currentRenderCopied) {
+			break;
+		}
+
+		RB_GLSL_CreateShaderPasses( drawSurfs[i], renderlist );
+	}
+
+	return i;
+}
