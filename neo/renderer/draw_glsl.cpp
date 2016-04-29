@@ -847,6 +847,7 @@ void RB_GLSL_SubmitFillDepthRenderList( const DepthRenderList& renderlist ) {
 			}
 		}
 
+		backEnd.stats.drawcalls[backEndGroup::DepthPrepass] += 1;
 		RB_DrawElementsWithCounters(drawdepth.surf->geo);
 
 		if (drawdepth.polygonOffset) {
@@ -995,6 +996,9 @@ to force the alpha test to fail when behind that clip plane
 */
 void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 	if (r_renderList.GetBool()) {
+		fhTimeElapsed timeElapsed( &backEnd.stats.time[backEndGroup::DepthPrepass] );
+		backEnd.stats.passes[backEndGroup::DepthPrepass] += 1;
+
 		DepthRenderList depthRenderList;
 		RB_GLSL_CreateFillDepthRenderList( drawSurfs, numDrawSurfs, depthRenderList );
 		RB_GLSL_SubmitFillDepthRenderList( depthRenderList );
@@ -1844,6 +1848,7 @@ void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionList ) {
 		din.specularImage->Bind( 5 );
 
 		// draw it
+		backEnd.stats.drawcalls[backEndGroup::Interaction] += 1;
 		RB_DrawElementsWithCounters( din.surf->geo );
 	}
 
@@ -1895,7 +1900,10 @@ void RB_GLSL_DrawInteractions(void) {
 		RB_RenderShadowMaps(vLight);
 
 	}
-	
+
+	backEnd.stats.passes[backEndGroup::Interaction] += 1;
+	fhTimeElapsed timeElapsed(&backEnd.stats.time[backEndGroup::Interaction]);
+
     lightShader = vLight->lightShader;
 
 
@@ -1917,6 +1925,7 @@ void RB_GLSL_DrawInteractions(void) {
       glStencilFunc(GL_ALWAYS, 128, 255);
     }
 
+	
 	if(r_renderList.GetBool()) {
 		RB_GLSL_StencilShadowPass( vLight->globalShadows );
 		interactionList.Clear();
@@ -1933,7 +1942,7 @@ void RB_GLSL_DrawInteractions(void) {
 		RB_GLSL_CreateDrawInteractions( vLight->localInteractions );
 		RB_GLSL_StencilShadowPass( vLight->localShadows );
 		RB_GLSL_CreateDrawInteractions( vLight->globalInteractions );
-	}
+	}	
 	
     // translucent surfaces never get stencil shadowed
     if (r_skipTranslucent.GetBool()) {
@@ -2331,6 +2340,7 @@ void RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist) {
 
 		GL_State(drawstage.drawStateBits);
 
+		backEnd.stats.drawcalls[backEndGroup::NonInteraction] += 1;
 		RB_DrawElementsWithCounters(drawstage.surf->geo);
 
 		if (drawstage.polygonOffset) {

@@ -424,7 +424,7 @@ void RB_EXP_CullInteractions(viewLight_t *vLight, idPlane frustumPlanes[6]) {
 	}
 }
 
-static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix, const float* shadowProjectionMatrix) {	
+static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix, const float* shadowProjectionMatrix, int lod) {	
 	
 	fhRenderProgram::SetProjectionMatrix( shadowProjectionMatrix );
 	fhRenderProgram::SetViewMatrix( shadowViewMatrix );		
@@ -470,9 +470,9 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 			
 			currentEntity = nullptr;
 			
+			backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;
 			RB_DrawElementsWithCounters( tri );
-			backEnd.pc.c_shadowMapDraws++;
-
+			
 			staticOccluderModelWasRendered = true;
 		}				
 
@@ -556,7 +556,7 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 
 					// draw it
 					RB_DrawElementsWithCounters(tri);
-					backEnd.pc.c_shadowMapDraws++;
+					backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;
 					didDraw = true;
 					break;
 				}
@@ -574,8 +574,8 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				}
 
 				// draw it
+				backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;
 				RB_DrawElementsWithCounters(tri);
-				backEnd.pc.c_shadowMapDraws++;
 			}
 		}
 	}
@@ -674,9 +674,9 @@ static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int lod ) {
 	float flippedViewMatrix[16];
 	myGlMultMatrix( viewMatrix, s_flipMatrix, flippedViewMatrix );
 //	myGlMultMatrix( flippedViewMatrix, lightProjectionMatrix, &backEnd.shadowViewProjection[0][0] );
-	RB_RenderShadowCasters( vLight, flippedViewMatrix, lightProjectionMatrix );
+	RB_RenderShadowCasters( vLight, flippedViewMatrix, lightProjectionMatrix, lod );
 
-	backEnd.pc.c_shadowPasses++;
+	backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
 }
 
 
@@ -716,9 +716,9 @@ static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
 	memcpy(backEnd.testProjectionMatrix, viewProjection.ToFloatPtr(), sizeof(float)*16);
 	memcpy(backEnd.testViewMatrix, viewMatrix.ToFloatPtr(), sizeof(float)*16);
 
-	RB_RenderShadowCasters( vLight, viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr() );
+	RB_RenderShadowCasters( vLight, viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), lod );
 
-	backEnd.pc.c_shadowPasses++;
+	backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
 }
 
 static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int lod) {
@@ -804,9 +804,9 @@ static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int l
 	viewMatrix = fhRenderMatrix::FlipMatrix() * viewMatrix;
 
     myGlMultMatrix(viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), &backEnd.shadowViewProjection[side][0]);
-	RB_RenderShadowCasters(vLight, viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr());
+	RB_RenderShadowCasters(vLight, viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), lod);
 
-	backEnd.pc.c_shadowPasses++;
+	backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
 }
 
 
@@ -832,6 +832,8 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		lod = r_smLod.GetInteger();
 	}	
 	lod = idMath::ClampInt(0, idImageManager::shadowMapLodNum-1, lod);
+
+	const uint64 startTime = Sys_Microseconds();
 
 	// all light side projections must currently match, so non-centered
 	// and non-cubic lights must take the largest length
@@ -903,4 +905,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.viewDef->scissor.x2 + 1 - backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1);
 		backEnd.currentScissor = backEnd.viewDef->scissor;
+
+	const uint64 endTime = Sys_Microseconds();
+	backEnd.stats.time[backEndGroup::ShadowMap0 + lod] += static_cast<uint32>(endTime - startTime);
 }

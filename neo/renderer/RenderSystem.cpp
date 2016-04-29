@@ -113,12 +113,9 @@ static void R_PerformanceCounters( void ) {
 		common->Printf( "lightScale: %f\n", backEnd.pc.maxLightValue );
 	}
 
-	if (r_showShadowPasses.GetBool()) {
-		common->Printf("shadow passes: %i,  draw calls: %i\n", backEnd.pc.c_shadowPasses, backEnd.pc.c_shadowMapDraws);
-	}
-
 	memset( &tr.pc, 0, sizeof( tr.pc ) );
 	memset( &backEnd.pc, 0, sizeof( backEnd.pc ) );
+	memset( &backEnd.stats, 0, sizeof( backEnd.stats ) );
 }
 
 
@@ -1012,4 +1009,13 @@ bool idRenderSystemLocal::UploadImage( const char *imageName, const byte *data, 
 	image->UploadScratch( 0, data, width, height );
 	image->SetImageFilterAndRepeat();
 	return true;
+}
+
+/*
+===============
+idRenderSystemLocal::GetBackEndStats
+===============
+*/
+backEndStats_t idRenderSystemLocal::GetBackEndStats() const {
+	return backEnd.stats;
 }

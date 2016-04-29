@@ -672,12 +672,35 @@ typedef struct {
 	int		c_vboIndexes;
 	float	c_overDraw;	
 
-	int     c_shadowPasses;
-	int     c_shadowMapDraws;
-
 	float	maxLightValue;	// for light scale
 	int		msec;			// total msec for backend run
 } backEndCounters_t;
+
+class fhTimeElapsed {
+public:
+	explicit fhTimeElapsed(uint64* c)
+		: counter(c)
+		, start(Sys_Microseconds())
+	{
+		assert(counter);
+	}
+
+	~fhTimeElapsed() {
+		Commit();
+	}
+
+	void Commit() {
+		if(counter) {
+			*counter += Sys_Microseconds() - start;
+			counter = nullptr;
+		}
+	}
+
+private:
+	uint64 start;
+	uint64* counter;
+};
+
 
 // all state modified by the back end is separated
 // from the front end state
@@ -685,6 +708,7 @@ typedef struct {
 	int					frameCount;		// used to track all images used in a frame
 	const viewDef_t	*	viewDef;
 	backEndCounters_t	pc;
+	backEndStats_t      stats;
 
 	const viewEntity_t *currentSpace;		// for detecting when a matrix must change
 	idScreenRect		currentScissor;
@@ -742,7 +766,7 @@ public:
 	virtual bool			IsFullScreen( void ) const;
 	virtual int				GetScreenWidth( void ) const;
 	virtual int				GetScreenHeight( void ) const;
-  virtual int       GetScreenAspectRatio( void ) const;
+	virtual int				GetScreenAspectRatio( void ) const;
 	virtual idRenderWorld *	AllocRenderWorld( void );
 	virtual void			FreeRenderWorld( idRenderWorld *rw );
 	virtual void			BeginLevelLoad( void );
@@ -759,8 +783,8 @@ public:
 	virtual void			GetGLSettings( int& width, int& height );
 	virtual void			PrintMemInfo( MemInfo_t *mi );
 
-  virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *materia, float scale );
-  virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale );  
+	virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *materia, float scale );
+	virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale );  
 	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material );
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material );
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material );
@@ -775,6 +799,7 @@ public:
 	virtual void			CaptureRenderToFile( const char *fileName, bool fixAlpha );
 	virtual void			UnCrop();
 	virtual bool			UploadImage( const char *imageName, const byte *data, int width, int height );
+	virtual backEndStats_t  GetBackEndStats() const;
 
 public:
 	// internal functions
@@ -1022,8 +1047,6 @@ extern idCVar r_glCoreProfile;
 
 extern idCVar r_softParticles;
 extern idCVar r_defaultParticleSoftness;
-
-extern idCVar r_showShadowPasses;
 
 extern idCVar r_smPolyOffsetFactor;
 extern idCVar r_smPolyOffsetBias;

@@ -373,6 +373,8 @@ RB_STD_DrawView
 =============
 */
 void	RB_STD_DrawView( void ) {
+	fhTimeElapsed timeElapsed(&backEnd.stats.totaltime);
+
 	drawSurf_t	 **drawSurfs;
 	int			numDrawSurfs;
 
@@ -422,6 +424,9 @@ void	RB_STD_DrawView( void ) {
 		}
 	}
 	else {
+		fhTimeElapsed timeElapsed(&backEnd.stats.time[backEndGroup::NonInteraction]);
+		backEnd.stats.passes[backEndGroup::NonInteraction] += 1;
+
 		StageRenderList stageRenderlist;
 
 		// now draw any non-light dependent shading passes

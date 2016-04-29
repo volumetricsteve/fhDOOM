@@ -125,6 +125,49 @@ typedef struct {
 	char				name[64];
 } fontInfoEx_t;
 
+struct backEndGroup {
+	enum Enum {
+		DepthPrepass,
+		ShadowMap0,
+		ShadowMap1,
+		ShadowMap2,
+		Interaction,
+		FogLight,
+		BlendLight,
+		NonInteraction,
+		NUM
+	};
+
+	Enum value;
+};
+
+struct backEndStats_t {
+	uint32 drawcalls[backEndGroup::NUM];
+	uint32 passes[backEndGroup::NUM];
+	uint64 time[backEndGroup::NUM];
+	uint64 totaltime;
+
+	const backEndStats_t& operator+=(const backEndStats_t& rhs) {
+		for(int i=0; i<backEndGroup::NUM; ++i) {
+			drawcalls[i] += rhs.drawcalls[i];
+			passes[i] += rhs.passes[i];
+			time[i] += rhs.time[i];
+		}
+		totaltime += rhs.totaltime;
+		return *this;
+	}
+
+	const backEndStats_t& operator/=(unsigned v) {
+		for (int i = 0; i < backEndGroup::NUM; ++i) {
+			drawcalls[i] /= v;
+			passes[i] /= v;
+			time[i] /= v;
+		}
+		totaltime /= v;
+		return *this;
+	}
+};
+
 const int SMALLCHAR_WIDTH		= 8;
 const int SMALLCHAR_HEIGHT		= 16;
 const int BIGCHAR_WIDTH			= 16;
@@ -240,6 +283,9 @@ public:
 	// texture filter / mipmapping / repeat won't be modified by the upload
 	// returns false if the image wasn't found
 	virtual bool			UploadImage( const char *imageName, const byte *data, int width, int height ) = 0;
+
+	// Get back end stats from previous frame.
+	virtual backEndStats_t GetBackEndStats() const = 0;
 };
 
 extern idRenderSystem *			renderSystem;

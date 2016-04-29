@@ -173,9 +173,6 @@ void SCR_DrawTextRightAlign( float &y, const char *text, ... ) {
 	y += SMALLCHAR_HEIGHT + 4;
 }
 
-
-
-
 /*
 ==================
 SCR_DrawFPS
@@ -212,13 +209,80 @@ float SCR_DrawFPS( float y ) {
 		fps = 10000 * FPS_FRAMES / total;
 		fps = (fps + 5)/10;
 
-		s = va( "%ifps", fps );
+		s = va( "%3dfps / %7.3fms", fps, static_cast<float>(total) / FPS_FRAMES);
 		w = strlen( s ) * BIGCHAR_WIDTH;
 
-		renderSystem->DrawBigStringExt( 635 - w, idMath::FtoiFast( y ) + 2, s, colorWhite, true, localConsole.charSetShader);
+		renderSystem->DrawScaledStringExt( 500, idMath::FtoiFast( y ) + 2, s, colorWhite, true, localConsole.charSetShader, 0.65f );
 	}
 
 	return y + BIGCHAR_HEIGHT + 4;
+}
+
+/*
+==================
+SCR_DrawBackEndStats
+==================
+*/
+float SCR_DrawBackEndStats( float y ) {
+
+	int ypos = idMath::FtoiFast( y );
+
+	char buffer[128];
+	const float xpos = 440;
+	const float fontScale = 0.55f;
+
+	auto PrintStats = [&](const char* name, int p, int dc, float t) {
+		sprintf( buffer, "%-15s  p:%4d  dc:%4d  t:%6.2f", name, p, dc, t );
+		renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
+		ypos += 11;
+	};
+
+
+#define TIME_FRAMES 10
+	static backEndStats_t previous[TIME_FRAMES] = { 0 };
+	static unsigned frame = 0;
+
+	const auto stats = renderSystem->GetBackEndStats(); 
+	previous[frame] = stats;
+	frame = (frame + 1) % TIME_FRAMES;
+
+	backEndStats_t sum = {0};
+
+	for(int j=0; j<TIME_FRAMES; ++j) {
+		sum += previous[j];
+	}
+	sum /= TIME_FRAMES;
+	
+	float msecs[backEndGroup::NUM] = { 0 };
+	float msecs_total = 0;
+
+	for(int i=0; i<backEndGroup::NUM; ++i) {
+		msecs[i] = sum.time[i] * 0.001f;
+	}
+	msecs_total = sum.totaltime * 0.001f;	
+
+	int sm_passes = 0;
+	int sm_drawcalls = 0;
+	float sm_time = 0;
+	for(int i=0; i<3; ++i) {
+		sm_passes += sum.passes[backEndGroup::ShadowMap0 + i];
+		sm_drawcalls += sum.drawcalls[backEndGroup::ShadowMap0 + i];
+		sm_time += msecs[backEndGroup::ShadowMap0 + i];
+	}
+
+	PrintStats("Depth Prepass", stats.passes[backEndGroup::DepthPrepass], stats.drawcalls[backEndGroup::DepthPrepass],  msecs[backEndGroup::DepthPrepass]);	
+	PrintStats("shadow maps", sm_passes, sm_drawcalls, sm_time);
+	PrintStats("    0", stats.passes[backEndGroup::ShadowMap0], stats.drawcalls[backEndGroup::ShadowMap0],  msecs[backEndGroup::ShadowMap0]);
+	PrintStats("    1", stats.passes[backEndGroup::ShadowMap1], stats.drawcalls[backEndGroup::ShadowMap1],  msecs[backEndGroup::ShadowMap1]);
+	PrintStats("    2", stats.passes[backEndGroup::ShadowMap2], stats.drawcalls[backEndGroup::ShadowMap2],  msecs[backEndGroup::ShadowMap2]);
+	PrintStats("Interaction", stats.passes[backEndGroup::Interaction], stats.drawcalls[backEndGroup::Interaction],  msecs[backEndGroup::Interaction]);
+	PrintStats("Non-Interaction", stats.passes[backEndGroup::NonInteraction], stats.drawcalls[backEndGroup::NonInteraction],  msecs[backEndGroup::NonInteraction]);
+
+	sprintf( buffer, "                      total time: %6.2fms", msecs_total );
+	renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
+	ypos += 11;
+
+	return ypos;
 }
 
 /*
@@ -1186,6 +1250,7 @@ void	idConsoleLocal::Draw( bool forceFullScreen ) {
 
 	if ( com_showFPS.GetBool() ) {
 		y = SCR_DrawFPS( 0 );
+		y = SCR_DrawBackEndStats( y );
 	}
 
 	if ( com_showMemoryUsage.GetBool() ) {

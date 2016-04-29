@@ -217,7 +217,6 @@ idCVar r_debugRenderToTexture( "r_debugRenderToTexture", "0", CVAR_RENDERER | CV
 idCVar r_softParticles( "r_softParticles", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enabled soft particles");
 idCVar r_defaultParticleSoftness( "r_defaultParticleSoftness", "0.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
 
-idCVar r_showShadowPasses( "r_showShadowPasses", "0", CVAR_RENDERER | CVAR_BOOL, "report shadow mapping passes stats" );
 /*
 ==================
 R_CheckPortableExtensions
