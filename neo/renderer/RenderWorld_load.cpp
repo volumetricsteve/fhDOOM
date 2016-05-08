@@ -115,7 +115,7 @@ void idRenderWorldLocal::TouchWorldModels( void ) {
 idRenderWorldLocal::ParseModel
 ================
 */
-idRenderModel *idRenderWorldLocal::ParseModel( idLexer *src ) {
+static idRenderModel* ParseModel( idLexer *src ) {
 	idToken			token;
 
 	src->ExpectTokenString( "{" );
@@ -185,7 +185,7 @@ idRenderModel *idRenderWorldLocal::ParseModel( idLexer *src ) {
 idRenderWorldLocal::ParseShadowModel
 ================
 */
-idRenderModel *idRenderWorldLocal::ParseShadowModel( idLexer *src ) {
+static idRenderModel* ParseShadowModel( idLexer *src ) {
 	idRenderModel	*model;
 	idToken			token;
 	int				j;
@@ -473,11 +473,7 @@ A NULL or empty name will make a world without a map model, which
 is still useful for displaying a bare model
 =================
 */
-bool idRenderWorldLocal::InitFromMap( const char *name ) {
-	idLexer *		src;
-	idToken			token;
-	idStr			filename;
-	idRenderModel *	lastModel;
+bool idRenderWorldLocal::InitFromMap( const char *name ) {		
 
 	// if this is an empty world, initialize manually
 	if ( !name || !name[0] ) {
@@ -487,9 +483,8 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 		return true;
 	}
 
-
 	// load it
-	filename = name;
+	idStr filename = name;
 	filename.SetFileExtension( PROC_FILE_EXT );
 
 	// if we are reloading the same map, check the timestamp
@@ -511,13 +506,12 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 
 	FreeWorld();
 
-	src = new idLexer( filename, LEXFL_NOSTRINGCONCAT | LEXFL_NODOLLARPRECOMPILE );
-	if ( !src->IsLoaded() ) {
+	idLexer src( filename, LEXFL_NOSTRINGCONCAT | LEXFL_NODOLLARPRECOMPILE );
+	if ( !src.IsLoaded() ) {
 		common->Printf( "idRenderWorldLocal::InitFromMap: %s not found\n", filename.c_str() );
 		ClearWorld();
 		return false;
 	}
-
 
 	mapName = name;
 	mapTimeStamp = currentTimeStamp;
@@ -527,20 +521,20 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 		WriteLoadMap();
 	}
 
-	if ( !src->ReadToken( &token ) || token.Icmp( PROC_FILE_ID ) ) {
+	idToken token;
+	if ( !src.ReadToken( &token ) || token.Icmp( PROC_FILE_ID ) ) {
 		common->Printf( "idRenderWorldLocal::InitFromMap: bad id '%s' instead of '%s'\n", token.c_str(), PROC_FILE_ID );
-		delete src;
 		return false;
 	}
 
 	// parse the file
 	while ( 1 ) {
-		if ( !src->ReadToken( &token ) ) {
+		if ( !src.ReadToken( &token ) ) {
 			break;
 		}
 
 		if ( token == "model" ) {
-			lastModel = ParseModel( src );
+			idRenderModel* lastModel = ParseModel( &src );
 
 			// add it to the model manager list
 			renderModelManager->AddModel( lastModel );
@@ -551,7 +545,7 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 		}
 
 		if ( token == "shadowModel" ) {
-			lastModel = ParseShadowModel( src );
+			idRenderModel* lastModel = ParseShadowModel( &src );
 
 			// add it to the model manager list
 			renderModelManager->AddModel( lastModel );
@@ -562,19 +556,17 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 		}
 
 		if ( token == "interAreaPortals" ) {
-			ParseInterAreaPortals( src );
+			ParseInterAreaPortals( &src );
 			continue;
 		}
 
 		if ( token == "nodes" ) {
-			ParseNodes( src );
+			ParseNodes( &src );
 			continue;
 		}
 
-		src->Error( "idRenderWorldLocal::InitFromMap: bad token \"%s\"", token.c_str() );
+		src.Error( "idRenderWorldLocal::InitFromMap: bad token \"%s\"", token.c_str() );
 	}
-
-	delete src;
 
 	// if it was a trivial map without any areas, create a single area
 	if ( !numPortalAreas ) {

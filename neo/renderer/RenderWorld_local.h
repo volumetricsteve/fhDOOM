@@ -171,10 +171,7 @@ public:
 	bool					generateAllInteractionsCalled;
 
 	//-----------------------
-	// RenderWorld_load.cpp
-
-	idRenderModel *			ParseModel( idLexer *src );
-	idRenderModel *			ParseShadowModel( idLexer *src );
+	// RenderWorld_load.cpp	
 	void					SetupAreaRefs();
 	void					ParseInterAreaPortals( idLexer *src );
 	void					ParseNodes( idLexer *src );

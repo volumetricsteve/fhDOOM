@@ -429,9 +429,11 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 	fhRenderProgram::SetProjectionMatrix( shadowProjectionMatrix );
 	fhRenderProgram::SetViewMatrix( shadowViewMatrix );		
 	fhRenderProgram::SetAlphaTestEnabled(false);
+	fhRenderProgram::SetDiffuseMatrix(idVec4::identityS, idVec4::identityT);
 
 	const idRenderEntityLocal *currentEntity = nullptr;
 	bool currentAlphaTest = false;
+	bool currentHasDiffuseMatrix = false;
 	
 	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 		const idRenderEntityLocal *entityDef = inter->entityDef;
@@ -467,6 +469,11 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 				fhRenderProgram::SetAlphaTestEnabled( false );				
 				currentAlphaTest = false;
 			}
+
+			if(currentHasDiffuseMatrix) {
+				fhRenderProgram::SetDiffuseMatrix(idVec4::identityS, idVec4::identityT);
+				currentHasDiffuseMatrix = false;
+			}
 			
 			currentEntity = nullptr;
 			
@@ -479,17 +486,15 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 		// draw each surface
 		for (int i = 0; i < inter->numSurfaces; i++) {
 			surfaceInteraction_t	*surfInt = &inter->surfaces[i];
-
-			if (!surfInt->ambientTris) {
-				continue;
-			}
-
 			const idMaterial* shader = surfInt->shader;
 
-			if (shader && !shader->SurfaceCastsShadow() && shader->Coverage() != MC_PERFORATED) {
+			if (!surfInt->ambientTris || !surfInt->shader) {
+				continue;
+			}			
+
+			if (!shader->SurfaceCastsSoftShadow()) {
 				continue;
 			}
-
 
 			// cull it
 			if (surfInt->expCulled == CULL_OCCLUDER_AND_RECEIVER) {
@@ -543,11 +548,17 @@ static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shado
 					fhRenderProgram::SetAlphaTestThreshold(0.5f);
 					currentAlphaTest = true;
 
-					idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};
+					
 					if (pStage->texture.hasMatrix) {						
+						idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};						
 						RB_GetShaderTextureMatrix(regs, &pStage->texture, textureMatrix);
+						fhRenderProgram::SetDiffuseMatrix(textureMatrix[0], textureMatrix[1]);
+						currentHasDiffuseMatrix = true;
 					}
-					fhRenderProgram::SetDiffuseMatrix(textureMatrix[0], textureMatrix[1]);
+					else if (currentHasDiffuseMatrix) {
+						fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
+						currentHasDiffuseMatrix = false;
+					}
 
 					if(currentEntity != entityDef) {
 						fhRenderProgram::SetModelMatrix(entityDef->modelMatrix);		

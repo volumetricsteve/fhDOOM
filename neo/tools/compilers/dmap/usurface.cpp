@@ -797,7 +797,6 @@ static void BuildLightShadows( uEntity_t *e, mapLight_t *light ) {
 	int			i;
 	optimizeGroup_t	*group;
 	mapTri_t	*tri;
-	mapTri_t	*shadowers;
 	optimizeGroup_t		*shadowerGroups;
 	idVec3		lightOrigin;
 	bool		hasPerforatedSurface = false;
@@ -838,7 +837,7 @@ static void BuildLightShadows( uEntity_t *e, mapLight_t *light ) {
 
 				// build up a list of the triangle fragments inside the
 				// light frustum
-				shadowers = NULL;
+				mapTri_t* shadowers = NULL;
 				for ( tri = group->triList ; tri ; tri = tri->next ) {
 					mapTri_t	*in, *out;
 
@@ -895,6 +894,140 @@ static void BuildLightShadows( uEntity_t *e, mapLight_t *light ) {
 
 	// we don't need the original shadower triangles for anything else
 	FreeOptimizeGroupList( shadowerGroups );
+}
+
+
+/*
+====================
+BuildLightOccluders
+====================
+*/
+static void BuildLightOccluders( uEntity_t *e, mapLight_t *light ) {
+	assert(light && "light must not be NULL");
+	assert(e && "e must not be NULL");	
+
+	memset(light->occluders, 0, sizeof(light->occluders));
+
+	if (light->def.parms.shadowMode == shadowMode_t::StencilShadow
+		|| light->def.parms.shadowMode == shadowMode_t::NoShadows
+		|| light->def.parms.noShadows
+		|| !light->def.lightShader->LightCastsShadows()) {
+		return;
+	}	
+
+	// shadowers will contain all the triangles that will cast a shadow
+	optimizeGroup_t* shadowerGroups[128] = { nullptr };
+	idVec3 lightOrigin = light->def.globalLightOrigin;
+	
+	for (int i = 0; i < e->numAreas; i++) {
+		for (optimizeGroup_t* group = e->areas[i].groups; group; group = group->nextGroup) {
+			// if the surface doesn't cast shadows, skip it
+			if (!group->material->SurfaceCastsSoftShadow()) {
+				continue;
+			}
+/*
+			// if the group doesn't face away from the light, it
+			// won't contribute to the shadow volume
+			if (dmapGlobals.mapPlanes[group->planeNum].Distance( lightOrigin ) > 0) {
+				continue;
+			}
+*/
+			// if the group bounds doesn't intersect the light bounds,
+			// skip it
+			if (!group->bounds.IntersectsBounds( light->def.frustumTris->bounds )) {
+				continue;
+			}
+
+			// build up a list of the triangle fragments inside the
+			// light frustum
+			mapTri_t* shadowers = NULL;
+			for (mapTri_t* tri = group->triList; tri; tri = tri->next) {
+				mapTri_t	*in, *out;
+
+				// clip it to the light frustum
+				ClipTriByLight( light, tri, &in, &out );
+				FreeTriList( out );
+				shadowers = MergeTriLists( shadowers, in );
+			}
+
+			// if we didn't get any out of this group, we don't
+			// need to create a new group in the shadower list
+			if (!shadowers) {
+				continue;
+			}
+
+			int trisIndex = 0;
+			for(; trisIndex<128; ++trisIndex) {
+
+				if(!shadowerGroups[trisIndex]) {
+					break;
+				}
+
+				if (shadowerGroups[trisIndex]->material->Coverage() == MC_OPAQUE && group->material->Coverage() == MC_OPAQUE) {
+					break;
+				}
+
+				if (shadowerGroups[trisIndex]->material == group->material) {
+					break;
+				}
+			}
+
+			assert(trisIndex < 128);
+
+			// find a group in shadowerGroups to add these to
+			// we will ignore everything but planenum, and we
+			// can merge across areas
+			optimizeGroup_t	*check;
+
+			for (check = shadowerGroups[trisIndex]; check; check = check->nextGroup) {
+				if (check->planeNum == group->planeNum) {
+					break;
+				}
+			}
+
+			if (!check) {
+				check = (optimizeGroup_t *)Mem_Alloc( sizeof(*check) );
+				*check = *group;
+				if(check->material->Coverage() != MC_PERFORATED) {
+					check->material = declManager->FindMaterial("_default");
+				}
+
+				check->triList = NULL;
+				check->nextGroup = shadowerGroups[trisIndex];
+				shadowerGroups[trisIndex] = check;
+			}
+
+			check->triList = MergeTriLists( check->triList, shadowers );
+		}
+	}
+
+	// optimize all the groups
+	for(int i=0; i<128; ++i) {
+		light->occluders[i].tris = nullptr;
+		light->occluders[i].material = nullptr;
+
+		if(!shadowerGroups[i])
+			continue;
+
+		OptimizeGroupList( shadowerGroups[i] );
+
+		// combine all the triangles into one list
+		mapTri_t* combined = nullptr;
+
+		for (optimizeGroup_t *group = shadowerGroups[i]; group; group = group->nextGroup) {
+			combined = MergeTriLists( combined, CopyTriList( group->triList ) );
+		}
+
+		if (!combined) {
+			return;
+		}
+
+		// find uniqued vertexes
+		light->occluders[i].tris = ShareMapTriVerts( combined );
+		light->occluders[i].material = shadowerGroups[i]->material;
+
+		FreeTriList( combined );
+	}
 }
 
 
@@ -1019,6 +1152,7 @@ void Prelight( uEntity_t *e ) {
 		for ( i = 0 ; i < dmapGlobals.mapLights.Num() ; i++ ) {
 			light = dmapGlobals.mapLights[i];
 			BuildLightShadows( e, light );
+			BuildLightOccluders( e, light );
 		}
 
 		end = Sys_Milliseconds();

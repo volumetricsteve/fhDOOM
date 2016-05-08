@@ -1339,75 +1339,69 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 
 }
 
-void Tris_ToOBJ(const char *outFile, idTriList *tris, idMatList *mats) {
-	idFile *f = fileSystem->OpenExplicitFileWrite( outFile );
-	if ( f ) {
-		char out[1024];
-		strcpy(out, outFile);
-		StripExtension(out);
+void Tris_ToOBJ(idTriList *tris, idMatList *mats, idFile* objFile, idFile* mtlFile) {
+	if(!tris || !objFile)
+		return;
 
-		idList<idStr*> matNames;
-		int i, j, k;
-		int indexBase = 1;
-		idStr lastMaterial("");
-		int matCount = 0;
-		//idStr basePath = cvarSystem->GetCVarString( "fs_savepath" );
-		f->Printf( "mtllib %s.mtl\n", out );
-		for (i = 0; i < tris->Num(); i++) {
-			srfTriangles_t *tri = (*tris)[i];
-			for (j = 0; j < tri->numVerts; j++) {
-				f->Printf( "v %f %f %f\n", tri->verts[j].xyz.x, tri->verts[j].xyz.z, -tri->verts[j].xyz.y );
-			}
-			for (j = 0; j < tri->numVerts; j++) {
-				f->Printf( "vt %f %f\n", tri->verts[j].st.x, 1.0f - tri->verts[j].st.y );
-			}
-			for (j = 0; j < tri->numVerts; j++) {
-				f->Printf( "vn %f %f %f\n", tri->verts[j].normal.x, tri->verts[j].normal.y, tri->verts[j].normal.z );
-			}
+	idList<idStr*> matNames;
+	int i, j, k;
+	int indexBase = 1;
+	idStr lastMaterial("");
+	int matCount = 0;
+	
+	if(mtlFile) {
+		objFile->Printf( "mtllib %s\n", mtlFile->GetName() );
+	}
 
-			if (stricmp( (*mats)[i]->GetName(), lastMaterial)) {
-				lastMaterial = (*mats)[i]->GetName();
-
-				bool found = false;
-				for (k = 0; k < matNames.Num(); k++) {
-					if ( idStr::Icmp(matNames[k]->c_str(), lastMaterial.c_str()) == 0 ) {
-						found = true;
-						// f->Printf( "usemtl m%i\n", k );
-						f->Printf( "usemtl %s\n", lastMaterial.c_str() );
-						break;
-					}
-				}
-
-				if (!found) {
-					// f->Printf( "usemtl m%i\n", matCount++ );
-					f->Printf( "usemtl %s\n", lastMaterial.c_str() );
-					matNames.Append(new idStr(lastMaterial));
-				}
-			}
-
-			for (int j = 0; j < tri->numIndexes; j += 3) {
-				int i1, i2, i3;
-				i1 = tri->indexes[j+2] + indexBase;
-				i2 = tri->indexes[j+1] + indexBase;
-				i3 = tri->indexes[j] + indexBase; 
-				f->Printf( "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i1,i1,i1, i2,i2,i2, i3,i3,i3 );
-			}
-
-			indexBase += tri->numVerts;
-
+	for (i = 0; i < tris->Num(); i++) {
+		srfTriangles_t *tri = (*tris)[i];
+		for (j = 0; j < tri->numVerts; j++) {
+			objFile->Printf( "v %f %f %f\n", tri->verts[j].xyz.x, tri->verts[j].xyz.z, -tri->verts[j].xyz.y );
 		}
-		fileSystem->CloseFile( f );
+		for (j = 0; j < tri->numVerts; j++) {
+			objFile->Printf( "vt %f %f\n", tri->verts[j].st.x, 1.0f - tri->verts[j].st.y );
+		}
+		for (j = 0; j < tri->numVerts; j++) {
+			objFile->Printf( "vn %f %f %f\n", tri->verts[j].normal.x, tri->verts[j].normal.y, tri->verts[j].normal.z );
+		}
 
-		strcat(out, ".mtl");
-		f = fileSystem->OpenExplicitFileWrite( out );
-		if (f) {
+		if (mats && mats->Num() > i && stricmp( (*mats)[i]->GetName(), lastMaterial)) {
+			lastMaterial = (*mats)[i]->GetName();
+
+			bool found = false;
 			for (k = 0; k < matNames.Num(); k++) {
-				// This presumes the diffuse tga name matches the material name
-				f->Printf( "newmtl %s\n\tNs 0\n\td 1\n\tillum 2\n\tKd 0 0 0 \n\tKs 0.22 0.22 0.22 \n\tKa 0 0 0 \n\tmap_Kd %s/base/%s.tga\n\n\n", matNames[k]->c_str(), "z:/d3xp", matNames[k]->c_str() );
+				if ( idStr::Icmp(matNames[k]->c_str(), lastMaterial.c_str()) == 0 ) {
+					found = true;
+					// f->Printf( "usemtl m%i\n", k );
+					objFile->Printf( "usemtl %s\n", lastMaterial.c_str() );
+					break;
+				}
 			}
-			fileSystem->CloseFile( f );
+
+			if (!found) {
+				// f->Printf( "usemtl m%i\n", matCount++ );
+				objFile->Printf( "usemtl %s\n", lastMaterial.c_str() );
+				matNames.Append(new idStr(lastMaterial));
+			}
 		}
 
+		for (int j = 0; j < tri->numIndexes; j += 3) {
+			int i1, i2, i3;
+			i1 = tri->indexes[j+2] + indexBase;
+			i2 = tri->indexes[j+1] + indexBase;
+			i3 = tri->indexes[j] + indexBase; 
+			objFile->Printf( "f %i/%i/%i %i/%i/%i %i/%i/%i\n", i1,i1,i1, i2,i2,i2, i3,i3,i3 );
+		}
+
+		indexBase += tri->numVerts;
+
+	}
+
+	if(mats && mtlFile) {
+		for (k = 0; k < matNames.Num(); k++) {
+			// This presumes the diffuse tga name matches the material name
+			mtlFile->Printf( "newmtl %s\n\tNs 0\n\td 1\n\tillum 2\n\tKd 0 0 0 \n\tKs 0.22 0.22 0.22 \n\tKa 0 0 0 \n\tmap_Kd %s/base/%s.tga\n\n\n", matNames[k]->c_str(), "z:/d3xp", matNames[k]->c_str() );
+		}
 	}
 }
 
@@ -1613,7 +1607,21 @@ void Select_ToOBJ() {
 			Brush_ToTris(b, &tris, &mats, true, false);
 		}
 
-		Tris_ToOBJ(dlgFile.GetPathName().GetBuffer(0), &tris, &mats);
+		char objFilePath[MAX_PATH];
+		char mtlFilePath[MAX_PATH];
+
+		sprintf(objFilePath, "%s", dlgFile.GetPathName().GetBuffer(0));
+		StripExtension(objFilePath);
+		sprintf(mtlFilePath, "%s.mtl", objFilePath);
+		sprintf(objFilePath, "%s", dlgFile.GetPathName().GetBuffer(0));
+
+		idFile *objFile = fileSystem->OpenExplicitFileWrite( objFilePath );
+		idFile *mtlFile = fileSystem->OpenExplicitFileWrite( mtlFilePath );
+
+		Tris_ToOBJ(&tris, &mats, objFile, mtlFile);
+
+		fileSystem->CloseFile( objFile );
+		fileSystem->CloseFile( mtlFile );
 
 		for( i = 0; i < tris.Num(); i++ ) {
 			R_FreeStaticTriSurf( tris[i] );
