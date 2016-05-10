@@ -33,14 +33,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "MegaTexture.h"
 #include "RenderProgram.h"
 
-template<typename T, int InitialCapacity = 1024, int CapcityIncrement = 256>
-class fhRenderList;
-struct drawDepth_t;
-struct drawStage_t;
-
-using DepthRenderList = fhRenderList<drawDepth_t>;
-using StageRenderList = fhRenderList<drawStage_t>;
-
 class idRenderWorldLocal;
 
 // everything that is needed by the backend needs
@@ -1054,6 +1046,11 @@ extern idCVar r_smSoftness;
 extern idCVar r_smBrightness;
 extern idCVar r_renderList;
 
+extern idCVar r_pomEnabled;
+extern idCVar r_pomMaxHeight;
+extern idCVar r_shading;
+extern idCVar r_specularExp;
+extern idCVar r_specularScale;
 
 /*
 ====================================================================
@@ -1395,9 +1392,6 @@ void	RB_GLSL_RenderSpecialShaderStage( const float* regs, const shaderStage_t* p
 void	RB_GLSL_RenderShaderStage( const drawSurf_t *surf, const shaderStage_t* pStage );
 void	RB_GLSL_FogPass( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
 void	RB_GLSL_BlendLight( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
-
-int     RB_GLSL_CreateStageRenderList(drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist, int maxSort);
-void    RB_GLSL_SubmitStageRenderList(const StageRenderList& renderlist);
 
 typedef enum {
 	PROG_INVALID,

@@ -183,6 +183,8 @@ public:
 	void					AddWorldModelEntities();
 	void					ClearPortalStates();
 	virtual	bool			InitFromMap( const char *mapName );
+	bool                    LoadProc( const char* mapName );
+	bool                    LoadOcl( const char* mapName );
 
 	//--------------------------
 	// RenderWorld_portals.cpp

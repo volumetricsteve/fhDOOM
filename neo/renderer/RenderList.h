@@ -1,5 +1,5 @@
 #pragma once
-
+#include <type_traits>
 
 template<typename T, int InitialCapacity = 1024, int CapcityIncrement = 256>
 class fhRenderList {
@@ -47,7 +47,7 @@ struct drawDepth_t {
 	bool               isSubView;	
 	float              alphaTestThreshold;
 	idVec4             color;
-};
+}; 
 
 struct drawStage_t {
 	const drawSurf_t* surf;
@@ -70,5 +70,27 @@ struct drawStage_t {
 	fhVertexLayout    vertexLayout;
 };
 
-using DepthRenderList = fhRenderList<drawDepth_t>;
-using StageRenderList = fhRenderList<drawStage_t>;
+static_assert(std::is_trivial<drawDepth_t>::value, "must be trivial");
+static_assert(std::is_trivial<drawStage_t>::value, "must be trivial");
+static_assert(std::is_trivial<drawInteraction_t>::value, "must be trivial");
+
+class DepthRenderList : public fhRenderList<drawDepth_t> {
+public:
+	void AddDrawSurfaces( drawSurf_t **surf, int numDrawSurfs );
+	void Submit();
+};
+
+class StageRenderList : public fhRenderList<drawStage_t> {
+public:
+	void AddDrawSurfaces( drawSurf_t **surf, int numDrawSurfs );
+	void Submit();
+};
+
+class InteractionList : public fhRenderList<drawInteraction_t> {
+public:
+	void AddDrawSurfacesOnLight(const drawSurf_t *surf);
+	void Submit();
+};
+
+int  RB_GLSL_CreateStageRenderList( drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist, int maxSort );
+void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist );

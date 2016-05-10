@@ -3,6 +3,7 @@
 
 #include "tr_local.h"
 #include "RenderProgram.h"
+#include "RenderMatrix.h"
 
 idCVar r_smObjectCulling( "r_smObjectCulling", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "cull objects/surfaces that are outside the shadow/light frustum when rendering shadow maps" );
 idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "Determines which faces should be rendered to shadow map: 0=front, 1=back, 2=front-and-back");
@@ -22,235 +23,6 @@ static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the
 static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
 
 static float viewLightAxialSize;
-
-/*
- * For programming purposes, OpenGL matrices are 16-value arrays with base 
- * vectors laid out contiguously in memory. The translation components occupy 
- * the 13th, 14th, and 15th elements of the 16-element matrix, where indices are
- * numbered from 1 to 16 as described in section 2.11.2 of the OpenGL 2.1 
- * Specification.
- *
- **/
-class fhRenderMatrix final {
-public:
-	fhRenderMatrix() {
-		memset(m, 0, sizeof(m));
-		m[0] = 1.0f;
-		m[5] = 1.0f;
-		m[10] = 1.0f;
-		m[15] = 1.0f;
-	}
-
-	explicit fhRenderMatrix(const float* arr) {
-		memcpy(m, arr, sizeof(m));
-	}
-
-	~fhRenderMatrix() = default;
-
-	fhRenderMatrix(const fhRenderMatrix& rhs) {
-		memcpy(m, rhs.m, sizeof(m));
-	}
-
-	const fhRenderMatrix& operator=(const fhRenderMatrix& rhs) {
-		memcpy(m, rhs.m, sizeof(m));
-		return *this;
-	}
-
-	fhRenderMatrix operator*(const fhRenderMatrix& rhs) const {
-		fhRenderMatrix ret;
-
-		const float* l = ToFloatPtr();
-		const float* r = rhs.ToFloatPtr();
-		ret[0] = l[0]*r[0] + l[4]*r[1] + l[8]*r[2] + l[12]*r[3];
-		ret[1] = l[1]*r[0] + l[5]*r[1] + l[9]*r[2] + l[13]*r[3];
-		ret[2] = l[2]*r[0] + l[6]*r[1] + l[10]*r[2] + l[14]*r[3];
-		ret[3] = l[3]*r[0] + l[7]*r[1] + l[11]*r[2] + l[15]*r[3];
-
-		ret[4] = l[0] * r[4] + l[4] * r[5] + l[8] * r[6] + l[12] * r[7];
-		ret[5] = l[1] * r[4] + l[5] * r[5] + l[9] * r[6] + l[13] * r[7];
-		ret[6] = l[2] * r[4] + l[6] * r[5] + l[10] * r[6] + l[14] * r[7];
-		ret[7] = l[3] * r[4] + l[7] * r[5] + l[11] * r[6] + l[15] * r[7];
-
-		ret[8] = l[0] * r[8] + l[4] * r[9] + l[8] * r[10] + l[12] * r[11];
-		ret[9] = l[1] * r[8] + l[5] * r[9] + l[9] * r[10] + l[13] * r[11];
-		ret[10] = l[2] * r[8] + l[6] * r[9] + l[10] * r[10] + l[14] * r[11];
-		ret[11] = l[3] * r[8] + l[7] * r[9] + l[11] * r[10] + l[15] * r[11];
-
-		ret[12] = l[0] * r[12] + l[4] * r[13] + l[8] * r[14] + l[12] * r[15];
-		ret[13] = l[1] * r[12] + l[5] * r[13] + l[9] * r[14] + l[13] * r[15];
-		ret[14] = l[2] * r[12] + l[6] * r[13] + l[10] * r[14] + l[14] * r[15];
-		ret[15] = l[3] * r[12] + l[7] * r[13] + l[11] * r[14] + l[15] * r[15];
-
-		return ret;
-	}
-
-	idVec3 operator*(const idVec3& v) const {		
-		idVec3 ret;
-		ret.x = m[0] * v.x + m[4] * v.y + m[8] * v.z + m[12];
-		ret.y = m[1] * v.x + m[5] * v.y + m[9] * v.z + m[13];
-		ret.z = m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14];
-		return ret;
-	}
-
-	idVec4 operator*(const idVec4 v) const {
-		idVec4 ret;
-		ret.x = m[0] * v.x + m[4] * v.y + m[8] * v.z + m[12] * v.w;
-		ret.y = m[1] * v.x + m[5] * v.y + m[9] * v.z + m[13] * v.w;
-		ret.z = m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14] * v.w;
-		ret.w = m[3] * v.x + m[7] * v.y + m[11] * v.z + m[15] * v.w;
-		return ret;
-	}
-
-	const float& operator[](int index) const {
-		assert(index >= 0);
-		assert(index < 16);
-		return m[index];
-	}
-
-	float& operator[]( int index ) {
-		assert( index >= 0 );
-		assert( index < 16 );
-		return m[index];
-	}
-
-	const float* ToFloatPtr() const	{
-		return &m[0];
-	}
-
-	float* ToFloatPtr()	{
-		return &m[0];
-	}
-
-	static fhRenderMatrix CreateProjectionMatrix(float fov, float aspect, float nearClip, float farClip) {		
-		const float D2R = idMath::PI / 180.0;
-		const float scale = 1.0 / tan( D2R * fov / 2.0 );
-		const float nearmfar = nearClip - farClip;
-
-		fhRenderMatrix m;
-		m[0] = scale;
-		m[5] = scale;
-		m[10] = (farClip + nearClip) / nearmfar;
-		m[11] = -1;
-		m[14] = 2 * farClip*nearClip / nearmfar;
-		m[15] = 0.0f;
-		return m;
-	}
-
-	static fhRenderMatrix CreateInfiniteProjectionMatrix( float fov, float aspect, float nearClip ) {
-		const float ymax = nearClip * tan( fov * idMath::PI / 360.0f );
-		const float ymin = -ymax;
-		const float xmax = nearClip * tan( fov * idMath::PI / 360.0f );
-		const float xmin = -xmax;
-		const float width = xmax - xmin;
-		const float height = ymax - ymin;
-
-		fhRenderMatrix m;
-		memset(&m, 0, sizeof(m));
-
-		m[0] = 2 * nearClip / width;
-		m[5] = 2 * nearClip / height;
-
-		// this is the far-plane-at-infinity formulation, and
-		// crunches the Z range slightly so w=0 vertexes do not
-		// rasterize right at the wraparound point
-		m[10] = -0.999f;
-		m[11] = -1;
-		m[14] = -2.0f * nearClip;
-		return m;
-	}
-
-	static fhRenderMatrix CreateLookAtMatrix(const idVec3& viewOrigin, const idVec3& at, const idVec3& up)
-	{
-		fhRenderMatrix rot = CreateLookAtMatrix(at - viewOrigin, up);
-
-		fhRenderMatrix translate;
-		translate[12] = -viewOrigin.x;
-		translate[13] = -viewOrigin.y;
-		translate[14] = -viewOrigin.z;
-
-		return rot * translate;
-	}
-
-	static fhRenderMatrix CreateLookAtMatrix( const idVec3& dir, const idVec3& up )
-	{
-		idVec3 zaxis = (dir * -1).Normalized();
-		idVec3 xaxis = up.Cross( zaxis ).Normalized();
-		idVec3 yaxis = zaxis.Cross( xaxis );
-
-		fhRenderMatrix m;
-		m[0] = xaxis.x;
-		m[1] = yaxis.x;
-		m[2] = zaxis.x;
-
-		m[4] = xaxis.y;
-		m[5] = yaxis.y;
-		m[6] = zaxis.y;
-
-		m[8] = xaxis.z;
-		m[9] = yaxis.z;
-		m[10] = zaxis.z;
-		return m;
-	}
-
-	static fhRenderMatrix CreateViewMatrix( const idVec3& origin ) {
-		fhRenderMatrix m;
-		m[12] = -origin.x;
-		m[13] = -origin.y;
-		m[14] = -origin.z;
-		return m;
-	}
-
-	static fhRenderMatrix FlipMatrix() {
-		static float flipMatrix[16] = {
-			// convert from our coordinate system (looking down X)
-			// to OpenGL's coordinate system (looking down -Z)
-			0, 0, -1, 0,
-			-1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 0, 1
-		};
-
-		static const fhRenderMatrix m( flipMatrix );
-		return m;
-	}	
-
-	static const fhRenderMatrix identity;
-private:
-	float m[16];
-};
-
-const fhRenderMatrix fhRenderMatrix::identity;
-
-static float	s_flipMatrix[16] = {
-	// convert from our coordinate system (looking down X)
-	// to OpenGL's coordinate system (looking down -Z)
-	0, 0, -1, 0,
-	-1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 0, 1
-};
-
-static void RB_CreateOrthographicProjectionMatrix( const viewLight_t* vlight, float* m )
-{
-	idVec3 lightSize = vlight->lightDef->parms.lightRadius;
-	const float r = lightSize.x / 2.0f;
-	const float l = lightSize.x / -2.0f;
-	const float t = lightSize.y / 2.0f;
-	const float b = lightSize.y / -2.0f;
-	const float f = lightSize.z;
-	const float n = 0;
-
-	idVec3 viewOrigin = idVec3( 0, 0, lightSize.z / 2.0f );
-
-	memset( m, 0, sizeof(m[0]) * 16 );
-	m[0] = 2.0f/(r-l);
-	m[5] = 2.0f/(b-t);
-	m[10] = -2.0f/(f-n);
-	m[12] = -((r+l)/(r-l));
-	m[13] = -((t+b)/(t-b));
-	m[14] = -((f+n)/(f-n));
-	m[15] = 1.0f;
-}
 
 static fhRenderMatrix RB_CreateShadowViewMatrix(const viewLight_t* vLight, int side) {
 	fhRenderMatrix viewMatrix;
@@ -651,46 +423,6 @@ static void RB_CreateProjectedProjectionMatrix(const viewLight_t* vLight, float*
 }
 
 
-static void RB_RenderParallelShadowBuffer( viewLight_t* vLight, int lod ) {
-	float	viewMatrix[16];
-	memset( viewMatrix, 0, sizeof(viewMatrix) );
-	viewMatrix[0] = 1.0f;
-	viewMatrix[5] = 1.0f;
-	viewMatrix[10] = 1.0f;
-	viewMatrix[12] = -vLight->lightDef->parms.origin.x;
-	viewMatrix[13] = -vLight->lightDef->parms.origin.y;
-	viewMatrix[14] = -vLight->lightDef->parms.origin.z;
-	viewMatrix[15] = 1.0f;
-
-	float lightProjectionMatrix[16];
-	RB_CreateOrthographicProjectionMatrix( vLight, lightProjectionMatrix );
-
-	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer(0, lod);
-	framebuffer->Bind();
-
-	glViewport( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
-	glScissor( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
-
-	glStencilFunc( GL_ALWAYS, 0, 255 );
-
-	GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
-	glDepthMask( GL_TRUE );
-	glEnable( GL_DEPTH_TEST );
-
-	glClearDepth( 1.0 );
-	glClear( GL_DEPTH_BUFFER_BIT );
-
-	backEnd.currentSpace = NULL;
-
-	float flippedViewMatrix[16];
-	myGlMultMatrix( viewMatrix, s_flipMatrix, flippedViewMatrix );
-//	myGlMultMatrix( flippedViewMatrix, lightProjectionMatrix, &backEnd.shadowViewProjection[0][0] );
-	RB_RenderShadowCasters( vLight, flippedViewMatrix, lightProjectionMatrix, lod );
-
-	backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
-}
-
-
 static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
 
 	//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
@@ -883,9 +615,9 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 			RB_RenderPointLightShadowBuffer(vLight, side, lod);
 			globalImages->GetShadowMapImage( side, lod )->Bind( textureUnit );
 		}
-	} else if (vLight->lightDef->parms.parallel) {
-		globalImages->BindNull( firstShadowMapTextureUnit );
-		RB_RenderParallelShadowBuffer(vLight, lod);		
+	} else if (vLight->lightDef->parms.parallel) {		
+		globalImages->BindNull( firstShadowMapTextureUnit );		
+		//TODO(johl): parallel lights not implemented yet
 		globalImages->GetShadowMapImage( 0, lod )->Bind( firstShadowMapTextureUnit );
 	}
 	else {	

@@ -819,7 +819,7 @@ public:
 	float			z;
 	float			w;
 
-	idVec4( void );
+	idVec4() = default;
 	explicit idVec4( const float x, const float y, const float z, const float w );
     explicit idVec4( const idVec3& xyz, const float w );
 	explicit idVec4( const float* xyzw );
@@ -874,9 +874,6 @@ public:
 
 extern idVec4 vec4_origin;
 #define vec4_zero vec4_origin
-
-ID_INLINE idVec4::idVec4( void ) {
-}
 
 ID_INLINE idVec4::idVec4( const float x, const float y, const float z, const float w ) {
 	this->x = x;

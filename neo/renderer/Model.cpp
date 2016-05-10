@@ -336,7 +336,11 @@ void idRenderModelStatic::InitEmpty( const char *fileName ) {
 	// shadowed normally
 	if ( !idStr::Cmpn( fileName, "_area", 5 ) ) {
 		isStaticWorldModel = true;
-	} else {
+	}
+	else if (!idStr::Cmpn( fileName, "_occluder", 9 )) {
+		isStaticWorldModel = true;
+	}
+	else {
 		isStaticWorldModel = false;
 	}
 

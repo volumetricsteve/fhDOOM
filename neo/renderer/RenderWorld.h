@@ -206,6 +206,7 @@ typedef struct renderLight_s {
 	// for the light against all the _area* models in the map.  The renderer will
 	// ignore this value if the light has been moved after initial creation
 	idRenderModel *			prelightModel;
+	idRenderModel*          occlusionModel;
 
 	// muzzle flash lights will not cast shadows from player and weapon world models
 	int						lightId;
