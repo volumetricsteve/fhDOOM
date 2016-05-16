@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "RenderList.h"
 
 idRenderSystemLocal	tr;
 idRenderSystem	*renderSystem = &tr;
@@ -717,6 +718,9 @@ void idRenderSystemLocal::EndFrame( int *frontEndMsec, int *backEndMsec ) {
 
 	// we can now release the vertexes used this frame
 	vertexCache.EndFrame();
+
+	// release all memory allocated for render lists
+	fhBaseRenderList::EndFrame();
 
 	if ( session->writeDemo ) {
 		session->writeDemo->WriteInt( DS_RENDER );

@@ -36,6 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "splines.h"
 #include "../../renderer/tr_local.h"
 #include "../../renderer/ImmediateMode.h"
+#include "../../renderer/RenderList.h"
 #include "../../renderer/model_local.h"	// for idRenderModelLiquid
 
 
@@ -1465,7 +1466,8 @@ void CXYWnd::OnPaint() {
     //common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
     
 		wglSwapBuffers(dc.m_hDC);
-    vertexCache.EndFrame();
+		vertexCache.EndFrame();
+		fhBaseRenderList::EndFrame();
 		TRACE("XY Paint\n");
 	}
 }
@@ -1486,7 +1488,7 @@ void CXYWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 void CreateEntityFromName(char *pName, brush_t *pBrush, bool forceFixed, idVec3 min, idVec3 max, idVec3 org) {
 	eclass_t	*pecNew;
 	entity_t	*petNew;
-	if (stricmp(pName, "worldspawn") == 0) {
+	if (stricmp(pName, "orldspawn") == 0) {
 		g_pParentWnd->MessageBox("Can't create an entity with worldspawn.", "info", 0);
 		return;
 	}

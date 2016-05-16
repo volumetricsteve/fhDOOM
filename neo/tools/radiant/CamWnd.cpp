@@ -202,10 +202,7 @@ void CCamWnd::OnPaint() {
 		common->Printf("Please restart " EDITOR_WINDOWTEXT " if the camera view is not working\n");
 	}
 	else {
-    fhImmediateMode::ResetStats();
-    idTimer timer;
-    timer.Start();
-
+	    fhImmediateMode::ResetStats();
 		QE_CheckOpenGLForErrors();
 
 		g_pSplitList = NULL;
@@ -217,9 +214,6 @@ void CCamWnd::OnPaint() {
 
 		Cam_Draw();
 		QE_CheckOpenGLForErrors();
-
-    timer.Stop();
-    common->Printf("CamWnd: count=%d, data=%d, milliseconds=%f\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize(), timer.Milliseconds());
 		wglSwapBuffers(dc.m_hDC);
 	}
 }

@@ -411,7 +411,7 @@ void	RB_STD_DrawView( void ) {
 	// uplight the entire screen to crutch up not having better blending range
 	RB_STD_LightScale();  
 
-	if(!r_renderList.GetBool()  || r_ignore2.GetBool()) {
+	if(!r_renderList.GetBool()) {
 		// now draw any non-light dependent shading passes
 		int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );
 

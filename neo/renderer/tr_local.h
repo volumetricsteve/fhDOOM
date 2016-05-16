@@ -878,6 +878,8 @@ extern idCVar r_multiSamples;			// number of antialiasing samples
 
 extern idCVar r_ignore;					// used for random debugging without defining new vars
 extern idCVar r_ignore2;				// used for random debugging without defining new vars
+extern idCVar r_ignore3;				// used for random debugging without defining new vars
+extern idCVar r_ignore4;				// used for random debugging without defining new vars
 extern idCVar r_znear;					// near Z clip plane
 
 extern idCVar r_finish;					// force a call to glFinish() every frame

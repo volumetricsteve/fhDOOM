@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "RenderProgram.h"
+#include "RenderList.h"
 
 // Vista OpenGL wrapper check
 #ifdef _WIN32
@@ -112,6 +113,8 @@ idCVar r_glCoreProfile( "r_glCoreProfile", "1", CVAR_RENDERER | CVAR_BOOL | CVAR
 
 idCVar r_ignore( "r_ignore", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
 idCVar r_ignore2( "r_ignore2", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
+idCVar r_ignore3( "r_ignore3", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
+idCVar r_ignore4( "r_ignore4", "0", CVAR_RENDERER, "used for random debugging without defining new vars" );
 idCVar r_usePreciseTriangleInteractions( "r_usePreciseTriangleInteractions", "0", CVAR_RENDERER | CVAR_BOOL, "1 = do winding clipping to determine if each ambiguous tri should be lit" );
 idCVar r_useCulling( "r_useCulling", "2", CVAR_RENDERER | CVAR_INTEGER, "0 = none, 1 = sphere, 2 = sphere + box", 0, 2, idCmdSystem::ArgCompletion_Integer<0,2> );
 idCVar r_useLightCulling( "r_useLightCulling", "3", CVAR_RENDERER | CVAR_INTEGER, "0 = none, 1 = box, 2 = exact clip of polyhedron faces, 3 = also areas", 0, 3, idCmdSystem::ArgCompletion_Integer<0,3> );
@@ -592,6 +595,8 @@ void R_InitOpenGL( void ) {
 	// allocate the vertex array range or vertex objects
 	vertexCache.Init();
 
+	// allocate memory for render lists
+	fhBaseRenderList::Init();
 
 	cmdSystem->AddCommand( "reloadARBPrograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB2 programs" );
 	cmdSystem->AddCommand( "reloadGlslPrograms", R_ReloadGlslPrograms_f, CMD_FL_RENDERER, "reloads GLSL programs" );

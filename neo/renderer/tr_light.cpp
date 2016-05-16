@@ -975,7 +975,7 @@ void R_AddLightSurfaces( void ) {
 		}
 
 		// add the prelight shadows for the static world geometry
-		if ( light->parms.prelightModel && r_useOptimizedShadows.GetBool() ) {
+		if ( light->ShadowMode() == shadowMode_t::StencilShadow && light->parms.prelightModel && r_useOptimizedShadows.GetBool() ) {
 
 			if ( !light->parms.prelightModel->NumSurfaces() ) {
 				common->Error( "no surfs in prelight model '%s'", light->parms.prelightModel->Name() );
@@ -1005,8 +1005,9 @@ void R_AddLightSurfaces( void ) {
 			vertexCache.Touch( tri->shadowCache );
 
 			if ( !tri->indexCache && r_useIndexBuffers.GetBool() ) {
-        tri->indexCache = vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), true );				
+				tri->indexCache = vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), true );				
 			}
+
 			if ( tri->indexCache ) {
 				vertexCache.Touch( tri->indexCache );
 			}

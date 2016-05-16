@@ -925,13 +925,13 @@ static void BuildLightOccluders( uEntity_t *e, mapLight_t *light ) {
 			if (!group->material->SurfaceCastsSoftShadow()) {
 				continue;
 			}
-/*
+
 			// if the group doesn't face away from the light, it
 			// won't contribute to the shadow volume
-			if (dmapGlobals.mapPlanes[group->planeNum].Distance( lightOrigin ) > 0) {
-				continue;
-			}
-*/
+			//if (dmapGlobals.mapPlanes[group->planeNum].Distance( lightOrigin ) > 0) {
+			//	continue;
+			//}
+
 			// if the group bounds doesn't intersect the light bounds,
 			// skip it
 			if (!group->bounds.IntersectsBounds( light->def.frustumTris->bounds )) {

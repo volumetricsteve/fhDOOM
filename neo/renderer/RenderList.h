@@ -1,16 +1,44 @@
 #pragma once
 #include <type_traits>
 
-template<typename T, int InitialCapacity = 1024, int CapcityIncrement = 256>
-class fhRenderList {
+
+class fhBaseRenderList {
+public:
+	static void Init();
+	static void EndFrame();
+protected:
+	template<typename T>
+	T* AllocateArray(uint32 num) {
+		static_assert(std::is_trivial<T>::value, "T must be trivial");
+		return static_cast<T*>(AllocateBytes(sizeof(T) * num));
+	}
+
+private:
+	void* AllocateBytes(uint32 bytes);
+};
+
+
+template<typename T>
+class fhRenderList : public fhBaseRenderList {
 public:
 	fhRenderList()
-		: array((T*)R_FrameAlloc(sizeof(T)*InitialCapacity))
-		, capacity(InitialCapacity)
+		: array(nullptr)
+		, capacity(0)
 		, size(0) {
 	}
 
 	void Append(const T& t) {
+		if(size == capacity) {
+			capacity += 1024;
+			T* t = AllocateArray<T>(capacity);
+
+			if (size > 0) {
+				memcpy(t, array, sizeof(T) * size);
+			}
+
+			array = t;			
+		}
+
 		assert(size < capacity);
 		array[size] = t;
 		++size;
@@ -46,8 +74,17 @@ struct drawDepth_t {
 	float              polygonOffset;
 	bool               isSubView;	
 	float              alphaTestThreshold;
-	idVec4             color;
 }; 
+
+struct drawShadow_t {
+	const srfTriangles_t* tris;
+	const idRenderEntityLocal* entity;
+	idImage*           texture;
+	idVec4             textureMatrix[2];
+	bool               hasTextureMatrix;
+	float              alphaTestThreshold;
+	unsigned           visibleFlags;
+};
 
 struct drawStage_t {
 	const drawSurf_t* surf;
@@ -71,6 +108,7 @@ struct drawStage_t {
 };
 
 static_assert(std::is_trivial<drawDepth_t>::value, "must be trivial");
+static_assert(std::is_trivial<drawShadow_t>::value, "must be trivial");
 static_assert(std::is_trivial<drawStage_t>::value, "must be trivial");
 static_assert(std::is_trivial<drawInteraction_t>::value, "must be trivial");
 
