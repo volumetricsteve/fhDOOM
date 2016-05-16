@@ -69,8 +69,9 @@ private:
 
 struct drawDepth_t {
 	const drawSurf_t*  surf;
-	idImage*           texture;
+	idImage*           texture;	
 	idVec4             textureMatrix[2];
+	idVec4             color;
 	float              polygonOffset;
 	bool               isSubView;	
 	float              alphaTestThreshold;

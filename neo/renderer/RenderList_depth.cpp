@@ -108,6 +108,8 @@ static void RB_GLSL_SubmitFillDepthRenderList( const DepthRenderList& renderlist
 			}
 		}
 
+		fhRenderProgram::SetDiffuseColor(drawdepth.color);
+
 		backEnd.stats.drawcalls[backEndGroup::DepthPrepass] += 1;
 		RB_DrawElementsWithCounters( drawdepth.surf->geo );
 
@@ -182,16 +184,15 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 		}
 
 		// subviews will just down-modulate the color buffer by overbright		
-		idVec4 color; //needed only to detect whether surface will be drawn later at all, not to render depth.
 		if (shader->GetSort() == SS_SUBVIEW) {
 			drawdepth.isSubView = true;
-			color[0] = color[1] = color[2] = (1.0 / backEnd.overBright);
-			color[3] = 1;
+			drawdepth.color[0] = drawdepth.color[1] = drawdepth.color[2] = (1.0 / backEnd.overBright);
+			drawdepth.color[3] = 1;
 		}
 		else {
 			drawdepth.isSubView = false;
-			color[0] = color[1] = color[2] = 0;
-			color[3] = 1;
+			drawdepth.color[0] = drawdepth.color[1] = drawdepth.color[2] = 0;
+			drawdepth.color[3] = 1;
 		}
 
 
@@ -218,10 +219,10 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 				}
 
 				// set the alpha modulate
-				color[3] = regs[pStage->color.registers[3]];
+				drawdepth.color[3] = regs[pStage->color.registers[3]];
 
 				// skip the entire stage if alpha would be black
-				if (color[3] <= 0) {
+				if (drawdepth.color[3] <= 0) {
 					continue;
 				}
 
