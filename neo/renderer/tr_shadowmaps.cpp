@@ -264,7 +264,8 @@ public:
 			}
 
 			RB_DrawElementsWithCounters( drawShadow.tris );
-			backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;
+			
+			backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;			
 		}
 	}
 
@@ -425,135 +426,6 @@ float	R_EXP_CalcLightAxialSize(const viewLight_t *vLight) {
 }
 
 
-static void RB_RenderShadowCasters(const viewLight_t *vLight, const float* shadowViewMatrix, const float* shadowProjectionMatrix, int lod) {	
-	
-	fhRenderProgram::SetProjectionMatrix( shadowProjectionMatrix );
-	fhRenderProgram::SetViewMatrix( shadowViewMatrix );		
-	fhRenderProgram::SetAlphaTestEnabled(false);
-	fhRenderProgram::SetDiffuseMatrix(idVec4::identityS, idVec4::identityT);
-
-	const idRenderEntityLocal *currentEntity = nullptr;
-	bool currentAlphaTest = false;
-	bool currentHasDiffuseMatrix = false;
-	
-	for (idInteraction *inter = vLight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
-		const idRenderEntityLocal *entityDef = inter->entityDef;
-
-		if (!entityDef) {
-			continue;
-		}
-		if (entityDef->parms.noShadow) {
-			continue;
-		}
-		if (inter->numSurfaces < 1) {
-			continue;
-		}		
-
-		// draw each surface
-		for (int i = 0; i < inter->numSurfaces; i++) {
-			surfaceInteraction_t	*surfInt = &inter->surfaces[i];
-			const idMaterial* shader = surfInt->shader;
-
-			if (!surfInt->ambientTris || !surfInt->shader) {
-				continue;
-			}			
-
-			if (!shader->SurfaceCastsSoftShadow()) {
-				continue;
-			}
-
-			// cull it
-			if (surfInt->expCulled == CULL_OCCLUDER_AND_RECEIVER) {
-				continue;
-			}
-
-			// render it
-			const srfTriangles_t *tri = surfInt->ambientTris;
-			if(!tri || !tri->numVerts) {
-				continue;
-			}
-
-			if (!tri->ambientCache) {
-				R_CreateAmbientCache(const_cast<srfTriangles_t *>(tri), false);
-			}
-
-			const auto offset = vertexCache.Bind(tri->ambientCache);
-			GL_SetupVertexAttributes(fhVertexLayout::DrawPosTexOnly, offset);			
-
-			bool didDraw = false;
-			
-			// we may have multiple alpha tested stages
-			if (shader->Coverage() == MC_PERFORATED) {
-				// if the only alpha tested stages are condition register omitted,
-				// draw a normal opaque surface
-				
-				float *regs = (float *)R_ClearedFrameAlloc(shader->GetNumRegisters() * sizeof(float));
-				shader->EvaluateRegisters(regs, entityDef->parms.shaderParms, backEnd.viewDef, nullptr);
-
-
-				// perforated surfaces may have multiple alpha tested stages
-				for (int stage = 0; stage < shader->GetNumStages(); stage++) {
-					const shaderStage_t* pStage = shader->GetStage(stage);
-
-					if (!pStage->hasAlphaTest) {
-						continue;
-					}
-
-					if (regs[pStage->conditionRegister] == 0) {
-						continue;
-					}
-
-					// bind the texture
-					pStage->texture.image->Bind(0);
-
-					fhRenderProgram::SetAlphaTestEnabled(true);
-					fhRenderProgram::SetAlphaTestThreshold(0.5f);
-					currentAlphaTest = true;
-
-					
-					if (pStage->texture.hasMatrix) {						
-						idVec4 textureMatrix[2] = {idVec4(1,0,0,0), idVec4(0,1,0,0)};						
-						RB_GetShaderTextureMatrix(regs, &pStage->texture, textureMatrix);
-						fhRenderProgram::SetDiffuseMatrix(textureMatrix[0], textureMatrix[1]);
-						currentHasDiffuseMatrix = true;
-					}
-					else if (currentHasDiffuseMatrix) {
-						fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
-						currentHasDiffuseMatrix = false;
-					}
-
-					if(currentEntity != entityDef) {
-						fhRenderProgram::SetModelMatrix(entityDef->modelMatrix);		
-						currentEntity = entityDef;
-					}
-
-					// draw it
-					RB_DrawElementsWithCounters(tri);
-					backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;
-					didDraw = true;
-					break;
-				}
-			}
-			
-			if(!didDraw) {
-				if (currentAlphaTest) {
-					fhRenderProgram::SetAlphaTestEnabled( false );
-					currentAlphaTest = false;
-				}			
-
-				if (currentEntity != entityDef) {
-					fhRenderProgram::SetModelMatrix( entityDef->modelMatrix );
-					currentEntity = entityDef;
-				}
-
-				// draw it
-				backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;
-				RB_DrawElementsWithCounters(tri);
-			}
-		}
-	}
-}
-
 static void RB_CreateProjectedProjectionMatrix(const viewLight_t* vLight, float* m)
 {
 	auto parms = vLight->lightDef->parms;
@@ -613,47 +485,6 @@ static void RB_CreateProjectedProjectionMatrix(const viewLight_t* vLight, float*
 }
 
 
-static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
-
-	//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
-	idVec3 origin = vLight->lightDef->parms.origin;
-	idVec3 localTarget = vLight->lightDef->parms.target;
-	idVec3 rotatedLocalTarget = vLight->lightDef->parms.axis * vLight->lightDef->parms.target;
-	idVec3 worldTarget = vLight->lightDef->parms.origin + rotatedLocalTarget;
-
-	idVec3 flippedOrigin = fhRenderMatrix::FlipMatrix() * origin;
-	idVec3 flippedTarget = fhRenderMatrix::FlipMatrix() * worldTarget;
-	idVec3 flippedUp = fhRenderMatrix::FlipMatrix() * (vLight->lightDef->parms.axis * vLight->lightDef->parms.up);
-	auto viewMatrix = fhRenderMatrix::CreateLookAtMatrix(flippedOrigin, flippedTarget, flippedUp) * fhRenderMatrix::FlipMatrix();
-	fhRenderMatrix projectionMatrix;	
-	RB_CreateProjectedProjectionMatrix( vLight, projectionMatrix.ToFloatPtr() );
-
-	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer;
-	framebuffer->Bind();
-	glViewport( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
-	glScissor( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
-
-	glStencilFunc( GL_ALWAYS, 0, 255 );
-
-	GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
-	glDepthMask( GL_TRUE );
-	glEnable( GL_DEPTH_TEST );
-
-	glClearDepth( 1.0 );
-	glClear( GL_DEPTH_BUFFER_BIT );
-
-	backEnd.currentSpace = NULL;	
-	auto viewProjection = projectionMatrix * viewMatrix;
-
-	memcpy(&backEnd.shadowViewProjection[0][0], viewProjection.ToFloatPtr(), sizeof(float)*16);
-	memcpy(backEnd.testProjectionMatrix, viewProjection.ToFloatPtr(), sizeof(float)*16);
-	memcpy(backEnd.testViewMatrix, viewMatrix.ToFloatPtr(), sizeof(float)*16);
-
-	RB_RenderShadowCasters( vLight, viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), lod );
-
-	backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
-}
-
 //offsets to pack 6 smaller textures into a texture atlas (3x2)
 static const idVec2 sideOffsets[] = {
 	idVec2(0,       0),
@@ -664,10 +495,10 @@ static const idVec2 sideOffsets[] = {
 	idVec2(1.0/1.5, 0.5)
 };
 
-static void RB_RenderPointLightShadowBuffer2( const ShadowRenderList& renderlist, const fhRenderMatrix& projectionMatrix, const fhRenderMatrix& viewMatrix, int side, int lod ) {
-	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer;	
+static void RB_SetupShadowMapViewPort(int side, int lod) {
+	const auto* framebuffer = globalImages->shadowmapFramebuffer;
 
-	const idVec2 scale = idVec2(1.0/3.0, 1.0/2.0) / (1 << lod);
+	const idVec2 scale = idVec2( 1.0 / 3.0, 1.0 / 2.0 ) / (1 << lod);
 	const idVec2 offset = sideOffsets[side];
 	const int width = framebuffer->GetWidth() * scale.x;
 	const int height = framebuffer->GetHeight() * scale.y;
@@ -677,13 +508,8 @@ static void RB_RenderPointLightShadowBuffer2( const ShadowRenderList& renderlist
 	backEnd.shadowCoords[side].scale = scale;
 	backEnd.shadowCoords[side].offset = offset;
 
-	glViewport( offsetX, offsetY, width, height);
-	glScissor( offsetX, offsetY, width, height);
-
-	*reinterpret_cast<fhRenderMatrix*>(&backEnd.shadowViewProjection[side][0]) = projectionMatrix * viewMatrix;
-
-	renderlist.Submit(viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), side, lod);
-	backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
+	glViewport( offsetX, offsetY, width, height );
+	glScissor( offsetX, offsetY, width, height );
 }
 
 void RB_RenderShadowMaps(viewLight_t* vLight) {
@@ -754,56 +580,86 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 			viewMatrices[side] = RB_CreateShadowViewMatrix( vLight, side );
 		}
 
+		ShadowRenderList renderlist;
+		renderlist.AddInteractions( vLight, viewMatrices, 6 );
+
 		glStencilFunc( GL_ALWAYS, 0, 255 );
 		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
 		glDepthMask( GL_TRUE );
 		glEnable( GL_DEPTH_TEST );
 
-		ShadowRenderList renderlist;
-		renderlist.AddInteractions( vLight, viewMatrices, 6 );
-
 		globalImages->BindNull( firstShadowMapTextureUnit );
-
 		globalImages->shadowmapFramebuffer->Bind();
 
+		//clear everything in one go
 		glViewport(0,0,globalImages->shadowmapFramebuffer->GetWidth(),globalImages->shadowmapFramebuffer->GetHeight());
 		glScissor(0,0,globalImages->shadowmapFramebuffer->GetWidth(),globalImages->shadowmapFramebuffer->GetHeight());
-
 		glClearDepth( 1.0 );
 		glClear( GL_DEPTH_BUFFER_BIT );
 
 		const int indices = backEnd.pc.c_drawIndexes;
 
 		for (int side = 0; side < 6; side++) {
-			viewMatrices[side] = fhRenderMatrix::FlipMatrix() * viewMatrices[side];
-			RB_RenderPointLightShadowBuffer2( renderlist, projectionMatrix, viewMatrices[side], side, lod );
-		}
+			RB_SetupShadowMapViewPort( side, lod );
 
-		globalImages->defaultFramebuffer->Bind();
+			viewMatrices[side] = fhRenderMatrix::FlipMatrix() * viewMatrices[side];		
 
-		globalImages->shadowmapImage->Bind( firstShadowMapTextureUnit );
+			*reinterpret_cast<fhRenderMatrix*>(&backEnd.shadowViewProjection[side][0]) = projectionMatrix * viewMatrices[side];
 
-		if(r_ignore.GetBool()) {
-			common->Printf("shadow map tris (%f %f %f): %d\n", vLight->lightDef->parms.origin.x, vLight->lightDef->parms.origin.y, vLight->lightDef->parms.origin.z, (backEnd.pc.c_drawIndexes - indices)/3 );
-		}
+			renderlist.Submit( viewMatrices[side].ToFloatPtr(), projectionMatrix.ToFloatPtr(), side, lod );
+			backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
+		}	
+
 	} else if (vLight->lightDef->parms.parallel) {		
 		assert(false && "parallel shadow maps not implemented");
 	}
 	else {	
+		//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
+		idVec3 origin = vLight->lightDef->parms.origin;
+		idVec3 localTarget = vLight->lightDef->parms.target;
+		idVec3 rotatedLocalTarget = vLight->lightDef->parms.axis * vLight->lightDef->parms.target;
+		idVec3 worldTarget = vLight->lightDef->parms.origin + rotatedLocalTarget;
+
+		idVec3 flippedOrigin = fhRenderMatrix::FlipMatrix() * origin;
+		idVec3 flippedTarget = fhRenderMatrix::FlipMatrix() * worldTarget;
+		idVec3 flippedUp = fhRenderMatrix::FlipMatrix() * (vLight->lightDef->parms.axis * vLight->lightDef->parms.up);
+		auto viewMatrix = fhRenderMatrix::CreateLookAtMatrix( flippedOrigin, flippedTarget, flippedUp ) * fhRenderMatrix::FlipMatrix();
+		fhRenderMatrix projectionMatrix;
+		RB_CreateProjectedProjectionMatrix( vLight, projectionMatrix.ToFloatPtr() );
+
+		ShadowRenderList renderlist;
+		renderlist.AddInteractions( vLight, &viewMatrix, 1 );
+
+		glStencilFunc( GL_ALWAYS, 0, 255 );
+		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
+		glDepthMask( GL_TRUE );
+		glEnable( GL_DEPTH_TEST );
+
 		globalImages->BindNull( firstShadowMapTextureUnit );
-		RB_RenderProjectedShadowBuffer( vLight, lod );		
-		globalImages->shadowmapImage->Bind( firstShadowMapTextureUnit );
+		globalImages->shadowmapFramebuffer->Bind();
+
+		RB_SetupShadowMapViewPort(0, lod);
+		glClearDepth( 1.0 );
+		glClear( GL_DEPTH_BUFFER_BIT );
+
+		auto viewProjection = projectionMatrix * viewMatrix;
+
+		memcpy( &backEnd.shadowViewProjection[0][0], viewProjection.ToFloatPtr(), sizeof(float)* 16 );
+		memcpy( backEnd.testProjectionMatrix, viewProjection.ToFloatPtr(), sizeof(float)* 16 );
+		memcpy( backEnd.testViewMatrix, viewMatrix.ToFloatPtr(), sizeof(float)* 16 );
+
+		renderlist.Submit(viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), 0, lod);
+
+
+		backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
 	}
 
-	glPolygonOffset( 0, 0 );
-	glDisable( GL_POLYGON_OFFSET_FILL );
-	
+	globalImages->defaultFramebuffer->Bind();
+	globalImages->shadowmapImage->Bind( firstShadowMapTextureUnit );
+
+	glDisable( GL_POLYGON_OFFSET_FILL );	
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
-	GL_UseProgram(nullptr);
-
-	globalImages->defaultFramebuffer->Bind();
-	backEnd.currentSpace = NULL;
 
 	//reset viewport 
 	glViewport(tr.viewportOffset[0] + backEnd.viewDef->viewport.x1,

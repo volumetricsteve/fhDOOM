@@ -11,7 +11,7 @@ out vec4 result;
 
 
 float linearDepth(float expDepth) {
-  const float f = 100.0;
+  const float f = 60.0;
   const float n = 0.1;
 
   float z = (2 * n) / (f + n - expDepth * (f - n));

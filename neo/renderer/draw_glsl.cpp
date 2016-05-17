@@ -1380,8 +1380,6 @@ void RB_GLSL_DrawInteractions(void) {
     backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
   }
 
-  r_ignore.SetBool(false);
-
   // disable stencil shadow test
   glStencilFunc(GL_ALWAYS, 128, 255);
 }
