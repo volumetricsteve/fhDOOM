@@ -19,13 +19,19 @@ float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
     return 0.0;
 }
 
-float getShadow(vec4 pos, sampler2D tex)
+float getShadow(vec4 pos, sampler2D tex, vec2 coordScale, vec2 coordOffset)
 {   
     pos = pos / pos.w;
 
     pos.x = pos.x/2.0 + 0.5;
     pos.y = pos.y/2.0 + 0.5;
-    pos.z = pos.z/2.0 + 0.5;    
+    pos.z = pos.z/2.0 + 0.5;   
+
+    pos.x *= coordScale.x; 
+    pos.y *= coordScale.y; 
+
+    pos.x += coordOffset.x;
+    pos.y += coordOffset.y;
 
 //#define FILTER_PCF
 //#define FILTER_PCF4
@@ -182,7 +188,7 @@ float getShadow(vec4 pos, sampler2D tex)
 
 float projectedShadow(vec4 pos)
 {
-  return getShadow(pos, texture6);
+  return getShadow(pos, texture6, rpShadowCoords[0].xy, rpShadowCoords[0].zw);
 }
 
 float pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
@@ -216,28 +222,28 @@ float pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
 
   if(side == 0)
   {  
-    return getShadow(pos[0], texture6); 
+    return getShadow(pos[0], texture6, rpShadowCoords[0].xy, rpShadowCoords[0].zw); 
   }
 
   if(side == 1)
   {  
-    return getShadow(pos[2], texture8); 
+    return getShadow(pos[2], texture8, rpShadowCoords[2].xy, rpShadowCoords[2].zw); 
   }  
 
   if(side == 2)
   {  
-    return getShadow(pos[4], texture10); 
+    return getShadow(pos[4], texture10, rpShadowCoords[4].xy, rpShadowCoords[4].zw); 
   }   
 
   if(side == 3)
   {  
-    return getShadow(pos[1], texture7); 
+    return getShadow(pos[1], texture7, rpShadowCoords[1].xy, rpShadowCoords[1].zw); 
   }   
 
   if(side == 4)
   {  
-    return getShadow(pos[3], texture9); 
+    return getShadow(pos[3], texture9, rpShadowCoords[3].xy, rpShadowCoords[3].zw); 
   }  
 
-  return getShadow(pos[5], texture11); 
+  return getShadow(pos[5], texture11, rpShadowCoords[5].xy, rpShadowCoords[5].zw); 
 }

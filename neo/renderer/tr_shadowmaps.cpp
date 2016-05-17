@@ -698,7 +698,7 @@ static void RB_RenderProjectedShadowBuffer(viewLight_t* vLight, int lod) {
 	fhRenderMatrix projectionMatrix;	
 	RB_CreateProjectedProjectionMatrix( vLight, projectionMatrix.ToFloatPtr() );
 
-	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer(0, lod);
+	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[0];
 	framebuffer->Bind();
 	glViewport( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
 	glScissor( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
@@ -739,7 +739,7 @@ static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int l
 		projectionMatrix = fhRenderMatrix::CreateProjectionMatrix(r_smFov.GetFloat(), 1, r_smNearClip.GetFloat(), r_smFarClip.GetFloat());
 	}
 
-	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer(side, lod);
+	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[side];
 	framebuffer->Bind();
 
 	glViewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
@@ -817,11 +817,22 @@ static void RB_RenderPointLightShadowBuffer(viewLight_t* vLight, int side, int l
 
 
 static void RB_RenderPointLightShadowBuffer2( ShadowRenderList& renderlist, const fhRenderMatrix& projectionMatrix, const fhRenderMatrix& viewMatrix, int side, int lod ) {
-	fhFramebuffer* framebuffer = globalImages->GetShadowMapFramebuffer( side, lod );
+	fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer[side];
 	framebuffer->Bind();
 
-	glViewport( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
-	glScissor( 0, 0, framebuffer->GetWidth(), framebuffer->GetHeight() );
+	float scale = 1.0/idMath::Pow(2, lod);
+	idVec2 offset = (lod > 0) ? idVec2(0.25, 0.25) : idVec2(0,0);
+
+	backEnd.shadowCoords[side].scale = idVec2(scale, scale);
+	backEnd.shadowCoords[side].offset = offset;	
+
+	const int width = framebuffer->GetWidth() * scale;
+	const int height = framebuffer->GetHeight() * scale;
+	const int offsetX = framebuffer->GetWidth() * offset.x;
+	const int offsetY = framebuffer->GetHeight() * offset.y;
+
+	glViewport( offsetX, offsetY, width, height);
+	glScissor( offsetX, offsetY, width, height);
 
 	glClearDepth( 1.0 );
 	glClear( GL_DEPTH_BUFFER_BIT );	
@@ -854,8 +865,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	int lod = vLight->shadowMapLod;
 	if(r_smLod.GetInteger() >= 0) {
 		lod = r_smLod.GetInteger();
-	}	
-	lod = idMath::ClampInt(0, idImageManager::shadowMapLodNum-1, lod);
+	}		
 
 	const uint64 startTime = Sys_Microseconds();
 
@@ -888,8 +898,6 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	if(vLight->lightDef->parms.pointLight) {
 		if(r_renderList.GetBool()) {	
-
-			//vLight->lightDef->parms.occlusionModel
 
 			fhRenderMatrix projectionMatrix;
 			if (r_smFarClip.GetInteger() < 0) {
@@ -927,7 +935,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 			}
 
 			for (int side = 0; side < 6; side++) {
-				globalImages->GetShadowMapImage( side, lod )->Bind( firstShadowMapTextureUnit + side );
+				globalImages->shadowmapImage[side]->Bind( firstShadowMapTextureUnit + side );
 			}
 
 			if(r_ignore.GetBool()) {
@@ -940,18 +948,18 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 				globalImages->BindNull( textureUnit );
 				RB_RenderPointLightShadowBuffer( vLight, side, lod );
-				globalImages->GetShadowMapImage( side, lod )->Bind( textureUnit );
+				globalImages->shadowmapImage[side]->Bind( textureUnit );
 			}
 		}
 	} else if (vLight->lightDef->parms.parallel) {		
 		globalImages->BindNull( firstShadowMapTextureUnit );		
 		//TODO(johl): parallel lights not implemented yet
-		globalImages->GetShadowMapImage( 0, lod )->Bind( firstShadowMapTextureUnit );
+		globalImages->shadowmapImage[0]->Bind( firstShadowMapTextureUnit );
 	}
 	else {	
 		globalImages->BindNull( firstShadowMapTextureUnit );
 		RB_RenderProjectedShadowBuffer( vLight, lod );		
-		globalImages->GetShadowMapImage( 0, lod )->Bind( firstShadowMapTextureUnit );
+		globalImages->shadowmapImage[0]->Bind( firstShadowMapTextureUnit );
 	}
 
 	glPolygonOffset( 0, 0 );

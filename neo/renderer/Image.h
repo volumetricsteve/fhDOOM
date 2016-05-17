@@ -475,14 +475,9 @@ public:
 	idImage *			borderClampImage;			// white inside, black outside
 
 	fhFramebuffer*		defaultFramebuffer;
-	static const int    shadowMapLodNum = 3;
-private:	
-	idImage *			shadowmapImage[shadowMapLodNum][6];
-	fhFramebuffer*		shadowmapFramebuffer[shadowMapLodNum][6];	
-public:
 
-	fhFramebuffer*      GetShadowMapFramebuffer(int side, int lod);
-	idImage*            GetShadowMapImage(int side, int lod); 
+	idImage *			shadowmapImage[6];
+	fhFramebuffer*		shadowmapFramebuffer[6];
 
 	//--------------------------------------------------------
 	
@@ -514,18 +509,6 @@ public:
 	int	numActiveBackgroundImageLoads;
 	const static int MAX_BACKGROUND_IMAGE_LOADS = 8;
 };
-
-inline fhFramebuffer* idImageManager::GetShadowMapFramebuffer( int side, int lod ) {
-	assert(side >= 0 && side < 6);
-	assert(lod >= 0 && lod < shadowMapLodNum);	
-	return shadowmapFramebuffer[lod][side];
-}
-
-inline idImage* idImageManager::GetShadowMapImage( int side, int lod ) {
-	assert( side >= 0 && side < 6 );
-	assert(lod >= 0 && lod < shadowMapLodNum);
-	return shadowmapImage[lod][side];
-}
 
 extern idImageManager	*globalImages;		// pointer to global list for the rest of the system
 

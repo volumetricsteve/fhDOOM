@@ -1546,12 +1546,10 @@ void idImageManager::PurgeAllImages() {
 		images[i]->PurgeImage();
 	}
 
-	for ( int i = 0; i < 3; ++i ) {
-		for ( int j = 0; j < 6; ++j ) {
-			shadowmapImage[i][j]->PurgeImage();
-			shadowmapFramebuffer[i][j]->Purge();
-		}
-	}	
+	for (int j = 0; j < 6; ++j) {
+		shadowmapImage[j]->PurgeImage();
+		shadowmapFramebuffer[j]->Purge();
+	}
 }
 
 /*
@@ -1884,16 +1882,13 @@ void idImageManager::Init() {
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
-
-	const int shadowmapSizes[] = {1024, 512, 256};
-	for(int j=0; j<sizeof(shadowmapSizes)/sizeof(shadowmapSizes[0]); ++j) {	
-		for(int i=0; i<6; ++i) {
-			char name[64] = {0};    
-			sprintf(name, "_shadowmapImage%d_%d", i, j);
-			shadowmapImage[j][i] = ImageFromFunction(name, R_Depth);
-			shadowmapFramebuffer[j][i] = new fhFramebuffer(shadowmapSizes[j], shadowmapSizes[j], nullptr, shadowmapImage[j][i]);
-		}
-	}
+	
+	for(int i=0; i<6; ++i) {
+		char name[64] = {0};    
+		sprintf(name, "_shadowmapImage%d", i);
+		shadowmapImage[i] = ImageFromFunction(name, R_Depth);
+		shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, nullptr, shadowmapImage[i]);
+	}	
 
 	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
   
