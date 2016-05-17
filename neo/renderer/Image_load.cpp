@@ -1627,35 +1627,33 @@ CopyFramebuffer
 */
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
 
-	if(glConfig.extDirectStateAccessAvailable) {
-		glReadBuffer( GL_BACK );
+	glReadBuffer( GL_BACK );
 
-		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-			uploadWidth = imageWidth;
-			uploadHeight = imageHeight;
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
+	if (uploadWidth != imageWidth || uploadHeight != imageHeight || internalFormat != GL_RGB8) {
+
+		uploadWidth = imageWidth;
+		uploadHeight = imageHeight;
+		internalFormat = GL_RGB8;
+		filter = TF_LINEAR;
+		repeat = TR_CLAMP;
+		type = TT_2D;
+		SetImageFilterAndRepeat();
+
+		if (glConfig.extDirectStateAccessAvailable) {
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
 		}
+		else {
+			Bind( 0 );
+			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
+		}
+	}
 
-		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
+	if (glConfig.extDirectStateAccessAvailable) {
+		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
 	}
 	else {
 		Bind( 0 );
-
-		glReadBuffer( GL_BACK );
-
-		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-			uploadWidth = imageWidth;
-			uploadHeight = imageHeight;
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
-		}
-
-		glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, x, y, imageWidth, imageHeight, 0 );
+		glCopyTexImage2D( GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
 	}
 
 	backEnd.c_copyFrameBuffer++;
@@ -1670,99 +1668,84 @@ This should just be part of copyFramebuffer once we have a proper image type fie
 */
 void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
 
-	if(glConfig.extDirectStateAccessAvailable) {
-	
-		glReadBuffer( GL_BACK );
+	glReadBuffer( GL_BACK );	
 
-		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-			uploadWidth = imageWidth;
-			uploadHeight = imageHeight;
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
+	if (uploadWidth != imageWidth || uploadHeight != imageHeight || internalFormat != GL_DEPTH_COMPONENT) {
+
+		uploadWidth = imageWidth;
+		uploadHeight = imageHeight;
+		internalFormat = GL_DEPTH_COMPONENT;
+		filter = TF_LINEAR;
+		repeat = TR_CLAMP;
+		type = TT_2D;
+		SetImageFilterAndRepeat();
+
+		if(glConfig.extDirectStateAccessAvailable) {
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 		}
+		else {
+			Bind( 0 );
+			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
+		}
+	}
 
-		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
+	if (glConfig.extDirectStateAccessAvailable) {
+		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
 	}
 	else {
 		Bind( 0 );
-
-		glReadBuffer( GL_BACK );
-
-		if (uploadWidth != imageWidth || uploadHeight != imageHeight) {
-			uploadWidth = imageWidth;
-			uploadHeight = imageHeight;
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
-		}
-
-		glCopyTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, x, y, imageWidth, imageHeight, 0 );
+		glCopyTexImage2D( GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
 	}
-
 
 	backEnd.c_copyFrameBuffer++;
 }
 
-void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
+void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {	
+	
+	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight() || internalFormat != GL_DEPTH_COMPONENT) {
 
-	Bind( 0 );
+		uploadWidth = framebuffer->GetWidth();
+		uploadHeight = framebuffer->GetHeight();
+		internalFormat = GL_DEPTH_COMPONENT;
+		filter = TF_LINEAR;
+		repeat = TR_CLAMP;
+		type = TT_2D;
 
-	if(glConfig.extDirectStateAccessAvailable) {
-		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
-			uploadWidth = framebuffer->GetWidth();
-			uploadHeight = framebuffer->GetHeight();
-
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
+		if(glConfig.extDirectStateAccessAvailable) {
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 		}
-	}
-	else {	
-
-		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
-			uploadWidth = framebuffer->GetWidth();
-			uploadHeight = framebuffer->GetHeight();
-
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
+		else {
+			Bind( 0 );
+			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
 		}
+
+
+		SetImageFilterAndRepeat();
 	}
 
 	glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texnum, 0 );
 }
 
 void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
+	
+	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight() || internalFormat != GL_RGB) {
 
-	Bind( 0 );
+		uploadWidth = framebuffer->GetWidth();
+		uploadHeight = framebuffer->GetHeight();
+		internalFormat = GL_RGB;
+		filter = TF_LINEAR;
+		repeat = TR_CLAMP;
+		type = TT_2D;
 
-	if(glConfig.extDirectStateAccessAvailable) {
-		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
-			uploadWidth = framebuffer->GetWidth();
-			uploadHeight = framebuffer->GetHeight();
-
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
+		if(glConfig.extDirectStateAccessAvailable) {
+			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 		}
-	}
-	else {	
-
-		if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight()) {
-			uploadWidth = framebuffer->GetWidth();
-			uploadHeight = framebuffer->GetHeight();
-
-			glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
-			filter = TF_LINEAR;
-			repeat = TR_CLAMP;
-			SetImageFilterAndRepeat();
+		else {
+			Bind( 0 );
+			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 		}
+
+		SetImageFilterAndRepeat();
 	}
 
 	glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texnum, 0 );

@@ -213,7 +213,6 @@ public:
 	// data commonly accessed is grouped here
 	static const int TEXTURE_NOT_LOADED = -1;
 	fhSampler*          sampler;
-	//GLuint              samplernum;             // gl sampler object
 	GLuint				texnum;					// gl texture binding, will be TEXTURE_NOT_LOADED if not loaded
 	textureType_t		type;
 	int					frameUsed;				// for texture usage in frame statistics
