@@ -730,6 +730,7 @@ typedef struct {
 	float               shadowViewProjection[6][16];
 	float               testViewMatrix[16];
 	float               testProjectionMatrix[16];
+	shadowCoord_t       shadowCoords[6];
 } backEndState_t;
 
 

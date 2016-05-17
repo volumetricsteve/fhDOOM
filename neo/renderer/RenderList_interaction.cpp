@@ -201,11 +201,13 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 			//point light
 			fhRenderProgram::SetShadowMappingMode( 1 );
 			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+			fhRenderProgram::SetShadowCoords(backEnd.shadowCoords, 6);
 		}
 		else {
 			//projected light
 			fhRenderProgram::SetShadowMappingMode( 2 );
 			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
+			fhRenderProgram::SetShadowCoords(backEnd.shadowCoords, 1);
 		}
 	}
 	else {

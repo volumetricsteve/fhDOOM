@@ -48,3 +48,4 @@ uniform mat4 rpPointlightProjection[6];
 
 uniform vec4 rpGlobalLightOrigin;
 uniform vec4 rpShadowParams; //x=minBias, y=maxbias, z=fuzzyness, w=samples
+uniform vec4 rpShadowCoords[6];

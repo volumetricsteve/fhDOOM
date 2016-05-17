@@ -42,10 +42,16 @@ struct fhUniform {
 		PointLightProjection,
 		GlobalLightOrigin,
 		ShadowParams,
+		ShadowCoords,
 		NUM
 	};
 
 	Value value;
+};
+
+struct shadowCoord_t {
+	idVec2 scale;
+	idVec2 offset;
 };
 
 struct fhRenderProgram {
@@ -110,6 +116,8 @@ public:
 	static void SetPointLightProjectionMatrices(const float* m);
 	static void SetShadowParams(const idVec4& v);
 	static void SetGlobalLightOrigin(const idVec4& v);
+
+	static void SetShadowCoords(const shadowCoord_t* coords, int num);
 
 private:
 	static bool dirty[fhUniform::NUM];
@@ -324,4 +332,10 @@ ID_INLINE void fhRenderProgram::SetShadowParams( const idVec4& v ) {
 
 ID_INLINE void fhRenderProgram::SetGlobalLightOrigin( const idVec4& v ) {
 	glUniform4fv(currentUniformLocations[fhUniform::GlobalLightOrigin], 1, v.ToFloatPtr());
+}
+
+ID_INLINE void fhRenderProgram::SetShadowCoords(const shadowCoord_t* coords, int num) {
+	static_assert(sizeof(shadowCoord_t) == sizeof(float)*4, "");
+	assert(num > 0 && num <= 6); //num==0 is probably ok technically, but it seems like a bug, so assert num>0
+	glUniform4fv(currentUniformLocations[fhUniform::ShadowCoords], num, reinterpret_cast<const float*>(coords));
 }
