@@ -35,6 +35,7 @@ const fhRenderProgram* blendLightProgram = nullptr;
 const fhRenderProgram* vertexColorProgram = nullptr;
 const fhRenderProgram* flatColorProgram = nullptr;
 const fhRenderProgram* intensityProgram = nullptr;
+const fhRenderProgram* debugDepthProgram = nullptr;
 
 
 static void R_TestUniformLocations(GLuint program)
@@ -516,4 +517,5 @@ void fhRenderProgram::Init() {
 	vertexColorProgram = R_FindGlslProgram( "vertexcolor.vp", "vertexcolor.fp" );
 	flatColorProgram = R_FindGlslProgram( "flatcolor.vp", "flatcolor.fp" );
 	intensityProgram = R_FindGlslProgram( "intensity.vp", "intensity.fp" );
+	debugDepthProgram = R_FindGlslProgram( "debugdepth.vp", "debugdepth.fp" );
 }

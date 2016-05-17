@@ -98,10 +98,15 @@ void fhImmediateMode::End()
 		if (currentTexture) {
 			currentTexture->Bind(1);
 
-			if (currentTexture->type == TT_CUBIC)
+			if (currentTexture->type == TT_CUBIC) {
 				GL_UseProgram(skyboxProgram);
-			else
-				GL_UseProgram(defaultProgram);
+			}
+			else if (currentTexture->internalFormat == GL_DEPTH_COMPONENT) {
+				GL_UseProgram(debugDepthProgram);
+			}
+			else {
+				GL_UseProgram(defaultProgram);			
+			}
 		}
 		else {
 			GL_UseProgram(vertexColorProgram);

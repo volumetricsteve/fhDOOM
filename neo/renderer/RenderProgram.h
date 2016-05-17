@@ -154,6 +154,7 @@ extern const fhRenderProgram* flatColorProgram;
 extern const fhRenderProgram* intensityProgram;
 extern const fhRenderProgram* blendLightProgram;
 extern const fhRenderProgram* depthblendProgram;
+extern const fhRenderProgram* debugDepthProgram;
 
 
 ID_INLINE void fhRenderProgram::SetModelMatrix( const float* m ) {
