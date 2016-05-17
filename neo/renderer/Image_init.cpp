@@ -1546,10 +1546,8 @@ void idImageManager::PurgeAllImages() {
 		images[i]->PurgeImage();
 	}
 
-	for (int j = 0; j < 6; ++j) {
-		shadowmapImage[j]->PurgeImage();
-		shadowmapFramebuffer[j]->Purge();
-	}
+	shadowmapImage->PurgeImage();
+	shadowmapFramebuffer->Purge();
 }
 
 /*
@@ -1882,16 +1880,10 @@ void idImageManager::Init() {
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
-	
-	for(int i=0; i<6; ++i) {
-		char name[64] = {0};    
-		sprintf(name, "_shadowmapImage%d", i);
-		shadowmapImage[i] = ImageFromFunction(name, R_Depth);
-		shadowmapFramebuffer[i] = new fhFramebuffer(1024, 1024, nullptr, shadowmapImage[i]);
-	}	
 
+	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
+	shadowmapFramebuffer = new fhFramebuffer( 1024 * 3, 1024 * 2, nullptr, shadowmapImage );	
 	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
-  
 
 	// should forceLoadImages be here?
 }

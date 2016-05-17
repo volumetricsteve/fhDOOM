@@ -98,6 +98,8 @@ int idImage::BitsForInternalFormat( int internalFormat ) const {
 		return 4;			// not sure
 	case GL_COMPRESSED_RGBA_ARB:
 		return 8;			// not sure
+	case GL_DEPTH_COMPONENT:
+		return 32; //not sure... we don't request explicitly a 24bit or 32bit depth buffer?
 	default:
 		common->Error( "R_BitsForInternalFormat: BAD FORMAT:%i", internalFormat );
 	}
