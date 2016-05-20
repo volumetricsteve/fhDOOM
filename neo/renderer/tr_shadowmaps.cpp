@@ -23,94 +23,39 @@ idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "26", CVAR_RENDERER | CVAR_FLOA
 idCVar r_smSoftness( "r_smSoftness", "1", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 idCVar r_smBrightness( "r_smBrightness", "0.15", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 
-
-
-static const int CULL_RECEIVER = 1;	// still draw occluder, but it is out of the view
-static const int CULL_OCCLUDER_AND_RECEIVER = 2;	// the surface doesn't effect the view at all
-
 static float viewLightAxialSize;
 static const int firstShadowMapTextureUnit = 6;
 
-class fhLightViewPlanes {
-public:
-	explicit fhLightViewPlanes() {
-	}
-	
-	void Set(const idVec3& origin, const fhRenderMatrix& viewMatrix) {
-		// near clip
-		globalFrustum[0][0] = -viewMatrix[0];
-		globalFrustum[0][1] = -viewMatrix[4];
-		globalFrustum[0][2] = -viewMatrix[8];
-		globalFrustum[0][3] = -(origin[0] * globalFrustum[0][0] + origin[1] * globalFrustum[0][1] + origin[2] * globalFrustum[0][2]);
+static bool Cull(const idVec3* corners, const shadowFrustum_t& frustum) {
 
-		// far clip
-		globalFrustum[1][0] = viewMatrix[0];
-		globalFrustum[1][1] = viewMatrix[4];
-		globalFrustum[1][2] = viewMatrix[8];
-		globalFrustum[1][3] = -globalFrustum[0][3] - viewLightAxialSize;
+	const int numPlanes = frustum.numPlanes;
 
-		// side clips
-		globalFrustum[2][0] = -viewMatrix[0] + viewMatrix[1];
-		globalFrustum[2][1] = -viewMatrix[4] + viewMatrix[5];
-		globalFrustum[2][2] = -viewMatrix[8] + viewMatrix[9];
+	bool outsidePlane[6];
 
-		globalFrustum[3][0] = -viewMatrix[0] - viewMatrix[1];
-		globalFrustum[3][1] = -viewMatrix[4] - viewMatrix[5];
-		globalFrustum[3][2] = -viewMatrix[8] - viewMatrix[9];
+	for (int i = 0; i < numPlanes; i++) {
 
-		globalFrustum[4][0] = -viewMatrix[0] + viewMatrix[2];
-		globalFrustum[4][1] = -viewMatrix[4] + viewMatrix[6];
-		globalFrustum[4][2] = -viewMatrix[8] + viewMatrix[10];
+		bool pointsCulled[8] = { true };
+		const idPlane plane = frustum.planes[i];
 
-		globalFrustum[5][0] = -viewMatrix[0] - viewMatrix[2];
-		globalFrustum[5][1] = -viewMatrix[4] - viewMatrix[6];
-		globalFrustum[5][2] = -viewMatrix[8] - viewMatrix[10];
-
-		// is this normalization necessary?
-		for (int i = 0; i < 6; i++) {
-			globalFrustum[i].ToVec4().ToVec3().Normalize();
+		for (int j = 0; j < 8; j++) {
+			pointsCulled[j] = plane.Distance(corners[j]) < 0;			
 		}
 
-		for (int i = 2; i < 6; i++) {
-			globalFrustum[i][3] = -(origin * globalFrustum[i].ToVec4().ToVec3());
-		}
-	}
-
-	bool Cull(const idRenderEntityLocal *entityDef) const {
-		idPlane	localPlanes[6];		
-		for (int plane = 0; plane < 6; plane++) {
-			R_GlobalPlaneToLocal( entityDef->modelMatrix, globalFrustum[plane], localPlanes[plane] );
-		}
-
-		// cull the entire entity bounding box
-		// has referenceBounds been tightened to the actual model bounds?
-		idVec3	corners[8];
-		for (int i = 0; i < 8; i++) {
-			corners[i][0] = entityDef->referenceBounds[i & 1][0];
-			corners[i][1] = entityDef->referenceBounds[(i >> 1) & 1][1];
-			corners[i][2] = entityDef->referenceBounds[(i >> 2) & 1][2];
-		}
-
-		for (int plane = 0; plane < 6; plane++) {
-			int j = 0;
-			for (; j < 8; j++) {
-				// if a corner is on the negative side (inside) of the frustum, the surface is not culled
-				// by this plane
-				if (corners[j] * localPlanes[plane].ToVec4().ToVec3() + localPlanes[plane][3] < 0) {
-					break;
-				}
-			}
-			if (j == 8) {
-				return true; // all points outside the light
+		outsidePlane[i] = true;
+		for (int j = 0; j < 8; j++) {			
+			if(!pointsCulled[j]) {
+				outsidePlane[i] = false;
 			}
 		}
-
-		return false;
 	}
 
-private:
-	idPlane globalFrustum[6];
-};
+	for (int i = 0; i < numPlanes; i++) {
+		if(outsidePlane[i])
+			return true;
+	}
+
+	return false;
+}
 
 class ShadowRenderList : public fhRenderList<drawShadow_t> {
 public:
@@ -126,19 +71,12 @@ public:
 		dummy.modelMatrix[15] = 1;
 	}
 
-
-	void AddInteractions( viewLight_t* vlight, const fhRenderMatrix* viewMatrices, int numViewMatrices ) {
-		assert(numViewMatrices <= 6);
+	void AddInteractions( viewLight_t* vlight, const shadowFrustum_t* shadowFrustrums, int numShadowFrustrums ) {
+		assert(numShadowFrustrums <= 6);
+		assert(numShadowFrustrums >= 0);
 
 		if(vlight->lightDef->lightHasMoved && r_smSkipMovingLights.GetBool()) {
 			return;
-		}
-
-		const idVec3 origin = vlight->lightDef->globalLightOrigin;
-
-		fhLightViewPlanes viewPlanes[6];
-		for(int i=0; i<numViewMatrices; ++i) {
-			viewPlanes[i].Set(origin, viewMatrices[i]);
 		}
 
 		bool staticOcclusionGeometryRendered = false;
@@ -177,10 +115,22 @@ public:
 
 			unsigned visibleSides = ~0;
 
-			if (r_smObjectCulling.GetBool() && numViewMatrices > 0) {
+			if (r_smObjectCulling.GetBool() && numShadowFrustrums > 0) {
 				visibleSides = 0;
-				for(int i=0; i<numViewMatrices; ++i) {
-					if(!viewPlanes[i].Cull(entityDef)) {
+
+				// cull the entire entity bounding box
+				// has referenceBounds been tightened to the actual model bounds?
+				idVec3	corners[8];
+				for (int i = 0; i < 8; i++) {
+					idVec3 tmp;
+					tmp[0] = entityDef->referenceBounds[i & 1][0];
+					tmp[1] = entityDef->referenceBounds[(i >> 1) & 1][1];
+					tmp[2] = entityDef->referenceBounds[(i >> 2) & 1][2];
+					R_LocalPointToGlobal(entityDef->modelMatrix, tmp, corners[i]);
+				}
+
+				for(int i=0; i<numShadowFrustrums; ++i) {
+					if(!Cull(corners, shadowFrustrums[i])) {
 						visibleSides |= (1 << i);
 					}
 				}				
@@ -192,7 +142,7 @@ public:
 			const int num = inter->numSurfaces;
 			for (int i = 0; i < num; i++) {
 				const auto& surface = inter->surfaces[i];
-				const idMaterial* material = surface.shader;				
+				const auto* material = surface.shader;				
 
 				if (staticOcclusionGeometryRendered && surface.isStaticWorldModel) {
 					continue;
@@ -581,7 +531,17 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		}
 
 		ShadowRenderList renderlist;
-		renderlist.AddInteractions( vLight, viewMatrices, 6 );
+		shadowFrustum_t shadowFrustums[6];
+		for(int i=0; i<vLight->lightDef->numShadowFrustums; ++i) {
+			shadowFrustums[i] = vLight->lightDef->shadowFrustums[i];
+			/*
+			for(int j=0; j<shadowFrustums[i].numPlanes; ++j) {
+				R_LocalPlaneToGlobal(vLight->lightDef->modelMatrix, vLight->lightDef->shadowFrustums[i].planes[j], shadowFrustums[i].planes[j] );
+			}
+			*/
+		}
+
+		renderlist.AddInteractions( vLight, shadowFrustums, vLight->lightDef->numShadowFrustums );
 
 		glStencilFunc( GL_ALWAYS, 0, 255 );
 		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
@@ -617,18 +577,24 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
 		idVec3 origin = vLight->lightDef->parms.origin;
 		idVec3 localTarget = vLight->lightDef->parms.target;
-		idVec3 rotatedLocalTarget = vLight->lightDef->parms.axis * vLight->lightDef->parms.target;
-		idVec3 worldTarget = vLight->lightDef->parms.origin + rotatedLocalTarget;
+		idVec3 rotatedTarget = vLight->lightDef->parms.axis * vLight->lightDef->parms.target;
+		idVec3 rotatedUp = vLight->lightDef->parms.axis * vLight->lightDef->parms.up;
+		idVec3 rotatedRight = vLight->lightDef->parms.axis * vLight->lightDef->parms.right;	
+
+		idVec3 worldTarget = vLight->lightDef->parms.origin + rotatedTarget;
 
 		idVec3 flippedOrigin = fhRenderMatrix::FlipMatrix() * origin;
 		idVec3 flippedTarget = fhRenderMatrix::FlipMatrix() * worldTarget;
-		idVec3 flippedUp = fhRenderMatrix::FlipMatrix() * (vLight->lightDef->parms.axis * vLight->lightDef->parms.up);
-		auto viewMatrix = fhRenderMatrix::CreateLookAtMatrix( flippedOrigin, flippedTarget, flippedUp ) * fhRenderMatrix::FlipMatrix();
+		idVec3 flippedUp     = fhRenderMatrix::FlipMatrix() * rotatedUp;
+	
+		auto viewMatrix_tmp = fhRenderMatrix::CreateLookAtMatrix( flippedOrigin, flippedTarget, flippedUp );
+		auto viewMatrix = viewMatrix_tmp * fhRenderMatrix::FlipMatrix();
+
 		fhRenderMatrix projectionMatrix;
 		RB_CreateProjectedProjectionMatrix( vLight, projectionMatrix.ToFloatPtr() );
 
 		ShadowRenderList renderlist;
-		renderlist.AddInteractions( vLight, &viewMatrix, 1 );
+		renderlist.AddInteractions( vLight, vLight->lightDef->shadowFrustums, vLight->lightDef->numShadowFrustums );
 
 		glStencilFunc( GL_ALWAYS, 0, 255 );
 		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear

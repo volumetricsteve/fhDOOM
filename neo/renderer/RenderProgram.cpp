@@ -37,16 +37,6 @@ const fhRenderProgram* flatColorProgram = nullptr;
 const fhRenderProgram* intensityProgram = nullptr;
 const fhRenderProgram* debugDepthProgram = nullptr;
 
-
-static void R_TestUniformLocations(GLuint program)
-{
-	auto rpModelMatrix = glGetUniformLocation(program, "rpModelIndex");
-	auto rpViewMatrix = glGetUniformLocation(program, "rpViewMatrix");
-	auto rpModelViewMatrix = glGetUniformLocation(program, "rpModelViewMatrix");
-	auto rpProjectionMatrix = glGetUniformLocation(program, "rpProjectionMatrix");
-}
-
-
 class fhParseException {
 public:
 	idStr filename;

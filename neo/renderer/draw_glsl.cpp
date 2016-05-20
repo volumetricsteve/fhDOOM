@@ -11,7 +11,7 @@ idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | 
 idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "0 = Doom3 (Blinn-Phong), 1 = Phong");
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
-idCVar r_renderList("r_renderlist", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "use render list");
+idCVar r_renderList("r_renderlist", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "use render list");
 
 /*
 =====================

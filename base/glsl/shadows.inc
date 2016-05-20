@@ -136,13 +136,13 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset)
        if( f < pos.z )
           foo += 1;       
     }
-
+/*
     if(foo == 0)
       return 0.0;
 
     if(foo == 8)
       return 1.0;
-
+*/
     for(;i<21; ++i) {
        float f = texture(texture6, pos.st + kernel3x3[i] * texsize).x;
        if( f < pos.z )
