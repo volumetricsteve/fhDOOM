@@ -232,6 +232,9 @@ public:
 	int						numShadowFrustums;		// one for projected lights, usually six for point lights
 	shadowFrustum_t			shadowFrustums[6];
 
+	int						numShadowMapFrustums;   // one for projected lights, usually six for point lights, all frustums are symmetric
+	shadowFrustum_t			shadowMapFrustums[6];
+
 	int						viewCount;				// if == tr.viewCount, the light is on the viewDef->viewLights list
 	struct viewLight_s *	viewLight;
 
@@ -1760,6 +1763,7 @@ TR_SHAODWMAPPING
 =============================================================
 */
 
+void R_MakeShadowMapFrustums( idRenderLightLocal *def );
 void RB_RenderShadowMaps(viewLight_t* light);
 
 //=============================================

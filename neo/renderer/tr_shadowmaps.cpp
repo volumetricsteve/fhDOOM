@@ -26,7 +26,43 @@ idCVar r_smBrightness( "r_smBrightness", "0.15", CVAR_RENDERER | CVAR_FLOAT | CV
 static float viewLightAxialSize;
 static const int firstShadowMapTextureUnit = 6;
 
-static bool Cull(const idVec3* corners, const shadowFrustum_t& frustum) {
+
+/*
+==================
+R_EXP_CalcLightAxialSize
+
+all light side projections must currently match, so non-centered
+and non-cubic lights must take the largest length
+==================
+*/
+static float R_EXP_CalcLightAxialSize( const idRenderLightLocal *lightDef ) {
+	float	max = 0;
+
+	if (!lightDef->parms.pointLight) {
+		idVec3	dir = lightDef->parms.target - lightDef->parms.origin;
+		max = dir.Length();
+		return max;
+	}
+
+	for (int i = 0; i < 3; i++) {
+		float	dist = fabs( lightDef->parms.lightCenter[i] );
+		dist += lightDef->parms.lightRadius[i];
+		if (dist > max) {
+			max = dist;
+		}
+	}
+	return max;
+}
+
+/*
+===================
+R_Cull
+
+cull 8 corners against given shadow frustum.
+Return true of all 8 corners are outside the frustum.
+===================
+*/
+static bool R_Cull(const idVec3* corners, const shadowFrustum_t& frustum) {
 
 	const int numPlanes = frustum.numPlanes;
 
@@ -38,7 +74,8 @@ static bool Cull(const idVec3* corners, const shadowFrustum_t& frustum) {
 		const idPlane plane = frustum.planes[i];
 
 		for (int j = 0; j < 8; j++) {
-			pointsCulled[j] = plane.Distance(corners[j]) < 0;			
+			const float distance = plane.Distance(corners[j]);
+			pointsCulled[j] = distance < 0;			
 		}
 
 		outsidePlane[i] = true;
@@ -56,6 +93,161 @@ static bool Cull(const idVec3* corners, const shadowFrustum_t& frustum) {
 
 	return false;
 }
+
+/*
+===================
+R_MakeShadowMapFrustums
+
+Called at definition derivation time.
+This is very similar to R_MakeShadowFrustums for stencil shadows,
+but frustrum for shadow maps need to bet setup slightly differently if the center
+of the light is not at (0,0,0).
+===================
+*/
+void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
+	if (light->parms.pointLight) {
+		static int	faceCorners[6][4] = {
+			{ 7, 5, 1, 3 },		// positive X side
+			{ 4, 6, 2, 0 },		// negative X side
+			{ 6, 7, 3, 2 },		// positive Y side
+			{ 5, 4, 0, 1 },		// negative Y side
+			{ 6, 4, 5, 7 },		// positive Z side
+			{ 3, 1, 0, 2 }		// negative Z side
+		};
+		static int	faceEdgeAdjacent[6][4] = {
+			{ 4, 4, 2, 2 },		// positive X side
+			{ 7, 7, 1, 1 },		// negative X side
+			{ 5, 5, 0, 0 },		// positive Y side
+			{ 6, 6, 3, 3 },		// negative Y side
+			{ 0, 0, 3, 3 },		// positive Z side
+			{ 5, 5, 6, 6 }		// negative Z side
+		};
+
+		bool	centerOutside = false;
+
+		// if the light center of projection is outside the light bounds,
+		// we will need to build the planes a little differently
+		if (fabs( light->parms.lightCenter[0] ) > light->parms.lightRadius[0]
+			|| fabs( light->parms.lightCenter[1] ) > light->parms.lightRadius[1]
+			|| fabs( light->parms.lightCenter[2] ) > light->parms.lightRadius[2]) {
+			centerOutside = true;
+		}		
+
+		// make the corners to calculate backplane
+		idVec3 corners[8];
+
+		for (int i = 0; i < 8; i++) {
+			idVec3	temp;
+			for (int j = 0; j < 3; j++) {
+				if (i & (1 << j)) {
+					temp[j] = light->parms.lightRadius[j];
+				}
+				else {
+					temp[j] = -light->parms.lightRadius[j];
+				}
+			}
+
+			// transform to global space
+			corners[i] = light->parms.origin + light->parms.axis * temp;
+		}
+
+		//make corners to make side planes of view frustrums
+		float xialDist = R_EXP_CalcLightAxialSize(light);
+		idVec3 corners2[8];
+		for (int i = 0; i < 8; i++) {
+			idVec3	temp;
+			for (int j = 0; j < 3; j++) {
+				if (i & (1 << j)) {
+					temp[j] = xialDist;
+				}
+				else {
+					temp[j] = -xialDist;
+				}
+			}
+
+			// transform to global space
+			corners2[i] = light->parms.origin + light->parms.axis * temp + light->parms.axis * light->parms.lightCenter;
+		}
+
+		light->numShadowMapFrustums = 0;
+		for (int side = 0; side < 6; side++) {
+			shadowFrustum_t	*frust = &light->shadowMapFrustums[light->numShadowMapFrustums];
+
+			idVec3 &p1 = corners[faceCorners[side][0]];
+			idVec3 &p2 = corners[faceCorners[side][1]];
+			idVec3 &p3 = corners[faceCorners[side][2]];
+			idPlane backPlane;
+
+			// plane will have positive side inward
+			backPlane.FromPoints( p1, p2, p3 );
+
+			// if center of projection is on the wrong side, skip
+			float d = backPlane.Distance( light->globalLightOrigin );
+			if (d < 0) {
+				continue;
+			}
+
+			frust->numPlanes = 6;
+			frust->planes[5] = backPlane;
+			frust->planes[4] = backPlane;	// we don't really need the extra plane
+
+			// make planes with positive side facing inwards in light local coordinates
+			for (int edge = 0; edge < 4; edge++) {
+				idVec3 &p1 = corners2[faceCorners[side][edge]];
+				idVec3 &p2 = corners2[faceCorners[side][(edge + 1) & 3]];
+
+				// create a plane that goes through the center of projection
+				frust->planes[edge].FromPoints( p2, p1, light->globalLightOrigin );
+
+#if 0 //???
+				// see if we should use an adjacent plane instead
+				if (centerOutside) {
+					idVec3 &p3 = corners[faceEdgeAdjacent[side][edge]];
+					idPlane sidePlane;
+
+					sidePlane.FromPoints( p2, p1, p3 );
+					d = sidePlane.Distance( light->globalLightOrigin );
+					if (d < 0) {
+						// use this plane instead of the edged plane
+						frust->planes[edge] = sidePlane;
+					}
+					// we can't guarantee a neighbor, so add sill planes at edge
+					light->shadowMapFrustums[light->numShadowFrustums].makeClippedPlanes = true;
+				}
+#endif
+			}
+			light->numShadowMapFrustums++;
+		}
+
+		return;
+	}
+
+	// projected light
+
+	light->numShadowMapFrustums = 1;
+	shadowFrustum_t	*frust = &light->shadowMapFrustums[0];
+
+
+	// flip and transform the frustum planes so the positive side faces
+	// inward in local coordinates
+
+	// it is important to clip against even the near clip plane, because
+	// many projected lights that are faking area lights will have their
+	// origin behind solid surfaces.
+	for (int i = 0; i < 6; i++) {
+		idPlane &plane = frust->planes[i];
+
+		plane.SetNormal( -light->frustum[i].Normal() );
+		plane.SetDist( -light->frustum[i].Dist() );
+	}
+
+	frust->numPlanes = 6;
+
+	frust->makeClippedPlanes = true;
+	// projected lights don't have shared frustums, so any clipped edges
+	// right on the planes must have a sil plane created for them
+}
+
 
 class ShadowRenderList : public fhRenderList<drawShadow_t> {
 public:
@@ -130,7 +322,7 @@ public:
 				}
 
 				for(int i=0; i<numShadowFrustrums; ++i) {
-					if(!Cull(corners, shadowFrustrums[i])) {
+					if(!R_Cull(corners, shadowFrustrums[i])) {
 						visibleSides |= (1 << i);
 					}
 				}				
@@ -349,32 +541,6 @@ static fhRenderMatrix RB_CreateShadowViewMatrix(const viewLight_t* vLight, int s
 	return viewMatrix;
 }
 
-/*
-==================
-R_EXP_CalcLightAxialSize
-
-all light side projections must currently match, so non-centered
-and non-cubic lights must take the largest length
-==================
-*/
-float	R_EXP_CalcLightAxialSize(const viewLight_t *vLight) {
-	float	max = 0;
-
-	if (!vLight->lightDef->parms.pointLight) {
-		idVec3	dir = vLight->lightDef->parms.target - vLight->lightDef->parms.origin;
-		max = dir.Length();
-		return max;
-	}
-
-	for (int i = 0; i < 3; i++) {
-		float	dist = fabs(vLight->lightDef->parms.lightCenter[i]);
-		dist += vLight->lightDef->parms.lightRadius[i];
-		if (dist > max) {
-			max = dist;
-		}
-	}
-	return max;
-}
 
 
 static void RB_CreateProjectedProjectionMatrix(const viewLight_t* vLight, float* m)
@@ -491,7 +657,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	// all light side projections must currently match, so non-centered
 	// and non-cubic lights must take the largest length
-	viewLightAxialSize = R_EXP_CalcLightAxialSize(vLight);
+	viewLightAxialSize = R_EXP_CalcLightAxialSize(vLight->lightDef);
 
 	GL_UseProgram(shadowmapProgram);
 
@@ -534,17 +700,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		}
 
 		ShadowRenderList renderlist;
-		shadowFrustum_t shadowFrustums[6];
-		for(int i=0; i<vLight->lightDef->numShadowFrustums; ++i) {
-			shadowFrustums[i] = vLight->lightDef->shadowFrustums[i];
-			/*
-			for(int j=0; j<shadowFrustums[i].numPlanes; ++j) {
-				R_LocalPlaneToGlobal(vLight->lightDef->modelMatrix, vLight->lightDef->shadowFrustums[i].planes[j], shadowFrustums[i].planes[j] );
-			}
-			*/
-		}
-
-		renderlist.AddInteractions( vLight, shadowFrustums, vLight->lightDef->numShadowFrustums );
+		renderlist.AddInteractions( vLight, vLight->lightDef->shadowMapFrustums, vLight->lightDef->numShadowMapFrustums );
 
 		glStencilFunc( GL_ALWAYS, 0, 255 );
 		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
@@ -597,7 +753,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		RB_CreateProjectedProjectionMatrix( vLight, projectionMatrix.ToFloatPtr() );
 
 		ShadowRenderList renderlist;
-		renderlist.AddInteractions( vLight, vLight->lightDef->shadowFrustums, vLight->lightDef->numShadowFrustums );
+		renderlist.AddInteractions( vLight, vLight->lightDef->shadowMapFrustums, vLight->lightDef->numShadowMapFrustums );
 
 		glStencilFunc( GL_ALWAYS, 0, 255 );
 		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
