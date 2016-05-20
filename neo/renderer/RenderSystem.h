@@ -128,6 +128,7 @@ typedef struct {
 struct backEndGroup {
 	enum Enum {
 		DepthPrepass,
+		StencilShadows,
 		ShadowMap0,
 		ShadowMap1,
 		ShadowMap2,
@@ -141,27 +142,57 @@ struct backEndGroup {
 	Enum value;
 };
 
+struct backEndGroupStats_t {
+	backEndGroupStats_t()
+		: drawcalls(0)
+		, passes(0)
+		, tris(0)
+		, time(0)
+	{}
+
+	uint32 drawcalls;
+	uint32 passes;
+	uint32 tris;
+	uint64 time; //micro seconds	
+
+	const backEndGroupStats_t& operator+=(const backEndGroupStats_t& rhs) {
+		drawcalls += rhs.drawcalls;
+		passes += rhs.passes;
+		time += rhs.time;
+		tris += rhs.tris;
+
+		return *this;
+	}
+
+	const backEndGroupStats_t& operator/=(uint32 v) {
+		drawcalls /= v;
+		passes /= v;
+		time /= v;
+		tris /= v;
+
+		return *this;
+	}
+};
+
 struct backEndStats_t {
-	uint32 drawcalls[backEndGroup::NUM];
-	uint32 passes[backEndGroup::NUM];
-	uint64 time[backEndGroup::NUM];
+	backEndStats_t()
+		: totaltime(0)
+	{}
+
+	backEndGroupStats_t groups[backEndGroup::NUM];
 	uint64 totaltime;
 
 	const backEndStats_t& operator+=(const backEndStats_t& rhs) {
 		for(int i=0; i<backEndGroup::NUM; ++i) {
-			drawcalls[i] += rhs.drawcalls[i];
-			passes[i] += rhs.passes[i];
-			time[i] += rhs.time[i];
+			groups[i] += rhs.groups[i];
 		}
 		totaltime += rhs.totaltime;
 		return *this;
 	}
 
-	const backEndStats_t& operator/=(unsigned v) {
+	const backEndStats_t& operator/=(uint32 v) {
 		for (int i = 0; i < backEndGroup::NUM; ++i) {
-			drawcalls[i] /= v;
-			passes[i] /= v;
-			time[i] /= v;
+			groups[i] /= v;
 		}
 		totaltime /= v;
 		return *this;

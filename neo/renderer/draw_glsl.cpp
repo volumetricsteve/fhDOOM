@@ -750,8 +750,8 @@ to force the alpha test to fail when behind that clip plane
 */
 void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 	if (r_renderList.GetBool()) {
-		fhTimeElapsed timeElapsed( &backEnd.stats.time[backEndGroup::DepthPrepass] );
-		backEnd.stats.passes[backEndGroup::DepthPrepass] += 1;
+		fhTimeElapsed timeElapsed( &backEnd.stats.groups[backEndGroup::DepthPrepass].time );
+		backEnd.stats.groups[backEndGroup::DepthPrepass].passes += 1;
 
 		DepthRenderList depthRenderList;
 		depthRenderList.AddDrawSurfaces( drawSurfs, numDrawSurfs );
@@ -1316,8 +1316,8 @@ void RB_GLSL_DrawInteractions(void) {
 
 	}
 
-	backEnd.stats.passes[backEndGroup::Interaction] += 1;
-	fhTimeElapsed timeElapsed(&backEnd.stats.time[backEndGroup::Interaction]);
+	backEnd.stats.groups[backEndGroup::Interaction].passes += 1;
+	fhTimeElapsed timeElapsed(&backEnd.stats.groups[backEndGroup::Interaction].time);
 
     lightShader = vLight->lightShader;
 

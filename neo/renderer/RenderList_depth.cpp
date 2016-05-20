@@ -110,7 +110,8 @@ static void RB_GLSL_SubmitFillDepthRenderList( const DepthRenderList& renderlist
 
 		fhRenderProgram::SetDiffuseColor(drawdepth.color);
 
-		backEnd.stats.drawcalls[backEndGroup::DepthPrepass] += 1;
+		backEnd.stats.groups[backEndGroup::DepthPrepass].drawcalls += 1;
+		backEnd.stats.groups[backEndGroup::DepthPrepass].tris += drawdepth.surf->geo->numIndexes / 3;
 		RB_DrawElementsWithCounters( drawdepth.surf->geo );
 
 		if (drawdepth.polygonOffset) {

@@ -424,8 +424,8 @@ void	RB_STD_DrawView( void ) {
 		}
 	}
 	else {
-		fhTimeElapsed timeElapsed(&backEnd.stats.time[backEndGroup::NonInteraction]);
-		backEnd.stats.passes[backEndGroup::NonInteraction] += 1;
+		fhTimeElapsed timeElapsed(&backEnd.stats.groups[backEndGroup::NonInteraction].time);
+		backEnd.stats.groups[backEndGroup::NonInteraction].passes += 1;
 
 		StageRenderList stageRenderlist;
 

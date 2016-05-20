@@ -273,6 +273,7 @@ SET(SOURCES
   framework/async/ServerScan.h
   framework/BuildDefines.h
   framework/BuildVersion.h
+  framework/BuildVersion.cpp
   framework/CmdSystem.cpp
   framework/CmdSystem.h
   framework/Common.cpp

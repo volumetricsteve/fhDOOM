@@ -179,7 +179,7 @@ SCR_DrawFPS
 ==================
 */
 #define	FPS_FRAMES	4
-float SCR_DrawFPS( float y ) {
+static float SCR_DrawFPS( int mode ) {
 	char		*s;
 	int			w;
 	static int	previousTimes[FPS_FRAMES];
@@ -197,6 +197,10 @@ float SCR_DrawFPS( float y ) {
 
 	previousTimes[index % FPS_FRAMES] = frameTime;
 	index++;
+
+	float y = 0;
+	int x = 0;
+
 	if ( index > FPS_FRAMES ) {
 		// average multiple frames together to smooth changes out a bit
 		total = 0;
@@ -209,10 +213,22 @@ float SCR_DrawFPS( float y ) {
 		fps = 10000 * FPS_FRAMES / total;
 		fps = (fps + 5)/10;
 
-		s = va( "%3dfps / %7.3fms", fps, static_cast<float>(total) / FPS_FRAMES);
+		if(mode == 1) {
+			s = va( "%3dfps", fps );
+			x = 600;
+		} 
+		else if(mode == 2) {
+			s = va( "%4.2fms", static_cast<float>(total) / FPS_FRAMES );
+			x = 600;
+		}
+		else {
+			s = va( "%3dfps (%4.2fms)", fps, static_cast<float>(total) / FPS_FRAMES );			
+			x = 565;
+		}
+
 		w = strlen( s ) * BIGCHAR_WIDTH;
 
-		renderSystem->DrawScaledStringExt( 500, idMath::FtoiFast( y ) + 2, s, colorWhite, true, localConsole.charSetShader, 0.65f );
+		renderSystem->DrawScaledStringExt( x, idMath::FtoiFast( y ) + 2, s, colorWhite, true, localConsole.charSetShader, 0.55f );
 	}
 
 	return y + BIGCHAR_HEIGHT + 4;
@@ -226,61 +242,64 @@ SCR_DrawBackEndStats
 float SCR_DrawBackEndStats( float y ) {
 
 	int ypos = idMath::FtoiFast( y );
+	const float lineHeight = 11;
 
 	char buffer[128];
 	const float xpos = 440;
 	const float fontScale = 0.55f;
 
-	auto PrintStats = [&](const char* name, int p, int dc, float t) {
-		sprintf( buffer, "%-15s  p:%4d  dc:%4d  t:%6.2f", name, p, dc, t );
-		renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
-		ypos += 11;
+	auto PrintStats = [&](const char* name, const backEndGroupStats_t& stats, const idVec4& color) {
+		const float milliseconds = stats.time * 0.001f;
+		sprintf( buffer, "%-15s  %4d  %4d  %6d  %6.2f", name, stats.passes, stats.drawcalls, stats.tris, milliseconds );
+		renderSystem->DrawScaledStringExt( xpos, ypos, buffer, color, true, localConsole.charSetShader, fontScale );
+		ypos += lineHeight;
 	};
 
 
 #define TIME_FRAMES 10
-	static backEndStats_t previous[TIME_FRAMES] = { 0 };
+	static backEndStats_t previous[TIME_FRAMES];
 	static unsigned frame = 0;
 
 	const auto stats = renderSystem->GetBackEndStats(); 
 	previous[frame] = stats;
 	frame = (frame + 1) % TIME_FRAMES;
 
-	backEndStats_t sum = {0};
-
+	backEndStats_t avg;
 	for(int j=0; j<TIME_FRAMES; ++j) {
-		sum += previous[j];
+		avg += previous[j];
 	}
-	sum /= TIME_FRAMES;
-	
-	float msecs[backEndGroup::NUM] = { 0 };
-	float msecs_total = 0;
 
-	for(int i=0; i<backEndGroup::NUM; ++i) {
-		msecs[i] = sum.time[i] * 0.001f;
-	}
-	msecs_total = sum.totaltime * 0.001f;	
+	avg /= TIME_FRAMES;	
 
-	int sm_passes = 0;
-	int sm_drawcalls = 0;
-	float sm_time = 0;
+	backEndGroupStats_t sm_total;
 	for(int i=0; i<3; ++i) {
-		sm_passes += sum.passes[backEndGroup::ShadowMap0 + i];
-		sm_drawcalls += sum.drawcalls[backEndGroup::ShadowMap0 + i];
-		sm_time += msecs[backEndGroup::ShadowMap0 + i];
+		sm_total += avg.groups[backEndGroup::ShadowMap0 + i];
 	}
 
-	PrintStats("Depth Prepass", stats.passes[backEndGroup::DepthPrepass], stats.drawcalls[backEndGroup::DepthPrepass],  msecs[backEndGroup::DepthPrepass]);	
-	PrintStats("shadow maps", sm_passes, sm_drawcalls, sm_time);
-	PrintStats("    0", stats.passes[backEndGroup::ShadowMap0], stats.drawcalls[backEndGroup::ShadowMap0],  msecs[backEndGroup::ShadowMap0]);
-	PrintStats("    1", stats.passes[backEndGroup::ShadowMap1], stats.drawcalls[backEndGroup::ShadowMap1],  msecs[backEndGroup::ShadowMap1]);
-	PrintStats("    2", stats.passes[backEndGroup::ShadowMap2], stats.drawcalls[backEndGroup::ShadowMap2],  msecs[backEndGroup::ShadowMap2]);
-	PrintStats("Interaction", stats.passes[backEndGroup::Interaction], stats.drawcalls[backEndGroup::Interaction],  msecs[backEndGroup::Interaction]);
-	PrintStats("Non-Interaction", stats.passes[backEndGroup::NonInteraction], stats.drawcalls[backEndGroup::NonInteraction],  msecs[backEndGroup::NonInteraction]);
+	backEndGroupStats_t total;
+	for (int i = 0; i < backEndGroup::NUM; ++i) {
+		total += avg.groups[i];
+	}
 
-	sprintf( buffer, "                      total time: %6.2fms", msecs_total );
+	sprintf( buffer, "                    p    dc    tris    time");
 	renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
-	ypos += 11;
+	ypos += lineHeight;
+
+	PrintStats("depth prepass", avg.groups[backEndGroup::DepthPrepass], colorWhite);	
+	//PrintStats("stencil shadows", avg.groups[backEndGroup::StencilShadows], colorWhite);	
+	PrintStats("shadow maps", sm_total, colorWhite);
+	PrintStats("    0", avg.groups[backEndGroup::ShadowMap0], colorMdGrey);
+	PrintStats("    1", avg.groups[backEndGroup::ShadowMap1], colorMdGrey);
+	PrintStats("    2", avg.groups[backEndGroup::ShadowMap2], colorMdGrey);
+	PrintStats("interaction", avg.groups[backEndGroup::Interaction], colorWhite);
+	PrintStats("non-interaction", avg.groups[backEndGroup::NonInteraction], colorWhite);
+	//PrintStats("fog lights", avg.groups[backEndGroup::FogLight], colorWhite);
+	//PrintStats("blend lights", avg.groups[backEndGroup::BlendLight], colorWhite);
+	PrintStats("          total", total, colorWhite);
+
+	sprintf( buffer, "                      total time: %6.2fms", avg.totaltime * 0.001f );
+	renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
+	ypos += lineHeight;
 
 	return ypos;
 }
@@ -1139,7 +1158,7 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 
 	renderSystem->SetColor( idStr::ColorForIndex( C_COLOR_CYAN ) );
 
-	idStr version = va("%s.%i", ENGINE_VERSION, BUILD_NUMBER);
+	idStr version = va("%s - %i", ENGINE_VERSION, BUILD_NUMBER);
 	i = version.Length();
 
   float fontScale = con_fontScale.GetFloat();
@@ -1248,8 +1267,11 @@ void	idConsoleLocal::Draw( bool forceFullScreen ) {
 		}
 	}
 
-	if ( com_showFPS.GetBool() ) {
-		y = SCR_DrawFPS( 0 );
+	if ( int mode = com_showFPS.GetInteger() ) {
+		y = SCR_DrawFPS( mode );		
+	}
+
+	if ( com_showBackendStats.GetBool() ) {
 		y = SCR_DrawBackEndStats( y );
 	}
 

@@ -433,7 +433,8 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 
 		GL_State( drawstage.drawStateBits );
 
-		backEnd.stats.drawcalls[backEndGroup::NonInteraction] += 1;
+		backEnd.stats.groups[backEndGroup::NonInteraction].drawcalls += 1;
+		backEnd.stats.groups[backEndGroup::NonInteraction].tris += drawstage.surf->geo->numIndexes / 3;
 		RB_DrawElementsWithCounters( drawstage.surf->geo );
 
 		if (drawstage.polygonOffset) {

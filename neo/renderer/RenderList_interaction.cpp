@@ -360,7 +360,8 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 		din.specularImage->Bind( 5 );
 
 		// draw it
-		backEnd.stats.drawcalls[backEndGroup::Interaction] += 1;
+		backEnd.stats.groups[backEndGroup::Interaction].drawcalls += 1;
+		backEnd.stats.groups[backEndGroup::Interaction].tris += din.surf->geo->numIndexes / 3;
 		RB_DrawElementsWithCounters( din.surf->geo );
 	}
 

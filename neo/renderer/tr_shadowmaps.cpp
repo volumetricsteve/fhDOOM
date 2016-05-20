@@ -215,7 +215,8 @@ public:
 
 			RB_DrawElementsWithCounters( drawShadow.tris );
 			
-			backEnd.stats.drawcalls[backEndGroup::ShadowMap0 + lod] += 1;			
+			backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].drawcalls += 1;			
+			backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].tris += drawShadow.tris->numIndexes / 3;
 		}
 	}
 
@@ -484,6 +485,8 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		lod = r_smLod.GetInteger();
 	}		
 
+	lod = Max(0, Min(lod, 2));
+
 	const uint64 startTime = Sys_Microseconds();
 
 	// all light side projections must currently match, so non-centered
@@ -567,7 +570,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 			*reinterpret_cast<fhRenderMatrix*>(&backEnd.shadowViewProjection[side][0]) = projectionMatrix * viewMatrices[side];
 
 			renderlist.Submit( viewMatrices[side].ToFloatPtr(), projectionMatrix.ToFloatPtr(), side, lod );
-			backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
+			backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
 		}	
 
 	} else if (vLight->lightDef->parms.parallel) {		
@@ -617,7 +620,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		renderlist.Submit(viewMatrix.ToFloatPtr(), projectionMatrix.ToFloatPtr(), 0, lod);
 
 
-		backEnd.stats.passes[backEndGroup::ShadowMap0 + lod] += 1;
+		backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
 	}
 
 	globalImages->defaultFramebuffer->Bind();
@@ -641,5 +644,5 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		backEnd.currentScissor = backEnd.viewDef->scissor;
 
 	const uint64 endTime = Sys_Microseconds();
-	backEnd.stats.time[backEndGroup::ShadowMap0 + lod] += static_cast<uint32>(endTime - startTime);
+	backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].time += static_cast<uint32>(endTime - startTime);
 }
