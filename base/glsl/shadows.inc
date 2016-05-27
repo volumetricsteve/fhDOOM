@@ -30,9 +30,9 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset)
 
 //#define FILTER_PCF
 //#define FILTER_PCF4
-//#define FILTER_PCF9
+#define FILTER_PCF9
 //#define FILTER_PCF13
-#define FILTER_PCF21
+//#define FILTER_PCF21
 
   //vec2 texsize = 1.0/textureSize(tex, 0) * 3 * rpShadowParams.x;
   vec2 texsize = coordScale * 0.003 * rpShadowParams.x;
@@ -181,12 +181,59 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset)
 
 }
 
-float projectedShadow(vec4 pos)
+vec4 projectedShadow(vec4 pos)
 {
-  return getShadow(pos, rpShadowCoords[0].xy, rpShadowCoords[0].zw);
+  float f = getShadow(pos, rpShadowCoords[0].xy, rpShadowCoords[0].zw);
+
+  f = mix(1, rpShadowParams.y, f);
+
+  return vec4(f,f,f,f);
 }
 
-float pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
+vec4 getParallelShadow(vec4 pos[6], int index)
+{
+  vec4 debugColors[6] = vec4[](
+    vec4(1,1,1,1),
+    vec4(1,0,0,1),
+    vec4(1,1,0,1),
+    vec4(0,1,0,1),
+    vec4(0,1,1,1),
+    vec4(0,0,1,1)
+  );
+
+  float f = getShadow(pos[index], rpShadowCoords[index].xy, rpShadowCoords[index].zw);
+
+  float ret = mix(1, rpShadowParams.y, f);
+
+#if 0
+  return debugColors[index] * ret;
+#else
+  return vec4(ret, ret, ret, 1);
+#endif    
+}
+
+vec4 parallelShadow(vec4 pos[6], float distance)
+{  
+  if(distance < 150) {
+    return getParallelShadow(pos, 0);
+  }
+  else if(distance < 300) {
+    return getParallelShadow(pos, 1);
+  }  
+  else if(distance < 500) {
+    return getParallelShadow(pos, 2);
+  }  
+  else if(distance < 800) {
+    return getParallelShadow(pos, 3);
+  }
+  else if(distance < 1200) {
+    return getParallelShadow(pos, 4);
+  }  
+
+  return getParallelShadow(pos, 5);
+}
+
+vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
 {  
   vec3 d = toGlobalLightOrigin;
 
@@ -215,5 +262,9 @@ float pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
     l = -d.z;
   }   
 
-  return getShadow(pos[side], rpShadowCoords[side].xy, rpShadowCoords[side].zw);  
+  float f = getShadow(pos[side], rpShadowCoords[side].xy, rpShadowCoords[side].zw);  
+
+  f = mix(1, rpShadowParams.y, f);
+
+  return vec4(f,f,f,f);   
 }

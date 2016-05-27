@@ -19,7 +19,8 @@ in vs_output
   vec3 V;
   vec3 H;
   vec4 shadow[6];
-  vec3 toGlobalLightOrigin;  
+  vec3 toGlobalLightOrigin; 
+  float depth; 
 } frag;
 
 out vec4 result;
@@ -42,16 +43,18 @@ vec4 specular(vec2 texcoord, vec3 N, vec3 L, vec3 V)
   return spec;
 }
 
-float shadow()
+vec4 shadow()
 {
-  float shadowness = 0;
+  vec4 shadowness = vec4(0,0,0,0);
 
   if(rpShadowMappingMode == 1)  
     shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin);  
   else if(rpShadowMappingMode == 2)
     shadowness = projectedShadow(frag.shadow[0]); 
-
-  return mix(1, rpShadowParams.y, shadowness);  
+  else if(rpShadowMappingMode == 3)
+    shadowness = parallelShadow(frag.shadow, -frag.depth);     
+ 
+  return shadowness;
 }
 
 void main(void)
@@ -73,6 +76,4 @@ void main(void)
   result *= texture2DProj(lightTexture, frag.texLight.xyw);
   result *= texture2D(lightFalloff, vec2(frag.texLight.z, 0.5));
   result *= shadow();
-
-
 }

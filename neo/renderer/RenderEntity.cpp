@@ -125,10 +125,7 @@ shadowMode_t idRenderLightLocal::ShadowMode() const {
 		return shadowMode_t::NoShadows;
 
 	if (parms.noShadows)
-		return shadowMode_t::NoShadows;
-
-	if (parms.parallel)
-		return shadowMode_t::StencilShadow;
+		return shadowMode_t::NoShadows;	
 
 	if (parms.shadowMode != shadowMode_t::Default)
 		return parms.shadowMode;

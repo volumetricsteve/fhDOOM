@@ -26,7 +26,6 @@ idCVar r_smBrightness( "r_smBrightness", "0.15", CVAR_RENDERER | CVAR_FLOAT | CV
 static float viewLightAxialSize;
 static const int firstShadowMapTextureUnit = 6;
 
-
 /*
 ==================
 R_EXP_CalcLightAxialSize
@@ -613,7 +612,7 @@ static const idVec2 sideOffsets[] = {
 };
 
 static void RB_SetupShadowMapViewPort(int side, int lod) {
-	const auto* framebuffer = globalImages->shadowmapFramebuffer;
+	const fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer;
 
 	const idVec2 scale = idVec2( 1.0 / 3.0, 1.0 / 2.0 ) / (1 << lod);
 	const idVec2 offset = sideOffsets[side];
@@ -682,7 +681,147 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		break;
 	}	
 
-	if(vLight->lightDef->parms.pointLight) {
+	if(vLight->lightDef->parms.parallel) {	
+
+		idVec3 target = -vLight->lightDef->parms.lightCenter;
+		idVec3 up = idVec3( 1, 0, 0 );
+
+		idVec3 flippedTarget = fhRenderMatrix::FlipMatrix() * target;
+		idVec3 flippedUp = fhRenderMatrix::FlipMatrix() * up;
+
+		const auto viewMatrix_tmp = fhRenderMatrix::CreateLookAtMatrix( idVec3(0,0,0), flippedTarget, flippedUp );
+		const auto fullViewMatrix = viewMatrix_tmp * fhRenderMatrix::FlipMatrix();		
+
+		idVec3 corners[8];
+		for (int i = 0; i < 8; i++) {
+			idVec3	temp;
+			for (int j = 0; j < 3; j++) {
+				if (i & (1 << j)) {
+					temp[j] = vLight->lightDef->parms.lightRadius[j];
+				}
+				else {
+					temp[j] = -vLight->lightDef->parms.lightRadius[j];
+				}
+			}
+
+			// transform to global space
+			corners[i] = vLight->lightDef->parms.origin + vLight->lightDef->parms.axis * temp;
+		}
+
+		for (int i = 0; i < 8; i++) {
+			corners[i] = fullViewMatrix * corners[i];
+		}
+
+		idVec3 lightMinimum = corners[0];
+		idVec3 lightMaximum = corners[0];
+
+		for (int i = 1; i < 8; i++) {
+			lightMinimum.x = Min( lightMinimum.x, corners[i].x );
+			lightMaximum.x = Max( lightMaximum.x, corners[i].x );
+
+			lightMinimum.y = Min( lightMinimum.y, corners[i].y );
+			lightMaximum.y = Max( lightMaximum.y, corners[i].y );
+
+			lightMinimum.z = Min( lightMinimum.z, corners[i].z );
+			lightMaximum.z = Max( lightMaximum.z, corners[i].z );
+		}
+
+		fhRenderMatrix projectionMatrices[6];
+		fhRenderMatrix viewMatrices[6];
+
+		const int numCascades = 6;
+		static const idVec2 cascadeRanges[6] = {
+			idVec2(1,150),
+			idVec2(150,300),
+			idVec2(300,500),
+			idVec2(500,800),
+			idVec2(800,1200),
+			idVec2(1200,10000)
+		};
+		
+		for(int c=0; c<6; ++c) {
+			idFrustum frustum = backEnd.viewDef->viewFrustum;
+			
+			frustum.MoveNearDistance( cascadeRanges[c].x );			
+			frustum.MoveFarDistance( cascadeRanges[c].y );			
+
+			idVec3 viewCorners[8];
+			frustum.ToPoints( viewCorners );
+
+			for (int i = 0; i < 8; ++i) {
+				viewCorners[i] = fullViewMatrix * viewCorners[i];
+			}
+
+			idVec2 viewMinimum = viewCorners[0].ToVec2();
+			idVec2 viewMaximum = viewCorners[0].ToVec2();
+
+			for (int i = 1; i < 8; ++i) {
+				const float x = viewCorners[i].x;
+				const float y = viewCorners[i].y;
+
+				viewMinimum.x = Min( viewMinimum.x, x );
+				viewMinimum.y = Min( viewMinimum.y, y );
+
+				viewMaximum.x = Max( viewMaximum.x, x );
+				viewMaximum.y = Max( viewMaximum.y, y );
+			}
+
+			idVec2 minimum, maximum;
+
+			minimum.x = Max( lightMinimum.x, viewMinimum.x );
+			minimum.y = Max( lightMinimum.y, viewMinimum.y );
+			maximum.x = Min( lightMaximum.x, viewMaximum.x );
+			maximum.y = Min( lightMaximum.y, viewMaximum.y );
+
+			const float r = (maximum.x - minimum.x) * 0.5f;
+			const float l = -r;
+			const float t = (maximum.y - minimum.y) * 0.5f;
+			const float b = -t;
+
+			viewMatrices[c] = fullViewMatrix;
+			viewMatrices[c][12] = -(maximum.x + minimum.x) * 0.5f;
+			viewMatrices[c][13] = -(maximum.y + minimum.y) * 0.5f;
+			viewMatrices[c][14] = -(lightMaximum.z + 1);
+
+			const float f = abs( lightMaximum.z - lightMinimum.z );
+			const float n = 1;
+
+			fhRenderMatrix& projectionMatrix = projectionMatrices[c];
+			projectionMatrix[0] = 2.0f / (r - l);
+			projectionMatrix[5] = 2.0f / (b - t);
+			projectionMatrix[10] = -2.0f / (f - n);
+			projectionMatrix[12] = -((r + l) / (r - l));
+			projectionMatrix[13] = -((t + b) / (t - b));
+			projectionMatrix[14] = -((f + n) / (f - n));
+			projectionMatrix[15] = 1.0f;
+		}
+
+
+		ShadowRenderList renderlist;
+		renderlist.AddInteractions( vLight, nullptr, 0 );
+
+		glStencilFunc( GL_ALWAYS, 0, 255 );
+		GL_State( GLS_DEPTHFUNC_LESS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );	// make sure depth mask is off before clear
+		glDepthMask( GL_TRUE );
+		glEnable( GL_DEPTH_TEST );
+
+		globalImages->BindNull( firstShadowMapTextureUnit );
+		globalImages->shadowmapFramebuffer->Bind();
+
+		glViewport( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+		glScissor( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+		glClearDepth( 1.0 );
+		glClear( GL_DEPTH_BUFFER_BIT );
+
+		for(int i=0; i<numCascades; ++i) {
+			RB_SetupShadowMapViewPort( i, 0 );
+			auto viewProjection = projectionMatrices[i] * viewMatrices[i];
+			memcpy( &backEnd.shadowViewProjection[i][0], viewProjection.ToFloatPtr(), sizeof(float)* 16 );
+			renderlist.Submit( viewMatrices[i].ToFloatPtr(), projectionMatrices[i].ToFloatPtr(), i, 0 );
+			backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
+		}
+	}
+	else if(vLight->lightDef->parms.pointLight) {
 		fhRenderMatrix projectionMatrix;
 		if (r_smFarClip.GetInteger() < 0) {
 			projectionMatrix = fhRenderMatrix::CreateInfiniteProjectionMatrix( r_smFov.GetFloat(), 1, r_smNearClip.GetFloat() );
@@ -729,9 +868,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 			backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
 		}	
 
-	} else if (vLight->lightDef->parms.parallel) {		
-		assert(false && "parallel shadow maps not implemented");
-	}
+	} 
 	else {	
 		//TODO(johl): get the math straight. this is just terrible and could be done simpler and more efficient
 		idVec3 origin = vLight->lightDef->parms.origin;

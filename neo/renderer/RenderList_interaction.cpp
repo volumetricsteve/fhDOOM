@@ -197,7 +197,13 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
 		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
 
-		if (backEnd.vLight->lightDef->parms.pointLight) {
+		if(backEnd.vLight->lightDef->parms.parallel) {
+			//parallel light
+			fhRenderProgram::SetShadowMappingMode( 3 );
+			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+			fhRenderProgram::SetShadowCoords( backEnd.shadowCoords, 6 );
+		}
+		else if (backEnd.vLight->lightDef->parms.pointLight) {
 			//point light
 			fhRenderProgram::SetShadowMappingMode( 1 );
 			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
