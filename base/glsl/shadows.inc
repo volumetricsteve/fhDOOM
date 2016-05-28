@@ -14,7 +14,7 @@ float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
     return 0.0;
 }
 
-float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset)
+float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
 {   
     pos = pos / pos.w;
 
@@ -34,8 +34,10 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset)
 //#define FILTER_PCF13
 //#define FILTER_PCF21
 
+
+
   //vec2 texsize = 1.0/textureSize(tex, 0) * 3 * rpShadowParams.x;
-  vec2 texsize = coordScale * 0.003 * rpShadowParams.x;
+  vec2 texsize = coordScale * 0.003 * softness;
 
 #if defined(FILTER_PCF4)
     const vec2 kernel2x2[4] = vec2[](
@@ -181,16 +183,16 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset)
 
 }
 
-vec4 projectedShadow(vec4 pos)
+vec4 projectedShadow(vec4 pos, float softness)
 {
-  float f = getShadow(pos, rpShadowCoords[0].xy, rpShadowCoords[0].zw);
+  float f = getShadow(pos, rpShadowCoords[0].xy, rpShadowCoords[0].zw, softness);
 
   f = mix(1, rpShadowParams.y, f);
 
   return vec4(f,f,f,f);
 }
 
-vec4 getParallelShadow(vec4 pos[6], int index)
+vec4 getParallelShadow(vec4 pos[6], int index, float softness)
 {
   vec4 debugColors[6] = vec4[](
     vec4(1,1,1,1),
@@ -201,7 +203,7 @@ vec4 getParallelShadow(vec4 pos[6], int index)
     vec4(0,0,1,1)
   );
 
-  float f = getShadow(pos[index], rpShadowCoords[index].xy, rpShadowCoords[index].zw);
+  float f = getShadow(pos[index], rpShadowCoords[index].xy, rpShadowCoords[index].zw, softness);
 
   float ret = mix(1, rpShadowParams.y, f);
 
@@ -212,28 +214,30 @@ vec4 getParallelShadow(vec4 pos[6], int index)
 #endif    
 }
 
-vec4 parallelShadow(vec4 pos[6], float distance)
+vec4 parallelShadow(vec4 pos[6], float distance, float softness)
 {  
-  if(distance < 150) {
-    return getParallelShadow(pos, 0);
-  }
-  else if(distance < 300) {
-    return getParallelShadow(pos, 1);
-  }  
-  else if(distance < 500) {
-    return getParallelShadow(pos, 2);
-  }  
-  else if(distance < 800) {
-    return getParallelShadow(pos, 3);
-  }
-  else if(distance < 1200) {
-    return getParallelShadow(pos, 4);
-  }  
+  //FIXME(johl): this is just a hack to compensate for increasing softness with distance from viewer.
+  //             Sooner or later, i need to completely rewrite the way softness for (all) shadows is 
+  //             handled and calculated.
+  float softscale[6] = float[](
+    0.8,
+    0.45,
+    0.3,
+    0.1,
+    0.1,
+    0.1
+  );
 
-  return getParallelShadow(pos, 5);
+  for(int i=0; i<5; ++i)
+  {
+    if(distance < rpCascadeDistances[i])
+      return getParallelShadow(pos, i, softness * softscale[i]);
+  }
+
+  return getParallelShadow(pos, 5, softness * softscale[5]);  
 }
 
-vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
+vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin, float softness)
 {  
   vec3 d = toGlobalLightOrigin;
 
@@ -262,7 +266,7 @@ vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin)
     l = -d.z;
   }   
 
-  float f = getShadow(pos[side], rpShadowCoords[side].xy, rpShadowCoords[side].zw);  
+  float f = getShadow(pos[side], rpShadowCoords[side].xy, rpShadowCoords[side].zw, softness);  
 
   f = mix(1, rpShadowParams.y, f);
 

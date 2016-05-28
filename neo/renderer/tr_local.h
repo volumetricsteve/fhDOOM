@@ -1050,6 +1050,12 @@ extern idCVar r_smPolyOffsetFactor;
 extern idCVar r_smPolyOffsetBias;
 extern idCVar r_smSoftness;
 extern idCVar r_smBrightness;
+extern idCVar r_smCascadeDistance0;
+extern idCVar r_smCascadeDistance1;
+extern idCVar r_smCascadeDistance2;
+extern idCVar r_smCascadeDistance3;
+extern idCVar r_smCascadeDistance4;
+
 extern idCVar r_renderList;
 
 extern idCVar r_pomEnabled;

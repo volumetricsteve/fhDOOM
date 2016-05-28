@@ -43,6 +43,7 @@ struct fhUniform {
 		GlobalLightOrigin,
 		ShadowParams,
 		ShadowCoords,
+		CascadeDistances,
 		NUM
 	};
 
@@ -118,6 +119,7 @@ public:
 	static void SetGlobalLightOrigin(const idVec4& v);
 
 	static void SetShadowCoords(const shadowCoord_t* coords, int num);
+	static void SetCascadeDistances(float d1, float d2, float d3, float d4, float d5);
 
 private:
 	static bool dirty[fhUniform::NUM];
@@ -339,4 +341,12 @@ ID_INLINE void fhRenderProgram::SetShadowCoords(const shadowCoord_t* coords, int
 	static_assert(sizeof(shadowCoord_t) == sizeof(float)*4, "");
 	assert(num > 0 && num <= 6); //num==0 is probably ok technically, but it seems like a bug, so assert num>0
 	glUniform4fv(currentUniformLocations[fhUniform::ShadowCoords], num, reinterpret_cast<const float*>(coords));
+}
+
+ID_INLINE void fhRenderProgram::SetCascadeDistances(float d1, float d2, float d3, float d4, float d5) {
+	float distances[] = {
+		d1, d2, d3, d4, d5
+	};
+
+	glUniform1fv(currentUniformLocations[fhUniform::CascadeDistances], 5, distances);
 }

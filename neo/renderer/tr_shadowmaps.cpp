@@ -23,6 +23,12 @@ idCVar r_smPolyOffsetBias( "r_smPolyOffsetBias", "26", CVAR_RENDERER | CVAR_FLOA
 idCVar r_smSoftness( "r_smSoftness", "1", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 idCVar r_smBrightness( "r_smBrightness", "0.15", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 
+idCVar r_smCascadeDistance0( "r_smCascadeDistance0", "150", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smCascadeDistance1( "r_smCascadeDistance1", "300", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smCascadeDistance2( "r_smCascadeDistance2", "500", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smCascadeDistance3( "r_smCascadeDistance3", "800", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smCascadeDistance4( "r_smCascadeDistance4", "1200", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+
 static float viewLightAxialSize;
 static const int firstShadowMapTextureUnit = 6;
 
@@ -727,23 +733,23 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		}
 
 		fhRenderMatrix projectionMatrices[6];
-		fhRenderMatrix viewMatrices[6];
-
-		const int numCascades = 6;
-		static const idVec2 cascadeRanges[6] = {
-			idVec2(1,150),
-			idVec2(150,300),
-			idVec2(300,500),
-			idVec2(500,800),
-			idVec2(800,1200),
-			idVec2(1200,10000)
+		fhRenderMatrix viewMatrices[6];		
+		
+		const float cascadeDistances[6] = {
+			r_smCascadeDistance0.GetFloat(),
+			r_smCascadeDistance1.GetFloat(),
+			r_smCascadeDistance2.GetFloat(),
+			r_smCascadeDistance3.GetFloat(),
+			r_smCascadeDistance4.GetFloat(),
+			100000
 		};
 		
+		float nextNearDistance = 1;
 		for(int c=0; c<6; ++c) {
-			idFrustum frustum = backEnd.viewDef->viewFrustum;
-			
-			frustum.MoveNearDistance( cascadeRanges[c].x );			
-			frustum.MoveFarDistance( cascadeRanges[c].y );			
+			idFrustum frustum = backEnd.viewDef->viewFrustum;			
+			frustum.MoveFarDistance( cascadeDistances[c] ); //move far before near, so far is always greater than near
+			frustum.MoveNearDistance( nextNearDistance );
+			nextNearDistance = cascadeDistances[c];
 
 			idVec3 viewCorners[8];
 			frustum.ToPoints( viewCorners );
@@ -813,7 +819,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		glClearDepth( 1.0 );
 		glClear( GL_DEPTH_BUFFER_BIT );
 
-		for(int i=0; i<numCascades; ++i) {
+		for(int i=0; i<6; ++i) {
 			RB_SetupShadowMapViewPort( i, 0 );
 			auto viewProjection = projectionMatrices[i] * viewMatrices[i];
 			memcpy( &backEnd.shadowViewProjection[i][0], viewProjection.ToFloatPtr(), sizeof(float)* 16 );

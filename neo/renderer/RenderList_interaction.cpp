@@ -202,6 +202,12 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 			fhRenderProgram::SetShadowMappingMode( 3 );
 			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
 			fhRenderProgram::SetShadowCoords( backEnd.shadowCoords, 6 );
+			fhRenderProgram::SetCascadeDistances(
+				r_smCascadeDistance0.GetFloat(),
+				r_smCascadeDistance1.GetFloat(),
+				r_smCascadeDistance2.GetFloat(),
+				r_smCascadeDistance3.GetFloat(),
+				r_smCascadeDistance4.GetFloat());
 		}
 		else if (backEnd.vLight->lightDef->parms.pointLight) {
 			//point light

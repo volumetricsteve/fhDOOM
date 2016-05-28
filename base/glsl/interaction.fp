@@ -45,21 +45,24 @@ vec4 specular(vec2 texcoord, vec3 N, vec3 L, vec3 V)
 
 vec4 shadow()
 {
-  vec4 shadowness = vec4(0,0,0,0);
+  vec4 shadowness = vec4(1,1,1,1);
+
+  //float linearDistance = length(frag.V);
+
+  //float softness = mix(rpShadowParams.x, rpShadowParams.x * 0.3, clamp(linearDistance/1000, 0, 1));
 
   if(rpShadowMappingMode == 1)  
-    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin);  
+    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, rpShadowParams.x);  
   else if(rpShadowMappingMode == 2)
-    shadowness = projectedShadow(frag.shadow[0]); 
+    shadowness = projectedShadow(frag.shadow[0], rpShadowParams.x); 
   else if(rpShadowMappingMode == 3)
-    shadowness = parallelShadow(frag.shadow, -frag.depth);     
+    shadowness = parallelShadow(frag.shadow, -frag.depth, rpShadowParams.x);     
  
   return shadowness;
 }
 
 void main(void)
 {  
-
   vec3 V = normalize(frag.V);
   vec3 L = normalize(frag.L);  
   vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, V);      
@@ -67,12 +70,10 @@ void main(void)
 
   result = vec4(0,0,0,0);
 
-  result += diffuse(frag.texDiffuse + offset, N, L);
-  
+  result += diffuse(frag.texDiffuse + offset, N, L);  
   result += specular(frag.texSpecular + offset, N, L, V);
 
   result *= frag.color;
-
   result *= texture2DProj(lightTexture, frag.texLight.xyw);
   result *= texture2D(lightFalloff, vec2(frag.texLight.z, 0.5));
   result *= shadow();
