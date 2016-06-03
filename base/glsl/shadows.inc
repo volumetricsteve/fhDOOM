@@ -14,6 +14,12 @@ float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
     return 0.0;
 }
 
+float linearDepth(float expDepth, float n, float f) {
+  float z = (2 * n) / (f + n - expDepth * (f - n));
+
+  return z;
+}
+
 float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
 {   
     pos = pos / pos.w;
@@ -30,14 +36,13 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
 
 //#define FILTER_PCF
 //#define FILTER_PCF4
-#define FILTER_PCF9
+//#define FILTER_PCF9
 //#define FILTER_PCF13
-//#define FILTER_PCF21
-
-
+#define FILTER_PCF21
+ 
 
   //vec2 texsize = 1.0/textureSize(tex, 0) * 3 * rpShadowParams.x;
-  vec2 texsize = coordScale * 0.003 * softness;
+  vec2 texsize = coordScale * softness;
 
 #if defined(FILTER_PCF4)
     const vec2 kernel2x2[4] = vec2[](

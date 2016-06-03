@@ -47,16 +47,17 @@ vec4 shadow()
 {
   vec4 shadowness = vec4(1,1,1,1);
 
-  //float linearDistance = length(frag.V);
+  float lightDistance = length(frag.toGlobalLightOrigin); 
 
-  //float softness = mix(rpShadowParams.x, rpShadowParams.x * 0.3, clamp(linearDistance/1000, 0, 1));
+
+  float softness = (0.008 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w);
 
   if(rpShadowMappingMode == 1)  
-    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, rpShadowParams.x);  
+    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, softness);  
   else if(rpShadowMappingMode == 2)
-    shadowness = projectedShadow(frag.shadow[0], rpShadowParams.x); 
+    shadowness = projectedShadow(frag.shadow[0], softness); 
   else if(rpShadowMappingMode == 3)
-    shadowness = parallelShadow(frag.shadow, -frag.depth, rpShadowParams.x);     
+    shadowness = parallelShadow(frag.shadow, -frag.depth, softness);     
  
   return shadowness;
 }

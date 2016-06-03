@@ -195,13 +195,13 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 
 		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
 		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
+		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, backEnd.vLight->nearClip[0], backEnd.vLight->farClip[0] ) );
 
 		if(backEnd.vLight->lightDef->parms.parallel) {
 			//parallel light
 			fhRenderProgram::SetShadowMappingMode( 3 );
-			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
-			fhRenderProgram::SetShadowCoords( backEnd.shadowCoords, 6 );
+			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
+			fhRenderProgram::SetShadowCoords( backEnd.vLight->shadowCoords, 6 );
 			fhRenderProgram::SetCascadeDistances(
 				r_smCascadeDistance0.GetFloat(),
 				r_smCascadeDistance1.GetFloat(),
@@ -212,14 +212,14 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 		else if (backEnd.vLight->lightDef->parms.pointLight) {
 			//point light
 			fhRenderProgram::SetShadowMappingMode( 1 );
-			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
-			fhRenderProgram::SetShadowCoords(backEnd.shadowCoords, 6);
+			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
+			fhRenderProgram::SetShadowCoords(backEnd.vLight->shadowCoords, 6);
 		}
 		else {
 			//projected light
 			fhRenderProgram::SetShadowMappingMode( 2 );
-			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
-			fhRenderProgram::SetShadowCoords(backEnd.shadowCoords, 1);
+			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
+			fhRenderProgram::SetShadowCoords(backEnd.vLight->shadowCoords, 1);
 		}
 	}
 	else {
@@ -283,7 +283,7 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 			}
 			else if (depthHackActive) {
 				RB_LeaveDepthHack();
-				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );				
 				depthHackActive = false;
 			}
 

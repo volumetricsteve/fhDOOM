@@ -1207,17 +1207,17 @@ void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
 
 		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
 		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, 0, 0 ) );
+		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, backEnd.vLight->nearClip[0], backEnd.vLight->farClip[0] ) );
 
 		if (backEnd.vLight->lightDef->parms.pointLight) {
 			//point light
 			fhRenderProgram::SetShadowMappingMode( 1 );
-			fhRenderProgram::SetPointLightProjectionMatrices( &backEnd.shadowViewProjection[0][0] );
+			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
 		}
 		else {
 			//projected light
 			fhRenderProgram::SetShadowMappingMode( 2 );
-			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.testProjectionMatrix );
+			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
 		}
 	}
 	else {

@@ -32,6 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "Image.h"
 #include "MegaTexture.h"
 #include "RenderProgram.h"
+#include "RenderMatrix.h"
 
 class idRenderWorldLocal;
 
@@ -138,6 +139,23 @@ typedef struct {
 } shadowFrustum_t;
 
 
+typedef struct {
+	int		numPlanes;		// this is always 6 for now
+	idPlane	planes[6];
+	// positive sides facing inward
+	// plane 5 is always the plane the projection is going to, the
+	// other planes are just clip planes
+	// all planes are in global coordinates
+	
+	float farPlaneDistance;
+	float nearPlaneDistance;
+	idBounds viewSpaceBounds; //minimum/maximum of light corners in view space, required for parallel lights
+	
+	fhRenderMatrix viewMatrix;	
+	fhRenderMatrix projectionMatrix;
+	fhRenderMatrix viewProjectionMatrix;	
+} shadowMapFrustum_t;
+
 // areas have references to hold all the lights and entities in them
 typedef struct areaReference_s {
 	struct areaReference_s *areaNext;				// chain in the area
@@ -233,7 +251,7 @@ public:
 	shadowFrustum_t			shadowFrustums[6];
 
 	int						numShadowMapFrustums;   // one for projected lights, usually six for point lights, all frustums are symmetric
-	shadowFrustum_t			shadowMapFrustums[6];
+	shadowMapFrustum_t		shadowMapFrustums[6];
 
 	int						viewCount;				// if == tr.viewCount, the light is on the viewDef->viewLights list
 	struct viewLight_s *	viewLight;
@@ -341,6 +359,13 @@ typedef struct viewLight_s {
 	idImage *				falloffImage;				// falloff image used by backend
 
 	int						shadowMapLod;               // Shadow Map Level of Detail, 0 = max shadow map resolution, higher values means lower resolution
+	                                                    // Maybe, we don't need this here, as soon as we move more things (matrices, coords) from backend to frontend?
+	fhRenderMatrix          viewMatrices[6];
+	fhRenderMatrix          projectionMatrices[6];
+	fhRenderMatrix          viewProjectionMatrices[6];
+	shadowCoord_t           shadowCoords[6];
+	float                   nearClip[6];
+	float                   farClip[6];
 
 	const struct drawSurf_s	*globalShadows;				// shadow everything
 	const struct drawSurf_s	*localInteractions;			// don't get local shadows
@@ -729,11 +754,6 @@ typedef struct {
 	int					c_copyFrameBuffer;
 
 	bool				glslReplaceArb2;
-
-	float               shadowViewProjection[6][16];
-	float               testViewMatrix[16];
-	float               testProjectionMatrix[16];
-	shadowCoord_t       shadowCoords[6];
 } backEndState_t;
 
 
