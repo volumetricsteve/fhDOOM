@@ -227,6 +227,10 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 		fhRenderProgram::SetShadowMappingMode( 0 );
 	}
 
+	//make sure depth hacks are disabled
+	//FIXME(johl): why is (sometimes) a depth hack enabled at this point?
+	RB_LeaveDepthHack();
+
 	fhRenderProgram::SetProjectionMatrix( backEnd.viewDef->projectionMatrix );
 	fhRenderProgram::SetPomMaxHeight( -1 );
 
