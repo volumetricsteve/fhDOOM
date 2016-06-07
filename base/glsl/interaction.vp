@@ -20,6 +20,7 @@ out vs_output
   vec4 shadow[6];
   vec3 toGlobalLightOrigin;
   float depth;
+  vec4 worldspacePosition;
 } result;
 
 void main(void)
@@ -56,7 +57,8 @@ void main(void)
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;  
 
   vec4 worldspace_position = rpModelMatrix * vec4(vertex_position, 1.0); 
-
+  result.worldspacePosition = worldspace_position;
+  
   if(rpShadowMappingMode == 1)
   {
     result.shadow[0] = rpPointlightProjection[0] * worldspace_position;

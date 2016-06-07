@@ -124,6 +124,49 @@ static int ClassifyImage( const char *name ) {
 
 /*
 ================
+R_JitterImage
+
+Creates a jitter image where each pixel is a random 2D rotation.
+The red channel contains cosine and the green channel sine of
+a rotation, so it's easy to build a 2D rotation matrix from it.
+
+cosine and sine are compressed from [-1, 1] range to [0, 255] range
+to fit into simple RGB(A) textures.
+
+Blue and alpha channel are not used yet. Could be used to store a second rotation
+or to increase precision?
+
+TODO(johl): using floating point RG texture format provides a lot more precision
+            and we don't need to compress the range.
+================
+*/
+static void R_JitterImage( idImage *image ) {
+
+	static const int jitterSize = 1024;
+
+	byte* data = new byte[jitterSize * jitterSize * 4];
+
+	idRandom random( 13 );
+
+	for (int x = 0; x < jitterSize * jitterSize * 4; x += 4) {
+		float rad = DEG2RAD( random.RandomInt( 359 ) );
+		float sine = idMath::Sin( rad );
+		float cosine = idMath::Cos( rad );
+
+		data[x + 0] = static_cast<byte>((cosine + 1) * 128);
+		data[x + 1] = static_cast<byte>((sine + 1) * 128);
+		data[x + 2] = 255;
+		data[x + 3] = 255;		
+	}
+
+	image->GenerateImage( data, jitterSize, jitterSize,
+		TF_NEAREST, false, TR_REPEAT, TD_HIGH_QUALITY );
+
+	delete[] data;
+}
+
+/*
+================
 R_RampImage
 
 Creates a 0-255 ramp image
@@ -1880,6 +1923,8 @@ void idImageManager::Init() {
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
+
+	jitterImage = ImageFromFunction("_jitter", R_JitterImage );
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
 	shadowmapFramebuffer = new fhFramebuffer( 1024 * 3, 1024 * 2, nullptr, shadowmapImage );	

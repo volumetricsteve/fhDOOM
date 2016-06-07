@@ -473,6 +473,7 @@ public:
 	idImage *			currentRenderImage;			// for SS_POST_PROCESS shaders
 	idImage *			currentDepthImage;
 	idImage *			borderClampImage;			// white inside, black outside
+	idImage *           jitterImage;
 
 	fhFramebuffer*		defaultFramebuffer;
 

@@ -1,5 +1,4 @@
 #include "global.inc"
-#include "shadows.inc"
 #include "shading.inc"
 
 layout(binding = 1) uniform sampler2D normalMap;
@@ -21,7 +20,10 @@ in vs_output
   vec4 shadow[6];
   vec3 toGlobalLightOrigin; 
   float depth; 
+  vec4 worldspacePosition;
 } frag;
+
+#include "shadows.inc"
 
 out vec4 result;
 
@@ -49,15 +51,18 @@ vec4 shadow()
 
   float lightDistance = length(frag.toGlobalLightOrigin); 
 
-
-  float softness = (0.008 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w);
+#if 0
+  float softness = (0.0095 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w);
+#else  
+  float softness = (0.003 * rpShadowParams.x);
+#endif  
 
   if(rpShadowMappingMode == 1)  
     shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, softness);  
   else if(rpShadowMappingMode == 2)
     shadowness = projectedShadow(frag.shadow[0], softness); 
   else if(rpShadowMappingMode == 3)
-    shadowness = parallelShadow(frag.shadow, -frag.depth, softness);     
+    shadowness = parallelShadow(frag.shadow, -frag.depth, rpShadowParams.x * 0.0095);     
  
   return shadowness;
 }

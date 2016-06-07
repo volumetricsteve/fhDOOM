@@ -1,4 +1,5 @@
 layout(binding = 6) uniform sampler2D texture6;
+layout(binding = 7) uniform sampler2D texture7;
 
 vec4 offset_lookup(sampler2D map, vec2 coord, vec2 offset)
 {
@@ -38,7 +39,11 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
 //#define FILTER_PCF4
 //#define FILTER_PCF9
 //#define FILTER_PCF13
-#define FILTER_PCF21
+//#define FILTER_PCF21
+//#define FILTER_POISSON6
+#define FILTER_POISSON9
+//#define FILTER_POISSON12    
+//#define FILTER_POISSON15
  
 
   //vec2 texsize = 1.0/textureSize(tex, 0) * 3 * rpShadowParams.x;
@@ -182,6 +187,121 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
     }   
 
     return occluded/samplesTaken;
+#elif defined(FILTER_POISSON6)
+    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
+    float cosinus = (jitter.x * 2) - 1;
+    float sinus = (jitter.y * 2) - 1;
+
+    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
+
+    const vec2 kernel[6] = vec2[](
+      vec2(-0.4397209, -0.3645),
+      vec2(-0.6508484, 0.4861422),
+      vec2(0.3237945, -0.1611787),
+      vec2(0.008111006, 0.7074075),
+      vec2(0.09966598, -0.8482586),
+      vec2(0.8881027, 0.4371758)
+    );
+
+    float foo = 0;
+    for(int i=0;i<6; ++i) {
+       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
+       if( f < pos.z )
+          foo += 1.0;       
+    }
+
+    return foo/6.0;     
+#elif defined(FILTER_POISSON9)
+    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
+    float cosinus = (jitter.x * 2) - 1;
+    float sinus = (jitter.y * 2) - 1;
+
+    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
+
+    const vec2 kernel[9] = vec2[](
+      vec2(0.01946597, -0.9665399),
+      vec2(-0.2643075, -0.2529854),
+      vec2(-0.6608061, -0.5971643),
+      vec2(0.5533955, -0.560185),
+      vec2(-0.6723549, 0.1494021),
+      vec2(0.8941639, 0.0498636),
+      vec2(0.3074718, 0.2643286),
+      vec2(-0.2686456, 0.9057658),
+      vec2(0.5373921, 0.8100548)
+    );
+
+    float foo = 0;
+    for(int i=0;i<9; ++i) {
+       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
+       if( f < pos.z )
+          foo += 1.0;       
+    }
+
+    return foo/9.0;    
+#elif defined(FILTER_POISSON12)
+    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
+    float cosinus = (jitter.x * 2) - 1;
+    float sinus = (jitter.y * 2) - 1;
+
+    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
+
+    const vec2 kernel[12] = vec2[](
+      vec2(0.3665185, -0.903574),
+      vec2(0.6162645, -0.4545356),
+      vec2(-0.2486034, -0.6077372),
+      vec2(0.05140426, -0.2567643),
+      vec2(-0.2610345, 0.07457025),
+      vec2(0.2511628, 0.2595751),
+      vec2(-0.6152166, -0.318685),
+      vec2(0.8690009, -0.03180576),
+      vec2(-0.9257081, 0.1798257),
+      vec2(-0.1923947, 0.5614256),
+      vec2(0.2714329, 0.7173462),
+      vec2(-0.7179349, 0.6915267)
+    );
+
+    float foo = 0;
+    for(int i=0;i<12; ++i) {
+       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
+       if( f < (pos.z) )
+          foo += 1.0;       
+    }
+
+    return foo/12.0;
+
+#elif defined(FILTER_POISSON15)
+    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
+    float cosinus = (jitter.x * 2) - 1;
+    float sinus = (jitter.y * 2) - 1;
+
+    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
+
+    const vec2 kernel[15] = vec2[](
+      vec2(0.3886908, 0.3622644),
+      vec2(0.01367045, 0.7141614),
+      vec2(-0.1952952, 0.261395),
+      vec2(0.167147, -0.08671506),
+      vec2(0.5340464, -0.3375779),
+      vec2(0.7503276, 0.1110756),
+      vec2(-0.02910505, -0.5694501),
+      vec2(0.3916242, -0.7194775),
+      vec2(-0.3699134, -0.1326576),
+      vec2(0.49934, 0.835238),
+      vec2(-0.8104502, 0.05760445),
+      vec2(-0.571758, 0.6056085),
+      vec2(-0.8419966, -0.3448843),
+      vec2(-0.5124402, -0.6106064),
+      vec2(-0.2231808, -0.9203894)
+    );
+
+    float foo = 0;
+    for(int i=0;i<15; ++i) {
+       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
+       if( f < pos.z )
+          foo += 1.0;       
+    }
+
+    return foo/15.0;
 #else    
     return isOccluded(texture6, pos.st, vec2(0,0), pos.z);
 #endif  

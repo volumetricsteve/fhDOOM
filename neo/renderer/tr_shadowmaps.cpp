@@ -844,6 +844,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	globalImages->defaultFramebuffer->Bind();
 	globalImages->shadowmapImage->Bind( firstShadowMapTextureUnit );
+	globalImages->jitterImage->Bind( 7 );
 
 	glDisable( GL_POLYGON_OFFSET_FILL );	
 	glEnable(GL_CULL_FACE);
