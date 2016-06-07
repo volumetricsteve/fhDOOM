@@ -1367,15 +1367,15 @@ void CXYWnd::OnPaint() {
 		QE_CheckOpenGLForErrors();
 
 		if (m_nViewType != XY) {
-      GL_ModelViewMatrix.Push();
+			GL_ModelViewMatrix.Push();
 			if (m_nViewType == YZ) {
-        GL_ModelViewMatrix.Rotate(-90, 0, 1, 0);
+				GL_ModelViewMatrix.Rotate(-90, 0, 1, 0);
 			}
 
 			GL_ModelViewMatrix.Rotate(-90, 1, 0, 0);		// put Z going up
 		}
 
-    fhImmediateMode im;
+		fhImmediateMode im;
 		if ( g_bCrossHairs ) {
 			im.Color4f( 0.2f, 0.9f, 0.2f, 0.8f );
 			im.Begin(GL_LINES);
@@ -1402,7 +1402,7 @@ void CXYWnd::OnPaint() {
 		}
 
 		if (ClipMode()) {
-      const idVec3 clipColor = g_qeglobals.d_savedinfo.colors[COLOR_CLIPPER];
+			const idVec3 clipColor = g_qeglobals.d_savedinfo.colors[COLOR_CLIPPER];
 
 			glPointSize(4);
 			im.Color3fv(clipColor.ToFloatPtr());
@@ -1420,16 +1420,19 @@ void CXYWnd::OnPaint() {
 			im.End();
 			glPointSize(1);
 
-      const idVec3 clipNumOffset(2,2,2);
+			const idVec3 clipNumOffset(2,2,2);
 
-      if (g_Clip1.Set())
-        drawText("1", 1.0/m_fScale, g_Clip1.m_ptClip + clipNumOffset, clipColor); 
+			if (g_Clip1.Set()) {
+				drawText("1", 1.0/m_fScale, g_Clip1.m_ptClip + clipNumOffset, clipColor); 
+			}
 
-      if (g_Clip2.Set())
-        drawText("2", 1.0/m_fScale, g_Clip2.m_ptClip + clipNumOffset, clipColor); 
+			if (g_Clip2.Set()) {
+				drawText("2", 1.0/m_fScale, g_Clip2.m_ptClip + clipNumOffset, clipColor); 
+			}
 
-      if (g_Clip3.Set())
-        drawText("3", 1.0/m_fScale, g_Clip3.m_ptClip + clipNumOffset, clipColor); 
+			if (g_Clip3.Set()) {
+				drawText("3", 1.0/m_fScale, g_Clip3.m_ptClip + clipNumOffset, clipColor); 
+			}
 
 			if (g_Clip1.Set() && g_Clip2.Set() && selected_brushes.next != &selected_brushes) {
 				ProduceSplitLists();
@@ -1460,11 +1463,11 @@ void CXYWnd::OnPaint() {
 		}
 
 		if (m_nViewType != XY) {
-      GL_ModelViewMatrix.Pop();
+			GL_ModelViewMatrix.Pop();
 		}
-
-    //common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
-    
+#ifdef _DEBUG
+		common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
+#endif    
 		wglSwapBuffers(dc.m_hDC);
 		vertexCache.EndFrame();
 		fhBaseRenderList::EndFrame();
@@ -2793,7 +2796,7 @@ void CXYWnd::DrawZIcon(void) {
 		glDisable(GL_CULL_FACE);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    fhImmediateMode im;
+		fhImmediateMode im;
 		im.Color4f(0.0, 0.0, 1.0, 0.25);
 		im.Begin(GL_QUADS);
 		im.Vertex3f(x - 8, y - 8, 0);
