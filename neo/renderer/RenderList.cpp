@@ -3,7 +3,7 @@
 #include "RenderProgram.h"
 #include <atomic>
 
-static const uint32 renderlistMaxSize = 1024 * 1024 * 8;
+static const uint32 renderlistMaxSize = 1024 * 1024 * 64;
 static void* renderlistMemory = nullptr;
 static std::atomic<uint32> allocated = 0;
 

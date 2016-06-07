@@ -649,8 +649,6 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	// generate the texture number
 	glGenTextures( 1, &texnum );	
 
-	assert(internalFormat != GL_COLOR_INDEX8_EXT);
-
 	// upload the main image level
 	if(glConfig.extDirectStateAccessAvailable) {
 		glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
