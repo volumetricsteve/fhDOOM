@@ -466,6 +466,11 @@ public:
 		if( r_smSkipNonStaticOcclusion.GetBool() ) {
 			return;
 		}		
+
+		//FIXME(johl): there is a bug. Culling does not work properly if light is rotated.
+		const bool forceObjectCullingOff = !vlight->lightDef->parms.axis.Compare(mat3_identity, 0.0001f);		
+
+		const bool objectCullingEnabled = !forceObjectCullingOff && r_smObjectCulling.GetBool() && (numShadowFrustrums > 0);
 		
 		for (idInteraction* inter = vlight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 			const idRenderEntityLocal *entityDef = inter->entityDef;
@@ -484,7 +489,7 @@ public:
 
 			unsigned visibleSides = ~0;
 
-			if (r_smObjectCulling.GetBool() && numShadowFrustrums > 0) {
+			if (objectCullingEnabled) {
 				visibleSides = 0;
 
 				// cull the entire entity bounding box
