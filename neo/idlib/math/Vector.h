@@ -73,6 +73,7 @@ public:
 	idVec2 &		operator/=( const idVec2 &a );
 	idVec2 &		operator/=( const float a );
 	idVec2 &		operator*=( const float a );
+	idVec2 &		operator*=( const idVec2 &a );
 
 	friend idVec2	operator*( const float a, const idVec2 b );
 
@@ -290,6 +291,13 @@ ID_INLINE idVec2 &idVec2::operator-=( const idVec2 &a ) {
 ID_INLINE idVec2 &idVec2::operator*=( const float a ) {
 	x *= a;
 	y *= a;
+
+	return *this;
+}
+
+ID_INLINE idVec2 &idVec2::operator*=(const idVec2 &a) {
+	x *= a.x;
+	y *= a.y;
 
 	return *this;
 }

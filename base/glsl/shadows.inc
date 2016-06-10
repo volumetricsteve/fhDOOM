@@ -21,7 +21,51 @@ float linearDepth(float expDepth, float n, float f) {
   return z;
 }
 
-float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
+mat2 getJitter()
+{
+    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
+    float cosinus = (jitter.x * 2) - 1;
+    float sinus = (jitter.y * 2) - 1;
+
+    return mat2(cosinus, sinus, -sinus, cosinus);  
+}
+
+#define DECLARE_POISSON_SAMPLE(KernelSize) float poissonSample(vec2 kernel[KernelSize], vec3 pos, vec2 texsize) { \
+    mat2 rot = getJitter(); \
+\
+    float bias = 0.000; \
+    float ret = 0; \
+    for(int i=0;i<KernelSize; ++i) { \
+       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x; \
+       if( f < (pos.z - bias) ) \
+          ret += 1.0; \
+    } \
+    return ret/KernelSize; \
+}
+
+DECLARE_POISSON_SAMPLE(6)
+DECLARE_POISSON_SAMPLE(9)
+DECLARE_POISSON_SAMPLE(12)
+DECLARE_POISSON_SAMPLE(15)
+
+
+#define DECLARE_PCF_SAMPLE(KernelSize) float pcfSample(vec2 kernel[KernelSize], vec3 pos, vec2 texsize) { \
+    float bias = 0.00; \
+    float ret = 0; \
+    for(int i=0;i<KernelSize; ++i) { \
+       float f = texture(texture6, pos.st + kernel[i] * texsize).x; \
+       if( f < (pos.z - bias) ) \
+          ret += 1.0; \
+    } \
+    return ret/KernelSize; \
+}
+
+DECLARE_PCF_SAMPLE(4)
+DECLARE_PCF_SAMPLE(9)
+DECLARE_PCF_SAMPLE(13)
+DECLARE_PCF_SAMPLE(21)
+
+float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, vec2 softness)
 {   
     pos = pos / pos.w;
 
@@ -35,7 +79,6 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
     pos.x += coordOffset.x;
     pos.y += coordOffset.y;
 
-//#define FILTER_PCF
 //#define FILTER_PCF4
 //#define FILTER_PCF9
 //#define FILTER_PCF13
@@ -45,29 +88,20 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
 //#define FILTER_POISSON12    
 //#define FILTER_POISSON15
  
-
-  //vec2 texsize = 1.0/textureSize(tex, 0) * 3 * rpShadowParams.x;
   vec2 texsize = coordScale * softness;
 
 #if defined(FILTER_PCF4)
-    const vec2 kernel2x2[4] = vec2[](
+    const vec2 kernel[4] = vec2[](
       vec2(1,0),
       vec2(-1,0),
       vec2(0,1),
       vec2(0,-1)
     );
 
-    float foo = 0;
-    for(int i=0;i<4; ++i) {
-       float f = texture(texture6, pos.st + kernel2x2[i] * texsize).x;
-       if( f <= pos.z )
-          foo += 1.0;       
-    }
-
-    return foo/4.0;
+    return pcfSample(kernel, pos.xyz, texsize);
 
 #elif defined(FILTER_PCF9)
-    const vec2 kernel3x3[9] = vec2[](
+    const vec2 kernel[9] = vec2[](
       vec2(-1,1),
       vec2(0,1),
       vec2(1,1),
@@ -79,17 +113,10 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(1,-1)
     );
 
-    float foo = 0;
-    for(int i=0;i<9; ++i) {
-       float f = texture(texture6, pos.st + kernel3x3[i] * texsize).x;
-       if( f < pos.z )
-          foo += 1.0;       
-    }
-
-    return foo/9.0;
+    return pcfSample(kernel, pos.xyz, texsize);
 
 #elif defined(FILTER_PCF13)
-    const vec2 kernel3x3[13] = vec2[](
+    const vec2 kernel[13] = vec2[](
       vec2(0, 1),
       vec2(0, -1),
       vec2(-1, 0),
@@ -105,17 +132,10 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(0.5,-0.5)
     );
 
-    float foo = 0;
-    for(int i=0;i<13; ++i) {
-       float f = texture(texture6, pos.st + kernel3x3[i] * texsize).x;
-       if( f < pos.z )
-          foo += 1.0;       
-    }
-
-    return foo/13.0;
+    return pcfSample(kernel, pos.xyz, texsize);
 
 #elif defined(FILTER_PCF21)
-    const vec2 kernel3x3[21] = vec2[](
+    const vec2 kernel[21] = vec2[](
       vec2(0.5, 1),
       vec2(0.5, -1),
       vec2(-0.5, 1),
@@ -141,59 +161,8 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(0.5,-0.5)
     );
 
-    int foo = 0;
-    int i=0;
-    for(;i<8; ++i) {
-       float f = texture(texture6, pos.st + kernel3x3[i] * texsize).x;
-       if( f < pos.z )
-          foo += 1;       
-    }
-/*
-    if(foo == 0)
-      return 0.0;
-
-    if(foo == 8)
-      return 1.0;
-*/
-    for(;i<21; ++i) {
-       float f = texture(texture6, pos.st + kernel3x3[i] * texsize).x;
-       if( f < pos.z )
-          foo += 1;       
-    }
-
-    return foo/21.0;
-
-#elif defined(FILTER_PCF)
-    float occluded = 0;
-    int samplesTaken = 0;
-    float d = 0.003 * rpShadowParams.x; //modulate 'base' softness by shadowSoftness parameter
-
-    if(d<0.0001)
-      return isOccluded(texture6, pos.st, vec2(0,0), pos.z);
-
-    float s = d/4;
-    for(float i=-d;i<d;i+=s) {
-      for(float j=-s;j<d;j+=s) {
-
-        vec2 coord = pos.st + vec2(i,j);
-                    
-        
-        float f = texture(texture6, coord).x;
-        if( f < pos.z )
-          occluded += 1.0;
-
-        samplesTaken += 1;
-      }     
-    }   
-
-    return occluded/samplesTaken;
+    return pcfSample(kernel, pos.xyz, texsize);
 #elif defined(FILTER_POISSON6)
-    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
-    float cosinus = (jitter.x * 2) - 1;
-    float sinus = (jitter.y * 2) - 1;
-
-    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
-
     const vec2 kernel[6] = vec2[](
       vec2(-0.4397209, -0.3645),
       vec2(-0.6508484, 0.4861422),
@@ -203,21 +172,9 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(0.8881027, 0.4371758)
     );
 
-    float foo = 0;
-    for(int i=0;i<6; ++i) {
-       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
-       if( f < pos.z )
-          foo += 1.0;       
-    }
+    return poissonSample(kernel, pos.xyz, texsize);
 
-    return foo/6.0;     
 #elif defined(FILTER_POISSON9)
-    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
-    float cosinus = (jitter.x * 2) - 1;
-    float sinus = (jitter.y * 2) - 1;
-
-    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
-
     const vec2 kernel[9] = vec2[](
       vec2(0.01946597, -0.9665399),
       vec2(-0.2643075, -0.2529854),
@@ -230,21 +187,9 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(0.5373921, 0.8100548)
     );
 
-    float foo = 0;
-    for(int i=0;i<9; ++i) {
-       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
-       if( f < pos.z )
-          foo += 1.0;       
-    }
-
-    return foo/9.0;    
+    return poissonSample(kernel, pos.xyz, texsize);
+   
 #elif defined(FILTER_POISSON12)
-    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
-    float cosinus = (jitter.x * 2) - 1;
-    float sinus = (jitter.y * 2) - 1;
-
-    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
-
     const vec2 kernel[12] = vec2[](
       vec2(0.3665185, -0.903574),
       vec2(0.6162645, -0.4545356),
@@ -260,22 +205,8 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(-0.7179349, 0.6915267)
     );
 
-    float foo = 0;
-    for(int i=0;i<12; ++i) {
-       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
-       if( f < (pos.z) )
-          foo += 1.0;       
-    }
-
-    return foo/12.0;
-
+    return poissonSample(kernel, pos.xyz, texsize);
 #elif defined(FILTER_POISSON15)
-    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
-    float cosinus = (jitter.x * 2) - 1;
-    float sinus = (jitter.y * 2) - 1;
-
-    mat2 rot = mat2(cosinus, sinus, -sinus, cosinus);
-
     const vec2 kernel[15] = vec2[](
       vec2(0.3886908, 0.3622644),
       vec2(0.01367045, 0.7141614),
@@ -294,21 +225,14 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, float softness)
       vec2(-0.2231808, -0.9203894)
     );
 
-    float foo = 0;
-    for(int i=0;i<15; ++i) {
-       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x;
-       if( f < pos.z )
-          foo += 1.0;       
-    }
-
-    return foo/15.0;
+    return poissonSample(kernel, pos.xyz, texsize);
 #else    
     return isOccluded(texture6, pos.st, vec2(0,0), pos.z);
 #endif  
 
 }
 
-vec4 projectedShadow(vec4 pos, float softness)
+vec4 projectedShadow(vec4 pos, vec2 softness)
 {
   float f = getShadow(pos, rpShadowCoords[0].xy, rpShadowCoords[0].zw, softness);
 
@@ -317,7 +241,7 @@ vec4 projectedShadow(vec4 pos, float softness)
   return vec4(f,f,f,f);
 }
 
-vec4 getParallelShadow(vec4 pos[6], int index, float softness)
+vec4 getParallelShadow(vec4 pos[6], int index, vec2 softness)
 {
   vec4 debugColors[6] = vec4[](
     vec4(1,1,1,1),
@@ -339,30 +263,42 @@ vec4 getParallelShadow(vec4 pos[6], int index, float softness)
 #endif    
 }
 
-vec4 parallelShadow(vec4 pos[6], float distance, float softness)
-{  
-  //FIXME(johl): this is just a hack to compensate for increasing softness with distance from viewer.
-  //             Sooner or later, i need to completely rewrite the way softness for (all) shadows is 
-  //             handled and calculated.
-  float softscale[6] = float[](
-    0.8,
-    0.45,
-    0.3,
-    0.1,
-    0.1,
-    0.1
-  );
+vec4 parallelShadow(vec4 pos[6], float distance, vec2 softness)
+{ 
+  const float referenceSize = 256;  
 
-  for(int i=0; i<5; ++i)
+  int i=0;
+
+  vec4 nextCascade = vec4(1,1,1,1);
+  float nextfraction = 0; 
+
+  for(; i<5; ++i)
   {
-    if(distance < rpCascadeDistances[i])
-      return getParallelShadow(pos, i, softness * softscale[i]);
+    float t = 10 * (i+1);//rpCascadeDistances[i+1] * 0.1;
+
+    if(distance < (rpCascadeDistances[i] - t))
+    {
+      break;
+    }
+
+    if(distance < (rpCascadeDistances[i] + t))
+    {
+      vec2 shadowmapSize = rpShadowMapSize[i+1].zw;
+      nextCascade = getParallelShadow(pos, i+1, softness * vec2(referenceSize / shadowmapSize.x, referenceSize / shadowmapSize.y));
+      nextfraction = (distance - (rpCascadeDistances[i] - t)) / (2*t);
+      break;
+    }    
   }
 
-  return getParallelShadow(pos, 5, softness * softscale[5]);  
+  vec2 shadowmapSize = rpShadowMapSize[i].zw;
+
+  softness = softness * vec2(referenceSize / shadowmapSize.x, referenceSize / shadowmapSize.y);
+
+  return mix(getParallelShadow(pos, i, softness), nextCascade, nextfraction);
+  //return getParallelShadow(pos, 5, softness * softscale[5]);  
 }
 
-vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin, float softness)
+vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin, vec2 softness)
 {  
   vec3 d = toGlobalLightOrigin;
 

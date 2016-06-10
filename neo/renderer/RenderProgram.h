@@ -44,6 +44,7 @@ struct fhUniform {
 		ShadowParams,
 		ShadowCoords,
 		CascadeDistances,
+		ShadowMapSize,
 		NUM
 	};
 
@@ -120,6 +121,7 @@ public:
 
 	static void SetShadowCoords(const shadowCoord_t* coords, int num);
 	static void SetCascadeDistances(float d1, float d2, float d3, float d4, float d5);
+	static void SetShadowMapSize(const idVec4* sizes, int numSizes);
 
 private:
 	static bool dirty[fhUniform::NUM];
@@ -349,4 +351,8 @@ ID_INLINE void fhRenderProgram::SetCascadeDistances(float d1, float d2, float d3
 	};
 
 	glUniform1fv(currentUniformLocations[fhUniform::CascadeDistances], 5, distances);
+}
+
+ID_INLINE void fhRenderProgram::SetShadowMapSize(const idVec4* sizes, int numSizes) {
+	glUniform4fv(currentUniformLocations[fhUniform::ShadowMapSize], numSizes, sizes[0].ToFloatPtr());
 }

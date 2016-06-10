@@ -49,20 +49,27 @@ vec4 shadow()
 {
   vec4 shadowness = vec4(1,1,1,1);
 
-  float lightDistance = length(frag.toGlobalLightOrigin); 
 
-#if 0
-  float softness = (0.0095 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w);
-#else  
-  float softness = (0.003 * rpShadowParams.x);
-#endif  
 
   if(rpShadowMappingMode == 1)  
-    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, softness);  
+  {
+#if 1
+    float softness = (0.003 * rpShadowParams.x);
+#else
+    float lightDistance = length(frag.toGlobalLightOrigin); 
+    float softness = (0.0095 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w); 
+#endif      
+    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, vec2(softness, softness));  
+  }
   else if(rpShadowMappingMode == 2)
-    shadowness = projectedShadow(frag.shadow[0], softness); 
+  {
+    float softness = (0.007 * rpShadowParams.x);
+    shadowness = projectedShadow(frag.shadow[0], vec2(softness, softness)); 
+  }
   else if(rpShadowMappingMode == 3)
-    shadowness = parallelShadow(frag.shadow, -frag.depth, rpShadowParams.x * 0.0095);     
+  {
+    shadowness = parallelShadow(frag.shadow, -frag.depth, vec2(rpShadowParams.x * 0.0095, rpShadowParams.x * 0.0095));     
+  }
  
   return shadowness;
 }

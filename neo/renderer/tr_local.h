@@ -145,10 +145,13 @@ typedef struct {
 	// positive sides facing inward
 	// plane 5 is always the plane the projection is going to, the
 	// other planes are just clip planes
-	// all planes are in global coordinates
-	
-	float farPlaneDistance;
+	// all planes are in global coordinates	
+
 	float nearPlaneDistance;
+	float farPlaneDistance;
+	float width;
+	float height;
+
 	idBounds viewSpaceBounds; //minimum/maximum of light corners in view space, required for parallel lights
 	
 	fhRenderMatrix viewMatrix;	
@@ -366,6 +369,8 @@ typedef struct viewLight_s {
 	shadowCoord_t           shadowCoords[6];
 	float                   nearClip[6];
 	float                   farClip[6];
+	float                   width[6];
+	float                   height[6];
 
 	const struct drawSurf_s	*globalShadows;				// shadow everything
 	const struct drawSurf_s	*localInteractions;			// don't get local shadows

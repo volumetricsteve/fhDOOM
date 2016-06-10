@@ -116,7 +116,7 @@ Version 2
 "anim" "idle"
 "classname" "marscity_marine_helmet_p90_directions_ver1"
 "name" "marscity_marine_helmet_p90_directions_ver1_1"
-"origin" "-240 160 -152"
+"origin" "72 56 -152"
 }
 // entity 2
 {
@@ -129,14 +129,15 @@ Version 2
 {
 "classname" "light"
 "name" "light_7"
-"origin" "0 64 0"
+"origin" "72 104 -72"
 "falloff" "0.000000"
 "shadowType" "2"
 "shadowPolygonOffsetBias" "10.000000"
 "shadowPolygonOffsetFactor" "10.600000"
+"rotation" "-0.766044 -0.642788 0 0.642788 -0.766044 0 0 0 1"
 "parallel" "0"
 "light_radius" "300 300 300"
-"light_center" "200 0 0"
+"light_center" "72 0 0"
 "_color" "1 1 1"
 "shadowMode" "3"
 "shadowSoftness" "2.000000"

@@ -208,6 +208,17 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 				r_smCascadeDistance2.GetFloat(),
 				r_smCascadeDistance3.GetFloat(),
 				r_smCascadeDistance4.GetFloat());
+
+			idVec4 shadowmapSizes[6] = {
+				idVec4(backEnd.vLight->nearClip[0], backEnd.vLight->farClip[0], backEnd.vLight->width[0], backEnd.vLight->height[0]),
+				idVec4(backEnd.vLight->nearClip[1], backEnd.vLight->farClip[1], backEnd.vLight->width[1], backEnd.vLight->height[1]),
+				idVec4(backEnd.vLight->nearClip[2], backEnd.vLight->farClip[2], backEnd.vLight->width[2], backEnd.vLight->height[2]),
+				idVec4(backEnd.vLight->nearClip[3], backEnd.vLight->farClip[3], backEnd.vLight->width[3], backEnd.vLight->height[3]),
+				idVec4(backEnd.vLight->nearClip[4], backEnd.vLight->farClip[4], backEnd.vLight->width[4], backEnd.vLight->height[4]),
+				idVec4(backEnd.vLight->nearClip[5], backEnd.vLight->farClip[5], backEnd.vLight->width[5], backEnd.vLight->height[5])
+			};
+
+			fhRenderProgram::SetShadowMapSize(shadowmapSizes, 6);
 		}
 		else if (backEnd.vLight->lightDef->parms.pointLight) {
 			//point light

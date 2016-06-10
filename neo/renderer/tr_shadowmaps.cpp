@@ -28,6 +28,7 @@ idCVar r_smCascadeDistance1( "r_smCascadeDistance1", "300", CVAR_RENDERER | CVAR
 idCVar r_smCascadeDistance2( "r_smCascadeDistance2", "500", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 idCVar r_smCascadeDistance3( "r_smCascadeDistance3", "800", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
 idCVar r_smCascadeDistance4( "r_smCascadeDistance4", "1200", CVAR_RENDERER | CVAR_FLOAT | CVAR_ARCHIVE, "" );
+idCVar r_smViewDependendCascades( "r_smViewDependendCascades", "6", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "" );
 
 static const int firstShadowMapTextureUnit = 6;
 
@@ -326,7 +327,8 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 				corners[i] = frustum.viewMatrix * corners[i];
 			}
 
-			frustum.viewSpaceBounds.FromPoints(corners, 8);		}
+			frustum.viewSpaceBounds.FromPoints(corners, 8);
+		}
 		else {
 			// all sides share the same projection matrix
 			fhRenderMatrix projectionMatrix;
@@ -346,6 +348,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 				frust->projectionMatrix = projectionMatrix;
 				frust->viewMatrix = fhRenderMatrix::FlipMatrix() * RB_CreateShadowViewMatrix( light, side );
 				frust->viewProjectionMatrix = frust->projectionMatrix * frust->viewMatrix;
+
 				frust->farPlaneDistance = farplaneDistance;
 				frust->nearPlaneDistance = r_smNearClip.GetFloat();
 
@@ -713,7 +716,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	if(vLight->lightDef->parms.parallel) {	
 		assert(vLight->lightDef->numShadowMapFrustums == 1);
-		const shadowMapFrustum_t& frustum = vLight->lightDef->shadowMapFrustums[0];
+		shadowMapFrustum_t& frustum = vLight->lightDef->shadowMapFrustums[0];
 
 		const float cascadeDistances[6] = {
 			r_smCascadeDistance0.GetFloat(),
@@ -755,15 +758,35 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 			idVec2 minimum, maximum;
 
-			minimum.x = Max( frustum.viewSpaceBounds[0].x, viewMinimum.x );
-			minimum.y = Max( frustum.viewSpaceBounds[0].y, viewMinimum.y );
-			maximum.x = Min( frustum.viewSpaceBounds[1].x, viewMaximum.x );
-			maximum.y = Min( frustum.viewSpaceBounds[1].y, viewMaximum.y );
+			if(c < r_smViewDependendCascades.GetInteger()) {
+				minimum.x = Max( frustum.viewSpaceBounds[0].x, viewMinimum.x );
+				minimum.y = Max( frustum.viewSpaceBounds[0].y, viewMinimum.y );
+				maximum.x = Min( frustum.viewSpaceBounds[1].x, viewMaximum.x );
+				maximum.y = Min( frustum.viewSpaceBounds[1].y, viewMaximum.y );				
+			} 
+			else {
+				minimum = frustum.viewSpaceBounds[0].ToVec2();
+				maximum = frustum.viewSpaceBounds[1].ToVec2();
+			}
 
-			const float r = (maximum.x - minimum.x) * 0.5f;
-			const float l = -r;
-			const float t = (maximum.y - minimum.y) * 0.5f;
-			const float b = -t;
+			float r = idMath::Abs(maximum.x - minimum.x) * 0.5f;
+			float l = -r;
+			float t = idMath::Abs(maximum.y - minimum.y) * 0.5f;
+			float b = -t;
+
+			if(r_ignore.GetBool()) {
+				idVec2 vWorldUnitsPerTexel = idVec2(2*r, 2*t) /	1024.0f;
+
+				minimum /= vWorldUnitsPerTexel;
+				minimum.x = idMath::Floor(minimum.x) - 10;
+				minimum.y = idMath::Floor(minimum.y) - 10;
+				minimum *= vWorldUnitsPerTexel;
+
+				maximum /= vWorldUnitsPerTexel;
+				maximum.x = idMath::Ceil( maximum.x ) + 10;
+				maximum.y = idMath::Ceil( maximum.y ) + 10;
+				maximum *= vWorldUnitsPerTexel;
+			}
 
 			vLight->viewMatrices[c] = frustum.viewMatrix;
 			vLight->viewMatrices[c][12] = -(maximum.x + minimum.x) * 0.5f;
@@ -783,6 +806,8 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 			vLight->projectionMatrices[c][15] = 1.0f;
 
 			vLight->viewProjectionMatrices[c] = vLight->projectionMatrices[c] * vLight->viewMatrices[c];
+			vLight->width[c] =  abs(r * 2);
+			vLight->height[c] =  abs(t * 2);
 
 			vLight->shadowCoords[c].scale = idVec2( 1.0 / 3.0, 1.0 / 2.0 ) / (1 << lod);
 			vLight->shadowCoords[c].offset = sideOffsets[c];

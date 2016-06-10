@@ -418,6 +418,7 @@ void fhRenderProgram::Load() {
 		uniformLocations[fhUniform::ShadowParams] = glGetUniformLocation( program, "rpShadowParams" );
 		uniformLocations[fhUniform::ShadowCoords] = glGetUniformLocation( program, "rpShadowCoords" );
 		uniformLocations[fhUniform::CascadeDistances] = glGetUniformLocation( program, "rpCascadeDistances" );
+		uniformLocations[fhUniform::ShadowMapSize] = glGetUniformLocation( program, "rpShadowMapSize" );
 	} else {
 		for(int i=0; i<fhUniform::NUM; ++i) {
 			uniformLocations[i] = -1;
