@@ -32,6 +32,137 @@ idCVar r_smViewDependendCascades( "r_smViewDependendCascades", "6", CVAR_RENDERE
 
 static const int firstShadowMapTextureUnit = 6;
 
+enum class ShadowMapSize
+{
+	SM4096,
+	SM2048,
+	SM1024,
+	SM512,
+	SM256,
+	NUM
+};
+
+size_t shadowMapSizes[] {
+	4096,
+	2048,
+	1024,
+	512,
+	256
+};
+
+class fhShadowMapAllocator {
+public:
+	fhShadowMapAllocator() {
+		int size = 1;
+		for (int i = 0; i < (int)ShadowMapSize::NUM; ++i) {
+			freelist[i].AssureSize(size);
+			size *= 4;
+		}
+
+		FreeAll();
+	}
+
+	bool Allocate( int lod, int num, shadowCoord_t* coords ) {		
+		switch(lod) {
+		case 0:
+			return Allocate( ShadowMapSize::SM1024, num, coords );
+		case 1:
+			return Allocate( ShadowMapSize::SM512, num, coords );
+		case 2:
+		default:
+			return Allocate( ShadowMapSize::SM256, num, coords );
+		}
+	}
+
+	void FreeAll() {
+		for(int i=0; i<(int)ShadowMapSize::NUM; ++i) {
+			freelist[i].SetNum(0);
+		}
+
+		freelist[0].Append(shadowCoord_t{idVec2(1,1), idVec2(0,0)});
+	}
+
+private:
+	bool Allocate( ShadowMapSize size, int num, shadowCoord_t* coords ) {
+		for (int i = 0; i < num; ++i) {
+			if (!Allocate( size, coords[i] )) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+
+	bool Allocate( ShadowMapSize size, shadowCoord_t& coords ) {
+		if (!Make( (int)size )) {
+			return false;
+		}
+
+		idList<shadowCoord_t>& level = freelist[(int)size];
+		coords = level[level.Num() - 1];
+		level.RemoveIndex(level.Num() - 1);
+		return true;
+	}
+
+	bool Make( int sizeIndex ) {
+		if (freelist[sizeIndex].Num() > 0) {
+			return true;
+		}
+
+		if (sizeIndex == 0 || !Make( sizeIndex - 1 )) {
+			return false;
+		}
+
+		idList<shadowCoord_t>& thisLevel = freelist[sizeIndex];
+		idList<shadowCoord_t>& prevLevel = freelist[sizeIndex - 1];
+
+		//take entry from upper level
+		shadowCoord_t oldCoords = prevLevel[prevLevel.Num() - 1];
+		prevLevel.RemoveIndex( prevLevel.Num() - 1 );
+
+		//create 4 new entries in this level
+		const idVec2 scale( (float)shadowMapSizes[sizeIndex] / (float)shadowMapSizes[0], (float)shadowMapSizes[sizeIndex] / (float)shadowMapSizes[0] );
+
+		shadowCoord_t newCoords[4];
+
+		newCoords[0].scale = scale;
+		newCoords[0].offset = oldCoords.offset + idVec2( 0, 0 );
+
+		newCoords[1].scale = scale;
+		newCoords[1].offset = oldCoords.offset + idVec2( scale.x, 0 );
+
+		newCoords[2].scale = scale;
+		newCoords[2].offset = oldCoords.offset + idVec2( 0, scale.y );
+
+		newCoords[3].scale = scale;
+		newCoords[3].offset = oldCoords.offset + idVec2( scale.x, scale.y );
+
+		for(int i=0; i<4; ++i) {
+			thisLevel.Append(newCoords[i]);
+		}
+	}
+
+	void Split( const shadowCoord_t& src, shadowCoord_t* dst, idVec2 scale, float size ) {
+
+		dst[0].scale = scale;
+		dst[0].offset = src.offset + idVec2( 0, 0 );
+
+		dst[1].scale = scale;
+		dst[1].offset = src.offset + idVec2( size, 0 );
+
+		dst[2].scale = scale;
+		dst[2].offset = src.offset + idVec2( 0, size );
+
+		dst[3].scale = scale;
+		dst[3].offset = src.offset + idVec2( size, size );
+	}
+
+	idList<shadowCoord_t> freelist[(int)ShadowMapSize::NUM];
+};
+
+fhShadowMapAllocator shadowMapAllocator;
+
 /*
 ===================
 R_Cull
@@ -819,7 +950,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	}
 	else if(vLight->lightDef->parms.pointLight) {
 		assert(vLight->lightDef->numShadowMapFrustums == 6);
-
+	
 		for (int i = 0; i < 6; ++i) {
 			vLight->viewMatrices[i] = vLight->lightDef->shadowMapFrustums[i].viewMatrix;
 			vLight->projectionMatrices[i] = vLight->lightDef->shadowMapFrustums[i].projectionMatrix;
@@ -855,6 +986,10 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 	globalImages->BindNull( firstShadowMapTextureUnit );
 	globalImages->shadowmapFramebuffer->Bind();
 
+	glViewport( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+	glScissor( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+	glClear( GL_DEPTH_BUFFER_BIT );
+
 	for (int side = 0; side < numShadowMaps; side++) {
 
 		const fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer;
@@ -865,8 +1000,7 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 		const int offsetY = framebuffer->GetHeight() * vLight->shadowCoords[side].offset.y;
 
 		glViewport( offsetX, offsetY, width, height );
-		glScissor( offsetX, offsetY, width, height );
-		glClear( GL_DEPTH_BUFFER_BIT );
+		glScissor( offsetX, offsetY, width, height );		
 
 		renderlist.Submit( vLight->viewMatrices[side].ToFloatPtr(), vLight->projectionMatrices[side].ToFloatPtr(), side, 0 );
 		backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
@@ -895,4 +1029,225 @@ void RB_RenderShadowMaps(viewLight_t* vLight) {
 
 	const uint64 endTime = Sys_Microseconds();
 	backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].time += static_cast<uint32>(endTime - startTime);
+}
+
+
+bool RB_RenderShadowMaps2( viewLight_t* vLight ) {
+
+	const idMaterial* lightShader = vLight->lightShader;
+	
+	if (lightShader->IsFogLight() || lightShader->IsBlendLight()) {
+		return true;
+	}
+
+	if (!vLight->localInteractions && !vLight->globalInteractions
+		&& !vLight->translucentInteractions) {
+		return true;
+	}
+
+	if (!vLight->lightShader->LightCastsShadows()) {
+		return true;
+	}
+
+	int lod = vLight->shadowMapLod;
+	if (r_smLod.GetInteger() >= 0) {
+		lod = r_smLod.GetInteger();
+	}
+
+	lod = Max( 0, Min( lod, 2 ) );
+
+	const uint64 startTime = Sys_Microseconds();
+
+	const float polygonOffsetBias = vLight->lightDef->ShadowPolygonOffsetBias();
+	const float polygonOffsetFactor = vLight->lightDef->ShadowPolygonOffsetFactor();
+	glEnable( GL_POLYGON_OFFSET_FILL );
+	glPolygonOffset( polygonOffsetFactor, polygonOffsetBias );
+
+	switch (r_smFaceCullMode.GetInteger())
+	{
+	case 0:
+		glEnable( GL_CULL_FACE );
+		glFrontFace( GL_CCW );
+		break;
+	case 1:
+		glEnable( GL_CULL_FACE );
+		glFrontFace( GL_CW );
+		break;
+	case 2:
+	default:
+		glDisable( GL_CULL_FACE );
+		break;
+	}
+
+	ShadowRenderList renderlist;
+	int numShadowMaps = 0;
+
+	if (vLight->lightDef->parms.parallel) {
+		assert( vLight->lightDef->numShadowMapFrustums == 1 );
+		shadowMapFrustum_t& frustum = vLight->lightDef->shadowMapFrustums[0];
+
+		if (!shadowMapAllocator.Allocate( 0, 6, vLight->shadowCoords )) {
+			return false;
+		}
+
+		const float cascadeDistances[6] = {
+			r_smCascadeDistance0.GetFloat(),
+			r_smCascadeDistance1.GetFloat(),
+			r_smCascadeDistance2.GetFloat(),
+			r_smCascadeDistance3.GetFloat(),
+			r_smCascadeDistance4.GetFloat(),
+			100000
+		};
+
+		lod = 0;
+		float nextNearDistance = 1;
+		for (int c = 0; c < 6; ++c) {
+			idFrustum viewFrustum = backEnd.viewDef->viewFrustum;
+			viewFrustum.MoveFarDistance( cascadeDistances[c] ); //move far before near, so far is always greater than near
+			viewFrustum.MoveNearDistance( nextNearDistance );
+			nextNearDistance = cascadeDistances[c];
+
+			idVec3 viewCorners[8];
+			viewFrustum.ToPoints( viewCorners );
+
+			for (int i = 0; i < 8; ++i) {
+				viewCorners[i] = frustum.viewMatrix * viewCorners[i];
+			}
+
+			idVec2 viewMinimum = viewCorners[0].ToVec2();
+			idVec2 viewMaximum = viewCorners[0].ToVec2();
+
+			for (int i = 1; i < 8; ++i) {
+				const float x = viewCorners[i].x;
+				const float y = viewCorners[i].y;
+
+				viewMinimum.x = Min( viewMinimum.x, x );
+				viewMinimum.y = Min( viewMinimum.y, y );
+
+				viewMaximum.x = Max( viewMaximum.x, x );
+				viewMaximum.y = Max( viewMaximum.y, y );
+			}
+
+			idVec2 minimum, maximum;
+
+			if (c < r_smViewDependendCascades.GetInteger()) {
+				minimum.x = Max( frustum.viewSpaceBounds[0].x, viewMinimum.x );
+				minimum.y = Max( frustum.viewSpaceBounds[0].y, viewMinimum.y );
+				maximum.x = Min( frustum.viewSpaceBounds[1].x, viewMaximum.x );
+				maximum.y = Min( frustum.viewSpaceBounds[1].y, viewMaximum.y );
+			}
+			else {
+				minimum = frustum.viewSpaceBounds[0].ToVec2();
+				maximum = frustum.viewSpaceBounds[1].ToVec2();
+			}
+
+			float r = idMath::Abs( maximum.x - minimum.x ) * 0.5f;
+			float l = -r;
+			float t = idMath::Abs( maximum.y - minimum.y ) * 0.5f;
+			float b = -t;
+
+			if (r_ignore.GetBool()) {
+				idVec2 vWorldUnitsPerTexel = idVec2( 2 * r, 2 * t ) / 1024.0f;
+
+				minimum /= vWorldUnitsPerTexel;
+				minimum.x = idMath::Floor( minimum.x ) - 10;
+				minimum.y = idMath::Floor( minimum.y ) - 10;
+				minimum *= vWorldUnitsPerTexel;
+
+				maximum /= vWorldUnitsPerTexel;
+				maximum.x = idMath::Ceil( maximum.x ) + 10;
+				maximum.y = idMath::Ceil( maximum.y ) + 10;
+				maximum *= vWorldUnitsPerTexel;
+			}
+
+			vLight->viewMatrices[c] = frustum.viewMatrix;
+			vLight->viewMatrices[c][12] = -(maximum.x + minimum.x) * 0.5f;
+			vLight->viewMatrices[c][13] = -(maximum.y + minimum.y) * 0.5f;
+			vLight->viewMatrices[c][14] = -(frustum.viewSpaceBounds[1].z + 1);
+
+			const float f = abs( frustum.viewSpaceBounds[1].z - frustum.viewSpaceBounds[0].z );
+			const float n = 1;
+
+			vLight->projectionMatrices[c] = fhRenderMatrix::identity;
+			vLight->projectionMatrices[c][0] = 2.0f / (r - l);
+			vLight->projectionMatrices[c][5] = 2.0f / (b - t);
+			vLight->projectionMatrices[c][10] = -2.0f / (f - n);
+			vLight->projectionMatrices[c][12] = -((r + l) / (r - l));
+			vLight->projectionMatrices[c][13] = -((t + b) / (t - b));
+			vLight->projectionMatrices[c][14] = -((f + n) / (f - n));
+			vLight->projectionMatrices[c][15] = 1.0f;
+
+			vLight->viewProjectionMatrices[c] = vLight->projectionMatrices[c] * vLight->viewMatrices[c];
+			vLight->width[c] = abs( r * 2 );
+			vLight->height[c] = abs( t * 2 );
+
+			vLight->shadowCoords[c].scale = idVec2( 1.0 / 3.0, 1.0 / 2.0 ) / (1 << lod);
+			vLight->shadowCoords[c].offset = sideOffsets[c];
+		}
+
+		renderlist.AddInteractions( vLight, nullptr, 0 );
+
+		numShadowMaps = 6;
+	}
+	else if (vLight->lightDef->parms.pointLight) {
+		assert( vLight->lightDef->numShadowMapFrustums == 6 );
+
+		if(!shadowMapAllocator.Allocate( lod, 6, vLight->shadowCoords )) {
+			return false;
+		}
+
+		for (int i = 0; i < 6; ++i) {
+			vLight->viewMatrices[i] = vLight->lightDef->shadowMapFrustums[i].viewMatrix;
+			vLight->projectionMatrices[i] = vLight->lightDef->shadowMapFrustums[i].projectionMatrix;
+			vLight->viewProjectionMatrices[i] = vLight->lightDef->shadowMapFrustums[i].viewProjectionMatrix;
+		}
+
+		renderlist.AddInteractions( vLight, vLight->lightDef->shadowMapFrustums, vLight->lightDef->numShadowMapFrustums );
+
+		numShadowMaps = 6;
+	}
+	else {
+		//projected light
+
+		if (!shadowMapAllocator.Allocate( lod, 1, vLight->shadowCoords )) {
+			return false;
+		}
+
+		assert( vLight->lightDef->numShadowMapFrustums == 1 );
+
+		vLight->viewMatrices[0] = vLight->lightDef->shadowMapFrustums[0].viewMatrix;
+		vLight->projectionMatrices[0] = vLight->lightDef->shadowMapFrustums[0].projectionMatrix;
+		vLight->viewProjectionMatrices[0] = vLight->lightDef->shadowMapFrustums[0].viewProjectionMatrix;
+
+		renderlist.AddInteractions( vLight, &vLight->lightDef->shadowMapFrustums[0], 1 );
+
+		numShadowMaps = 1;
+	}
+
+	for (int side = 0; side < numShadowMaps; side++) {
+
+		const fhFramebuffer* framebuffer = globalImages->shadowmapAtlasFramebuffer;
+
+		const int width = framebuffer->GetWidth() * vLight->shadowCoords[side].scale.x;
+		const int height = framebuffer->GetHeight() * vLight->shadowCoords[side].scale.y;
+		const int offsetX = framebuffer->GetWidth() * vLight->shadowCoords[side].offset.x;
+		const int offsetY = framebuffer->GetHeight() * vLight->shadowCoords[side].offset.y;
+
+		glViewport( offsetX, offsetY, width, height );
+		glScissor( offsetX, offsetY, width, height );
+
+		renderlist.Submit( vLight->viewMatrices[side].ToFloatPtr(), vLight->projectionMatrices[side].ToFloatPtr(), side, 0 );
+		backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
+	}
+
+
+
+	const uint64 endTime = Sys_Microseconds();
+	backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].time += static_cast<uint32>(endTime - startTime);
+
+	return true;
+}
+
+void RB_FreeAllShadowMaps() {
+	shadowMapAllocator.FreeAll();
 }

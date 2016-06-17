@@ -1589,8 +1589,14 @@ void idImageManager::PurgeAllImages() {
 		images[i]->PurgeImage();
 	}
 
+	//FIXME(johl): reloading images breaks shadow mapping
+/*
 	shadowmapImage->PurgeImage();
 	shadowmapFramebuffer->Purge();
+
+	shadowmapAtlasImage->PurgeImage();
+	shadowmapAtlasFramebuffer->Purge();
+*/
 }
 
 /*
@@ -1928,6 +1934,10 @@ void idImageManager::Init() {
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
 	shadowmapFramebuffer = new fhFramebuffer( 1024 * 3, 1024 * 2, nullptr, shadowmapImage );	
+
+	shadowmapAtlasImage = ImageFromFunction( "_shadowmapAtlasImage", R_Depth );
+	shadowmapAtlasFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, shadowmapAtlasImage );
+
 	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
 
 	// should forceLoadImages be here?

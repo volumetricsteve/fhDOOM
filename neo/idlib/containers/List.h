@@ -125,11 +125,20 @@ public:
 	int				FindNull( void ) const;								// find the index for the first NULL pointer in the list
 	int				IndexOf( const type *obj ) const;					// returns the index for the pointer to an element in the list
 	bool			RemoveIndex( int index );							// remove the element at the given index
-	bool			Remove( const type & obj );							// remove the element
+	bool			Remove( const type & obj );							// remove the element	
 	void			Sort( cmp_t *compare = ( cmp_t * )&idListSortCompare<type> );
 	void			SortSubSection( int startIndex, int endIndex, cmp_t *compare = ( cmp_t * )&idListSortCompare<type> );
 	void			Swap( idList<type> &other );						// swap the contents of the lists
 	void			DeleteContents( bool clear );						// delete the contents of the list
+
+	type &          First();                                            // returns a reference to the first element in the list
+	const type &    First() const;                                      // returns a const reference to the first element in the list
+	void            RemoveFirst();                                      // removes the first element from the list
+	type            TakeFirst();                                        // removes and returns the first element from the list
+	type &          Last();                                             // returns a reference to the last element in the list
+	const type &    Last() const;                                       // returns a const reference to the last element in the list
+	void            RemoveLast();                                       // removes the last element from the list
+	type            TakeLast();                                         // removes and returns the last element from the list
 
 private:
 	int				num;
@@ -885,6 +894,118 @@ ID_INLINE bool idList<type>::Remove( type const & obj ) {
 	
 	return false;
 }
+
+
+/*
+================
+idList<type>::First
+================
+*/
+template< class type >
+ID_INLINE type & idList<type>::First() {
+	assert( Num() > 0 );
+	return (*this)[0];
+}
+
+/*
+================
+idList<type>::First
+================
+*/
+template< class type >
+ID_INLINE const type & idList<type>::First() const {
+	assert( Num() > 0 );
+	return (*this)[0];
+}
+
+/*
+================
+idList<type>::RemoveFirst
+
+Removes first element from the list.
+
+Note that the element is not destroyed, so any memory used by it may not be
+freed until the destruction of the list. Assumes list is not empty.
+================
+*/
+template< class type >
+ID_INLINE void idList<type>::RemoveFirst() {
+	assert( Num() > 0 );
+	RemoveIndex( 0 );
+}
+
+/*
+================
+idList<type>::TakeFirst
+
+Removes and returns the first element from the list.
+
+Note that the element is not destroyed, so any memory used by it may not be
+freed until the destruction of the list. Assumes list is not empty.
+================
+*/
+template< class type >
+ID_INLINE type idList<type>::TakeFirst() {
+	type ret = First();
+	RemoveFirst();
+	return ret;
+}
+
+/*
+================
+idList<type>::Last
+================
+*/
+template< class type >
+ID_INLINE type & idList<type>::Last() {
+	assert( Num() > 0 );
+	return (*this)[ Num()-1 ];
+}
+
+/*
+================
+idList<type>::Last
+================
+*/
+template< class type >
+ID_INLINE const type & idList<type>::Last() const {
+	assert( Num() > 0 );
+	return (*this)[ Num()-1 ];
+}
+
+/*
+================
+idList<type>::RemoveLast
+
+Removes the last element from the list.
+
+Note that the element is not destroyed, so any memory used by it may not be
+freed until the destruction of the list. Assumes list is not empty.
+================
+*/
+template< class type >
+ID_INLINE void idList<type>::RemoveLast() {
+	assert( Num() > 0 );
+	RemoveIndex( Num() - 1 );
+}
+
+/*
+================
+idList<type>::TakeLast
+
+Removes and returns the last element from the list.
+
+Note that the element is not destroyed, so any memory used by it may not be
+freed until the destruction of the list. Assumes list is not empty.
+================
+*/
+template< class type >
+ID_INLINE type idList<type>::TakeLast() {
+	type ret = Last();
+	RemoveLast();
+	return ret;
+}
+
 
 /*
 ================

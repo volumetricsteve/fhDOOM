@@ -477,8 +477,11 @@ public:
 
 	fhFramebuffer*		defaultFramebuffer;
 
-	idImage *			shadowmapImage;
+	idImage *			shadowmapImage;	
 	fhFramebuffer*		shadowmapFramebuffer;
+
+	idImage *			shadowmapAtlasImage;
+	fhFramebuffer*		shadowmapAtlasFramebuffer;
 
 	//--------------------------------------------------------
 	
