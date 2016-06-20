@@ -688,9 +688,9 @@ void PutPrimitivesInAreas( uEntity_t *e ) {
 
 /*
 =================
-ClipTriByLight
+ClipTriByPlanes
 
-Carves a triangle by the frustom planes of a light, producing
+Carves a triangle by the planes (e.g. of a light), producing
 a (possibly empty) list of triangles on the inside and outside.
 
 The original triangle is not modified.
@@ -701,8 +701,8 @@ If clipping was required, the outside fragments will be planar clips, which
 will benefit from re-optimization.
 =================
 */
-static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri, 
-						   mapTri_t **in, mapTri_t **out ) {
+static void ClipTriByPlanes( const idPlane* planes, int numPlanes, const mapTri_t *tri,
+	mapTri_t **in, mapTri_t **out ) {
 	idWinding	*inside, *oldInside;
 	idWinding	*outside[6];
 	bool	hasOutside;
@@ -714,26 +714,26 @@ static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri,
 	// clip this winding to the light
 	inside = WindingForTri( tri );
 	hasOutside = false;
-	for ( i = 0 ; i < 6 ; i++ ) {
+	for (i = 0; i < numPlanes; i++) {
 		oldInside = inside;
-		if ( oldInside ) {
-			oldInside->Split( light->def.frustum[i], 0, &outside[i], &inside );
+		if (oldInside) {
+			oldInside->Split( planes[i], 0, &outside[i], &inside );
 			delete oldInside;
 		}
 		else {
 			outside[i] = NULL;
 		}
-		if ( outside[i] ) {
+		if (outside[i]) {
 			hasOutside = true;
 		}
 	}
 
-	if ( !inside ) {
+	if (!inside) {
 		// the entire winding is outside this light
 
 		// free the clipped fragments
-		for ( i = 0 ; i < 6 ; i++ ) {
-			if ( outside[i] ) {
+		for (i = 0; i < 6; i++) {
+			if (outside[i]) {
 				delete outside[i];
 			}
 		}
@@ -744,7 +744,7 @@ static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri,
 		return;
 	}
 
-	if ( !hasOutside ) {
+	if (!hasOutside) {
 		// the entire winding is inside this light
 
 		// free the inside copy
@@ -761,8 +761,8 @@ static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri,
 	delete inside;
 
 	// combine all the outside fragments
-	for ( i = 0 ; i < 6 ; i++ ) {
-		if ( outside[i] ) {
+	for (i = 0; i < 6; i++) {
+		if (outside[i]) {
 			mapTri_t	*list;
 
 			list = WindingToTriList( outside[i], tri );
@@ -770,6 +770,26 @@ static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri,
 			*out = MergeTriLists( *out, list );
 		}
 	}
+}
+
+/*
+=================
+ClipTriByLight
+
+Carves a triangle by the frustum planes of a light, producing
+a (possibly empty) list of triangles on the inside and outside.
+
+The original triangle is not modified.
+
+If no clipping is required, the result will be a copy of the original.
+
+If clipping was required, the outside fragments will be planar clips, which
+will benefit from re-optimization.
+=================
+*/
+static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri, 
+						   mapTri_t **in, mapTri_t **out ) {
+	ClipTriByPlanes(light->def.frustum, 6, tri, in, out);
 }
 
 /*

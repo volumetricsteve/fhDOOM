@@ -310,6 +310,64 @@ static void WriteUTriangles( idFile* f, const srfTriangles_t *uTris ) {
 	}
 }
 
+/*
+====================
+WriteOccluderTriangles
+
+Writes text verts and indexes to file
+====================
+*/
+static void WriteOccluderTriangles( idFile* f, const srfTriangles_t *uTris, bool excludeTextureCoordinates ) {
+	int			col;
+
+	// emit this chain
+	f->WriteFloatString( "/* numVerts = */ %i /* numIndexes = */ %i /* no texcoords = */ %i \n",
+		uTris->numVerts, uTris->numIndexes, (excludeTextureCoordinates ? 1 : 0) );
+
+	// verts
+	col = 0;
+	for (int i = 0; i < uTris->numVerts; i++) {
+		float	vec[5];
+		const idDrawVert *dv;
+
+		dv = &uTris->verts[i];
+
+		vec[0] = dv->xyz[0];
+		vec[1] = dv->xyz[1];
+		vec[2] = dv->xyz[2];
+		vec[3] = dv->st[0];
+		vec[4] = dv->st[1];
+
+		if(!excludeTextureCoordinates) {
+			Write1DMatrix( f, 5, vec );
+		} else {
+			Write1DMatrix( f, 3, vec );
+		}
+
+		if (++col == 3) {
+			col = 0;
+			f->WriteFloatString( "\n" );
+		}
+	}
+	if (col != 0) {
+		f->WriteFloatString( "\n" );
+	}
+
+	// indexes
+	col = 0;
+	for (int i = 0; i < uTris->numIndexes; i++) {
+		f->WriteFloatString( "%i ", uTris->indexes[i] );
+
+		if (++col == 18) {
+			col = 0;
+			f->WriteFloatString( "\n" );
+		}
+	}
+	if (col != 0) {
+		f->WriteFloatString( "\n" );
+	}
+}
+
 
 /*
 ====================
@@ -725,7 +783,7 @@ void WriteOclFile( void ) {
 			vertices += tris->numVerts;
 			oclFile->WriteFloatString( "/* surface %d */ { \"%s\" ", j, matlist[j]->GetName());
 
-			WriteUTriangles( oclFile, tris );		
+			WriteOccluderTriangles( oclFile, tris, matlist[j]->Coverage() != MC_PERFORATED );		
 
 			oclFile->WriteFloatString( "}\n\n" );
 		}		

@@ -180,6 +180,79 @@ static idRenderModel* ParseModel( idLexer *src ) {
 	return model;
 }
 
+
+/*
+================
+idRenderWorldLocal::ParseOccluder
+================
+*/
+static idRenderModel* ParseOccluder( idLexer *src ) {
+	idToken			token;
+
+	src->ExpectTokenString( "{" );
+
+	// parse the name
+	src->ExpectAnyToken( &token );
+
+	idRenderModel* model = renderModelManager->AllocModel();
+	model->InitEmpty( token );
+
+	int numSurfaces = src->ParseInt();
+	if (numSurfaces < 0) {
+		src->Error( "R_ParseModel: bad numSurfaces" );
+	}
+
+	for (int i = 0; i < numSurfaces; i++) {
+		src->ExpectTokenString( "{" );
+
+		src->ExpectAnyToken( &token );
+
+		modelSurface_t	surf;
+		surf.shader = declManager->FindMaterial( token );
+
+		((idMaterial*)surf.shader)->AddReference();
+
+		srfTriangles_t* tri = R_AllocStaticTriSurf();
+		surf.geometry = tri;
+
+		tri->numVerts = src->ParseInt();
+		tri->numIndexes = src->ParseInt();
+		bool texcoords = (src->ParseInt() != 1);
+
+		R_AllocStaticTriSurfVerts( tri, tri->numVerts );
+		for (int j = 0; j < tri->numVerts; j++) {
+			float	vec[5];
+
+			if(texcoords) {
+				src->Parse1DMatrix( 5, vec );
+			} else {
+				src->Parse1DMatrix( 3, vec );
+			}
+
+			tri->verts[j].xyz[0] = vec[0];
+			tri->verts[j].xyz[1] = vec[1];
+			tri->verts[j].xyz[2] = vec[2];
+			tri->verts[j].st[0] = vec[3];
+			tri->verts[j].st[1] = vec[4];
+		}
+
+		R_AllocStaticTriSurfIndexes( tri, tri->numIndexes );
+		for (int j = 0; j < tri->numIndexes; j++) {
+			tri->indexes[j] = src->ParseInt();
+		}
+		src->ExpectTokenString( "}" );
+
+		// add the completed surface to the model
+		model->AddSurface( surf );
+	}
+
+	src->ExpectTokenString( "}" );
+
+	model->FinishSurfaces();
+
+	return model;
+}
+
 /*
 ================
 idRenderWorldLocal::ParseShadowModel
@@ -640,7 +713,7 @@ bool idRenderWorldLocal::LoadOcl( const char* name ) {
 		}
 
 		if (token == "occluder") {
-			idRenderModel* lastModel = ParseModel( &src );
+			idRenderModel* lastModel = ParseOccluder( &src );
 
 			// add it to the model manager list
 			renderModelManager->AddModel( lastModel );
