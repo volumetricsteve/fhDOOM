@@ -141,6 +141,8 @@ private:
 		for(int i=0; i<4; ++i) {
 			thisLevel.Append(newCoords[i]);
 		}
+
+		return true;
 	}
 
 	void Split( const shadowCoord_t& src, shadowCoord_t* dst, idVec2 scale, float size ) {
