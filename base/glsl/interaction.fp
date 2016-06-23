@@ -18,7 +18,7 @@ in vs_output
   vec3 V;
   vec3 H;
   vec4 shadow[6];
-  vec3 toGlobalLightOrigin; 
+  vec3 toLightOrigin; 
   float depth; 
   vec4 worldspacePosition;
 } frag;
@@ -56,10 +56,10 @@ vec4 shadow()
 #if 1
     float softness = (0.003 * rpShadowParams.x);
 #else
-    float lightDistance = length(frag.toGlobalLightOrigin); 
-    float softness = (0.0095 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w); 
+    float lightDistance = length(frag.toLightOrigin); 
+    float softness = (0.009 * rpShadowParams.x) * (1-lightDistance/rpShadowParams.w); 
 #endif      
-    shadowness = pointlightShadow(frag.shadow, frag.toGlobalLightOrigin, vec2(softness, softness));  
+    shadowness = pointlightShadow(frag.shadow, frag.toLightOrigin, vec2(softness, softness));  
   }
   else if(rpShadowMappingMode == 2)
   {

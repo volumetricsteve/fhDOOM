@@ -264,80 +264,60 @@ static void RB_CreateProjectedProjectionMatrix( const idRenderLightLocal* light,
 	m[14] = -(2 * f  * n) / (f - n);
 }
 
+static fhRenderMatrix RB_CreatePointLightViewMatrix( const idRenderLightLocal* lightDef, int side )
+{
+	static const idMat3 sides[6] = {
+		idMat3( //+x
+			1, 0, 0,
+		    0, 1, 0,
+			0, 0, 1),
+		idMat3( //-x
+			-1, 0, 0,
+			0, 1, 0,
+			0, 0, -1),
+		idMat3( //+y
+			0, 1, 0,
+			-1, 0, 0,
+			0, 0, 1),
+		idMat3( //-y
+			0, -1, 0,
+			1, 0, 0,
+			0, 0, 1 ),
+		idMat3( //z
+			0, 0, 1,
+			0, 1, 0,
+			-1, 0, 0 ),
+		idMat3( //-z
+			0, 0, -1,
+			0, 1, 0,
+			1, 0, 0 )
+	};
 
+	const idVec3 origin = lightDef->globalLightOrigin;
+	const idMat3 axis = sides[side] * lightDef->parms.axis;
 
-static fhRenderMatrix RB_CreateShadowViewMatrix( const idRenderLightLocal* lightDef, int side ) {
-	fhRenderMatrix viewMatrix;
+	fhRenderMatrix	viewerMatrix;
+	viewerMatrix[0] = axis[0][0];
+	viewerMatrix[4] = axis[0][1];
+	viewerMatrix[8] = axis[0][2];
+	viewerMatrix[12] = -origin[0] * viewerMatrix[0] + -origin[1] * viewerMatrix[4] + -origin[2] * viewerMatrix[8];
 
-	memset( &viewMatrix, 0, sizeof(viewMatrix) );
+	viewerMatrix[1] = axis[1][0];
+	viewerMatrix[5] = axis[1][1];
+	viewerMatrix[9] = axis[1][2];
+	viewerMatrix[13] = -origin[0] * viewerMatrix[1] + -origin[1] * viewerMatrix[5] + -origin[2] * viewerMatrix[9];
 
-	if (side == -1) {
-		// projected light
-		idVec3 vec = lightDef->parms.target;
-		vec.Normalize();
-		viewMatrix[0] = vec[0];
-		viewMatrix[4] = vec[1];
-		viewMatrix[8] = vec[2];
+	viewerMatrix[2] = axis[2][0];
+	viewerMatrix[6] = axis[2][1];
+	viewerMatrix[10] = axis[2][2];
+	viewerMatrix[14] = -origin[0] * viewerMatrix[2] + -origin[1] * viewerMatrix[6] + -origin[2] * viewerMatrix[10];
 
-		vec = lightDef->parms.right;
-		vec.Normalize();
-		viewMatrix[1] = -vec[0];
-		viewMatrix[5] = -vec[1];
-		viewMatrix[9] = -vec[2];
+	viewerMatrix[3] = 0;
+	viewerMatrix[7] = 0;
+	viewerMatrix[11] = 0;
+	viewerMatrix[15] = 1;
 
-		vec = lightDef->parms.up;
-		vec.Normalize();
-		viewMatrix[2] = vec[0];
-		viewMatrix[6] = vec[1];
-		viewMatrix[10] = vec[2];
-	}
-	else {
-		// side of a point light		
-		switch (side) {
-		case 0:
-			viewMatrix[0] = 1;
-			viewMatrix[9] = 1;
-			viewMatrix[6] = -1;
-			break;
-		case 1:
-			viewMatrix[0] = -1;
-			viewMatrix[9] = -1;
-			viewMatrix[6] = -1;
-			break;
-		case 2:
-			viewMatrix[4] = 1;
-			viewMatrix[1] = -1;
-			viewMatrix[10] = 1;
-			break;
-		case 3:
-			viewMatrix[4] = -1;
-			viewMatrix[1] = -1;
-			viewMatrix[10] = -1;
-			break;
-		case 4:
-			viewMatrix[8] = 1;
-			viewMatrix[1] = -1;
-			viewMatrix[6] = -1;
-			break;
-		case 5:
-			viewMatrix[8] = -1;
-			viewMatrix[1] = 1;
-			viewMatrix[6] = -1;
-			break;
-		}
-	}
-
-	idVec3	origin = lightDef->globalLightOrigin;
-	viewMatrix[12] = -origin[0] * viewMatrix[0] + -origin[1] * viewMatrix[4] + -origin[2] * viewMatrix[8];
-	viewMatrix[13] = -origin[0] * viewMatrix[1] + -origin[1] * viewMatrix[5] + -origin[2] * viewMatrix[9];
-	viewMatrix[14] = -origin[0] * viewMatrix[2] + -origin[1] * viewMatrix[6] + -origin[2] * viewMatrix[10];
-
-	viewMatrix[3] = 0;
-	viewMatrix[7] = 0;
-	viewMatrix[11] = 0;
-	viewMatrix[15] = 1;
-
-	return viewMatrix;
+	return fhRenderMatrix::FlipMatrix() * viewerMatrix;
 }
 
 
@@ -479,7 +459,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 			for (int side = 0; side < 6; side++) {
 				shadowMapFrustum_t *frust = &light->shadowMapFrustums[side];
 				frust->projectionMatrix = projectionMatrix;
-				frust->viewMatrix = fhRenderMatrix::FlipMatrix() * RB_CreateShadowViewMatrix( light, side );
+				frust->viewMatrix = RB_CreatePointLightViewMatrix( light, side );
 				frust->viewProjectionMatrix = frust->projectionMatrix * frust->viewMatrix;
 
 				frust->farPlaneDistance = farplaneDistance;
@@ -603,10 +583,7 @@ public:
 			return;
 		}		
 
-		//FIXME(johl): there is a bug. Culling does not work properly if light is rotated.
-		const bool forceObjectCullingOff = !vlight->lightDef->parms.axis.Compare(mat3_identity, 0.0001f);		
-
-		const bool objectCullingEnabled = !forceObjectCullingOff && r_smObjectCulling.GetBool() && (numShadowFrustrums > 0);
+		const bool objectCullingEnabled = r_smObjectCulling.GetBool() && (numShadowFrustrums > 0);
 		
 		for (idInteraction* inter = vlight->lightDef->firstInteraction; inter; inter = inter->lightNext) {
 			const idRenderEntityLocal *entityDef = inter->entityDef;

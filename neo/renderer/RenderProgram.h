@@ -45,6 +45,7 @@ struct fhUniform {
 		ShadowCoords,
 		CascadeDistances,
 		ShadowMapSize,
+		InverseLightRotation,
 		NUM
 	};
 
@@ -123,6 +124,7 @@ public:
 	static void SetCascadeDistances(float d1, float d2, float d3, float d4, float d5);
 	static void SetShadowMapSize(const idVec4* sizes, int numSizes);
 
+	static void SetInverseLightRotation(const float* m);
 private:
 	static bool dirty[fhUniform::NUM];
 	static idVec4 currentColorModulate;
@@ -355,4 +357,8 @@ ID_INLINE void fhRenderProgram::SetCascadeDistances(float d1, float d2, float d3
 
 ID_INLINE void fhRenderProgram::SetShadowMapSize(const idVec4* sizes, int numSizes) {
 	glUniform4fv(currentUniformLocations[fhUniform::ShadowMapSize], numSizes, sizes[0].ToFloatPtr());
+}
+
+ID_INLINE void fhRenderProgram::SetInverseLightRotation(const float* m) {
+	glUniformMatrix4fv( currentUniformLocations[fhUniform::InverseLightRotation], 1, GL_FALSE, m);
 }

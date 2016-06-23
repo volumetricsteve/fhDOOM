@@ -298,9 +298,9 @@ vec4 parallelShadow(vec4 pos[6], float distance, vec2 softness)
   //return getParallelShadow(pos, 5, softness * softscale[5]);  
 }
 
-vec4 pointlightShadow(vec4 pos[6], vec3 toGlobalLightOrigin, vec2 softness)
+vec4 pointlightShadow(vec4 pos[6], vec3 toLightOrigin, vec2 softness)
 {  
-  vec3 d = toGlobalLightOrigin;
+  vec3 d = toLightOrigin;
 
   int side = 0;
   float l = d.x;

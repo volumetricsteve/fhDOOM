@@ -18,7 +18,7 @@ out vs_output
   vec3 V;
   vec3 H;
   vec4 shadow[6];
-  vec3 toGlobalLightOrigin;
+  vec3 toLightOrigin;
   float depth;
   vec4 worldspacePosition;
 } result;
@@ -66,7 +66,7 @@ void main(void)
     result.shadow[2] = rpPointlightProjection[2] * worldspace_position;
     result.shadow[3] = rpPointlightProjection[3] * worldspace_position;
     result.shadow[4] = rpPointlightProjection[4] * worldspace_position;
-    result.shadow[5] = rpPointlightProjection[5] * worldspace_position;
+    result.shadow[5] = rpPointlightProjection[5] * worldspace_position;    
   }
   else if(rpShadowMappingMode == 2)
   {
@@ -83,8 +83,5 @@ void main(void)
     result.depth = (rpModelViewMatrix * vec4(vertex_position, 1.0)).z;
   }
 
-
-  result.toGlobalLightOrigin = (worldspace_position - rpGlobalLightOrigin).xyz;
-
-  
+  result.toLightOrigin = (rpInverseLightRotation * (worldspace_position - rpGlobalLightOrigin)).xyz;
 }

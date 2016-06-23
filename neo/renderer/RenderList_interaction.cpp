@@ -225,6 +225,34 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 			fhRenderProgram::SetShadowMappingMode( 1 );
 			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
 			fhRenderProgram::SetShadowCoords(backEnd.vLight->shadowCoords, 6);
+
+			{
+				const idMat3 axis = backEnd.vLight->lightDef->parms.axis;
+
+				float viewerMatrix[16];
+
+				viewerMatrix[0] = axis[0][0];
+				viewerMatrix[4] = axis[0][1];
+				viewerMatrix[8] = axis[0][2];
+				viewerMatrix[12] = 0;
+
+				viewerMatrix[1] = axis[1][0];
+				viewerMatrix[5] = axis[1][1];
+				viewerMatrix[9] = axis[1][2];
+				viewerMatrix[13] = 0;
+
+				viewerMatrix[2] = axis[2][0];
+				viewerMatrix[6] = axis[2][1];
+				viewerMatrix[10] = axis[2][2];
+				viewerMatrix[14] = 0;
+
+				viewerMatrix[3] = 0;
+				viewerMatrix[7] = 0;
+				viewerMatrix[11] = 0;
+				viewerMatrix[15] = 1;
+
+				fhRenderProgram::SetInverseLightRotation( viewerMatrix );
+			}
 		}
 		else {
 			//projected light
