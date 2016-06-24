@@ -1544,7 +1544,7 @@ void CMainFrame::OnDestroy() {
 	}
 
 	while (entities.next != &entities) {
-		Entity_Free(entities.next);
+		delete entities.next;
 	}
 
 
@@ -1553,12 +1553,12 @@ void CMainFrame::OnDestroy() {
 	entity_t	*pEntity = g_qeglobals.d_project_entity->next;
 	while (pEntity != NULL && pEntity != g_qeglobals.d_project_entity) {
 		entity_t	*pNextEntity = pEntity->next;
-		Entity_Free(pEntity);
+		delete pEntity;
 		pEntity = pNextEntity;
 	}
 
 	if (world_entity) {
-		Entity_Free(world_entity);
+		delete world_entity;
 	}
 
 	//

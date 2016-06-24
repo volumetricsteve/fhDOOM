@@ -786,7 +786,7 @@ void Brush_Build(brush_t *b, bool bSnap, bool bMarkMap, bool bConvert, bool upda
 	}
 
 	/* build the windings and generate the bounding box */
-	Brush_BuildWindings(b, bSnap, EntityHasModel(b->owner) || b->pPatch, updateLights);
+	Brush_BuildWindings(b, bSnap, b->owner && b->owner->HasModel() || b->pPatch, updateLights);
 
 	/* move the points and edges if in select mode */
 	if (g_qeglobals.d_select_mode == sel_vertex || g_qeglobals.d_select_mode == sel_edge) {
@@ -2982,7 +2982,7 @@ void Brush_SelectFaceForDragging(brush_t *b, face_t *f, bool shear) {
 	brush_t		*b2;
 	int			c;
 
-	if (b->owner->eclass->fixedsize || EntityHasModel(b->owner)) {
+	if (b->owner->eclass->fixedsize || b->owner->HasModel()) {
 		return;
 	}
 
@@ -4832,13 +4832,13 @@ void Brush_Move(brush_t *b, const idVec3 move, bool bSnap, bool updateOrigin) {
 
 	if ( b->owner->curve ) {
 		b->owner->curve->Translate( move );
-		Entity_UpdateCurveData( b->owner );
+		b->owner->UpdateCurveData();
 	}
 
 	idVec3	temp;
 
 	// PGM - keep the origin vector up to date on fixed size entities.
-	if (b->owner->eclass->fixedsize || EntityHasModel(b->owner) || (updateOrigin && GetVectorForKey(b->owner, "origin", temp))) {
+	if (b->owner->eclass->fixedsize || b->owner->HasModel() || (updateOrigin && GetVectorForKey(b->owner, "origin", temp))) {
 //		if (!b->entityModel) {
 			bool adjustOrigin = true;
 			if(b->trackLightOrigin) {

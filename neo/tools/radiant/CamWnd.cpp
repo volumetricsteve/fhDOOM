@@ -1198,7 +1198,7 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 	idDict		spawnArgs;
 	const char	*name = NULL;
 
-	Entity_UpdateSoundEmitter( ent );
+	ent->UpdateSoundEmitter();
 
 	// delete the existing def if we aren't creating a brand new world
 	if ( !update ) {
@@ -1916,7 +1916,7 @@ void CCamWnd::ToggleSoundMode() {
 	UpdateCaption();
 
 	for ( entity_t *ent = entities.next ; ent != &entities ; ent = ent->next ) {
-		Entity_UpdateSoundEmitter( ent );
+		ent->UpdateSoundEmitter();
 	}
 }
 

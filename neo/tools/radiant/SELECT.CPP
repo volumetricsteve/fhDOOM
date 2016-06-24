@@ -1483,7 +1483,7 @@ void Select_Ungroup() {
 			b->owner = world_entity;
 		}
 
-		Entity_Free(e);
+		delete e;
 		numselectedgroups++;
 	}
 

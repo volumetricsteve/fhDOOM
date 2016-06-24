@@ -46,6 +46,26 @@ struct entity_t {
 	idMat3		lightRotation;		// ''
 	bool		trackLightOrigin;	
 	idCurve<idVec3> *curve;
+
+	entity_t();
+	~entity_t();
+
+	void		UpdateSoundEmitter();
+	idCurve<idVec3>* MakeCurve();
+	void		UpdateCurveData();
+	void		SetCurveData();
+
+	void		FreeEpairs();
+	int			MemorySize() const;
+
+	void		WriteSelected( FILE *f );
+	void		WriteSelected( CMemFile* );
+
+	entity_t *	Clone() const;
+	void		AddToList( entity_t *list );
+	void		RemoveFromList();
+	bool		HasModel() const;
+
 };
 
 void		ParseEpair(idDict *dict);
@@ -63,27 +83,14 @@ void		SetKeyVec3(entity_t *ent, const char *key, idVec3 v);
 void		SetKeyMat3(entity_t *ent, const char *key, idMat3 m);
 bool		GetMatrixForKey(entity_t *ent, const char *key, idMat3 &mat);
 
-void		Entity_UpdateSoundEmitter( entity_t *ent );
-idCurve<idVec3> *Entity_MakeCurve( entity_t *e );
-void		Entity_UpdateCurveData( entity_t *e );
-void		Entity_SetCurveData( entity_t *e );
-void		Entity_Free (entity_t *e);
-void		Entity_FreeEpairs(entity_t *e);
-int			Entity_MemorySize(const entity_t *e);
+
 entity_t *	Entity_Parse (bool onlypairs, brush_t* pList = NULL);
-void		Entity_WriteSelected(entity_t *e, FILE *f);
-void		Entity_WriteSelected(entity_t *e, CMemFile*);
 entity_t *	Entity_Create (eclass_t *c, bool forceFixed = false);
-entity_t *	Entity_Clone (entity_t *e);
-void		Entity_AddToList(entity_t *e, entity_t *list);
-void		Entity_RemoveFromList(entity_t *e);
-bool		EntityHasModel(const entity_t *ent);
 
 void		Entity_LinkBrush (entity_t *e, brush_t *b);
 void		Entity_UnlinkBrush (brush_t *b);
 entity_t *	FindEntity(const char *pszKey, const char *pszValue);
 entity_t *	FindEntityInt(const char *pszKey, int iValue);
-entity_t *	Entity_New();
 void		Entity_SetName(entity_t *e, const char *name);
 
 //Timo : used for parsing epairs in brush primitive

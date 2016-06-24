@@ -252,12 +252,12 @@ void Map_Free(void) {
 		}
 
 		while (entities.next != &entities) {
-			Entity_Free(entities.next);
+			delete entities.next;
 		}
 	}
 
 	if (world_entity) {
-		Entity_Free(world_entity);
+		delete world_entity;
 	}
 
 	world_entity = NULL;
@@ -367,7 +367,7 @@ brush_t *BrushFromMapBrush(idMapBrush *mapbrush, idVec3 origin) {
 entity_t *EntityFromMapEntity(idMapEntity *mapent, CWaitDlg *dlg) {
 	entity_t *ent = NULL;
 	if (mapent) {
-		ent = Entity_New();
+		ent = new entity_t();
 		ent->brushes.onext = ent->brushes.oprev = &ent->brushes;
 		ent->origin.Zero();
 		ent->epairs = mapent->epairs;
@@ -616,7 +616,7 @@ idMapEntity *EntityToMapEntity(entity_t *e, bool use_region, CWaitDlg *dlg) {
 	idStr status;
 	int count = 0;
 	long lastUpdate = 0;
-	if ( !EntityHasModel( e ) ) {
+	if ( !e->HasModel() ) {
 		for ( brush_t *b = e->brushes.onext; b != &e->brushes; b = b->onext ) {
 			count++;					
 			if ( e->eclass->fixedsize && !b->entityModel ) {
@@ -739,7 +739,7 @@ bool Map_SaveFile(const char *filename, bool use_region, bool autosave) {
 		count++;
 		next = e->next;
 		if (e->brushes.onext == &e->brushes) {
-			Entity_Free(e); // no brushes left, so remove it
+			delete e; // no brushes left, so remove it
 		}
 		else {
 			if (use_region) {
@@ -807,7 +807,7 @@ void Map_New(void) {
 	Patch_Cleanup();
 	g_Inspectors->entityDlg.SetEditEntity ( NULL );
 
-	world_entity = Entity_New();
+	world_entity = new entity_t();
 	world_entity->brushes.onext = world_entity->brushes.oprev = &world_entity->brushes;
 	SetKeyValue(world_entity, "classname", "worldspawn");
 	world_entity->eclass = Eclass_ForName("worldspawn", true);
@@ -1366,14 +1366,14 @@ void Map_SaveSelected(char *fileName) {
 
 	// write world entity second
 	world_entity->origin.Zero();
-	Entity_WriteSelected( world_entity, f );
+	world_entity->WriteSelected( f );
 
 	// then write all other ents
 	count = 1;
 	for ( e = entities.next; e != &entities; e = next ) {
 		fprintf( f, "// entity %i\n", count );
 		count++;
-		Entity_WriteSelected( e, f );
+		e->WriteSelected( f );
 		next = e->next;
 	}
 
@@ -1396,14 +1396,14 @@ void Map_SaveSelected(CMemFile *pMemFile, CMemFile *pPatchFile) {
 
 	// write world entity first
 	world_entity->origin.Zero();
-	Entity_WriteSelected(world_entity, pMemFile);
+	world_entity->WriteSelected(pMemFile);
 
 	// then write all other ents
 	count = 1;
 	for (e = entities.next; e != &entities; e = next) {
 		MemFile_fprintf(pMemFile, "// entity %i\n", count);
 		count++;
-		Entity_WriteSelected(e, pMemFile);
+		e->WriteSelected(pMemFile);
 		next = e->next;
 	}
 

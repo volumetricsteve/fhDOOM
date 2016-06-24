@@ -3788,7 +3788,7 @@ void CleanCopyEntities() {
 		entity_t	*next = pe->next;
 		pe->epairs.Clear();
 
-		Entity_Free(pe);
+		delete pe;
 		pe = next;
 	}
 
@@ -3800,9 +3800,7 @@ void CleanCopyEntities() {
  =======================================================================================================================
  */
 entity_t *Entity_CopyClone(entity_t *e) {
-	entity_t	*n;
-
-	n = Entity_New();
+	entity_t* n = new entity_t();
 	n->brushes.onext = n->brushes.oprev = &n->brushes;
 	n->eclass = e->eclass;
 	n->rotation = e->rotation;
