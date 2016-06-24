@@ -1081,8 +1081,6 @@ extern idCVar r_smCascadeDistance2;
 extern idCVar r_smCascadeDistance3;
 extern idCVar r_smCascadeDistance4;
 
-extern idCVar r_renderList;
-
 extern idCVar r_pomEnabled;
 extern idCVar r_pomMaxHeight;
 extern idCVar r_shading;
