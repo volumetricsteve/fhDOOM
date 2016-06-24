@@ -623,48 +623,48 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 
 	if (!(g_qeglobals.d_savedinfo.exclude & EXCLUDE_ANGLES)) {
 		// draw the angle pointer (e.g. little arrow o na speaker entity)    
-		float angle = FloatForKey(b->owner, "angle");
+		float angle = b->owner->FloatForKey("angle");
 		if (angle) {
 			float s = sin( DEG2RAD( angle ) );
 			float c = cos( DEG2RAD( angle ) );
 
 			const idVec3 delta4 = idVec3(c * 4, s * 4, s * 4);
-      const idVec3 delta8 = idVec3(c * 8, s * 8, s * 8);
+			const idVec3 delta8 = idVec3( c * 8, s * 8, s * 8 );
 
-      idVec3 mid = (b->mins + b->maxs) / 2.0f;     
+			idVec3 mid = (b->mins + b->maxs) / 2.0f;
 
-      idVec3 prev = mid;      
-      mid[0] += c * 8;
-      mid[1] += s * 8;
-      mid[2] += s * 8;      
-      g_qeglobals.lineBuffer.Add(prev,mid,color);      
-      
-      prev = mid;
-      mid[0] -= c * 4;
-      mid[1] -= s * 4;
-      mid[2] -= s * 4;
-      mid[0] -= s * 4;
-      mid[1] += c * 4;
-      mid[2] += c * 4;      
-      g_qeglobals.lineBuffer.Add(prev,mid,color);      
-      
-      prev = mid;
-      mid[0] += c * 4;
-      mid[1] += s * 4;
-      mid[2] += s * 4;
-      mid[0] += s * 4;
-      mid[1] -= c * 4;
-      mid[2] -= c * 4;      
-      g_qeglobals.lineBuffer.Add(prev,mid,color);      
+			idVec3 prev = mid;
+			mid[0] += c * 8;
+			mid[1] += s * 8;
+			mid[2] += s * 8;
+			g_qeglobals.lineBuffer.Add( prev, mid, color );
 
-      prev = mid;
-      mid[0] -= c * 4;
-      mid[1] -= s * 4;
-      mid[2] -= s * 4;
-      mid[0] += s * 4;
-      mid[1] -= c * 4;
-      mid[2] -= c * 4;      
-      g_qeglobals.lineBuffer.Add(prev,mid,color);      
+			prev = mid;
+			mid[0] -= c * 4;
+			mid[1] -= s * 4;
+			mid[2] -= s * 4;
+			mid[0] -= s * 4;
+			mid[1] += c * 4;
+			mid[2] += c * 4;
+			g_qeglobals.lineBuffer.Add( prev, mid, color );
+
+			prev = mid;
+			mid[0] += c * 4;
+			mid[1] += s * 4;
+			mid[2] += s * 4;
+			mid[0] += s * 4;
+			mid[1] -= c * 4;
+			mid[2] -= c * 4;
+			g_qeglobals.lineBuffer.Add( prev, mid, color );
+
+			prev = mid;
+			mid[0] -= c * 4;
+			mid[1] -= s * 4;
+			mid[2] -= s * 4;
+			mid[0] += s * 4;
+			mid[1] -= c * 4;
+			mid[2] -= c * 4;
+			g_qeglobals.lineBuffer.Add( prev, mid, color );
 		}
 	}
 
@@ -672,10 +672,10 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 	float scale = g_pParentWnd->ActiveXY()->Scale();
 
 	if (g_qeglobals.d_savedinfo.show_names && scale >= 1.0f) {
-		name = ValueForKey(b->owner, "name");
+		name = b->owner->ValueForKey("name");
 		int nameLen = strlen(name);
 		if ( nameLen == 0 ) {
-			name = ValueForKey(b->owner, "classname");
+			name = b->owner->ValueForKey("classname");
 			nameLen = strlen(name);
 		}
 		if ( nameLen > 0 ) {
@@ -699,7 +699,7 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 				break;
 			}
 
-      drawText(name, 1.0f, origin, color, viewType);
+			drawText(name, 1.0f, origin, color, viewType);
 		}
 	}
 }
@@ -2498,7 +2498,6 @@ brush_t *Brush_FullClone(brush_t *b) {
 	return n;
 }
 
-extern bool GetMatrixForKey(entity_t *ent, const char *key, idMat3 &mat);
 extern bool Patch_Intersect(patchMesh_t *pm, idVec3 origin, idVec3 direction , float &scale);
 extern bool RayIntersectsTri
 			(
@@ -2625,11 +2624,11 @@ bool Brush_ModelIntersect(brush_t *b, idVec3 origin, idVec3 dir,float &scale) {
   bool matrix = false;
   idMat3 mat;
   float a, s, c;
-  if (GetMatrixForKey(b->owner, "rotation", mat)) {
+  if (b->owner->GetMatrixForKey("rotation", mat)) {
     matrix = true;
   }
   else {
-    a = FloatForKey(b->owner, "angle");
+    a = b->owner->FloatForKey("angle");
     if (a) {
       s = sin(DEG2RAD(a));
       c = cos(DEG2RAD(a));
@@ -3139,8 +3138,8 @@ extern void VectorSnapGrid(idVec3 &v);
 idMat3 Brush_RotationMatrix(brush_t *b) {
 	idMat3 mat;
 	mat.Identity();
-	if (!GetMatrixForKey(b->owner, "light_rotation", mat)) {
-		GetMatrixForKey(b->owner, "rotation", mat);
+	if (!b->owner->GetMatrixForKey("light_rotation", mat)) {
+		b->owner->GetMatrixForKey("rotation", mat);
 	}
 	return mat;
 }
@@ -3175,11 +3174,11 @@ void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 	idVec3	vCenter;
 	idVec3 *origin = (b->trackLightOrigin) ? &b->owner->lightOrigin : &b->owner->origin;
 
-	if (!GetVectorForKey(b->owner, "_color", b->lightColor)) {
+	if (!b->owner->GetVectorForKey("_color", b->lightColor)) {
 		b->lightColor[0] = b->lightColor[1] = b->lightColor[2] = 1;
 	}
 
-	const char	*str = ValueForKey(b->owner, "texture");
+	const char	*str = b->owner->ValueForKey("texture");
 	b->lightTexture = -1;
 	if (str && strlen(str) > 0) {
 		const idMaterial	*q = Texture_LoadLight(str);
@@ -3188,14 +3187,14 @@ void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 		}
 	}
 
-	str = ValueForKey(b->owner, "light_right");
+	str = b->owner->ValueForKey("light_right");
 	if (str && *str) {
 		idVec3	vRight, vUp, vTarget, vTemp;
 
-		if (GetVectorForKey(b->owner, "light_start", b->lightStart)) {
+		if (b->owner->GetVectorForKey("light_start", b->lightStart)) {
 			b->startEnd = true;
-			if (!GetVectorForKey(b->owner, "light_end", b->lightEnd)) {
-				GetVectorForKey(b->owner, "light_target", b->lightEnd);
+			if (!b->owner->GetVectorForKey("light_end", b->lightEnd)) {
+				b->owner->GetVectorForKey("light_target", b->lightEnd);
 			}
 
 
@@ -3207,13 +3206,13 @@ void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 			b->startEnd = false;
 		}
 
-		GetVectorForKey(b->owner, "light_right", vRight);
-		GetVectorForKey(b->owner, "light_up", vUp);
-		GetVectorForKey(b->owner, "light_target", vTarget);
+		b->owner->GetVectorForKey("light_right", vRight);
+		b->owner->GetVectorForKey("light_up", vUp);
+		b->owner->GetVectorForKey("light_target", vTarget);
 		if (offset.x || offset.y || offset.z) {
 			CString str;
 			VectorAdd(vTarget, offset, vTarget);
-			SetKeyVec3(b->owner, "light_target", vTarget);
+			b->owner->SetKeyVec3("light_target", vTarget);
 		}
 
 		VectorAdd(vTarget, *origin, b->lightTarget);
@@ -3230,20 +3229,20 @@ void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 	else {
 		b->pointLight = true;
 
-		if (GetVectorForKey(b->owner, "light_center", vCenter)) {
+		if (b->owner->GetVectorForKey("light_center", vCenter)) {
 
 			if (offset.x || offset.y || offset.z) {
 				CString str;
 				VectorAdd(vCenter, offset, vCenter);
-				SetKeyVec3(b->owner, "light_center", vCenter);
+				b->owner->SetKeyVec3("light_center", vCenter);
 			}
 
 			VectorAdd(vCenter, *origin, b->lightCenter);
 			UpdateSelectablePoint(b, b->lightCenter, LIGHT_CENTER);
 		}
 
-		if (!GetVectorForKey(b->owner, "light_radius", b->lightRadius)) {
-			float	f = FloatForKey(b->owner, "light");
+		if (!b->owner->GetVectorForKey("light_radius", b->lightRadius)) {
+			float	f = b->owner->FloatForKey("light");
 			if (f == 0) {
 				f = 300;
 			}
@@ -3405,40 +3404,42 @@ void Brush_SnapToGrid(brush_t *pb) {
 	}
 	idVec3 v;
 	idStr str;
-	if (GetVectorForKey(pb->owner, "origin", v)) {
+	entity_t* owner = pb->owner;
+
+	if (owner->GetVectorForKey("origin", v)) {
 		SnapVectorToGrid(pb->owner->origin);
 		sprintf(str, "%i %i %i", (int)pb->owner->origin.x, (int)pb->owner->origin.y, (int)pb->owner->origin.z);
-		SetKeyValue(pb->owner, "origin", str);
+		owner->SetKeyValue("origin", str);
 	}
 
 	if (pb->owner->eclass->nShowFlags & ECLASS_LIGHT) {
-		if (GetVectorForKey(pb->owner, "light_right", v)) {
+		if (owner->GetVectorForKey("light_right", v)) {
 			// projected
 			SnapVectorToGrid(v);
 			pb->lightRight = v;
-			SetKeyVec3(pb->owner, "light_right", v);
-			GetVectorForKey(pb->owner, "light_up", v);
+			owner->SetKeyVec3("light_right", v);
+			owner->GetVectorForKey("light_up", v);
 			SnapVectorToGrid(v);
 			pb->lightUp = v;
-			SetKeyVec3(pb->owner, "light_up", v);
-			GetVectorForKey(pb->owner, "light_target", v);
+			owner->SetKeyVec3("light_up", v);
+			owner->GetVectorForKey("light_target", v);
 			SnapVectorToGrid(v);
 			pb->lightTarget = v;
-			SetKeyVec3(pb->owner, "light_target", v);
-			if (GetVectorForKey(pb->owner, "light_start", v)) {
+			owner->SetKeyVec3("light_target", v);
+			if (owner->GetVectorForKey("light_start", v)) {
 				SnapVectorToGrid(v);
 				pb->lightStart = v;
-				SetKeyVec3(pb->owner, "light_start", v);
-				GetVectorForKey(pb->owner, "light_end", v);
+				owner->SetKeyVec3("light_start", v);
+				owner->GetVectorForKey("light_end", v);
 				SnapVectorToGrid(v);
 				pb->lightEnd = v;
-				SetKeyVec3(pb->owner, "light_end", v);
+				owner->SetKeyVec3("light_end", v);
 			}
 		} else {
 			// point
-			if (GetVectorForKey(pb->owner, "light_center", v)) {
+			if (owner->GetVectorForKey("light_center", v)) {
 				SnapVectorToGrid(v);
-				SetKeyVec3(pb->owner, "light_center", v);
+				owner->SetKeyVec3("light_center", v);
 			}
 		}
 	}
@@ -3553,10 +3554,12 @@ Entity_GetRotationMatrixAngles
 ================
 */
 bool Entity_GetRotationMatrixAngles( entity_t *e, idMat3 &mat, idAngles &angles ) {
+	assert(e);
+	
 	int angle;
 
 	/* the angle keyword is a yaw value, except for two special markers */
-	if ( GetMatrixForKey( e, "rotation", mat ) ) {
+	if ( e->GetMatrixForKey( "rotation", mat ) ) {
 		angles = mat.ToAngles();
 		return true;
 	}
@@ -3680,9 +3683,9 @@ void DrawProjectedLight(const brush_t *b, bool bSelected, bool texture) {
 	}
 
 	idMat3 mat;
-	bool transform = GetMatrixForKey(b->owner, "light_rotation", mat);
+	bool transform = b->owner->GetMatrixForKey("light_rotation", mat);
 	if (!transform) {
-		transform = GetMatrixForKey(b->owner, "rotation", mat);
+		transform = b->owner->GetMatrixForKey("rotation", mat);
 	}
 	idVec3 tv;
 	idVec3 *origin = (b->trackLightOrigin) ? &b->owner->lightOrigin : &b->owner->origin;
@@ -3789,8 +3792,8 @@ void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 	}
 	
 	// convert to units ( inches )
-	float min = FloatForKey(b->owner, "s_mindistance"); 
-	float max = FloatForKey(b->owner, "s_maxdistance");
+	float min = b->owner->FloatForKey("s_mindistance"); 
+	float max = b->owner->FloatForKey("s_maxdistance");
 
 	const char *s = b->owner->epairs.GetString("s_shader");
 	if (s && *s) {
@@ -3874,7 +3877,7 @@ void DrawLight(const brush_t *b, bool bSelected) {
 	vTriColor[1] = 1.0f;
 	bTriPaint = true;
 
-	idStr strColor = ValueForKey(b->owner, "_color");
+	idStr strColor = b->owner->ValueForKey("_color");
 	if (strColor.Length() > 0) {
 		float	fR, fG, fB;
 		int		n = sscanf(strColor.c_str(), "%f %f %f", &fR, &fG, &fB);
@@ -3949,12 +3952,12 @@ editorModel_t Brush_GetEditorModel(const brush_t* b) {
 
     if (dynamic_cast<idRenderModelMD5 *>(ret.model)) {
       if (!b->animSnapshotModel) {
-        const char *classname = ValueForKey(b->owner, "classname");
+        const char *classname = b->owner->ValueForKey("classname");
         if (stricmp(classname, "func_static") == 0) {
-          classname = ValueForKey(b->owner, "animclass");
+          classname = b->owner->ValueForKey("animclass");
         }
-        const char *anim = ValueForKey(b->owner, "anim");
-        int frame = IntForKey(b->owner, "frame") + 1;
+        const char *anim = b->owner->ValueForKey("anim");
+        int frame = b->owner->IntForKey("frame") + 1;
         if (frame < 1) {
           frame = 1;
         }
@@ -3964,7 +3967,7 @@ editorModel_t Brush_GetEditorModel(const brush_t* b) {
         //common->Printf("instantiate dynamic model '%s'\n", classname);
         b->animSnapshotModel = gameEdit->ANIM_CreateMeshForAnim(ret.model, classname, anim, frame, false);
         if(!b->animSnapshotModel) {
-          common->Warning("Unknown animation '%s' for classname '%s' (entity %s)", anim, classname, ValueForKey(b->owner, "name"));
+          common->Warning("Unknown animation '%s' for classname '%s' (entity %s)", anim, classname, b->owner->ValueForKey("name"));
 
           idStr stubName = classname;
           stubName.Append("_");
@@ -4136,10 +4139,10 @@ void Brush_DrawAxis(const brush_t *b) {
 		bool matrix = false;
 		idMat3 mat;
 		float a, s, c;
-		if (GetMatrixForKey(b->owner, "rotation", mat)) {
+		if (b->owner->GetMatrixForKey("rotation", mat)) {
 			matrix = true;
 		} else {
-			a = FloatForKey(b->owner, "angle");
+			a = b->owner->FloatForKey("angle");
 			if (a) {
 				s = sin( DEG2RAD( a ) );
 				c = cos( DEG2RAD( a ) );
@@ -4836,13 +4839,13 @@ void Brush_Move(brush_t *b, const idVec3 move, bool bSnap, bool updateOrigin) {
 	idVec3	temp;
 
 	// PGM - keep the origin vector up to date on fixed size entities.
-	if (b->owner->eclass->fixedsize || b->owner->HasModel() || (updateOrigin && GetVectorForKey(b->owner, "origin", temp))) {
+	if (b->owner->eclass->fixedsize || b->owner->HasModel() || (updateOrigin && b->owner->GetVectorForKey("origin", temp))) {
 //		if (!b->entityModel) {
 			bool adjustOrigin = true;
 			if(b->trackLightOrigin) {
 				b->owner->lightOrigin += move;
 				sprintf(text, "%i %i %i", (int)b->owner->lightOrigin[0], (int)b->owner->lightOrigin[1], (int)b->owner->lightOrigin[2]);
-				SetKeyValue(b->owner, "light_origin", text);
+				b->owner->SetKeyValue("light_origin", text);
 				if (QE_SingleBrush(true, true)) {
 					adjustOrigin = false;
 				}
@@ -4855,7 +4858,7 @@ void Brush_Move(brush_t *b, const idVec3 move, bool bSnap, bool updateOrigin) {
 				} else {
 					sprintf(text, "%i %i %i", (int)b->owner->origin[0], (int)b->owner->origin[1], (int)b->owner->origin[2]);
 				}
-				SetKeyValue(b->owner, "origin", text);
+				b->owner->SetKeyValue("origin", text);
 			}
 
 			// rebuild the light dragging points now that the origin has changed
@@ -4906,17 +4909,17 @@ void Select_AddProjectedLight() {
 		vTemp[0] = vTemp[1] = 0;
 		vTemp[2] = -256;
 		str.Format("%f %f %f", vTemp[0], vTemp[1], vTemp[2]);
-		SetKeyValue(b->owner, "light_target", str);
+		b->owner->SetKeyValue("light_target", str);
 
 		vTemp[2] = 0;
 		vTemp[1] = -128;
 		str.Format("%f %f %f", vTemp[0], vTemp[1], vTemp[2]);
-		SetKeyValue(b->owner, "light_up", str);
+		b->owner->SetKeyValue("light_up", str);
 
 		vTemp[1] = 0;
 		vTemp[0] = -128;
 		str.Format("%f %f %f", vTemp[0], vTemp[1], vTemp[2]);
-		SetKeyValue(b->owner, "light_right", str);
+		b->owner->SetKeyValue("light_right", str);
 		Brush_Build(b);
 	}
 }

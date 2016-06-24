@@ -148,7 +148,7 @@ entity_t *Map_FindClass(char *cname) {
 	entity_t	*ent;
 
 	for (ent = entities.next; ent != &entities; ent = ent->next) {
-		if (!strcmp(cname, ValueForKey(ent, "classname"))) {
+		if (!strcmp(cname, ent->ValueForKey("classname"))) {
 			return ent;
 		}
 	}
@@ -164,8 +164,8 @@ int Map_GetUniqueEntityID(const char *prefix, const char *eclass) {
 	entity_t	*ent;
 	int			id = 0;
 	for (ent = entities.next; ent != &entities; ent = ent->next) {
-		if (!strcmp(eclass, ValueForKey(ent, "classname"))) {
-			const char	*name = ValueForKey(ent, "name");
+		if (!strcmp(eclass, ent->ValueForKey("classname"))) {
+			const char	*name = ent->ValueForKey("name");
 			if (name && name[0]) {
 				const char *buf;
 				if (prefix && *prefix) {
@@ -198,7 +198,7 @@ bool Entity_NameIsUnique(const char *name) {
 	}
 
 	for (ent = entities.next; ent != &entities; ent = ent->next) {
-		const char	*testName = ValueForKey(ent, "name");
+		const char	*testName = ent->ValueForKey("name");
 		if (testName) {
 			if ( idStr::Icmp(name, testName) == 0 ) {
 				return false;
@@ -371,7 +371,7 @@ entity_t *EntityFromMapEntity(idMapEntity *mapent, CWaitDlg *dlg) {
 		ent->brushes.onext = ent->brushes.oprev = &ent->brushes;
 		ent->origin.Zero();
 		ent->epairs = mapent->epairs;
-		GetVectorForKey(ent, "origin", ent->origin);
+		ent->GetVectorForKey("origin", ent->origin);
 		int count = mapent->GetNumPrimitives();
 		long lastUpdate = 0;
 		idStr status;
@@ -475,7 +475,7 @@ void Map_LoadFile(const char *filename) {
 				} else {
 					ent = EntityFromMapEntity(mapent, &dlg);
 					ent->PostParse(&active_brushes);
-					Entity_Name(ent, true);
+					ent->Name(true);
 					// add the entity to the end of the entity list
 					ent->next = &entities;
 					ent->prev = entities.prev;
@@ -518,9 +518,9 @@ void Map_LoadFile(const char *filename) {
 	g_pParentWnd->GetCamera()->Camera().angles[PITCH] = 0;
 	
 	if (ent) {
-		GetVectorForKey(ent, "origin", g_pParentWnd->GetCamera()->Camera().origin);
-		GetVectorForKey(ent, "origin", g_pParentWnd->GetXYWnd()->GetOrigin());
-		g_pParentWnd->GetCamera()->Camera().angles[YAW] = FloatForKey(ent, "angle");
+		ent->GetVectorForKey("origin", g_pParentWnd->GetCamera()->Camera().origin);
+		ent->GetVectorForKey("origin", g_pParentWnd->GetXYWnd()->GetOrigin());
+		g_pParentWnd->GetCamera()->Camera().angles[YAW] = ent->FloatForKey("angle");
 	}
 	else {
 		g_pParentWnd->GetCamera()->Camera().angles[YAW] = 0;
@@ -754,14 +754,14 @@ bool Map_SaveFile(const char *filename, bool use_region, bool autosave) {
 
 			}
 			idVec3 origin;
-			if (!GetVectorForKey(e, "origin", origin)) {
+			if (!e->GetVectorForKey("origin", origin)) {
 				idStr text;
 				VectorSubtract(e->brushes.onext->mins, e->eclass->mins, origin);
 				sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
-				SetKeyValue(e, "origin", text);
+				e->SetKeyValue("origin", text);
 			}
 
-			if (use_region && !idStr::Icmp(ValueForKey(e, "classname"), "info_player_start")) {
+			if (use_region && !idStr::Icmp(e->ValueForKey("classname"), "info_player_start")) {
 				continue;
 			} 
 		
@@ -808,7 +808,7 @@ void Map_New(void) {
 
 	world_entity = new entity_t();
 	world_entity->brushes.onext = world_entity->brushes.oprev = &world_entity->brushes;
-	SetKeyValue(world_entity, "classname", "worldspawn");
+	world_entity->SetKeyValue("classname", "worldspawn");
 	world_entity->eclass = Eclass_ForName("worldspawn", true);
 
 	g_pParentWnd->GetCamera()->Camera().angles[YAW] = 0;
@@ -1110,7 +1110,7 @@ void UniqueTargetName(idStr &rStr) {
 	// make a unique target value
 	int maxtarg = 0;
 	for (entity_t * e = entities.next; e != &entities; e = e->next) {
-		const char	*tn = ValueForKey(e, "name");
+		const char	*tn = e->ValueForKey("name");
 		if (tn && tn[0]) {
 			int targetnum = atoi(tn + 1);
 			if (targetnum > maxtarg) {
@@ -1118,7 +1118,7 @@ void UniqueTargetName(idStr &rStr) {
 			}
 		}
 		else {
-			tn = ValueForKey(e, "target");
+			tn = e->ValueForKey("target");
 			if (tn && tn[0]) {
 				int targetnum = atoi(tn + 1);
 				if (targetnum > maxtarg) {
@@ -1191,7 +1191,7 @@ void Map_ImportBuffer(char *buf, bool renameEntities) {
 				Undo_EndBrush(b);
 			}
 
-			if (!strcmp(ValueForKey(ent, "classname"), "worldspawn")) {
+			if (!strcmp(ent->ValueForKey("classname"), "worldspawn")) {
 				// world brushes need to be added to the current world entity
 				b = ent->brushes.onext;
 				while (b && b != &ent->brushes) {
@@ -1204,7 +1204,7 @@ void Map_ImportBuffer(char *buf, bool renameEntities) {
 			}
 			else {
 				// the following bit remaps conflicting target/targetname key/value pairs
-				CString str = ValueForKey(ent, "target");
+				CString str = ent->ValueForKey("target");
 				CString strKey;
 				CString strTarget("");
 				if (str.GetLength() > 0) {
@@ -1217,7 +1217,7 @@ void Map_ImportBuffer(char *buf, bool renameEntities) {
 						}
 
 						strTarget = strKey;
-						SetKeyValue(ent, "target", strTarget.GetBuffer(0));
+						ent->SetKeyValue("target", strTarget.GetBuffer(0));
 					}
 				}
 
@@ -1227,9 +1227,9 @@ void Map_ImportBuffer(char *buf, bool renameEntities) {
 				 * UniqueTargetName(strKey); mapStr.SetAt(str, strKey); } Entity_SetName(ent,
 				 * strKey.GetBuffer(0)); } }
 				 */
-				CString cstrNameOld = ValueForKey(ent, "name");
-				Entity_Name(ent, renameEntities);
-				CString cstrNameNew = ValueForKey(ent, "name");
+				CString cstrNameOld = ent->ValueForKey("name");
+				ent->Name(renameEntities);
+				CString cstrNameNew = ent->ValueForKey("name");
 				if (cstrNameOld != cstrNameNew)
 				{
 					RemappedNames.Set(cstrNameOld, cstrNameNew);
@@ -1268,7 +1268,7 @@ void Map_ImportBuffer(char *buf, bool renameEntities) {
 
 			if (pEntOld && pEntNew)
 			{
-				CString cstrTargetNameOld = ValueForKey(pEntOld, "target");
+				CString cstrTargetNameOld = pEntOld->ValueForKey("target");
 				if (!cstrTargetNameOld.IsEmpty())
 				{
 					// ok, this ent was targeted at another ent, so it's clone needs updating to point to
@@ -1280,7 +1280,7 @@ void Map_ImportBuffer(char *buf, bool renameEntities) {
 						LPCSTR psNewTargetName = RemappedNames.GetString( cstrTargetNameOld );
 						if (psNewTargetName && psNewTargetName[0])
 						{								
-							SetKeyValue(pEntNew, "target", psNewTargetName);
+							pEntNew->SetKeyValue("target", psNewTargetName);
 						}
 					}
 				}

@@ -473,11 +473,11 @@ void CEntityDlg::DelProp() {
 	if (multipleEntities) {
 		for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 			assert(b->owner);
-			DeleteKey(b->owner, key);
+			b->owner->DeleteKey(key);
 			b->owner->UpdateCurveData();			
 		}
 	} else {
-		DeleteKey(editEntity, key);
+		editEntity->DeleteKey(key);
 		editEntity->UpdateCurveData();
 	}
 
@@ -612,20 +612,20 @@ void CEntityDlg::AddProp() {
 		brush_t *b;
 		for (b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 			if (isName) {
-				Entity_SetName(b->owner, Value);
+				b->owner->SetName(Value);
 			} else {
 				if ( ! ( ( isModel || isOrigin ) && ( b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN ) ) ) { 
-					SetKeyValue(b->owner, Key, Value);
+					b->owner->SetKeyValue(Key, Value);
 				}
 			}
 		}
 	}
 	else {
 		if (isName) {
-			Entity_SetName(editEntity, Value);
+			editEntity->SetName(Value);
 		} else {
 			if ( ! ( ( isModel || isOrigin ) && ( editEntity->eclass->nShowFlags & ECLASS_WORLDSPAWN ) ) ) { 
-				SetKeyValue(editEntity, Key, Value);
+				editEntity->SetKeyValue(Key, Value);
 			}
 		}
 

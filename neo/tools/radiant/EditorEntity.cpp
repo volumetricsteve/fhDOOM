@@ -38,17 +38,17 @@ static int g_entityId = 1;
 
 extern void Brush_Resize(brush_t *b, idVec3 vMin, idVec3 vMax);
 
-int	GetNumKeys(const entity_t *ent)
+int	entity_t::GetNumKeys() const
 {
-	int iCount = ent->epairs.GetNumKeyVals();
+	int iCount = epairs.GetNumKeyVals();
 	return iCount;
 }
 
-const char *GetKeyString(const entity_t *ent, int iIndex)
+const char * entity_t::GetKeyString(int iIndex) const
 {
-	if ( iIndex < GetNumKeys(ent) )
+	if ( iIndex < GetNumKeys() )
 	{
-		return ent->epairs.GetKeyVal(iIndex)->GetKey().c_str();
+		return epairs.GetKeyVal(iIndex)->GetKey().c_str();
 	}
 
 	assert(0);
@@ -60,8 +60,8 @@ const char *GetKeyString(const entity_t *ent, int iIndex)
  =======================================================================================================================
  =======================================================================================================================
  */
-const char *ValueForKey(const entity_t *ent, const char *key) {
-	return ent->epairs.GetString(key);
+const char * entity_t::ValueForKey(const char *key) const {
+	return epairs.GetString(key);
 }
 
 /*
@@ -74,7 +74,7 @@ void TrackMD3Angles(entity_t *e, const char *key, const char *value) {
 	}
 
 	if ((e->eclass->fixedsize && e->eclass->nShowFlags & ECLASS_MISCMODEL) || e->HasModel()) {
-		float	a = FloatForKey(e, "angle");
+		float	a = e->FloatForKey("angle");
 		float	b = atof(value);
 		if (a != b) {
 			idVec3	vAngle;
@@ -91,54 +91,42 @@ void TrackMD3Angles(entity_t *e, const char *key, const char *value) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void SetKeyValue(entity_t *ent, const char *key, const char *value, bool trackAngles) {
-	if (ent == NULL) {
-		return;
-	}
-
+void entity_t::SetKeyValue( const char *key, const char *value, bool trackAngles) {
 	if (!key || !key[0]) {
 		return;
 	}
 
 	if (trackAngles) {
-		TrackMD3Angles(ent, key, value);
+		TrackMD3Angles(this, key, value);
 	}
 
-	ent->epairs.Set(key, value);
-	GetVectorForKey(ent, "origin", ent->origin);
+	epairs.Set(key, value);
+	GetVectorForKey("origin", origin);
 
 	// update sound in case this key was relevent
-	ent->UpdateSoundEmitter();
+	UpdateSoundEmitter();
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SetKeyVec3(entity_t *ent, const char *key, idVec3 v) {
-	if (ent == NULL) {
-		return;
-	}
-
+void entity_t::SetKeyVec3( const char *key, idVec3 v) {
 	if (!key || !key[0]) {
 		return;
 	}
 
 	idStr str;
 	sprintf(str, "%g %g %g", v.x, v.y, v.z);
-	ent->epairs.Set(key, str);
-	GetVectorForKey(ent, "origin", ent->origin);
+	epairs.Set(key, str);
+	GetVectorForKey("origin", origin);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SetKeyMat3(entity_t *ent, const char *key, idMat3 m) {
-	if (ent == NULL) {
-		return;
-	}
-
+void entity_t::SetKeyMat3( const char *key, idMat3 m) {
 	if (!key || !key[0]) {
 		return;
 	}
@@ -147,8 +135,8 @@ void SetKeyMat3(entity_t *ent, const char *key, idMat3 m) {
 	
 	sprintf(str, "%g %g %g %g %g %g %g %g %g",m[0][0],m[0][1],m[0][2],m[1][0],m[1][1],m[1][2],m[2][0],m[2][1],m[2][2]);
 	
-	ent->epairs.Set(key, str);
-	GetVectorForKey(ent, "origin", ent->origin);
+	epairs.Set(key, str);
+	GetVectorForKey("origin", origin);
 }
 
 
@@ -157,10 +145,10 @@ void SetKeyMat3(entity_t *ent, const char *key, idMat3 m) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void DeleteKey(entity_t *ent, const char *key) {
-	ent->epairs.Delete(key);
+void entity_t::DeleteKey( const char *key) {
+	epairs.Delete(key);
 	if (stricmp(key, "rotation") == 0) {
-		ent->rotation.Identity();
+		rotation.Identity();
 	}
 }
 
@@ -168,10 +156,8 @@ void DeleteKey(entity_t *ent, const char *key) {
  =======================================================================================================================
  =======================================================================================================================
  */
-float FloatForKey(entity_t *ent, const char *key) {
-	const char	*k;
-
-	k = ValueForKey(ent, key);
+float entity_t::FloatForKey( const char *key) {
+	const char* k = ValueForKey(key);
 	if (k && *k) {
 		return atof(k);
 	}
@@ -183,10 +169,8 @@ float FloatForKey(entity_t *ent, const char *key) {
  =======================================================================================================================
  =======================================================================================================================
  */
-int IntForKey(entity_t *ent, const char *key) {
-	const char	*k;
-
-	k = ValueForKey(ent, key);
+int entity_t::IntForKey(const char *key) {
+	const char* k = ValueForKey(key);
 	return atoi(k);
 }
 
@@ -194,9 +178,8 @@ int IntForKey(entity_t *ent, const char *key) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool GetVectorForKey(entity_t *ent, const char *key, idVec3 &vec) {
-	const char	*k;
-	k = ValueForKey(ent, key);
+bool entity_t::GetVectorForKey(const char *key, idVec3 &vec) {
+	const char* k = ValueForKey(key);
 	if (k && strlen(k) > 0) {
 		sscanf(k, "%f %f %f", &vec[0], &vec[1], &vec[2]);
 		return true;
@@ -212,9 +195,8 @@ bool GetVectorForKey(entity_t *ent, const char *key, idVec3 &vec) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool GetVector4ForKey(entity_t *ent, const char *key, idVec4 &vec) {
-	const char	*k;
-	k = ValueForKey(ent, key);
+bool entity_t::GetVector4ForKey(const char *key, idVec4 &vec) {	
+	const char* k = ValueForKey(key);
 	if (k && strlen(k) > 0) {
 		sscanf(k, "%f %f %f %f", &vec[0], &vec[1], &vec[2], &vec[3]);
 		return true;
@@ -230,9 +212,8 @@ bool GetVector4ForKey(entity_t *ent, const char *key, idVec4 &vec) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool GetFloatForKey(entity_t *ent, const char *key, float *f) {
-	const char	*k;
-	k = ValueForKey(ent, key);
+bool entity_t::GetFloatForKey(const char *key, float *f) {
+	const char* k = ValueForKey(key);
 	if (k && strlen(k) > 0) {
 		*f = atof(k);
 		return true;
@@ -246,9 +227,8 @@ bool GetFloatForKey(entity_t *ent, const char *key, float *f) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool GetMatrixForKey(entity_t *ent, const char *key, idMat3 &mat) {
-	const char	*k;
-	k = ValueForKey(ent, key);
+bool entity_t::GetMatrixForKey(const char *key, idMat3 &mat) {	
+	const char* k = ValueForKey(key);
 	if (k && strlen(k) > 0) {
 		sscanf
 		(
@@ -418,8 +398,8 @@ void ParseEpair(idDict *dict) {
  =======================================================================================================================
  */
 bool entity_t::HasModel() const {
-	const char	*model = ValueForKey(this, "model");
-	const char	*name = ValueForKey(this, "name");
+	const char	*model = ValueForKey("model");
+	const char	*name = ValueForKey("name");
 	if (model && *model) {
 		if ( idStr::Icmp(model, name) ) {
 			return true;
@@ -542,15 +522,15 @@ void entity_t::PostParse(brush_t *pList) {
 		has_brushes = true;
 	}
 
-	bool needsOrigin = !GetVectorForKey(this, "origin", origin);
-	const char	*pModel = ValueForKey(this, "model");
+	bool needsOrigin = !GetVectorForKey("origin", origin);
+	const char	*pModel = ValueForKey("model");
 
-	const char *cp = ValueForKey(this, "classname");
+	const char *cp = ValueForKey("classname");
 
 	if (strlen(cp)) {
 		e = Eclass_ForName(cp, has_brushes);
 	} else {
-		const char *cp2 = ValueForKey(this, "name");
+		const char *cp2 = ValueForKey("name");
 		if (strlen(cp2)) {
 			char buff[1024];
 			strcpy(buff, cp2);
@@ -560,7 +540,7 @@ void entity_t::PostParse(brush_t *pList) {
 				len--;
 			}
 			e = Eclass_ForName(buff, has_brushes);
-			SetKeyValue(this, "classname", buff, false);
+			SetKeyValue("classname", buff, false);
 		} else {
 			e = Eclass_ForName("", has_brushes);
 		}
@@ -589,14 +569,14 @@ void entity_t::PostParse(brush_t *pList) {
 		needsOrigin = false;
 		epairs.Delete( "model" );
 	} else if (e->nShowFlags & ECLASS_LIGHT) {
-		if (GetVectorForKey(this, "light_origin", lightOrigin)) {
-			GetMatrixForKey(this, "light_rotation", lightRotation);
+		if (GetVectorForKey("light_origin", lightOrigin)) {
+			GetMatrixForKey("light_rotation", lightRotation);
 			trackLightOrigin = true;
 		} else if (hasModel) {
-			SetKeyValue(this, "light_origin", ValueForKey(this, "origin"));
+			SetKeyValue("light_origin", ValueForKey("origin"));
 			lightOrigin = origin;
-			if (GetMatrixForKey(this, "rotation", lightRotation)) {
-				SetKeyValue(this, "light_rotation", ValueForKey(this, "rotation"));
+			if (GetMatrixForKey("rotation", lightRotation)) {
+				SetKeyValue("light_rotation", ValueForKey("rotation"));
 			}
 			trackLightOrigin = true;
 		}
@@ -650,7 +630,7 @@ void entity_t::PostParse(brush_t *pList) {
 			b->modelHandle = modelHandle;
 
 			float		yaw = 0;
-			bool		convertAngles = GetFloatForKey(this, "angle", &yaw);
+			bool		convertAngles = GetFloatForKey("angle", &yaw);
 			extern void Brush_Rotate(brush_t *b, idMat3 matrix, idVec3 origin, bool bBuild);
 			extern void Brush_Rotate(brush_t *b, idVec3 rot, idVec3 origin, bool bBuild);
 			
@@ -659,7 +639,7 @@ void entity_t::PostParse(brush_t *pList) {
 				Brush_Rotate(b, rot, origin, false);
 			}
 
-			if (GetMatrixForKey(this, "rotation", rotation)) {
+			if (GetMatrixForKey("rotation", rotation)) {
 				idBounds bo2;
 				bo2.FromTransformedBounds(bo, origin, rotation);
 				b->owner = this;
@@ -679,7 +659,7 @@ void entity_t::PostParse(brush_t *pList) {
 			}
 
 			b = Brush_Create(mins, maxs, &e->texdef);
-			GetMatrixForKey(this, "rotation", rotation);
+			GetMatrixForKey("rotation", rotation);
 			Entity_LinkBrush(this, b);
 			b->trackLightOrigin = trackLightOrigin;
 			if ( e->texdef.name == NULL ) {
@@ -695,9 +675,9 @@ void entity_t::PostParse(brush_t *pList) {
 		}
 
 		if (!needsOrigin) {
-			idStr cn = ValueForKey(this, "classname");
-			idStr name = ValueForKey(this, "name");
-			idStr model = ValueForKey(this, "model");
+			idStr cn = ValueForKey("classname");
+			idStr name = ValueForKey("name");
+			idStr model = ValueForKey("model");
 			if (cn.Icmp("func_static") == 0) {
 				if (name.Icmp(model) == 0) {
 					needsOrigin = true;
@@ -731,16 +711,16 @@ void entity_t::PostParse(brush_t *pList) {
 			}
 
 			sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
-			SetKeyValue(this, "origin", text);
+			SetKeyValue("origin", text);
 		}
 
 		if (!(e->nShowFlags & ECLASS_WORLDSPAWN)) {
 			if (e->defArgs.FindKey("model") == NULL && (pModel == NULL || (pModel && strlen(pModel) == 0))) {
-				SetKeyValue(this, "model", ValueForKey(this, "name"));
+				SetKeyValue("model", ValueForKey("name"));
 			}
 		}
 		else {
-			DeleteKey(this, "origin");
+			DeleteKey("origin");
 		}
 	}
 
@@ -790,7 +770,7 @@ entity_t *Entity_Parse(bool onlypairs, brush_t *pList) {
 		}
 
 		if (!strcmp(token, "{")) {
-			GetVectorForKey(ent, "origin", ent->origin);
+			ent->GetVectorForKey("origin", ent->origin);
 			brush_t *b = Brush_Parse(ent->origin);
 			if (b != NULL) {
 				b->owner = ent;
@@ -865,11 +845,11 @@ void entity_t::WriteSelected(FILE *file) {
 	if (eclass->fixedsize || HasModel()) {
 		idVec3	origin;
 
-		if (!GetVectorForKey(this, "origin", origin)) {
+		if (!GetVectorForKey("origin", origin)) {
 			char text[128];	
 			VectorSubtract(brushes.onext->mins, eclass->mins, origin);
 			sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
-			SetKeyValue(this, "origin", text);
+			SetKeyValue("origin", text);
 		}
 	}
 
@@ -919,10 +899,10 @@ void entity_t::WriteSelected(CMemFile *pMemFile) {
 
 	// if fixedsize, calculate a new origin based on the current brush position
 	if (eclass->fixedsize || HasModel()) {
-		if (!GetVectorForKey(this, "origin", origin)) {
+		if (!GetVectorForKey("origin", origin)) {
 			VectorSubtract(brushes.onext->mins, eclass->mins, origin);
 			sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
-			SetKeyValue(this, "origin", text);
+			SetKeyValue("origin", text);
 		}
 	}
 
@@ -954,12 +934,12 @@ void entity_t::WriteSelected(CMemFile *pMemFile) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void Entity_SetName(entity_t *e, const char *name) {
-	CString oldName = ValueForKey(e, "name");
-	CString oldModel = ValueForKey(e, "model");
-	SetKeyValue(e, "name", name);
+void entity_t::SetName(const char *name) {
+	CString oldName = ValueForKey("name");
+	CString oldModel = ValueForKey("model");
+	SetKeyValue("name", name);
 	if (oldName == oldModel) {
-		SetKeyValue(e, "model", name);
+		SetKeyValue("model", name);
 	}
 }
 
@@ -969,8 +949,8 @@ extern bool Entity_NameIsUnique(const char *name);
  =======================================================================================================================
  =======================================================================================================================
  */
-void Entity_Name(entity_t *e, bool force) {
-	const char	*name = ValueForKey(e, "name");
+void entity_t::Name(bool force) {
+	const char	*name = ValueForKey("name");
 
 	if (!force && name && name[0]) {
 		return;
@@ -982,7 +962,7 @@ void Entity_Name(entity_t *e, bool force) {
 
 	bool	setModel = false;
 	if (name[0]) {
-		const char	*model = ValueForKey(e, "model");
+		const char	*model = ValueForKey("model");
 		if (model[0]) {
 			if ( idStr::Icmp(model, name) == 0 ) {
 				setModel = true;
@@ -990,20 +970,20 @@ void Entity_Name(entity_t *e, bool force) {
 		}
 	}
 
-	const char *eclass = ValueForKey(e, "classname");
+	const char *eclass = ValueForKey("classname");
 	if (eclass && eclass[0]) {
 		idStr str = cvarSystem->GetCVarString( "radiant_nameprefix" );
 		int id = Map_GetUniqueEntityID(str, eclass);
 		if (str.Length()) {
-			SetKeyValue(e, "name", va("%s_%s_%i", str.c_str(), eclass, id));
+			SetKeyValue("name", va("%s_%s_%i", str.c_str(), eclass, id));
 		} else {
-			SetKeyValue(e, "name", va("%s_%i", eclass, id));
+			SetKeyValue("name", va("%s_%i", eclass, id));
 		}
 		if (setModel) {
 			if (str.Length()) {
-				SetKeyValue(e, "model", va("%s_%s_%i", str.c_str(), eclass, id));
+				SetKeyValue("model", va("%s_%s_%i", str.c_str(), eclass, id));
 			} else {
-				SetKeyValue(e, "model", va("%s_%i",  eclass, id));
+				SetKeyValue("model", va("%s_%i",  eclass, id));
 			}
 		}
 	}
@@ -1042,8 +1022,8 @@ entity_t *Entity_Create(eclass_t *entityClass, bool forceFixed) {
 	e->brushes.onext = e->brushes.oprev = &e->brushes;
 	e->eclass = entityClass;
 	e->epairs.Copy(entityClass->args);
-	SetKeyValue(e, "classname", entityClass->name);
-	Entity_Name(e, false);
+	e->SetKeyValue("classname", entityClass->name);
+	e->Name(false);
 
 	// add the entity to the entity list
 	e->AddToList(&entities);
@@ -1100,12 +1080,12 @@ entity_t *Entity_Create(eclass_t *entityClass, bool forceFixed) {
 		//}
 
 		if (!forceFixed) {
-			SetKeyValue(e, "model", ValueForKey(e, "name"));
+			e->SetKeyValue("model", e->ValueForKey("name"));
 		}
 	}
 
 	sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
-	SetKeyValue(e, "origin", text);
+	e->SetKeyValue("origin", text);
 	VectorCopy(origin, e->origin);
 
 	Sys_UpdateWindows(W_ALL);
@@ -1176,12 +1156,10 @@ entity_t *entity_t::Clone() const {
  =======================================================================================================================
  */
 entity_t *FindEntity(const char *pszKey, const char *pszValue) {
-	entity_t	*pe;
-
-	pe = entities.next;
+	entity_t* pe = entities.next;
 
 	for (; pe != NULL && pe != &entities; pe = pe->next) {
-		if (!strcmp(ValueForKey(pe, pszKey), pszValue)) {
+		if (!strcmp(pe->ValueForKey(pszKey), pszValue)) {
 			return pe;
 		}
 	}
@@ -1194,12 +1172,10 @@ entity_t *FindEntity(const char *pszKey, const char *pszValue) {
  =======================================================================================================================
  */
 entity_t *FindEntityInt(const char *pszKey, int iValue) {
-	entity_t	*pe;
-
-	pe = entities.next;
+	entity_t* pe = entities.next;
 
 	for (; pe != NULL && pe != &entities; pe = pe->next) {
-		if (IntForKey(pe, pszKey) == iValue) {
+		if (pe->IntForKey(pszKey) == iValue) {
 			return pe;
 		}
 	}
@@ -1225,7 +1201,7 @@ void entity_t::UpdateSoundEmitter() {
 	if ( g_pParentWnd->GetCamera()->GetSoundMode() 
 		&& this->brushes.onext != &this->brushes && !FilterBrush(this->brushes.onext) ) {
 		// check for sounds
-		const char *v = ValueForKey( this, "s_shader" );
+		const char *v = ValueForKey( "s_shader" );
 		if ( v[0] ) {
 			refSound_t	sound;
 

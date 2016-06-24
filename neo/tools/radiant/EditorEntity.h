@@ -50,6 +50,20 @@ struct entity_t {
 	entity_t();
 	~entity_t();
 
+	const char *ValueForKey( const char *key ) const;
+	int			GetNumKeys() const;
+	const char *GetKeyString( int iIndex ) const;
+	void		SetKeyValue( const char *key, const char *value, bool trackAngles = true );
+	void		DeleteKey( const char *key );
+	float		FloatForKey( const char *key );
+	int			IntForKey( const char *key );
+	bool		GetVectorForKey( const char *key, idVec3 &vec );
+	bool		GetVector4ForKey( const char *key, idVec4 &vec );
+	bool		GetFloatForKey( const char *key, float *f );
+	void		SetKeyVec3( const char *key, idVec3 v );
+	void		SetKeyMat3( const char *key, idMat3 m );
+	bool		GetMatrixForKey( const char *key, idMat3 &mat );
+
 	void		UpdateSoundEmitter();
 	idCurve<idVec3>* MakeCurve();
 	void		UpdateCurveData();
@@ -68,23 +82,15 @@ struct entity_t {
 
 
 	void        PostParse(brush_t *pList);
+
+	void		SetName(const char *name );
+
+	//Timo : used for parsing epairs in brush primitive
+	void		Name(bool force );
+
 };
 
 void		ParseEpair(idDict *dict);
-
-const char *ValueForKey(const entity_t *ent, const char *key);
-int			GetNumKeys(const entity_t *ent);
-const char *GetKeyString(const entity_t *ent, int iIndex);
-void		SetKeyValue (entity_t *ent, const char *key, const char *value, bool trackAngles = true);
-void		DeleteKey (entity_t *ent, const char *key);
-float		FloatForKey (entity_t *ent, const char *key);
-int			IntForKey (entity_t *ent, const char *key);
-bool		GetVectorForKey (entity_t *ent, const char *key, idVec3 &vec);
-bool		GetVector4ForKey (entity_t *ent, const char *key, idVec4 &vec);
-bool		GetFloatForKey(entity_t *end, const char *key, float *f);
-void		SetKeyVec3(entity_t *ent, const char *key, idVec3 v);
-void		SetKeyMat3(entity_t *ent, const char *key, idMat3 m);
-bool		GetMatrixForKey(entity_t *ent, const char *key, idMat3 &mat);
 
 
 entity_t *	Entity_Parse (bool onlypairs, brush_t* pList = NULL);
@@ -94,9 +100,5 @@ void		Entity_LinkBrush (entity_t *e, brush_t *b);
 void		Entity_UnlinkBrush (brush_t *b);
 entity_t *	FindEntity(const char *pszKey, const char *pszValue);
 entity_t *	FindEntityInt(const char *pszKey, int iValue);
-void		Entity_SetName(entity_t *e, const char *name);
-
-//Timo : used for parsing epairs in brush primitive
-void		Entity_Name(entity_t *e, bool force);
 
 bool		IsBrushSelected(const brush_t* bSel);

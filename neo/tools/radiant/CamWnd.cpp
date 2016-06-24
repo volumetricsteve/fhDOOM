@@ -1176,9 +1176,9 @@ void CCamWnd::ShiftTexture_BrushPrimit(face_t *f, int x, int y) {
 
 
 bool IsBModel(brush_t *b) {
-	const char *v = ValueForKey( b->owner, "model" );
+	const char *v = b->owner->ValueForKey( "model" );
 	if (v && *v) {
-		const char *n = ValueForKey( b->owner, "name");
+		const char *n = b->owner->ValueForKey("name");
 		return (stricmp( n, v ) == 0);
 	}
 	return false;
@@ -1229,7 +1229,7 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 	}
 
 	// any entity can have a model
-	name = ValueForKey( ent, "name" );
+	name = ent->ValueForKey( "name" );
 	v = spawnArgs.GetString("model");
 	if ( v && *v ) {
 		renderEntity_t	refent;
@@ -1404,7 +1404,7 @@ int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 	if (brush->modelHandle > 0 ) {
 		idRenderModel *model = brush->modelHandle;
 		if (model) {
-			float	a = FloatForKey(brush->owner, "angle");
+			float	a = brush->owner->FloatForKey("angle");
 			float	s, c;
 			//FIXME: support full rotation matrix
 			bool matrix = false;
@@ -1413,7 +1413,7 @@ int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 				c = cos( DEG2RAD(a) );
 			}
 			idMat3 mat;
-			if (GetMatrixForKey(brush->owner, "rotation", mat)) {
+			if (brush->owner->GetMatrixForKey("rotation", mat)) {
 				matrix = true;
 			}
 
@@ -2034,7 +2034,7 @@ void CCamWnd::UpdateCameraView() {
 		brush_t *b = selected_brushes.next;
 		if (b->owner->eclass->nShowFlags & ECLASS_CAMERAVIEW) {
 			// find the entity that targets this
-			const char *name = ValueForKey(b->owner, "name");
+			const char *name = b->owner->ValueForKey("name");
 			entity_t *ent = FindEntity("target", name);
 			if (ent) {
 				if (!saveValid) {
