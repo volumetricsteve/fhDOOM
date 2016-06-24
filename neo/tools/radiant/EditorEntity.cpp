@@ -355,16 +355,12 @@ void Entity_Free( entity_t *e ) {
  =======================================================================================================================
  */
 
-int Entity_MemorySize( entity_t *e ) 
+int Entity_MemorySize( const entity_t *entity ) 
 {
-	brush_t		*b;
-	int			size;
-
-	size = sizeof( entity_t ) + e->epairs.Size();
-	for( b = e->brushes.onext; b != &e->brushes; b = b->onext )
-	{
+	int size = sizeof( entity_t ) + entity->epairs.Size();
+	for( const brush_t* b = entity->brushes.onext; b != &entity->brushes; b = b->onext ) {
 		size += Brush_MemorySize( b );
-}
+	}
 	return( size );
 }
 
@@ -438,7 +434,7 @@ void ParseEpair(idDict *dict) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool EntityHasModel(entity_t *ent) {
+bool EntityHasModel(const entity_t *ent) {
 	if (ent) {
 		const char	*model = ValueForKey(ent, "model");
 		const char	*name = ValueForKey(ent, "name");
@@ -862,8 +858,8 @@ void VectorMidpoint(idVec3 va, idVec3 vb, idVec3 &out) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool IsBrushSelected(brush_t *bSel) {
-	for (brush_t * b = selected_brushes.next; b != NULL && b != &selected_brushes; b = b->next) {
+bool IsBrushSelected(const brush_t *bSel) {
+	for (const brush_t * b = selected_brushes.next; b != NULL && b != &selected_brushes; b = b->next) {
 		if (b == bSel) {
 			return true;
 		}
@@ -877,53 +873,52 @@ bool IsBrushSelected(brush_t *bSel) {
 //    Entity_WriteSelected
 // =======================================================================================================================
 //
-void Entity_WriteSelected(entity_t *e, FILE *f) {
-	brush_t *b;
-	idVec3	origin;
-	char	text[128];
-	int		count;
+void Entity_WriteSelected(entity_t *entity, FILE *file) {
+	const brush_t *b;		
 
-	for (b = e->brushes.onext; b != &e->brushes; b = b->onext) {
+	for (b = entity->brushes.onext; b != &entity->brushes; b = b->onext) {
 		if (IsBrushSelected(b)) {
 			break;	// got one
 		}
 	}
 
-	if (b == &e->brushes) {
+	if (b == &entity->brushes) {
 		return;		// nothing selected
 	}
 
 	// if fixedsize, calculate a new origin based on the current brush position
-	if (e->eclass->fixedsize || EntityHasModel(e)) {
-		if (!GetVectorForKey(e, "origin", origin)) {
-			VectorSubtract(e->brushes.onext->mins, e->eclass->mins, origin);
+	if (entity->eclass->fixedsize || EntityHasModel(entity)) {
+		idVec3	origin;
+
+		if (!GetVectorForKey(entity, "origin", origin)) {
+			char text[128];	
+			VectorSubtract(entity->brushes.onext->mins, entity->eclass->mins, origin);
 			sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
-			SetKeyValue(e, "origin", text);
+			SetKeyValue(entity, "origin", text);
 		}
 	}
 
-	fprintf(f, "{\n");
-	
-	count = e->epairs.GetNumKeyVals();
-	for (int j = 0; j < count; j++) {
-		fprintf(f, "\"%s\" \"%s\"\n", e->epairs.GetKeyVal(j)->GetKey().c_str(), e->epairs.GetKeyVal(j)->GetValue().c_str());
+	fprintf(file, "{\n");	
+
+	for (int j = 0; j < entity->epairs.GetNumKeyVals(); j++) {
+		fprintf(file, "\"%s\" \"%s\"\n", entity->epairs.GetKeyVal(j)->GetKey().c_str(), entity->epairs.GetKeyVal(j)->GetValue().c_str());
 	}
 
-	if (!EntityHasModel(e)) {
-		count = 0;
-		for (b = e->brushes.onext; b != &e->brushes; b = b->onext) {
-			if (e->eclass->fixedsize && !b->entityModel) {
+	if (!EntityHasModel(entity)) {
+		int count = 0;
+		for (brush_t* b = entity->brushes.onext; b != &entity->brushes; b = b->onext) {
+			if (entity->eclass->fixedsize && !b->entityModel) {
 				continue;
 			}
 			if (IsBrushSelected(b)) {
-				fprintf(f, "// brush %i\n", count);
+				fprintf(file, "// brush %i\n", count);
 				count++;
-				Brush_Write( b, f, e->origin, ( g_PrefsDlg.m_bNewMapFormat != FALSE ) );
+				Brush_Write( b, file, entity->origin, ( g_PrefsDlg.m_bNewMapFormat != FALSE ) );
 			}
 		}
 	}
 
-	fprintf(f, "}\n");
+	fprintf(file, "}\n");
 }
 
 //

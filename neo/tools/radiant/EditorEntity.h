@@ -31,8 +31,8 @@ eclass_t *	Eclass_ForName( const char *name, bool has_brushes );
 
 //TODO(johl): rename to 'EditorEntity', change from struct to class, add all
 //            those Entity_* functions as proper member functions
-typedef struct entity_s {
-	struct entity_s	*prev, *next;
+struct entity_t {
+	entity_t	*prev, *next;
 	brush_t		brushes;					// head/tail of list
 	int			undoId, redoId, entityId;	// used for undo/redo
 	idVec3		origin;
@@ -46,7 +46,7 @@ typedef struct entity_s {
 	idMat3		lightRotation;		// ''
 	bool		trackLightOrigin;	
 	idCurve<idVec3> *curve;
-} entity_t;
+};
 
 void		ParseEpair(idDict *dict);
 const char *ValueForKey(const entity_t *ent, const char *key);
@@ -69,7 +69,7 @@ void		Entity_UpdateCurveData( entity_t *e );
 void		Entity_SetCurveData( entity_t *e );
 void		Entity_Free (entity_t *e);
 void		Entity_FreeEpairs(entity_t *e);
-int			Entity_MemorySize(entity_t *e);
+int			Entity_MemorySize(const entity_t *e);
 entity_t *	Entity_Parse (bool onlypairs, brush_t* pList = NULL);
 void		Entity_WriteSelected(entity_t *e, FILE *f);
 void		Entity_WriteSelected(entity_t *e, CMemFile*);
@@ -77,7 +77,7 @@ entity_t *	Entity_Create (eclass_t *c, bool forceFixed = false);
 entity_t *	Entity_Clone (entity_t *e);
 void		Entity_AddToList(entity_t *e, entity_t *list);
 void		Entity_RemoveFromList(entity_t *e);
-bool		EntityHasModel(entity_t *ent);
+bool		EntityHasModel(const entity_t *ent);
 
 void		Entity_LinkBrush (entity_t *e, brush_t *b);
 void		Entity_UnlinkBrush (brush_t *b);
@@ -89,4 +89,4 @@ void		Entity_SetName(entity_t *e, const char *name);
 //Timo : used for parsing epairs in brush primitive
 void		Entity_Name(entity_t *e, bool force);
 
-bool		IsBrushSelected(brush_t* bSel);
+bool		IsBrushSelected(const brush_t* bSel);

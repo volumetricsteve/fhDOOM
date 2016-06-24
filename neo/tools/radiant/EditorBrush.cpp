@@ -2344,11 +2344,11 @@ Face_MemorySize
   returns the size in memory of the face
 ================
 */
-int Face_MemorySize(face_t *f) {
+int Face_MemorySize(const face_t *face) {
 	int size = 0;
 
-	if ( f->face_winding ) {
-		size += sizeof( idWinding ) + f->face_winding->GetNumPoints() * sizeof( (f->face_winding)[0] );
+	if ( face->face_winding ) {
+		size += sizeof( idWinding ) + face->face_winding->GetNumPoints() * sizeof( (face->face_winding)[0] );
 	}
 	size += sizeof( face_t );
 	return size;
@@ -2361,18 +2361,17 @@ Brush_MemorySize
   returns the size in memory of the brush
 ================
 */
-int Brush_MemorySize( brush_t *b ) {
-	face_t	*f;
-	int		size = 0;
-	if ( b->pPatch ) {
-		size += Patch_MemorySize( b->pPatch );
+int Brush_MemorySize( const brush_t *brush ) {	
+	int size = 0;
+	if ( brush->pPatch ) {
+		size += Patch_MemorySize( brush->pPatch );
 	}
 
-	for ( f = b->brush_faces; f; f = f->next ) {
-		size += Face_MemorySize(f);
+	for ( const face_t* face = brush->brush_faces; face; face = face->next ) {
+		size += Face_MemorySize(face);
 	}
 
-	size += sizeof( brush_t ) + b->epairs.Size();
+	size += sizeof( brush_t ) + brush->epairs.Size();
 	return size;
 }
 
@@ -4393,6 +4392,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 
 		if ( g_PrefsDlg.m_bNewLightDraw && (b->owner->eclass->nShowFlags & ECLASS_LIGHT) && !(b->modelHandle || b->entityModel) ) {
  			DrawLight( b, bSelected );
+			common->Printf("draw light\n");
 			return;
 		}
 
