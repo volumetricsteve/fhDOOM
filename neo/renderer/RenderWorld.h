@@ -41,7 +41,7 @@ If you have questions concerning this license or the applicable additional terms
 #define	PROC_FILE_ID				"mapProcFile003"
 
 #define OCL_FILE_EXT				"ocl"
-#define	OCL_FILE_ID					"mapOclFile002"
+#define	OCL_FILE_ID					"mapOclFile003"
 
 // shader parms
 const int MAX_GLOBAL_SHADER_PARMS	= 12;
@@ -206,7 +206,7 @@ typedef struct renderLight_s {
 	// for the light against all the _area* models in the map.  The renderer will
 	// ignore this value if the light has been moved after initial creation
 	idRenderModel *			prelightModel;
-	idRenderModel*          occlusionModel;
+	idRenderModel*          occlusionModel[6];
 
 	// muzzle flash lights will not cast shadows from player and weapon world models
 	int						lightId;

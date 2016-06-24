@@ -430,8 +430,11 @@ void idRenderWorldLocal::UpdateLightDef( qhandle_t lightHandle, const renderLigh
 	}
 
 	if ( light->lightHasMoved ) {
-		light->parms.prelightModel = NULL;
-		light->parms.occlusionModel = NULL;
+		light->parms.prelightModel = nullptr;
+
+		for(int i=0; i<6; ++i) {
+			light->parms.occlusionModel[i] = nullptr;
+		}
 	}
 
 	if (!justUpdate) {

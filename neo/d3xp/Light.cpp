@@ -275,8 +275,10 @@ void idLight::Restore( idRestoreGame *savefile ) {
 			gameLocal.Warning( "idLight::Restore: prelightModel '_prelight_%s' not found", name.c_str() );
 		}
 	}
-
-	renderLight.occlusionModel = renderModelManager->CheckModel( va( "_occluder_%s", name.c_str() ) );
+	
+	for (int i = 0; i < 6; ++i) {
+		renderLight.occlusionModel[i] = renderModelManager->CheckModel( va( "_occluder%d_%s", i, name.c_str() ) );
+	}
 
 	savefile->ReadVec3( localLightOrigin );
 	savefile->ReadMat3( localLightAxis );
@@ -350,8 +352,11 @@ void idLight::Spawn( void ) {
 	renderLight.prelightModel = 0;
 	if ( name[ 0 ] ) {
 		// this will return 0 if not found
-		renderLight.prelightModel = renderModelManager->CheckModel( va( "_prelight_%s", name.c_str() ) );
-		renderLight.occlusionModel = renderModelManager->CheckModel( va( "_occluder_%s", name.c_str() ) );
+		renderLight.prelightModel = renderModelManager->CheckModel( va( "_prelight_%s", name.c_str() ) );		
+
+		for (int i = 0; i < 6; ++i) {
+			renderLight.occlusionModel[i] = renderModelManager->CheckModel( va( "_occluder%d_%s", i, name.c_str() ) );
+		}
 	}
 
 	spawnArgs.GetBool( "start_off", "0", start_off );

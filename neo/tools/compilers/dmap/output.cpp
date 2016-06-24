@@ -760,51 +760,60 @@ void WriteOclFile( void ) {
 	for (int i = 0; i < dmapGlobals.mapLights.Num(); i++) {
 		mapLight_t	*light = dmapGlobals.mapLights[i];
 
-		trilist.Clear();	
-		matlist.Clear();
+		int sides = 6;
+		if(light->def.parms.parallel || !light->def.parms.pointLight) {
+			sides = 1;
+		}		
 
-		for(int j=0; j<128; ++j) {
-			if(light->occluders[j].tris && light->occluders[j].tris->numVerts > 0) {
-				trilist.Append(light->occluders[j].tris);
-				matlist.Append(light->occluders[j].material);
+		for(int side = 0; side < sides; ++side) {
+			idList<mapSurface_t>& occluders = light->occluders[side];
+
+			trilist.Clear();
+			matlist.Clear();
+
+			for (int j = 0; j<occluders.Num(); ++j) {
+				if (occluders[j].tris && occluders[j].tris->numVerts > 0) {
+					trilist.Append( occluders[j].tris );
+					matlist.Append( occluders[j].material );
+				}
 			}
-		}
 
-		if(trilist.Num() <= 0)
-			continue;
+			if (trilist.Num() <= 0)
+				continue;
 
-		lights += 1;
-		oclFile->WriteFloatString( "occluder { /* name = */ \"_occluder_%s\" /* numSurfaces = */ %i \n\n", light->name, trilist.Num() );
+			lights += 1;
+			oclFile->WriteFloatString( "occluder { /* name = */ \"_occluder%d_%s\" /* numSurfaces = */ %i \n\n", side, light->name, trilist.Num() );
 
-		for(int j=0; j<trilist.Num(); ++j) {
-			const srfTriangles_t* tris = trilist[j];
+			for (int j = 0; j < trilist.Num(); ++j) {
+				const srfTriangles_t* tris = trilist[j];
 
-			surfaces += 1;
-			vertices += tris->numVerts;
-			oclFile->WriteFloatString( "/* surface %d */ { \"%s\" ", j, matlist[j]->GetName());
+				surfaces += 1;
+				vertices += tris->numVerts;
+				oclFile->WriteFloatString( "/* surface %d */ { \"%s\" ", j, matlist[j]->GetName() );
 
-			WriteOccluderTriangles( oclFile, tris, matlist[j]->Coverage() != MC_PERFORATED );		
+				WriteOccluderTriangles( oclFile, tris, matlist[j]->Coverage() != MC_PERFORATED );
+
+				oclFile->WriteFloatString( "}\n\n" );
+			}
+
+			if (dmapGlobals.occluders2obj) {
+				idStr objPath;
+				sprintf( objPath, "%s/occluder%d_%s.obj", dmapGlobals.mapFileBase, side, light->name );
+				idFile* objFile = fileSystem->OpenFileWrite( objPath, "fs_devpath" );
+				Tris_ToOBJ( &trilist, &matlist, objFile, nullptr );
+
+				fileSystem->CloseFile( objFile );
+			}
 
 			oclFile->WriteFloatString( "}\n\n" );
-		}		
 
-		if(dmapGlobals.occluders2obj) {
-			idStr objPath;
-			sprintf( objPath, "%s/%s.obj", dmapGlobals.mapFileBase, light->name );
-			idFile* objFile = fileSystem->OpenFileWrite( objPath, "fs_devpath" );
-			Tris_ToOBJ( &trilist, &matlist, objFile, nullptr );
-
-			fileSystem->CloseFile( objFile );
-		}
-
-		oclFile->WriteFloatString( "}\n\n" );
-
-		for (int j = 0; j < 128; ++j) {
-			if (light->occluders[j].tris) {
-				R_FreeStaticTriSurf( light->occluders[j].tris );
-				light->occluders[j].tris = nullptr;
+			for (int j = 0; j < trilist.Num(); ++j) {
+				if (occluders[j].tris) {
+					R_FreeStaticTriSurf( occluders[j].tris );
+					occluders[j].tris = nullptr;
+				}
 			}
-		}		
+		}				
 	}
 
 	fileSystem->CloseFile( oclFile );

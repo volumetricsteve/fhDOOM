@@ -187,7 +187,7 @@ typedef struct {
 	char		name[MAX_QPATH];		// for naming the shadow volume surface and interactions
 	srfTriangles_t* shadowTris;
 
-	mapSurface_t occluders[128];
+	idList<mapSurface_t> occluders[6];
 } mapLight_t;
 
 #define	MAX_GROUP_LIGHTS	16

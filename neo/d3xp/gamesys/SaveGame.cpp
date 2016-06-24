@@ -1356,7 +1356,10 @@ void idRestoreGame::ReadRenderLight( renderLight_t &renderLight ) {
 	// only idLight has a prelightModel and it's always based on the entityname, so we'll restore it there
 	// ReadModel( renderLight.prelightModel );
 	renderLight.prelightModel = NULL;
-	renderLight.occlusionModel = NULL;
+
+	for( int i = 0; i < 6; ++i ) {
+		renderLight.occlusionModel[i] = nullptr;
+	}
 
 	ReadInt( renderLight.lightId );
 

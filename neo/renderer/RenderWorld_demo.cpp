@@ -497,7 +497,10 @@ void	idRenderWorldLocal::ReadRenderLight( ) {
 		session->readDemo->ReadFloat( light.shaderParms[i] );
 	session->readDemo->ReadInt( (int&)light.referenceSound );
 
-	light.occlusionModel = nullptr;
+	for (int i = 0; i < 6; ++i) {
+		light.occlusionModel[i] = nullptr;
+	}
+	
 	light.shadowMode = shadowMode_t::Default;
 
 	if ( light.prelightModel ) {
@@ -507,7 +510,9 @@ void	idRenderWorldLocal::ReadRenderLight( ) {
 
 		//"_prelight_light_xyz"
 		if(name && strlen(name) > 10) {
-			light.occlusionModel = renderModelManager->CheckModel( va( "_occluder_%s", &name[10] ) );
+			for(int i=0; i<6; ++i) {
+				light.occlusionModel[i] = renderModelManager->CheckModel( va( "_occluder%d_%s", i, &name[10] ) );
+			}			
 		}		
 	}
 	if ( light.shader ) {

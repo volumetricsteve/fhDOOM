@@ -206,9 +206,9 @@ static bool R_Cull(const idVec3* corners, const shadowMapFrustum_t& frustum) {
 }
 
 
-static void RB_CreateProjectedProjectionMatrix( const idRenderLightLocal* light, float* m )
+static void RB_CreateProjectedProjectionMatrix( const renderLight_t& lightParms, float* m )
 {
-	auto parms = light->parms;
+	auto parms = lightParms;
 
 	if (parms.start.LengthSqr() < 0.0001f)
 		parms.start = parms.target.Normalized() * 8.0f;
@@ -331,6 +331,8 @@ but frustrum for shadow maps need to bet setup slightly differently if the cente
 of the light is not at (0,0,0).
 ===================
 */
+
+
 void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 	if (light->parms.pointLight || light->parms.parallel) {
 		static int	faceCorners[6][4] = {
@@ -533,7 +535,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 		auto viewMatrix_tmp = fhRenderMatrix::CreateLookAtMatrix( flippedOrigin, flippedTarget, flippedUp );
 		frust->viewMatrix = viewMatrix_tmp * fhRenderMatrix::FlipMatrix();
 		
-		RB_CreateProjectedProjectionMatrix( light, frust->projectionMatrix.ToFloatPtr() );
+		RB_CreateProjectedProjectionMatrix( light->parms, frust->projectionMatrix.ToFloatPtr() );
 
 		frust->viewProjectionMatrix = frust->projectionMatrix * frust->viewMatrix;
 		frust->nearPlaneDistance = light->parms.start.Length();
@@ -569,11 +571,19 @@ public:
 		if(vlight->lightDef->parms.occlusionModel && !vlight->lightDef->lightHasMoved && r_smUseStaticOcclusion.GetBool()) {
 
 			if(!r_smSkipStaticOcclusion.GetBool()) {
-				int numSurfaces = vlight->lightDef->parms.occlusionModel->NumSurfaces();
-				for( int i = 0; i < numSurfaces; ++i ) {
-					auto surface = vlight->lightDef->parms.occlusionModel->Surface(i);				
-					AddSurfaceInteraction(&dummy, surface->geometry, surface->shader, ~0);
-				}
+				for( int j = 0; j < 6; ++j ) {
+					const idRenderModel* model = vlight->lightDef->parms.occlusionModel[j];
+
+					if(!model) {
+						continue;
+					}
+
+					int numSurfaces = model->NumSurfaces();
+					for (int i = 0; i < numSurfaces; ++i) {
+						auto surface = model->Surface( i );
+						AddSurfaceInteraction( &dummy, surface->geometry, surface->shader, (1 << j) );
+					}
+				}				
 			}
 
 			staticOcclusionGeometryRendered = true;
