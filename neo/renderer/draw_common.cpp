@@ -188,72 +188,6 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 	}
 }
 
-/*
-=====================
-RB_STD_DrawShaderPasses
-
-Draw non-light dependent passes
-=====================
-*/
-int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs ) {
-
-	// only obey skipAmbient if we are rendering a view
-	if ( backEnd.viewDef->viewEntitys && r_skipAmbient.GetBool() ) {
-		return numDrawSurfs;
-	}
-
-	RB_LogComment( "---------- RB_STD_DrawShaderPasses ----------\n" );  
-
-	// if we are about to draw the first surface that needs
-	// the rendering in a texture, copy it over
-	if ( drawSurfs[0]->material->GetSort() >= SS_POST_PROCESS ) {
-		if ( r_skipPostProcess.GetBool() ) {
-			return 0;
-		}
-
-		// only dump if in a 3d view
-		if ( backEnd.viewDef->viewEntitys ) {
-			globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
-				backEnd.viewDef->viewport.y1,  backEnd.viewDef->viewport.x2 -  backEnd.viewDef->viewport.x1 + 1,
-				backEnd.viewDef->viewport.y2 -  backEnd.viewDef->viewport.y1 + 1, true );
-		}
-		backEnd.currentRenderCopied = true;
-	}
-
-	// we don't use RB_RenderDrawSurfListWithFunction()
-	// because we want to defer the matrix load because many
-	// surfaces won't draw any ambient passes
-	backEnd.currentSpace = NULL;
-	int i = 0;
-	for (; i < numDrawSurfs ; i++ ) {
-		if ( drawSurfs[i]->material->SuppressInSubview() ) {
-			continue;
-		}
-
-		if ( backEnd.viewDef->isXraySubview && drawSurfs[i]->space->entityDef ) {
-			if ( drawSurfs[i]->space->entityDef->parms.xrayIndex != 2 ) {
-				continue;
-			}
-		}
-
-		// we need to draw the post process shaders after we have drawn the fog lights
-		if ( drawSurfs[i]->material->GetSort() >= SS_POST_PROCESS
-			&& !backEnd.currentRenderCopied ) {
-			break;
-		}
-    
-		RB_STD_T_RenderShaderPasses( drawSurfs[i] );   
-
-		backEnd.currentSpace = drawSurfs[i]->space;
-	}  
-	backEnd.currentSpace = NULL;
-	RB_LeaveDepthHack();
-	GL_Cull( CT_FRONT_SIDED );
-
-	return i;
-}
-
-
 //========================================================================
 
 
@@ -411,19 +345,7 @@ void	RB_STD_DrawView( void ) {
 	// uplight the entire screen to crutch up not having better blending range
 	RB_STD_LightScale();  
 
-	if(!r_renderList.GetBool()) {
-		// now draw any non-light dependent shading passes
-		int	processed = RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );
-
-		// fob and blend lights
-		RB_STD_FogAllLights();
-
-		// now draw any post-processing effects using _currentRender
-		if (processed < numDrawSurfs) {
-			RB_STD_DrawShaderPasses( drawSurfs + processed, numDrawSurfs - processed );
-		}
-	}
-	else {
+	{
 		fhTimeElapsed timeElapsed(&backEnd.stats.groups[backEndGroup::NonInteraction].time);
 		backEnd.stats.groups[backEndGroup::NonInteraction].passes += 1;
 
@@ -441,8 +363,7 @@ void	RB_STD_DrawView( void ) {
 			stageRenderlist.Clear();
 			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist, INT_MAX );
 			RB_GLSL_SubmitStageRenderList(stageRenderlist);
-		}
-	}	
-	
+		}	
+	}
 	RB_RenderDebugTools( drawSurfs, numDrawSurfs ); 
 }
