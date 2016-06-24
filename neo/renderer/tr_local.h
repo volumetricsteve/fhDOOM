@@ -1795,8 +1795,7 @@ TR_SHAODWMAPPING
 */
 
 void R_MakeShadowMapFrustums( idRenderLightLocal *def );
-void RB_RenderShadowMaps(viewLight_t* light);
-bool RB_RenderShadowMaps2(viewLight_t* light);
+bool RB_RenderShadowMaps(viewLight_t* light);
 void RB_FreeAllShadowMaps();
 
 //=============================================

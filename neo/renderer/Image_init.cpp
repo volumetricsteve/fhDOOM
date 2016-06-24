@@ -1933,10 +1933,7 @@ void idImageManager::Init() {
 	jitterImage = ImageFromFunction("_jitter", R_JitterImage );
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
-	shadowmapFramebuffer = new fhFramebuffer( 1024 * 3, 1024 * 2, nullptr, shadowmapImage );	
-
-	shadowmapAtlasImage = ImageFromFunction( "_shadowmapAtlasImage", R_Depth );
-	shadowmapAtlasFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, shadowmapAtlasImage );
+	shadowmapFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, shadowmapImage );
 
 	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
 

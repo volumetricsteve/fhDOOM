@@ -12,7 +12,6 @@ idCVar r_shading("r_shading", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, 
 idCVar r_specularExp("r_specularExp", "10", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "exponent used for specularity");
 idCVar r_specularScale("r_specularScale", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "scale specularity globally for all surfaces");
 idCVar r_renderList("r_renderlist", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "use render list");
-idCVar r_smAtlasSize("r_smAtlasSize", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "size of shadow map atlas: 0=No Atlas, 1=4K");
 
 /*
 =====================
@@ -1288,10 +1287,10 @@ static idList<viewLight_t*> batch;
 
 /*
 ==================
-RB_GLSL_DrawBatchedInteractions
+RB_GLSL_DrawInteractions
 ==================
 */
-static void RB_GLSL_DrawBatchedInteractions( void ) {
+void RB_GLSL_DrawInteractions( void ) {
 
 	InteractionList interactionList;
 
@@ -1333,9 +1332,9 @@ static void RB_GLSL_DrawBatchedInteractions( void ) {
 			glEnable( GL_DEPTH_TEST );
 
 			globalImages->BindNull( 6 );
-			globalImages->shadowmapAtlasFramebuffer->Bind();
-			glViewport( 0, 0, globalImages->shadowmapAtlasFramebuffer->GetWidth(), globalImages->shadowmapAtlasFramebuffer->GetHeight() );
-			glScissor( 0, 0, globalImages->shadowmapAtlasFramebuffer->GetWidth(), globalImages->shadowmapAtlasFramebuffer->GetHeight() );
+			globalImages->shadowmapFramebuffer->Bind();
+			glViewport( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+			glScissor( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
 			glClear( GL_DEPTH_BUFFER_BIT );
 
 			for(int lod = 0; lod < 3; ++lod) {
@@ -1344,7 +1343,7 @@ static void RB_GLSL_DrawBatchedInteractions( void ) {
 				while (lights.Num() > 0) {
 					backEnd.vLight = lights.Last();
 
-					if (RB_RenderShadowMaps2(backEnd.vLight)) {	
+					if (RB_RenderShadowMaps(backEnd.vLight)) {	
 						//shadow map was rendered successfully, so add the light to the next batch
 						batch.Append( backEnd.vLight );			
 						lights.RemoveLast();
@@ -1356,7 +1355,7 @@ static void RB_GLSL_DrawBatchedInteractions( void ) {
 			}
 
 			globalImages->defaultFramebuffer->Bind();
-			globalImages->shadowmapAtlasImage->Bind( 6 );
+			globalImages->shadowmapImage->Bind( 6 );
 			globalImages->jitterImage->Bind( 7 );
 		}
 
@@ -1440,113 +1439,3 @@ static void RB_GLSL_DrawBatchedInteractions( void ) {
 
 	glStencilFunc( GL_ALWAYS, 128, 255 );
 }
-
-
-/*
-==================
-RB_GLSL_DrawInteractions
-==================
-*/
-void RB_GLSL_DrawInteractions(void) { 
-	if(r_smAtlasSize.GetInteger() > 0) {
-		RB_GLSL_DrawBatchedInteractions();
-		return;
-	}
-
-
-  InteractionList interactionList;
-
-  //
-  // for each light, perform adding and shadowing
-  //
-  for (viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
-    backEnd.vLight = vLight;
-
-    // do fogging later
-    if (vLight->lightShader->IsFogLight()) {
-		continue;
-    }
-
-    if (vLight->lightShader->IsBlendLight()) {
-		continue;
-    }
-
-    if (!vLight->localInteractions && !vLight->globalInteractions && !vLight->translucentInteractions) {
-		continue;
-    }	
-
-	if(vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
-		RB_RenderShadowMaps(vLight);
-
-	}
-
-	backEnd.stats.groups[backEndGroup::Interaction].passes += 1;
-	fhTimeElapsed timeElapsed(&backEnd.stats.groups[backEndGroup::Interaction].time);
-
-    const idMaterial* lightShader = vLight->lightShader;
-
-
-    // clear the stencil buffer if needed
-    if (vLight->globalShadows || vLight->localShadows) {
-      backEnd.currentScissor = vLight->scissorRect;
-      if (r_useScissor.GetBool()) {
-        glScissor(backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
-          backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
-          backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
-          backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1);
-      }
-      glClear(GL_STENCIL_BUFFER_BIT);
-    }
-    else {
-      // no shadows, so no need to read or write the stencil buffer
-      // we might in theory want to use GL_ALWAYS instead of disabling
-      // completely, to satisfy the invarience rules
-      glStencilFunc(GL_ALWAYS, 128, 255);
-    }
-
-	
-	if(r_renderList.GetBool()) {
-		RB_GLSL_StencilShadowPass( vLight->globalShadows );
-		interactionList.Clear();
-		interactionList.AddDrawSurfacesOnLight( vLight->localInteractions );
-		interactionList.Submit();
-				
-		RB_GLSL_StencilShadowPass( vLight->localShadows );
-		interactionList.Clear();
-		interactionList.AddDrawSurfacesOnLight( vLight->globalInteractions );
-		interactionList.Submit();
-	}
-	else {
-		RB_GLSL_StencilShadowPass( vLight->globalShadows );
-		RB_GLSL_CreateDrawInteractions( vLight->localInteractions );
-		RB_GLSL_StencilShadowPass( vLight->localShadows );
-		RB_GLSL_CreateDrawInteractions( vLight->globalInteractions );
-	}	
-	
-    // translucent surfaces never get stencil shadowed
-    if (r_skipTranslucent.GetBool()) {
-      continue;
-    }
-
-    glStencilFunc(GL_ALWAYS, 128, 255);
-
-    backEnd.depthFunc = GLS_DEPTHFUNC_LESS;
-
-	if(r_renderList.GetBool()) {
-		interactionList.Clear();
-		interactionList.AddDrawSurfacesOnLight( vLight->translucentInteractions );
-		interactionList.Submit();
-	}
-	else {
-		RB_GLSL_CreateDrawInteractions(vLight->translucentInteractions);
-	}
-
-    backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
-  }
-
-  // disable stencil shadow test
-  glStencilFunc(GL_ALWAYS, 128, 255);
-}
-
-
-
