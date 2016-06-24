@@ -1215,7 +1215,7 @@ bool RB_RenderShadowMaps2( viewLight_t* vLight ) {
 		glViewport( offsetX, offsetY, width, height );
 		glScissor( offsetX, offsetY, width, height );
 
-		renderlist.Submit( vLight->viewMatrices[side].ToFloatPtr(), vLight->projectionMatrices[side].ToFloatPtr(), side, 0 );
+		renderlist.Submit( vLight->viewMatrices[side].ToFloatPtr(), vLight->projectionMatrices[side].ToFloatPtr(), side, lod );
 		backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
 	}
 
