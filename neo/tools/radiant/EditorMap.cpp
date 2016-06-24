@@ -414,7 +414,6 @@ entity_t *EntityFromMapEntity(idMapEntity *mapent, CWaitDlg *dlg) {
 	return ent;
 }
 
-extern entity_t *Entity_PostParse(entity_t *ent, brush_t *pList);
  /*
  =======================================================================================================================
     Map_LoadFile
@@ -472,10 +471,10 @@ void Map_LoadFile(const char *filename) {
 				}
 				if (classname == "worldspawn") {
 					world_entity = EntityFromMapEntity(mapent, &dlg);
-					Entity_PostParse(world_entity, &active_brushes);
+					world_entity->PostParse(&active_brushes);
 				} else {
 					ent = EntityFromMapEntity(mapent, &dlg);
-					Entity_PostParse(ent, &active_brushes);
+					ent->PostParse(&active_brushes);
 					Entity_Name(ent, true);
 					// add the entity to the end of the entity list
 					ent->next = &entities;

@@ -404,7 +404,7 @@ void CEntityDlg::SetKeyValPairs( bool updateAnims ) {
 	}
 }
 
-void CEntityDlg::UpdateEntitySel(eclass_t *ent) {
+void CEntityDlg::UpdateEntitySel(const eclass_t* ent) {
 	assert ( ent );
 	assert ( ent->name );
 	int index = comboClass.FindString(-1, ent->name);

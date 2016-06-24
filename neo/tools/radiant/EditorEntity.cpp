@@ -524,7 +524,7 @@ void entity_t::SetCurveData() {
 
 }
 
-entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
+void entity_t::PostParse(brush_t *pList) {
 	bool		has_brushes;
 	eclass_t	*e;
 	brush_t		*b;
@@ -533,25 +533,24 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 
 	zero.Zero();
 
-	assert(ent);
-	ent->SetCurveData();
+	SetCurveData();
 
-	if (ent->brushes.onext == &ent->brushes) {
+	if (brushes.onext == &brushes) {
 		has_brushes = false;
 	}
 	else {
 		has_brushes = true;
 	}
 
-	bool needsOrigin = !GetVectorForKey(ent, "origin", ent->origin);
-	const char	*pModel = ValueForKey(ent, "model");
+	bool needsOrigin = !GetVectorForKey(this, "origin", origin);
+	const char	*pModel = ValueForKey(this, "model");
 
-	const char *cp = ValueForKey(ent, "classname");
+	const char *cp = ValueForKey(this, "classname");
 
 	if (strlen(cp)) {
 		e = Eclass_ForName(cp, has_brushes);
 	} else {
-		const char *cp2 = ValueForKey(ent, "name");
+		const char *cp2 = ValueForKey(this, "name");
 		if (strlen(cp2)) {
 			char buff[1024];
 			strcpy(buff, cp2);
@@ -561,7 +560,7 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 				len--;
 			}
 			e = Eclass_ForName(buff, has_brushes);
-			SetKeyValue(ent, "classname", buff, false);
+			SetKeyValue(this, "classname", buff, false);
 		} else {
 			e = Eclass_ForName("", has_brushes);
 		}
@@ -573,33 +572,33 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 		e->entityModel = gameEdit->ANIM_GetModelFromEntityDef( &e->defArgs );
 	}
 	
-	ent->eclass = e;
+	eclass = e;
 
-	bool hasModel = ent->HasModel();
+	bool hasModel = HasModel();
 
 	if (hasModel) {
-		ent->eclass->defArgs.GetString("model", "", str);
+		eclass->defArgs.GetString("model", "", str);
 		if (str.Length()) {
 			hasModel = false;
-			ent->epairs.Delete("model");
+			epairs.Delete("model");
 		}
 	}
 
 	if (e->nShowFlags & ECLASS_WORLDSPAWN) {
-		ent->origin.Zero();
+		origin.Zero();
 		needsOrigin = false;
-		ent->epairs.Delete( "model" );
+		epairs.Delete( "model" );
 	} else if (e->nShowFlags & ECLASS_LIGHT) {
-		if (GetVectorForKey(ent, "light_origin", ent->lightOrigin)) {
-			GetMatrixForKey(ent, "light_rotation", ent->lightRotation);
-			ent->trackLightOrigin = true;
+		if (GetVectorForKey(this, "light_origin", lightOrigin)) {
+			GetMatrixForKey(this, "light_rotation", lightRotation);
+			trackLightOrigin = true;
 		} else if (hasModel) {
-			SetKeyValue(ent, "light_origin", ValueForKey(ent, "origin"));
-			ent->lightOrigin = ent->origin;
-			if (GetMatrixForKey(ent, "rotation", ent->lightRotation)) {
-				SetKeyValue(ent, "light_rotation", ValueForKey(ent, "rotation"));
+			SetKeyValue(this, "light_origin", ValueForKey(this, "origin"));
+			lightOrigin = origin;
+			if (GetMatrixForKey(this, "rotation", lightRotation)) {
+				SetKeyValue(this, "light_rotation", ValueForKey(this, "rotation"));
 			}
-			ent->trackLightOrigin = true;
+			trackLightOrigin = true;
 		}
 	} else if ( e->nShowFlags & ECLASS_ENV ) {
 		// need to create an origin from the bones here
@@ -607,21 +606,21 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 		idAngles ang;
 		bo.Clear();
 		bool hasBody = false;
-		const idKeyValue *arg = ent->epairs.MatchPrefix( "body ", NULL );
+		const idKeyValue *arg = epairs.MatchPrefix( "body ", NULL );
 		while ( arg ) {
 			sscanf( arg->GetValue(), "%f %f %f %f %f %f", &org.x, &org.y, &org.z, &ang.pitch, &ang.yaw, &ang.roll );
 			bo.AddPoint( org );
-			arg = ent->epairs.MatchPrefix( "body ", arg );
+			arg = epairs.MatchPrefix( "body ", arg );
 			hasBody = true;
 		}
 		if (hasBody) {
-			ent->origin = bo.GetCenter();
+			origin = bo.GetCenter();
 		}
 	}
 
 	if (e->fixedsize || hasModel) {			// fixed size entity
-		if (ent->brushes.onext != &ent->brushes) {
-			for (b = ent->brushes.onext; b != &ent->brushes; b = b->onext) {
+		if (brushes.onext != &brushes) {
+			for (b = brushes.onext; b != &brushes; b = b->onext) {
 				b->entityModel = true;
 			}
 		}
@@ -645,60 +644,60 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 					maxs[i]++;
 				}
 			}
-			VectorAdd(mins, ent->origin, mins);
-			VectorAdd(maxs, ent->origin, maxs);
+			VectorAdd(mins, origin, mins);
+			VectorAdd(maxs, origin, maxs);
 			b = Brush_Create(mins, maxs, &e->texdef);
 			b->modelHandle = modelHandle;
 
 			float		yaw = 0;
-			bool		convertAngles = GetFloatForKey(ent, "angle", &yaw);
+			bool		convertAngles = GetFloatForKey(this, "angle", &yaw);
 			extern void Brush_Rotate(brush_t *b, idMat3 matrix, idVec3 origin, bool bBuild);
 			extern void Brush_Rotate(brush_t *b, idVec3 rot, idVec3 origin, bool bBuild);
 			
 			if (convertAngles) {
 				idVec3	rot(0, 0, yaw);
-				Brush_Rotate(b, rot, ent->origin, false);
+				Brush_Rotate(b, rot, origin, false);
 			}
 
-			if (GetMatrixForKey(ent, "rotation", ent->rotation)) {
+			if (GetMatrixForKey(this, "rotation", rotation)) {
 				idBounds bo2;
-				bo2.FromTransformedBounds(bo, ent->origin, ent->rotation);
-				b->owner = ent;
+				bo2.FromTransformedBounds(bo, origin, rotation);
+				b->owner = this;
 				Brush_Resize(b, bo2[0], bo2[1]);
 			}
-			Entity_LinkBrush(ent, b);
+			Entity_LinkBrush(this, b);
 		}
 
-		if (!hasModel || (ent->eclass->nShowFlags & ECLASS_LIGHT && hasModel)) {
+		if (!hasModel || (eclass->nShowFlags & ECLASS_LIGHT && hasModel)) {
 			// create a custom brush
-			if (ent->trackLightOrigin) {
-				mins = e->mins + ent->lightOrigin;
-				maxs = e->maxs + ent->lightOrigin;
+			if (trackLightOrigin) {
+				mins = e->mins + lightOrigin;
+				maxs = e->maxs + lightOrigin;
 			} else {
-				mins = e->mins + ent->origin;
-				maxs = e->maxs + ent->origin;
+				mins = e->mins + origin;
+				maxs = e->maxs + origin;
 			}
 
 			b = Brush_Create(mins, maxs, &e->texdef);
-			GetMatrixForKey(ent, "rotation", ent->rotation);
-			Entity_LinkBrush(ent, b);
-			b->trackLightOrigin = ent->trackLightOrigin;
+			GetMatrixForKey(this, "rotation", rotation);
+			Entity_LinkBrush(this, b);
+			b->trackLightOrigin = trackLightOrigin;
 			if ( e->texdef.name == NULL ) {
 				brushprimit_texdef_t bp;
 				texdef_t td;
-				td.SetName( ent->eclass->defMaterial );
+				td.SetName( eclass->defMaterial );
 				Brush_SetTexture( b, &td, &bp, false );
 			}
 		}
 	} else {	// brush entity
-		if (ent->brushes.next == &ent->brushes) {
+		if (brushes.next == &brushes) {
 			printf("Warning: Brush entity with no brushes\n");
 		}
 
 		if (!needsOrigin) {
-			idStr cn = ValueForKey(ent, "classname");
-			idStr name = ValueForKey(ent, "name");
-			idStr model = ValueForKey(ent, "model");
+			idStr cn = ValueForKey(this, "classname");
+			idStr name = ValueForKey(this, "name");
+			idStr model = ValueForKey(this, "model");
 			if (cn.Icmp("func_static") == 0) {
 				if (name.Icmp(model) == 0) {
 					needsOrigin = true;
@@ -714,7 +713,7 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 			maxs[0] = maxs[1] = maxs[2] = -999999;
 
 			// add in the origin
-			for (b = ent->brushes.onext; b != &ent->brushes; b = b->onext) {
+			for (b = brushes.onext; b != &brushes; b = b->onext) {
 				Brush_Build(b, true, false, false);
 				for (i = 0; i < 3; i++) {
 					if (b->mins[i] < mins[i]) {
@@ -728,26 +727,26 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 			}
 
 			for (i = 0; i < 3; i++) {
-				ent->origin[i] = (mins[i] + ((maxs[i] - mins[i]) / 2));
+				origin[i] = (mins[i] + ((maxs[i] - mins[i]) / 2));
 			}
 
-			sprintf(text, "%i %i %i", (int)ent->origin[0], (int)ent->origin[1], (int)ent->origin[2]);
-			SetKeyValue(ent, "origin", text);
+			sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
+			SetKeyValue(this, "origin", text);
 		}
 
 		if (!(e->nShowFlags & ECLASS_WORLDSPAWN)) {
 			if (e->defArgs.FindKey("model") == NULL && (pModel == NULL || (pModel && strlen(pModel) == 0))) {
-				SetKeyValue(ent, "model", ValueForKey(ent, "name"));
+				SetKeyValue(this, "model", ValueForKey(this, "name"));
 			}
 		}
 		else {
-			DeleteKey(ent, "origin");
+			DeleteKey(this, "origin");
 		}
 	}
 
 	// add all the brushes to the main list
 	if (pList) {
-		for (b = ent->brushes.onext; b != &ent->brushes; b = b->onext) {
+		for (b = brushes.onext; b != &brushes; b = b->onext) {
 			b->next = pList->next;
 			pList->next->prev = b;
 			b->prev = pList;
@@ -755,10 +754,7 @@ entity_t *Entity_PostParse(entity_t *ent, brush_t *pList) {
 		}
 	}
 
-	FixFloats(&ent->epairs);
-
-	return ent;
-
+	FixFloats(&epairs);
 }
 
 /*
@@ -818,7 +814,8 @@ entity_t *Entity_Parse(bool onlypairs, brush_t *pList) {
 		return ent;
 	}
 
-	return Entity_PostParse(ent, pList);
+	ent->PostParse(pList);
+	return ent;
 }
 
 /*
@@ -1018,7 +1015,7 @@ void Entity_Name(entity_t *e, bool force) {
     are only used to find a midpoint. Otherwise, the brushes have their ownership transfered to the new entity.
  =======================================================================================================================
  */
-entity_t *Entity_Create(eclass_t *c, bool forceFixed) {
+entity_t *Entity_Create(eclass_t *entityClass, bool forceFixed) {
 	entity_t	*e;
 	brush_t		*b;
 	idVec3		mins, maxs, origin;
@@ -1036,22 +1033,22 @@ entity_t *Entity_Create(eclass_t *c, bool forceFixed) {
 	}
 
 	idStr str;
-	if (c->defArgs.GetString("model", "", str) && c->entityModel == NULL) {
-		c->entityModel = gameEdit->ANIM_GetModelFromEntityDef( &c->defArgs );
+	if (entityClass->defArgs.GetString("model", "", str) && entityClass->entityModel == NULL) {
+		entityClass->entityModel = gameEdit->ANIM_GetModelFromEntityDef( &entityClass->defArgs );
 	}
 
 	// create it
 	e = new entity_t();
 	e->brushes.onext = e->brushes.oprev = &e->brushes;
-	e->eclass = c;
-	e->epairs.Copy(c->args);
-	SetKeyValue(e, "classname", c->name);
+	e->eclass = entityClass;
+	e->epairs.Copy(entityClass->args);
+	SetKeyValue(e, "classname", entityClass->name);
 	Entity_Name(e, false);
 
 	// add the entity to the entity list
 	e->AddToList(&entities);
 
-	if (c->fixedsize) {
+	if (entityClass->fixedsize) {
 		//
 		// just use the selection for positioning b = selected_brushes.next; for (i=0 ;
 		// i<3 ; i++) { e->origin[i] = b->mins[i] - c->mins[i]; }
@@ -1060,15 +1057,15 @@ entity_t *Entity_Create(eclass_t *c, bool forceFixed) {
 		VectorCopy(e->origin, origin);
 
 		// create a custom brush
-		VectorAdd(c->mins, e->origin, mins);
-		VectorAdd(c->maxs, e->origin, maxs);
+		VectorAdd(entityClass->mins, e->origin, mins);
+		VectorAdd(entityClass->maxs, e->origin, maxs);
 
-		b = Brush_Create(mins, maxs, &c->texdef);
+		b = Brush_Create(mins, maxs, &entityClass->texdef);
 
 		Entity_LinkBrush(e, b);
 
-		if (c->defMaterial.Length()) {
-			td.SetName(c->defMaterial);
+		if (entityClass->defMaterial.Length()) {
+			td.SetName(entityClass->defMaterial);
 			Brush_SetTexture(b, &td, &bp, false);
 		}
 
@@ -1091,8 +1088,8 @@ entity_t *Entity_Create(eclass_t *c, bool forceFixed) {
 			Entity_UnlinkBrush(b);
 			Entity_LinkBrush(e, b);
 			Brush_Build(b); // so the key brush gets a name
-			if (c->defMaterial.Length()) {
-				td.SetName(c->defMaterial);
+			if (entityClass->defMaterial.Length()) {
+				td.SetName(entityClass->defMaterial);
 				Brush_SetTexture(b, &td, &bp, false);
 			}
 

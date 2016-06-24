@@ -38,8 +38,8 @@ struct entity_t {
 	idVec3		origin;
 	qhandle_t	lightDef;
 	qhandle_t	modelDef;
-	idSoundEmitter *soundEmitter;
-	eclass_t *	eclass;
+	idSoundEmitter* soundEmitter;
+	const eclass_t* eclass;
 	idDict		epairs;
 	idMat3		rotation;
 	idVec3 		lightOrigin;		// for lights that have been combined with models
@@ -66,9 +66,12 @@ struct entity_t {
 	void		RemoveFromList();
 	bool		HasModel() const;
 
+
+	void        PostParse(brush_t *pList);
 };
 
 void		ParseEpair(idDict *dict);
+
 const char *ValueForKey(const entity_t *ent, const char *key);
 int			GetNumKeys(const entity_t *ent);
 const char *GetKeyString(const entity_t *ent, int iIndex);
