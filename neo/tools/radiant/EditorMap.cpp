@@ -51,21 +51,6 @@ entity_t	*world_entity = NULL;	// "classname" "worldspawn" !
 void		AddRegionBrushes(void);
 void		RemoveRegionBrushes(void);
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void DupLists() {
-	DWORD	dw = GetTickCount();
-}
-
-/*
- * Cross map selection saving this could mess this up if you have only part of a
- * complex entity selected...
- */
-brush_t		between_brushes;
-entity_t	between_entities;
-
 bool		g_bRestoreBetween = false;
 
 /*
@@ -79,7 +64,6 @@ void Map_SaveBetween(void) {
 	}
 
 	return;
-
 }
 
 /*

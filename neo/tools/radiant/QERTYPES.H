@@ -281,7 +281,6 @@ typedef struct eclass_s
 	struct eclass_s *next;
 	idStr	name;
 	bool	fixedsize;
-	bool	unknown;		// wasn't found in source
 	idVec3	mins, maxs;
 	idVec3	color;
 	texdef_t texdef;
@@ -291,14 +290,11 @@ typedef struct eclass_s
 	idRenderModel *modelHandle;
 	idRenderModel *entityModel;
 
-	int   nFrame;
 	unsigned int nShowFlags;
 	idStr	defMaterial;
 	idDict	args;
 	idDict	defArgs;
 	idList<evar_t> vars;
-
-	HMODULE	hPlug;
 } eclass_t;
 
 extern	eclass_t	*eclass;
