@@ -410,11 +410,7 @@ int PointInMoveList( idVec3 *pf );
 
 extern bool ByeByeSurfaceDialog();
 extern void UpdateSurfaceDialog();
-extern void UpdateLightInspector();
-
-BOOL UpdateEntitySel(eclass_t *pec);	
-void SetInspectorMode(int iType);
-BOOL GetSelectAllCriteria(CString &strKey, CString &strVal);
+extern void UpdateLightInspector();	
 
 int GetCvarInt(const char *name, const int def);
 const char *GetCvarString(const char *name, const char *def);
