@@ -6,6 +6,30 @@ Version 2
 {
  brushDef3
  {
+  ( 0 0 -1 -152 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -0.5625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -0 0 1 64 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -0.5625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -0 -1 -0 88 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -0.5625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( 1 0 0 -616 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -0.5625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -0 1 0 -96 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -0.5625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+  ( -1 0 0 400 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -0.5625 ) ) "textures/base_wall/lfwall13f3" 0 0 0
+ }
+}
+// primitive 1
+{
+ brushDef3
+ {
+  ( 0 0 -1 -152 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/monster_clip" 0 0 0
+  ( -0 0 1 -96 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/monster_clip" 0 0 0
+  ( -0 -1 -0 -96 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/monster_clip" 0 0 0
+  ( 1 0 0 -400 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/monster_clip" 0 0 0
+  ( -0 1 0 -272 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/monster_clip" 0 0 0
+  ( -1 0 0 392 ) ( ( 0.03125 0 0 ) ( 0 0.03125 0 ) ) "textures/common/monster_clip" 0 0 0
+ }
+}
+// primitive 2
+{
+ brushDef3
+ {
   ( -0 -0 -1 -152 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 2.4375019073 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
   ( 0 -0 1 112 ) ( ( 0.0078125 0 -0.1875 ) ( 0 0.0078125 -2.4374980927 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
   ( 0 -1 0 -40 ) ( ( 0.0078125 -0 -2.4375 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
@@ -14,7 +38,7 @@ Version 2
   ( -1 0 0 504 ) ( ( 0.0078125 0 0.1875019073 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
  }
 }
-// primitive 1
+// primitive 3
 {
  brushDef3
  {
@@ -26,7 +50,7 @@ Version 2
   ( -1 0 0 120 ) ( ( 0.0078125 0 0.1875 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_floor/a_bluetex1a_02" 0 0 0
  }
 }
-// primitive 2
+// primitive 4
 {
  brushDef3
  {
@@ -38,7 +62,7 @@ Version 2
   ( -1 0 0 -208 ) ( ( 0.0625 0 -10.5 ) ( 0 0.0625 -9.5 ) ) "textures/common/nodraw" 0 0 0
  }
 }
-// primitive 3
+// primitive 5
 {
  brushDef3
  {
@@ -50,7 +74,7 @@ Version 2
   ( 0.0000001341 1 -0 -280.0003051758 ) ( ( 0.0078125 -0 -0.5625008941 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 4
+// primitive 6
 {
  brushDef3
  {
@@ -62,7 +86,7 @@ Version 2
   ( 0.0000001341 1 -0 -280.0003051758 ) ( ( 0.0078125 -0 -0.5625008941 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 5
+// primitive 7
 {
  brushDef3
  {
@@ -74,7 +98,7 @@ Version 2
   ( 0.0000001341 1 -0 -296.0003051758 ) ( ( 0.0078125 0 -1.0625003576 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 6
+// primitive 8
 {
  brushDef3
  {
@@ -86,7 +110,7 @@ Version 2
   ( 0.0000001341 1 -0 103.9996795654 ) ( ( 0.0078125 0 -1.0625003576 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 7
+// primitive 9
 {
  brushDef3
  {
@@ -98,7 +122,7 @@ Version 2
   ( -1 0 0 616 ) ( ( 0.0078125 0 0.1875 ) ( 0 0.0078125 -1.1875 ) ) "textures/base_wall/lfwall13f3" 0 0 0
  }
 }
-// primitive 8
+// primitive 10
 {
  brushDef3
  {
@@ -114,23 +138,37 @@ Version 2
 // entity 1
 {
 "anim" "idle"
+"classname" "monster_zsec_machinegun"
+"name" "monster_zsec_machinegun_1"
+"origin" "464 -24 -144"
+}
+// entity 2
+{
+"anim" "idle1"
+"classname" "monster_demon_imp"
+"name" "monster_demon_imp_1"
+"origin" "472 152 -144"
+}
+// entity 3
+{
+"anim" "idle"
 "classname" "marscity_marine_helmet_p90_directions_ver1"
 "name" "marscity_marine_helmet_p90_directions_ver1_1"
 "origin" "72 56 -152"
 }
-// entity 2
+// entity 4
 {
 "classname" "info_player_start"
 "name" "info_player_start_1"
 "origin" "56 88 -152"
 "angle" "180"
 }
-// entity 3
+// entity 5
 {
 "classname" "light"
 "name" "light_7"
 "origin" "72 104 -72"
-"falloff" "0.000000"
+"falloff" "0"
 "shadowType" "2"
 "shadowPolygonOffsetBias" "10.000000"
 "shadowPolygonOffsetFactor" "10.600000"
@@ -138,6 +176,26 @@ Version 2
 "parallel" "0"
 "light_radius" "300 300 300"
 "light_center" "72 0 0"
+"_color" "1 1 1"
+"shadowMode" "3"
+"shadowSoftness" "2.000000"
+"shadowBrightness" "0.200000"
+"nospecular" "0"
+"nodiffuse" "0"
+}
+// entity 6
+{
+"classname" "light"
+"name" "light_8"
+"origin" "544 88 -72"
+"falloff" "0.000000"
+"shadowType" "2"
+"shadowPolygonOffsetBias" "10.000000"
+"shadowPolygonOffsetFactor" "3.000000"
+"rotation" "-0.766044 -0.642788 0 0.642788 -0.766044 0 0 0 1"
+"parallel" "0"
+"light_radius" "300 300 300"
+"light_center" "72 0 80"
 "_color" "1 1 1"
 "shadowMode" "3"
 "shadowSoftness" "2.000000"

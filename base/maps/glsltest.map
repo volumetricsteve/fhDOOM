@@ -529,7 +529,7 @@ Version 2
 "classname" "light"
 "name" "light_8"
 "origin" "-304 -232 168"
-"falloff" "0.000000"
+"falloff" "0"
 "target" "target_setinfluence_1"
 "light_right" "-128 0 0"
 "light_up" "0 -128 0"
