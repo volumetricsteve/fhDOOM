@@ -7,6 +7,7 @@
 #include "RenderList.h"
 
 idCVar r_smObjectCulling( "r_smObjectCulling", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "cull objects/surfaces that are outside the shadow/light frustum when rendering shadow maps" );
+idCVar r_smLightSideCulling( "r_smLightSideCulling", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "cull sides of point lights against current view frustum" );
 idCVar r_smFaceCullMode( "r_smFaceCullMode", "2", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "Determines which faces should be rendered to shadow map: 0=front, 1=back, 2=front-and-back");
 idCVar r_smFov( "r_smFov", "93", CVAR_RENDERER|CVAR_FLOAT | CVAR_ARCHIVE, "fov used when rendering point light shadow maps");
 idCVar r_smFarClip( "r_smFarClip", "-1", CVAR_RENDERER|CVAR_INTEGER | CVAR_ARCHIVE, "far clip distance for rendering shadow maps: -1=infinite-z, 0=max light radius, other=fixed distance");
@@ -911,6 +912,8 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 			vLight->viewProjectionMatrices[c] = vLight->projectionMatrices[c] * vLight->viewMatrices[c];
 			vLight->width[c] = abs( r * 2 );
 			vLight->height[c] = abs( t * 2 );
+
+			vLight->culled[c] = false;
 		}
 
 		renderlist.AddInteractions( vLight, nullptr, 0 );
@@ -920,11 +923,25 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 	else if (vLight->lightDef->parms.pointLight) {
 		assert( vLight->lightDef->numShadowMapFrustums == 6 );
 
-		if(!shadowMapAllocator.Allocate( lod, 6, vLight->shadowCoords )) {
-			return false;
-		}
-
+		idVec3 viewCorners[8];
+		backEnd.viewDef->viewFrustum.ToPoints( viewCorners );
+		
 		for (int i = 0; i < 6; ++i) {
+			if(r_smLightSideCulling.GetBool()) {
+				vLight->culled[i] = R_Cull(viewCorners, vLight->lightDef->shadowMapFrustums[i]);
+			}
+			else {
+				vLight->culled[i] = false;
+			}
+
+			if(vLight->culled[i]) {
+				continue;
+			}
+
+			if (!shadowMapAllocator.Allocate( lod, 1, &vLight->shadowCoords[i] )) {
+				return false;
+			}
+
 			vLight->viewMatrices[i] = vLight->lightDef->shadowMapFrustums[i].viewMatrix;
 			vLight->projectionMatrices[i] = vLight->lightDef->shadowMapFrustums[i].projectionMatrix;
 			vLight->viewProjectionMatrices[i] = vLight->lightDef->shadowMapFrustums[i].viewProjectionMatrix;
@@ -946,13 +963,16 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 		vLight->viewMatrices[0] = vLight->lightDef->shadowMapFrustums[0].viewMatrix;
 		vLight->projectionMatrices[0] = vLight->lightDef->shadowMapFrustums[0].projectionMatrix;
 		vLight->viewProjectionMatrices[0] = vLight->lightDef->shadowMapFrustums[0].viewProjectionMatrix;
+		vLight->culled[0] = false;
 
 		renderlist.AddInteractions( vLight, &vLight->lightDef->shadowMapFrustums[0], 1 );
-
 		numShadowMaps = 1;
 	}
 
 	for (int side = 0; side < numShadowMaps; side++) {
+		if(vLight->culled[side]) {
+			continue;
+		}
 
 		const fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer;
 
@@ -967,8 +987,6 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 		renderlist.Submit( vLight->viewMatrices[side].ToFloatPtr(), vLight->projectionMatrices[side].ToFloatPtr(), side, lod );
 		backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].passes += 1;
 	}
-
-
 
 	const uint64 endTime = Sys_Microseconds();
 	backEnd.stats.groups[backEndGroup::ShadowMap0 + lod].time += static_cast<uint32>(endTime - startTime);

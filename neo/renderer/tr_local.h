@@ -371,6 +371,7 @@ typedef struct viewLight_s {
 	float                   farClip[6];
 	float                   width[6];
 	float                   height[6];
+	bool                    culled[6];
 
 	const struct drawSurf_s	*globalShadows;				// shadow everything
 	const struct drawSurf_s	*localInteractions;			// don't get local shadows
