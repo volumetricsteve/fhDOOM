@@ -497,6 +497,7 @@ void	idRenderWorldLocal::ReadRenderLight( ) {
 		session->readDemo->ReadFloat( light.shaderParms[i] );
 	session->readDemo->ReadInt( (int&)light.referenceSound );
 
+	light.smLodBias = 0;
 	light.occlusionModel = nullptr;
 	light.shadowMode = shadowMode_t::Default;
 

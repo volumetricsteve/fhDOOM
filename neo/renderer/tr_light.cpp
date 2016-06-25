@@ -395,7 +395,7 @@ static idCVar r_smScreenSizeLod2( "r_smScreenSizeLod2", "0.3", CVAR_RENDERER | C
 
 static int R_SelectShadowMapLod( const viewLight_t* vlight, const viewDef_t* view ) {
 
-	int lod = r_smLodBias.GetInteger();
+	int lod = Max(r_smLodBias.GetInteger(), vlight->lightDef->parms.smLodBias);
 
 	if(r_smUseScreenSizeLod.GetBool()) {
 		idVec3 corners[8];
