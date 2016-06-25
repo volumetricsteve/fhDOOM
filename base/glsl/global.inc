@@ -1,4 +1,5 @@
-#version 430
+#version 330
+#extension GL_ARB_shading_language_420pack: enable
 
 uniform mat4 rpModelMatrix;
 uniform mat4 rpViewMatrix;
