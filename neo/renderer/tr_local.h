@@ -157,6 +157,8 @@ typedef struct {
 	fhRenderMatrix viewMatrix;	
 	fhRenderMatrix projectionMatrix;
 	fhRenderMatrix viewProjectionMatrix;	
+
+	bool Cull(const idVec3 points[8]) const;
 } shadowMapFrustum_t;
 
 // areas have references to hold all the lights and entities in them

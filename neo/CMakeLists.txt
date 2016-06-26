@@ -376,6 +376,7 @@ SET(SOURCES
   renderer/RenderList_interaction.cpp
   renderer/RenderList_depth.cpp
   renderer/RenderList_stages.cpp
+  renderer/RenderList_shadowmap.cpp
   renderer/RenderEntity.cpp
   renderer/RenderSystem.cpp
   renderer/RenderSystem.h
@@ -415,6 +416,8 @@ SET(SOURCES
   renderer/wglext.h
   renderer/ImmediateMode.h
   renderer/ImmediateMode.cpp
+  renderer/ShadowMapAllocator.h
+  renderer/ShadowMapAllocator.cpp
 
   sound/snd_cache.cpp
   sound/snd_decoder.cpp

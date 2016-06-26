@@ -131,5 +131,15 @@ public:
 	void Submit();
 };
 
+class ShadowRenderList : public fhRenderList<drawShadow_t> {
+public:
+	ShadowRenderList();
+	void AddInteractions( viewLight_t* vlight, const shadowMapFrustum_t* shadowFrustrums, int numShadowFrustrums );
+	void Submit( const float* shadowViewMatrix, const float* shadowProjectionMatrix, int side, int lod ) const;
+private:
+	void AddSurfaceInteraction( const idRenderEntityLocal *entityDef, const srfTriangles_t *tri, const idMaterial* material, unsigned visibleSides );
+	idRenderEntityLocal dummy;
+};
+
 int  RB_GLSL_CreateStageRenderList( drawSurf_t **drawSurfs, int numDrawSurfs, StageRenderList& renderlist, int maxSort );
 void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist );
