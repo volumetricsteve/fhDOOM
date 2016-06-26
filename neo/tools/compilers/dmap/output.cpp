@@ -788,7 +788,7 @@ void WriteOclFile( void ) {
 			oclFile->WriteFloatString( "}\n\n" );
 		}		
 
-		if(dmapGlobals.occluders2obj) {
+		if(dmapGlobals.exportObj) {
 			idStr objPath;
 			sprintf( objPath, "%s/%s.obj", dmapGlobals.mapFileBase, light->name );
 			idFile* objFile = fileSystem->OpenFileWrite( objPath, "fs_devpath" );

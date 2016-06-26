@@ -330,7 +330,7 @@ typedef struct {
 	shadowOptLevel_t	shadowOptLevel;
 	bool	noShadow;			// don't create optimized shadow volumes
 
-	bool    occluders2obj;
+	bool    exportObj;
 
 	idBounds	drawBounds;
 	bool	drawflag;

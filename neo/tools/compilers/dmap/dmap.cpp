@@ -300,9 +300,9 @@ void Dmap( const idCmdArgs &args ) {
 		} else if ( !idStr::Icmp( s, "noAAS" ) ) {
 			noAAS = true;
 			common->Printf( "noAAS = true\n" );
-		} else if (!idStr::Icmp( s, "occluders2obj" )) {
-			dmapGlobals.occluders2obj = true;
-			common->Printf( "occluders2obj = true\n" );
+		} else if (!idStr::Icmp( s, "exportObj" )) {
+			dmapGlobals.exportObj = true;
+			common->Printf( "exportObj = true\n" );
 		} else if (!idStr::Icmp( s, "editorOutput" )) {
 #ifdef _WIN32
 			com_outputMsg = true;
