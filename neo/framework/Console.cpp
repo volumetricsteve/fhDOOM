@@ -296,11 +296,11 @@ float SCR_DrawBackEndStats( float y ) {
 	//PrintStats("fog lights", avg.groups[backEndGroup::FogLight], colorWhite);
 	//PrintStats("blend lights", avg.groups[backEndGroup::BlendLight], colorWhite);
 	PrintStats("          total", total, colorWhite);
-
+/*
 	sprintf( buffer, "                      total time: %6.2fms", avg.totaltime * 0.001f );
 	renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
 	ypos += lineHeight;
-
+*/
 	return ypos;
 }
 
