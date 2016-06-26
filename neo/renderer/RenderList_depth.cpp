@@ -200,6 +200,12 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 		drawdepth.surf = surf;
 		drawdepth.texture = nullptr;
 
+		bool drawSolid = false;
+
+		if (shader->Coverage() == MC_OPAQUE) {
+			drawSolid = true;
+		}
+
 		// we may have multiple alpha tested stages
 		if (shader->Coverage() == MC_PERFORATED) {
 			// if the only alpha tested stages are condition register omitted,
@@ -218,6 +224,10 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 				if (regs[pStage->conditionRegister] == 0) {
 					continue;
 				}
+
+				// if we at least tried to draw an alpha tested stage,
+				// we won't draw the opaque surface
+				didDraw = true;
 
 				// set the alpha modulate
 				drawdepth.color[3] = regs[pStage->color.registers[3]];
@@ -244,10 +254,21 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 					drawdepth.textureMatrix[0] = idVec4::identityS;
 					drawdepth.textureMatrix[1] = idVec4::identityT;
 				}
+
+				// Append drawdepth inside the loop, because some effects (eg burn-away of dead demons) 
+				// require multiple stages being rendered to the depth buffer, because those stages are 
+				// being blended/masked individually.
+				renderlist.Append( drawdepth );
+			}
+
+			if (!didDraw) {
+				drawSolid = true;
 			}
 		}
 
-		renderlist.Append( drawdepth );
+		if(drawSolid) {
+			renderlist.Append( drawdepth );
+		}
 	}
 }
 
