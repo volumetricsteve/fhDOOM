@@ -4393,7 +4393,6 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 
 		if ( g_PrefsDlg.m_bNewLightDraw && (b->owner->eclass->nShowFlags & ECLASS_LIGHT) && !(b->modelHandle || b->entityModel) ) {
  			DrawLight( b, bSelected );
-			common->Printf("draw light\n");
 			return;
 		}
 
@@ -4404,12 +4403,11 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 		if ( b->owner->eclass->nShowFlags & ECLASS_COMBATNODE ) {
 			Brush_DrawCombatNode( b, true, bSelected );
 		}
-
 	}
 
 
 	if (!(b->owner && (b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN))) {
-    g_qeglobals.pointBuffer.Add(b->owner->origin, idVec4(1,0,0,1), 4);
+		g_qeglobals.pointBuffer.Add(b->owner->origin, idVec4(1,0,0,1), 4);
 	}
 
 	if ( b->owner->eclass->entityModel ) {

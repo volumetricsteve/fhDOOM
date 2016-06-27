@@ -2016,7 +2016,7 @@ void CCamWnd::Cam_Render() {
 
 void CCamWnd::OnTimer(UINT nIDEvent) 
 {
-	if (animationMode || nIDEvent == 1) {
+	if ((renderMode && animationMode) || nIDEvent == 1) {
 		Sys_UpdateWindows(W_CAMERA);
 	}
 	if (nIDEvent == 1) {
