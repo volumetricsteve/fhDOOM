@@ -331,7 +331,7 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
   common->Printf( "succeeded\n" );
 
   if(parms.glCoreProfile) {
-    int flags = 0;//WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+    int flags = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
     int attribs[] = {
       WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
       WGL_CONTEXT_MINOR_VERSION_ARB, 3,

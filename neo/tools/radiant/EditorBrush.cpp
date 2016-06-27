@@ -3601,7 +3601,7 @@ static void FacingVectors(entity_t *e, idVec3 &forward, idVec3 &right, idVec3 &u
 Brush_DrawFacingAngle
 ================
 */
-void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle) {
+void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle, const idVec4& color ) {
 	idVec3	forward, right, up;
 	idVec3	endpoint, tip1, tip2;
 	idVec3	start = (e->brushes.onext->mins + e->brushes.onext->maxs) * 0.5f;
@@ -3619,7 +3619,7 @@ void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle) {
 	//TODO(johl): linewidth should be 2, but linewidth>1 is deprecated. WTF?
     glLineWidth(1);
     fhImmediateMode im;
-	im.Color4f(1, 1, 1, 1);	
+	im.Color4fv(color.ToFloatPtr());	
 	im.Begin(GL_LINES);
 	im.Vertex3fv(start.ToFloatPtr());
 	im.Vertex3fv(endpoint.ToFloatPtr());
@@ -4232,16 +4232,15 @@ Brush_DrawEmitter
 void Brush_DrawEmitter(const brush_t *b, bool bSelected, bool cam) {
 	if ( !( b->owner->eclass->nShowFlags & ECLASS_PARTICLE ) ) {
 		return;
-	}
-		
-	if (bSelected) {
-		glColor4f(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].x, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].y, g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES].z, .5);
-	} else {
-		glColor4f(b->owner->eclass->color.x, b->owner->eclass->color.y, b->owner->eclass->color.z, .5);
+	}	
+
+	idVec4 color = idVec4(b->owner->eclass->color, 0.5f);
+	if(bSelected) {
+		color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.5);
 	}
 
 	if ( cam ) {
-		Brush_DrawFacingAngle( b, b->owner, true );
+		Brush_DrawFacingAngle( b, b->owner, true, color );
 	}
 }
 
@@ -4384,7 +4383,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 	int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
 	if (!(g_qeglobals.d_savedinfo.exclude & EXCLUDE_ANGLES) && (b->owner->eclass->nShowFlags & ECLASS_ANGLE)) {
-		Brush_DrawFacingAngle(b, b->owner, false);
+		Brush_DrawFacingAngle(b, b->owner, false, idVec4(1,1,1,1));
 	}
 
 	if ( b->owner->eclass->fixedsize ) {
