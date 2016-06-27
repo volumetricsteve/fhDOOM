@@ -788,6 +788,8 @@ void WriteOclFile( void ) {
 			oclFile->WriteFloatString( "}\n\n" );
 		}		
 
+//FIXME(johl): Tris_ToOBJ is currently part of MFC editor code, thus not available on linux. Tris_ToOBJ could be moved into compilers?
+#ifdef WIN32
 		if(dmapGlobals.exportObj) {
 			idStr objPath;
 			sprintf( objPath, "%s/%s.obj", dmapGlobals.mapFileBase, light->name );
@@ -796,7 +798,7 @@ void WriteOclFile( void ) {
 
 			fileSystem->CloseFile( objFile );
 		}
-
+#endif
 		oclFile->WriteFloatString( "}\n\n" );
 
 		for (int j = 0; j < 128; ++j) {

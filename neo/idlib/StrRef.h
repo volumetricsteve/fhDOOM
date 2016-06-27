@@ -166,11 +166,11 @@ inline fhStrRef fhStrRef::operator++(int) {
 }
 
 inline fhStrRef fhStrRef::Left( int n ) const {
-	return fhStrRef( s, min( n, length ) );
+	return fhStrRef( s, Min( n, length ) );
 }
 
 inline fhStrRef fhStrRef::Right( int n ) const {
-	return fhStrRef( &s[length - min( n, length )], min( n, length ) );
+	return fhStrRef( &s[length - Min( n, length )], Min( n, length ) );
 }
 
 inline fhStrRef fhStrRef::Substr( int from ) const {
@@ -178,8 +178,8 @@ inline fhStrRef fhStrRef::Substr( int from ) const {
 }
 
 inline fhStrRef fhStrRef::Substr( int from, int n ) const {
-	from = min( from, length );
-	n = min( n, length - from );
+	from = Min( from, length );
+	n = Min( n, length - from );
 
 	return fhStrRef( &s[from], n );
 }

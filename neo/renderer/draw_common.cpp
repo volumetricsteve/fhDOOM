@@ -361,7 +361,7 @@ void	RB_STD_DrawView( void ) {
 		// now draw any post-processing effects using _currentRender
 		if (processed < numDrawSurfs) {
 			stageRenderlist.Clear();
-			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist, INT_MAX );
+			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist, 1000 );
 			RB_GLSL_SubmitStageRenderList(stageRenderlist);
 		}	
 	}

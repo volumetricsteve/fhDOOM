@@ -192,6 +192,7 @@ ENDIF()
 ######################## QT TOOLS #############################################
 ###############################################################################
 
+if(WIN32)
 if (NOT "${QTDIR}" STREQUAL "")
   set(CMAKE_PREFIX_PATH ${QTDIR})
   message("QTDIR from options: ${QTDIR}")
@@ -243,6 +244,7 @@ if(Qt5Widgets_FOUND)
 
 else()
   message(WARNING "Qt5 not found. Qt based tools are excluded from the build")
+endif()
 endif()
 
 ###############################################################################

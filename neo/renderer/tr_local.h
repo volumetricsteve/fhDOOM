@@ -559,6 +559,10 @@ static const int vertex_attrib_binormal = 4;
 static const int vertex_attrib_tangent = 5;
 static const int vertex_attrib_position_shadow = 6;
 
+#ifdef None
+#undef None
+#endif
+
 enum class fhVertexLayout {
 	None = 0,
 	Shadow,

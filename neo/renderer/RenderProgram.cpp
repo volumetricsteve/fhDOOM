@@ -319,8 +319,8 @@ fhRenderProgram::~fhRenderProgram() {
 }
 
 void fhRenderProgram::Load( const char* vs, const char* fs ) {
-	const int vsLen = min( strlen( vs ), sizeof(vertexShaderName)-1 );
-	const int fsLen = min( strlen( fs ), sizeof(fragmentShaderName)-1 );
+	const int vsLen = Min( strlen( vs ), sizeof(vertexShaderName)-1 );
+	const int fsLen = Min( strlen( fs ), sizeof(fragmentShaderName)-1 );
 	strncpy( vertexShaderName, vs, vsLen );
 	strncpy( fragmentShaderName, fs, fsLen );
 	vertexShaderName[vsLen] = '\0';
