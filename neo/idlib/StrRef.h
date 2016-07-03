@@ -77,7 +77,7 @@ inline fhStrRef::fhStrRef( const char* s )
 inline fhStrRef::fhStrRef( const char* s, int size ) 
 : s( s )
 , length( size ) {
-	assert( (!s && !length) || (!!s && length <= (int)strlen( s )) );
+//	assert( (!s && !length) || (!!s && length <= (int)strlen( s )) );
 }
 
 inline fhStrRef::~fhStrRef() {
@@ -90,7 +90,7 @@ inline void fhStrRef::Reset() {
 inline void fhStrRef::Reset( const char* s, int size ) {
 	s = s;
 	length = size;
-	assert( (!s && !length) || (!!s && length <= strlen( s )) );
+//	assert( (!s && !length) || (!!s && length <= strlen( s )) );
 }
 
 inline bool fhStrRef::IsNull() const {
@@ -182,6 +182,26 @@ inline fhStrRef fhStrRef::Substr( int from, int n ) const {
 	n = Min( n, length - from );
 
 	return fhStrRef( &s[from], n );
+}
+
+inline fhStrRef fhStrRef::TrimmedLeft() const {
+	fhStrRef ret = *this;
+	while(!ret.IsEmpty() && idStr::CharIsWhitespace(ret[0])) {
+		++ret;
+	}
+	return ret;
+}
+
+inline fhStrRef fhStrRef::TrimmedRight() const {
+	fhStrRef ret = *this;
+	while (!ret.IsEmpty() && idStr::CharIsWhitespace( ret[ret.Length()-1] )) {
+		ret = ret.Substr(ret.Length()-2);
+	}
+	return ret;
+}
+
+inline fhStrRef fhStrRef::Trimmed() const {
+	return TrimmedLeft().TrimmedRight();
 }
 
 inline bool fhStrRef::StartsWith( fhStrRef sr ) const {

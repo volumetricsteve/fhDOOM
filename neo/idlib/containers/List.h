@@ -89,6 +89,7 @@ public:
 
 					idList( int newgranularity = 16 );
 					idList( const idList<type> &other );
+					idList( idList<type>&& other );
 					~idList<type>( void );
 
 	void			Clear( void );										// clear the list
@@ -102,6 +103,7 @@ public:
 	size_t			MemoryUsed( void ) const;							// returns size of the used elements in the list
 
 	idList<type> &	operator=( const idList<type> &other );
+	idList<type> &	operator=( idList<type>&& other );
 	const type &	operator[]( int index ) const;
 	type &			operator[]( int index );
 
@@ -170,6 +172,23 @@ template< class type >
 ID_INLINE idList<type>::idList( const idList<type> &other ) {
 	list = NULL;
 	*this = other;
+}
+
+/*
+================
+idList<type>::idList( const idList<type> &other )
+================
+*/
+template< class type >
+ID_INLINE idList<type>::idList( idList<type>&& other ) {
+	list = other.list;
+	num = other.num;
+	size = other.size;
+	granularity = other.granularity;
+
+	other.list = nullptr;
+	other.size = 0;
+	other.num = 0;
 }
 
 /*
@@ -554,6 +573,29 @@ ID_INLINE idList<type> &idList<type>::operator=( const idList<type> &other ) {
 			list[ i ] = other.list[ i ];
 		}
 	}
+
+	return *this;
+}
+
+/*
+================
+idList<type>::operator=
+
+Moves the contents and size attributes of another list.
+================
+*/
+template< class type >
+ID_INLINE idList<type> &idList<type>::operator=(idList<type>&& other) {
+	Clear();
+
+	list = other.list;
+	num = other.num;
+	size = other.size;
+	granularity = other.granularity;
+
+	other.list = nullptr;
+	other.size = 0;
+	other.num = 0;
 
 	return *this;
 }

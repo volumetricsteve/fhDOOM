@@ -368,6 +368,8 @@ SET(SOURCES
   renderer/Model_md3.cpp
   renderer/Model_md3.h
   renderer/Model_md5.cpp
+  renderer/Model_obj.cpp
+  renderer/Model_obj.h
   renderer/Model_prt.cpp
   renderer/Model_sprite.cpp
   renderer/qgl.h

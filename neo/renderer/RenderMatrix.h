@@ -105,6 +105,24 @@ public:
 	static fhRenderMatrix CreateViewMatrix( const idVec3& origin );
 	static fhRenderMatrix FlipMatrix();
 
+	static idVec3 OpenGL2Doom( const idVec3& v ) {
+#if 0
+		static float flipMatrix[16] = {
+			// convert from our coordinate system (looking down X)
+			// to OpenGL's coordinate system (looking down -Z)
+			0, -1, 0, 0,
+			0, 0, 1, 0,
+			-1, 0, 0, 0,
+			0, 0, 0, 1
+		};
+
+		static const fhRenderMatrix m( flipMatrix );
+
+		return m * v;
+#endif
+		return idVec3( -v.z, -v.x, v.y );
+	}
+
 	static const fhRenderMatrix identity;
 private:
 	float m[16];
