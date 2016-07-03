@@ -76,7 +76,7 @@ fhDOOM is one of my little side projects. I am working on this because its fun a
   * Fixed tons of warnings
   * image_usePrecompressedTextures is 0 by default, so HD texture packs (like Wulfen) can be used more easily.
 
-### Screenshots
+## Screenshots
 
 Shadow Mapping
 
@@ -108,7 +108,7 @@ Enhanced Light Editor (Qt based)
 
 All Screenshots were taken with HD textures installed (Wulfen, Monoxead, xio).
 
-### Installation
+## Installation
 
  * Download Binaries here: http://www.facinghell.com/fhdoom/fhDOOM-1.5.1-1413.zip
  * Extract zip to a location of your choice (e.g. c:\games)
@@ -120,6 +120,35 @@ All Screenshots were taken with HD textures installed (Wulfen, Monoxead, xio).
     * pak004.pk4
  * Start game by clicking on fhDOOM.exe
  * Don't forget to change the game's resolution (fhDOOM does not yet select your native resolution automatically).
+
+## FAQ
+
+#### Q1. Are Mods supported?
+Yes!
+Mod support is pretty much the same as in vanilla Doom3 1.3.1 (only difference: game dll is named 'fhGame-x86' instead of 'gamex86').
+
+#### Q2. Is fhDOOM compatible with mods for vanilla Doom3 1.3.1?
+It depends. 
+Pure content mods containing only textures, scripts, maps and such things should work just fine (only exception: custom ARB2 shaders won't work).
+Mods that come with a compiled game dll (gamex86.dll on windows, gamex86.so on linux) won't work. Those game dlls must be recompiled for fhDOOM.
+
+#### Q3. Can i use SikkMod with fhDOOM?
+No, because SikkMod is based on ARB2 shaders (see Q2).
+
+#### Q4. Can i use HD texture mods (Wulfen, Monoxead, etc.) with fhDOOM?
+Yes (see Q2).
+
+#### Q5. How do i (re)compile a mods game dll for fhDOOM?
+Unfortunately that's currently not that easy. You have basically two options:
+ 1. If you don't care about existing installations of officially released fhDOOM binaries, you could just clone the latest fhDOOM version from github. You apply your changes to the game code and distribute the whole thing (executable and game dlls).
+ 2. You clone the fhDOOM version from github that matches the latest official binary release. You apply your changes to the game code and distribute only the game dll to the user (the user must have fhDOOM installed). Pretty much like vanilla Doom3 1.3.1.
+
+Both options are far from being good, but since i am working for the most part on the engine itself and not on the game code, i never felt the need to improve this. If you want to make a mod and need to compile your own game dll, let me know. If there is enough interest in better support for this, i will set up and release some kind of SDK to easily compile only the game code.
+
+#### Q6. Does multiplayer work?
+I suppose it does... but i don't know for sure. Feel free to test it out and share your findings :)
+
+
 
 ## cvars
 
@@ -167,7 +196,7 @@ fhDOOM added and changed a couple of cvars. This list of cvars might be interest
   * g_projectileLightLodBias <0|1|2>: reduce shadow quality from projectile lights, usually not noticable
   * g_muzzleFlashLightLodBias <0|1|2>: reduce shadow quality from muzzle flashes, usually not noticable
 
-### Notes  
+## Notes  
   * The maps of the original game were not designed with shadow mapping in mind. I tried to find sensible default shadow parameters, but those parameters are not the perfect fit in every case, so if you look closely enough you will notice a few glitches here and there
     * light bleeding
     * low-res/blocky shadows
@@ -200,7 +229,7 @@ fhDOOM added and changed a couple of cvars. This list of cvars might be interest
       * simplifies messy fullscreen switch
    * i am pretty sure i forgot a lot of things, so you might discover more things that are pretty hacky or not working at all ;)
 
-### Building fhDOOM
+## Building fhDOOM
 
 Dependencies:
   * Visual Studio 2013 or Visual Studio 2015. Community versions are just fine, but VS2013 needs MBCS-Addon.
