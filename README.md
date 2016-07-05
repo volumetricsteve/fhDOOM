@@ -1,5 +1,14 @@
 # fhDOOM
 
+  * [About](#about)
+  * [Changes](#changes)
+  * [Screenshots](#screenshots)
+  * [Installation](#installation)
+  * [FAQ](#faq)
+  * [cvars](#cvars)
+  * [Notes](#notes)
+  * [Building fhDOOM](#building-fhdoom)
+
 ## About
 
 fhDOOM is one of my little side projects. I am working on this because its fun and a great learning experience. Its interesting to explore the code and to test out how such an old game can be improved by new features and more modern techniques. I have no plans to make a real game or something like that with it. Using Unity, Cry Engine or Unreal Engine might be a better choice for that anyways.
