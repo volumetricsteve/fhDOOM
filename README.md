@@ -22,6 +22,7 @@ fhDOOM is one of my little side projects. I am working on this because its fun a
  * iodoom3 (discontinued?): https://github.com/iodoom/iod3
  * dhewm3: https://github.com/dhewm/dhewm3
  * RBDOOM-3-BFG (based on DOOM-3-BFG): https://github.com/RobertBeckebans/RBDOOM-3-BFG
+ * OpenTechEngine (Aims for real game creation): https://github.com/OpenTechEngine/OpenTechBFG
  * Dark Mod (total conversion, not sure if it can still run the original DOOM3 game): http://www.thedarkmod.com/
  * https://github.com/raynorpat/Doom3
  * https://github.com/revelator/Revelation
