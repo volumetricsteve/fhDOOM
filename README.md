@@ -27,15 +27,15 @@ fhDOOM is one of my little side projects. I am working on this because its fun a
 
 ### Similar Projects
   There exist other forks of the DOOM3 engine and even id software released a modernized version of DOOM3 and its engine as "DOOM 3 - BFG Edition".
- * DOOM-3-BFG: https://github.com/id-Software/DOOM-3-BFG
- * iodoom3 (discontinued?): https://github.com/iodoom/iod3
- * dhewm3: https://github.com/dhewm/dhewm3
- * RBDOOM-3-BFG (based on DOOM-3-BFG): https://github.com/RobertBeckebans/RBDOOM-3-BFG
- * OpenTechEngine (Aims for real game creation): https://github.com/OpenTechEngine/OpenTechBFG
- * Dark Mod (total conversion, not sure if it can still run the original DOOM3 game): http://www.thedarkmod.com/
- * https://github.com/raynorpat/Doom3
+ * [DOOM-3-BFG](https://github.com/id-Software/DOOM-3-BFG)
+ * [iodoom3](https://github.com/iodoom/iod3) (discontinued?)
+ * [dhewm3](https://github.com/dhewm/dhewm3) (makes DOOM3 available on many platforms via SDL)
+ * [RBDOOM-3-BFG](https://github.com/RobertBeckebans/RBDOOM-3-BFG) (based on DOOM-3-BFG)
+ * [OpenTechEngine](https://github.com/OpenTechEngine/OpenTechBFG) (creation of standalone games, based on RBDOOM-3-BFG)
+ * [Storm Engine 2](https://github.com/motorsep/StormEngine2) (creation of standalone games, based on RBDOOM-3-BFG)
+ * [The Dark Mod](http://www.thedarkmod.com/) (total conversion, not sure if it can still run the original DOOM3 game)
+ * https://github.com/raynorpat/Doom3 Attempt to port rendersystem from DOOM-3-BFG to classic DOOM3
  * https://github.com/revelator/Revelation
- * https://github.com/motorsep/StormEngine2
 
 ## Changes
  * CMake build system
