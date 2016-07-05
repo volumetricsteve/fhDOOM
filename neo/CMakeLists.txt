@@ -994,9 +994,19 @@ IF(MSVC)
   source_group(Tools\\Script tools/script/.*)  
   source_group(Tools\\Sound tools/sound/.*)  
   source_group(Ui ui/.*)  
-
- 
+    
   SET(WINSDK_LIB_DIR "$ENV{ProgramFiles}/Windows Kits/8.1/Lib/winv6.3/um/x86")
+  IF(NOT IS_DIRECTORY ${WINSDK_LIB_DIR})
+	message("Windows 8.1 SDK not found: ${WINSDK_LIB_DIR}")
+  SET(PROGRAM_FILES_X86 "ProgramFiles(x86)")
+	SET(WINSDK_LIB_DIR "$ENV{${PROGRAM_FILES_X86}}/Windows Kits/8.1/Lib/winv6.3/um/x86")
+
+	IF(NOT IS_DIRECTORY ${WINSDK_LIB_DIR})
+		message("Windows 8.1 SDK not found either: ${WINSDK_LIB_DIR}")		
+		message( FATAL_ERROR "Please install Windows 8.1 SDK" )
+	ENDIF()
+  ENDIF()
+
 
   SET(EXTERNAL_LIBS
     opengl32.lib 
