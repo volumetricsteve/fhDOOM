@@ -23,6 +23,7 @@ struct fhUniform {
 		ColorAdd,
 		DiffuseColor,
 		SpecularColor,
+		AmbientLight,
 		ShaderParm0,
 		ShaderParm1,
 		ShaderParm2,
@@ -125,6 +126,9 @@ public:
 	static void SetShadowMapSize(const idVec4* sizes, int numSizes);
 
 	static void SetInverseLightRotation(const float* m);
+
+	static void SetAmbientLight(int amb);
+
 private:
 	static bool dirty[fhUniform::NUM];
 	static idVec4 currentColorModulate;
@@ -321,6 +325,10 @@ ID_INLINE void fhRenderProgram::SetSpecularExp( float e ) {
 
 ID_INLINE void fhRenderProgram::SetShadowMappingMode( int m ) {
 	glUniform1i(currentUniformLocations[fhUniform::ShadowMappingMode], m);
+}
+
+ID_INLINE void fhRenderProgram::SetAmbientLight(int amb) {
+	glUniform1i(currentUniformLocations[fhUniform::AmbientLight], amb);
 }
 
 ID_INLINE void fhRenderProgram::SetSpotLightProjectionMatrix( const float* m ) {

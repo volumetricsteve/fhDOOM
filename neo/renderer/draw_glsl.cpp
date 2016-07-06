@@ -937,6 +937,8 @@ void RB_GLSL_DrawInteraction(const drawInteraction_t *din) {
 		fhRenderProgram::SetPomMaxHeight(-1);	  
 	}
 
+	fhRenderProgram::SetAmbientLight(din->ambientLight);
+
 	// texture 1 will be the per-surface bump map  
 	din->bumpImage->Bind(1);
 
