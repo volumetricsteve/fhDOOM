@@ -75,16 +75,7 @@ vec4 shadow()
 void main(void)
 {  
   vec3 V = normalize(frag.V);
-  vec3 L = vec3(0.0, 0.0, 0.0);
-  if(rpAmbientLight == 1)
-  {
-	const vec3 ambientLightVector = vec3(0.5, 0.5 - 0.385, 0.8925);
-	L = normalize(ambientLightVector);
-  }
-  else
-  {
-	L = normalize(frag.L);  
-  }
+  vec3 L = normalize(frag.L);  
   vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, V);      
   vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).agb - 1.0);
 

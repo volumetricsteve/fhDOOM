@@ -44,14 +44,23 @@ void main(void)
   result.texLight.z = dot(rpLightFallOff, vertex_position4);
   result.texLight.w = dot(rpLightProjectionQ, vertex_position4);
 
-  vec3 L = rpLocalLightOrigin.xyz - vertex_position.xyz;
-  vec3 V = rpLocalViewOrigin.xyz - vertex_position.xyz;
-  vec3 H = L+V;
-
   mat3 M = mat3(vertex_tangent, vertex_binormal, vertex_normal);
 
-  result.L = L * M;
+  vec3 L = rpLocalLightOrigin.xyz - vertex_position.xyz;
+  if(rpAmbientLight == 1)
+  {
+    const vec3 ambientLightVector = vec3(0.5, 0.5 - 0.385, 0.8925);
+    result.L = ambientLightVector;
+  }
+  else
+  {
+    result.L = L * M;
+  }  
+
+  vec3 V = rpLocalViewOrigin.xyz - vertex_position.xyz;
   result.V = V * M;
+
+  vec3 H = L+V;
   result.H = H * M;
 
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;  
