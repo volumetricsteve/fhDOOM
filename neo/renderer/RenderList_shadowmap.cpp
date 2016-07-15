@@ -131,7 +131,12 @@ void ShadowRenderList::Submit( const float* shadowViewMatrix, const float* shado
 		}
 
 		if (!drawShadow.tris->ambientCache) {
-			R_CreateAmbientCache( const_cast<srfTriangles_t *>(drawShadow.tris), false );
+			//TODO(johl): Some surfaces need lighting later on (e.g. AF/Ragdolls), if we don't create 
+			//            lighting info for them here (needsLighting=true), those surfaces will show up
+			//            completely black in the game (due to missing normals/tangents).
+			//            How do we know, if lighting is needed later on?
+			//            For now we just assume this to be true for every surface. It seems that it does not effect performance badly.
+			R_CreateAmbientCache( const_cast<srfTriangles_t *>(drawShadow.tris), true /*<= just assume lighting is needed*/ );
 		}
 
 		const auto offset = vertexCache.Bind( drawShadow.tris->ambientCache );
