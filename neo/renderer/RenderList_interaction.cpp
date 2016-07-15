@@ -8,7 +8,7 @@
 RB_SubmittInteraction
 =================
 */
-static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList ) {
+static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList, bool isAmbientLight ) {
 	if (!din->bumpImage) {
 		return;
 	}
@@ -16,7 +16,7 @@ static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& inte
 	if (!din->diffuseImage || r_skipDiffuse.GetBool()) {
 		din->diffuseImage = globalImages->blackImage;
 	}
-	if (!din->specularImage || r_skipSpecular.GetBool() || din->ambientLight) {
+	if (!din->specularImage || r_skipSpecular.GetBool() || isAmbientLight) {
 		din->specularImage = globalImages->blackImage;
 	}
 	if (!din->bumpImage || r_skipBump.GetBool()) {
@@ -69,7 +69,6 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, inter.localViewOrigin.ToVec3() );
 		inter.localLightOrigin[3] = 0;
 		inter.localViewOrigin[3] = 1;
-		inter.ambientLight = lightShader->IsAmbientLight();
 
 		// the base projections may be modified by texture matrix on light stages
 		idPlane lightProject[4];
@@ -124,7 +123,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 						break;
 					}
 					// draw any previous interaction
-					RB_SubmittInteraction( &inter, interactionList );
+					RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 					inter.diffuseImage = NULL;
 					inter.specularImage = NULL;
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.bumpImage, inter.bumpMatrix, NULL );
@@ -137,7 +136,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 						break;
 					}
 					if (inter.diffuseImage) {
-						RB_SubmittInteraction( &inter, interactionList );
+						RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 					}
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.diffuseImage,
 						inter.diffuseMatrix, inter.diffuseColor.ToFloatPtr() );
@@ -155,7 +154,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 						break;
 					}
 					if (inter.specularImage) {
-						RB_SubmittInteraction( &inter, interactionList );
+						RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 					}
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.specularImage,
 						inter.specularMatrix, inter.specularColor.ToFloatPtr() );
@@ -172,7 +171,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 			}
 
 			// draw the final interaction
-			RB_SubmittInteraction( &inter, interactionList );
+			RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 		}
 	}
 }

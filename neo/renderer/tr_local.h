@@ -494,9 +494,6 @@ typedef struct {
 	idVec4				specularColor;	// may have a light color baked into it, will be < tr.backEndRendererMaxLight
 	stageVertexColor_t	vertexColor;	// applies to both diffuse and specular
 
-	int					ambientLight;	// use tr.ambientNormalMap instead of normalization cube map 
-	// (not a bool just to avoid an uninitialized memory check of the pad region by valgrind)
-
 	// these are loaded into the vertex program
 	idVec4				localLightOrigin;
 	idVec4				localViewOrigin;
@@ -1388,7 +1385,6 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 										void (*triFunc_)( const drawSurf_t *) );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, float matrix[16] );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
-void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInteraction)(const drawInteraction_t *) );
 
 const shaderStage_t *RB_SetLightTexture( const idRenderLightLocal *light );
 
