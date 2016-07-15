@@ -397,6 +397,7 @@ void fhRenderProgram::Load() {
 		uniformLocations[fhUniform::ColorAdd] = glGetUniformLocation( program, "rpColorAdd" );
 		uniformLocations[fhUniform::DiffuseColor] = glGetUniformLocation( program, "rpDiffuseColor" );
 		uniformLocations[fhUniform::SpecularColor] = glGetUniformLocation( program, "rpSpecularColor" );
+		uniformLocations[fhUniform::AmbientLight] = glGetUniformLocation(program, "rpAmbientLight");
 		uniformLocations[fhUniform::ShaderParm0] = glGetUniformLocation( program, "shaderParm0" );
 		uniformLocations[fhUniform::ShaderParm1] = glGetUniformLocation( program, "shaderParm1" );
 		uniformLocations[fhUniform::ShaderParm2] = glGetUniformLocation( program, "shaderParm2" );

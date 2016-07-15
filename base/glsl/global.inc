@@ -46,6 +46,7 @@ uniform float rpSpecularExp;
 uniform int rpShadowMappingMode;
 uniform mat4 rpSpotlightProjection;
 uniform mat4 rpPointlightProjection[6];
+uniform int rpAmbientLight;
 
 uniform vec4 rpGlobalLightOrigin;
 uniform vec4 rpShadowParams; //x=minBias, y=maxbias, z=fuzzyness, w=samples
