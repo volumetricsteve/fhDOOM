@@ -284,6 +284,55 @@ public:
 	virtual bool			FilenameCompare( const char *s1, const char *s2 ) const = 0;
 };
 
+class fhFileHandle {
+public:
+	fhFileHandle(idFile* file);
+	~fhFileHandle();
+
+	idFile* operator->();
+	const idFile* operator->() const;
+
+	operator bool() const;
+
+	void Close();
+private:
+	idFile* file;
+};
+
 extern idFileSystem *		fileSystem;
+
+
+
+
+
+
+
+ID_INLINE fhFileHandle::fhFileHandle(idFile* file) 
+ : file(file) {
+}
+
+ID_INLINE fhFileHandle::~fhFileHandle() {
+	Close();
+}
+
+ID_INLINE idFile* fhFileHandle::operator->() {
+	assert(file != nullptr);
+	return file;
+}
+ID_INLINE const idFile* fhFileHandle::operator->() const {
+	assert(file != nullptr);
+	return file;
+}
+
+ID_INLINE fhFileHandle::operator bool() const {
+	return (file != nullptr);
+}
+
+ID_INLINE void fhFileHandle::Close() {
+	if (file != nullptr) {
+		fileSystem->CloseFile(file);
+		file = nullptr;
+	}
+}
 
 #endif /* !__FILESYSTEM_H__ */

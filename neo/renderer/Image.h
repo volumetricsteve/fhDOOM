@@ -145,6 +145,7 @@ typedef enum {
 
 class fhFramebuffer;
 class fhSampler;
+class fhImageData;
 
 class idImage {
 public:
@@ -169,6 +170,8 @@ public:
 	void		GenerateCubeImage( const byte *pic[6], int size, 
 						textureFilter_t filter, bool allowDownSize, 
 						textureDepth_t depth );
+
+	void		GenerateImage(const fhImageData& imgeData);
 
 	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
 	void		CopyDepthbuffer( int x, int y, int width, int height );

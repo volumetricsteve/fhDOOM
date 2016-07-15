@@ -79,7 +79,8 @@ void main(void)
   vec3 V = normalize(frag.V);
   vec3 L = normalize(frag.L);  
   vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, V);      
-  vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).agb - 1.0);
+  //vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).agb - 1.0);
+  vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).rgb - 1.0);
 
   result = vec4(0,0,0,0);
 

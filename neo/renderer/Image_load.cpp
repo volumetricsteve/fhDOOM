@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "Sampler.h"
+#include "ImageData.h"
 
 /*
 PROBLEM: compressed textures may break the zero clamp rule!
@@ -527,15 +528,15 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	const bool preserveBorder = ( repeat == TR_CLAMP_TO_ZERO );
 
 	// make sure it is a power of 2
-	int scaled_width = MakePowerOfTwo( width );
-	int scaled_height = MakePowerOfTwo( height );
+	int scaled_width = width;// MakePowerOfTwo(width);
+	int scaled_height = height;// MakePowerOfTwo(height);
 
 	if ( scaled_width != width || scaled_height != height ) {
 		common->Error( "R_CreateImage: not a power of 2 image" );
 	}
 
 	// Optionally modify our width/height based on options/hardware
-	GetDownsize( scaled_width, scaled_height );
+	//GetDownsize( scaled_width, scaled_height );
 
 	byte* scaledBuffer = NULL;
 
@@ -585,7 +586,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	uploadHeight = scaled_height;
 	uploadWidth = scaled_width;
 	type = TT_2D;
-
+#if 0
 	// zero the border if desired, allowing clamped projection textures
 	// even after picmip resampling or careless artists.
 	if ( repeat == TR_CLAMP_TO_ZERO ) {
@@ -632,18 +633,20 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 			*/
 		}
 	}
-
+#endif
 	// swap the red and alpha for rxgb support
 	// do this even on tga normal maps so we only have to use
 	// one fragment program
 	// if the image is precompressed ( either in palletized mode or true rxgb mode )
 	// then it is loaded above and the swap never happens here
+	/*
 	if ( depth == TD_BUMP && globalImages->image_useNormalCompression.GetInteger() != 1 ) {
 		for ( int i = 0; i < scaled_width * scaled_height * 4; i += 4 ) {
 			scaledBuffer[ i + 3 ] = scaledBuffer[ i ];
 			scaledBuffer[ i ] = 0;
 		}
 	}
+	*/
 
 
 	// generate the texture number
@@ -808,6 +811,183 @@ void idImage::GenerateCubeImage( const byte *pic[6], int size,
 	GL_CheckErrors();
 }
 
+
+void idImage::GenerateImage(const fhImageData& imageData) {
+	PurgeImage();
+
+	filter = TF_LINEAR;
+	allowDownSize = false;
+	repeat = TR_REPEAT;
+	//depth = TD_HIGH_QUALITY;
+
+	// if we don't have a rendering context, just return after we
+	// have filled in the parms.  We must have the values set, or
+	// an image match from a shader before OpenGL starts would miss
+	// the generated texture
+	if (!glConfig.isInitialized) {
+		return;
+	}
+
+	switch (imageData.GetPixelFormat()) {
+	case PixelFormat::DXT1_RGB:
+		internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		break;
+	case PixelFormat::DXT3_RGBA:
+		internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+		break;
+	case PixelFormat::DXT5_RGBA:
+		internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		break;
+	case PixelFormat::RGBA:
+		internalFormat = GL_RGBA8;
+		break;
+	case PixelFormat::RGB:
+		internalFormat = GL_RGB8;
+		break;
+	case PixelFormat::BGRA:
+		assert(false && "not implemented yet");
+		common->FatalError("PixelFormat BGRA not implemented yet");
+		break;
+	case PixelFormat::BGR:
+		assert(false && "not implemented yet");
+		common->FatalError("PixelFormat BGR not implemented yet");
+		break;
+	default:
+		assert(false && "format not implemented or unknown?");
+		common->FatalError("unknown PixelFormat");
+		break;
+	}
+
+
+	// select proper internal format before we resample
+	hasAlpha = false;
+	isMonochrome = false;
+	//internalFormat = SelectInternalFormat(&pic, 1, width, height, depth, &isMonochrome, &hasAlpha);
+	type = TT_2D;
+
+	uploadHeight = imageData.GetHeight();
+	uploadWidth = imageData.GetWidth();
+	
+
+	// zero the border if desired, allowing clamped projection textures
+	// even after picmip resampling or careless artists.
+	if (imageData.GetPixelFormat() == PixelFormat::RGBA) {
+		if ( repeat == TR_CLAMP_TO_ZERO ) {
+			byte	rgba[4];
+
+			rgba[0] = rgba[1] = rgba[2] = 0;
+			rgba[3] = 255;
+			R_SetBorderTexels((byte *)imageData.GetData(), uploadWidth, uploadHeight, rgba);
+		}
+		if ( repeat == TR_CLAMP_TO_ZERO_ALPHA ) {
+			byte	rgba[4];
+
+			rgba[0] = rgba[1] = rgba[2] = 255;
+			rgba[3] = 0;
+			R_SetBorderTexels( (byte *)imageData.GetData(), uploadWidth, uploadHeight, rgba );
+		}
+	}
+
+#if 0
+	if (generatorFunction == NULL && (depth == TD_BUMP && globalImages->image_writeNormalTGA.GetBool() || depth != TD_BUMP && globalImages->image_writeTGA.GetBool())) {
+		// Optionally write out the texture to a .tga
+		char filename[MAX_IMAGE_NAME];
+		ImageProgramStringToCompressedFileName(imgName, filename);
+		char *ext = strrchr(filename, '.');
+		if (ext) {
+			strcpy(ext, ".tga");
+			// swap the red/alpha for the write
+			/*
+			if ( depth == TD_BUMP ) {
+			for ( int i = 0; i < scaled_width * scaled_height * 4; i += 4 ) {
+			scaledBuffer[ i ] = scaledBuffer[ i + 3 ];
+			scaledBuffer[ i + 3 ] = 0;
+			}
+			}
+			*/
+			R_WriteTGA(filename, scaledBuffer, scaled_width, scaled_height, false);
+
+			// put it back
+			/*
+			if ( depth == TD_BUMP ) {
+			for ( int i = 0; i < scaled_width * scaled_height * 4; i += 4 ) {
+			scaledBuffer[ i + 3 ] = scaledBuffer[ i ];
+			scaledBuffer[ i ] = 0;
+			}
+			}
+			*/
+		}
+	}
+#endif
+
+	// generate the texture number
+	glGenTextures(1, &texnum);
+
+	// upload the main image level
+	if (glConfig.extDirectStateAccessAvailable) {
+		for (uint32 level = 0; level < imageData.GetNumLevels(); ++level) {
+			const uint32 width = imageData.GetWidth(level);
+			const uint32 height = imageData.GetHeight(level);
+			const uint32 size = imageData.GetSize(level);
+			const GLvoid* data = imageData.GetData(0, level);
+
+			if (imageData.GetPixelFormat() == PixelFormat::DXT1_RGB ||
+				imageData.GetPixelFormat() == PixelFormat::DXT3_RGBA ||
+				imageData.GetPixelFormat() == PixelFormat::DXT5_RGBA) {
+				glCompressedTextureImage2DEXT(texnum, GL_TEXTURE_2D, level, internalFormat, width, height, 0, size, data);
+			}
+			else {
+				glTextureImage2DEXT(texnum, GL_TEXTURE_2D, level, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			}
+		}
+		
+		if (imageData.GetNumLevels() == 1) {
+			glGenerateTextureMipmapEXT(texnum, GL_TEXTURE_2D);
+		}
+	}
+	else {
+#if 0
+		Bind(0);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer);
+
+		// create and upload the mip map levels, which we do in all cases, even if we don't think they are needed
+		int miplevel = 0;
+		while (scaled_width > 1 || scaled_height > 1) {
+			// preserve the border after mip map unless repeating
+			byte* shrunk = R_MipMap(scaledBuffer, scaled_width, scaled_height, preserveBorder);
+			R_StaticFree(scaledBuffer);
+			scaledBuffer = shrunk;
+
+			scaled_width >>= 1;
+			scaled_height >>= 1;
+			if (scaled_width < 1) {
+				scaled_width = 1;
+			}
+			if (scaled_height < 1) {
+				scaled_height = 1;
+			}
+			miplevel++;
+
+			// this is a visualization tool that shades each mip map
+			// level with a different color so you can see the
+			// rasterizer's texture level selection algorithm
+			// Changing the color doesn't help with lumminance/alpha/intensity formats...
+			if (depth == TD_DIFFUSE && globalImages->image_colorMipLevels.GetBool()) {
+				R_BlendOverTexture((byte *)scaledBuffer, scaled_width * scaled_height, mipBlendColors[miplevel]);
+			}
+
+			// upload the mip map
+			glTexImage2D(GL_TEXTURE_2D, miplevel, internalFormat, scaled_width, scaled_height,
+				0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer);
+		}
+#endif
+	}
+
+	SetImageFilterAndRepeat();
+
+	// see if we messed anything up
+	GL_CheckErrors();
+}
 
 /*
 ================
@@ -1421,9 +1601,6 @@ On exit, the idImage will have a valid OpenGL texture number that can be bound
 ===============
 */
 void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) {
-	int		width, height;
-	byte	*pic;
-
 	// this is the ONLY place generatorFunction will ever be called
 	if ( generatorFunction ) {
 		generatorFunction( this );
@@ -1447,7 +1624,8 @@ void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) 
 		byte	*pics[6];
 
 		// we don't check for pre-compressed cube images currently
-		R_LoadCubeImages( imgName, cubeFiles, pics, &width, &timestamp );
+		int	size = -1;
+		R_LoadCubeImages(imgName, cubeFiles, pics, &size, &timestamp);
 
 		if ( pics[0] == NULL ) {
 			common->Warning( "Couldn't load cube image: %s", imgName.c_str() );
@@ -1455,7 +1633,7 @@ void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) 
 			return;
 		}
 
-		GenerateCubeImage( (const byte **)pics, width, filter, allowDownSize, depth );
+		GenerateCubeImage((const byte **)pics, size, filter, allowDownSize, depth);
 		precompressedFile = false;
 
 		for ( int i = 0 ; i < 6 ; i++ ) {
@@ -1474,36 +1652,52 @@ void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) 
 			// fall through to load the normal image
 		}
 
-		R_LoadImageProgram( imgName, &pic, &width, &height, &timestamp, &depth );
+		if (true) {
+//			idStr extension;
+//			imgName.ExtractFileExtension(extension);
 
-		if ( pic == NULL ) {
-			common->Warning( "Couldn't load image: %s", imgName.c_str() );
-			MakeDefault();
-			return;
+			fhImageData imgData;
+			bool ok = imgData.LoadProgram(imgName);
+			if (!ok || !imgData.IsValid()) {
+				common->Warning("Couldn't load image: %s", imgName.c_str());
+				MakeDefault();
+				return;
+			}	
+
+			
+			this->timestamp = imgData.GetTimeStamp();
+
+			//GenerateImage(imgData);
+			GenerateImage(imgData.GetData(), imgData.GetWidth(), imgData.GetHeight(), filter, allowDownSize, repeat, depth);
+			
+			//this->depth = TD_HIGH_QUALITY;
+			
+			this->precompressedFile = false;
 		}
-/*
-		// swap the red and alpha for rxgb support
-		// do this even on tga normal maps so we only have to use
-		// one fragment program
-		// if the image is precompressed ( either in palletized mode or true rxgb mode )
-		// then it is loaded above and the swap never happens here
-		if ( depth == TD_BUMP && globalImages->image_useNormalCompression.GetInteger() != 1 ) {
-			for ( int i = 0; i < width * height * 4; i += 4 ) {
-				pic[ i + 3 ] = pic[ i ];
-				pic[ i ] = 0;
+		else {
+			int	width = -1;
+			int height = -1;
+			byte *pic = nullptr;
+
+			R_LoadImageProgram(imgName, &pic, &width, &height, &timestamp, &depth);
+
+			if (pic == NULL) {
+				common->Warning("Couldn't load image: %s", imgName.c_str());
+				MakeDefault();
+				return;
 			}
+
+			// build a hash for checking duplicate image files
+			// NOTE: takes about 10% of image load times (SD)
+			// may not be strictly necessary, but some code uses it, so let's leave it in
+			//imageHash = MD4_BlockChecksum(pic, width * height * 4);
+
+			GenerateImage(pic, width, height, filter, allowDownSize, repeat, depth);
+			//timestamp = timestamp;
+			precompressedFile = false;
+
+			R_StaticFree(pic);
 		}
-*/
-		// build a hash for checking duplicate image files
-		// NOTE: takes about 10% of image load times (SD)
-		// may not be strictly necessary, but some code uses it, so let's leave it in
-		imageHash = MD4_BlockChecksum( pic, width * height * 4 );
-
-		GenerateImage( pic, width, height, filter, allowDownSize, repeat, depth );
-		timestamp = timestamp;
-		precompressedFile = false;
-
-		R_StaticFree( pic );
 
 		// write out the precompressed version of this file if needed
 		WritePrecompressedImage();

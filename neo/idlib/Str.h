@@ -174,6 +174,8 @@ public:
 	bool				IsColor( void ) const;
 	bool				HasLower( void ) const;
 	bool				HasUpper( void ) const;
+	bool                EndsWith(const char* suffix) const;
+	bool                StartsWith(const char* prefix) const;
 	int					LengthWithoutColors( void ) const;
 	idStr &				RemoveColors( void );
 	void				CapLength( int );
@@ -819,6 +821,25 @@ ID_INLINE bool idStr::HasLower( void ) const {
 ID_INLINE bool idStr::HasUpper( void ) const {
 	return idStr::HasUpper( data );
 }
+
+ID_INLINE bool idStr::EndsWith(const char* suffix) const {
+	int suffixLen = strlen(suffix);
+	if (this->len < suffixLen) {
+		return false;
+	}
+
+	return strncmp(c_str() + (this->len - suffixLen), suffix, suffixLen) == 0;
+}
+
+ID_INLINE bool idStr::StartsWith(const char* prefix) const {
+	int prefixLen = strlen(prefix);
+	if (this->len < prefixLen) {
+		return false;
+	}
+
+	return strncmp(c_str(), prefix, prefixLen) == 0;
+}
+
 
 ID_INLINE idStr &idStr::RemoveColors( void ) {
 	idStr::RemoveColors( data );

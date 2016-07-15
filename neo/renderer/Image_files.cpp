@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImageData.h"
 
 /*
 
@@ -205,7 +206,6 @@ typedef struct _TargaHeader {
 	unsigned short	x_origin, y_origin, width, height;
 	unsigned char	pixel_size, attributes;
 } TargaHeader;
-
 
 
 /*
@@ -1019,26 +1019,56 @@ void R_LoadImage( const char *cname, byte **pic, int *width, int *height, ID_TIM
 
 	name.ToLower();
 	idStr ext;
-	name.ExtractFileExtension( ext );
-
-	if ( ext == "tga" ) {
-		LoadTGA( name.c_str(), pic, width, height, timestamp );            // try tga first
-		if ( ( pic && *pic == 0 ) || ( timestamp && *timestamp == -1 ) ) {
-			name.StripFileExtension();
-			name.DefaultFileExtension( ".jpg" );
-			LoadJPG( name.c_str(), pic, width, height, timestamp );
+	name.ExtractFileExtension( ext );	
+#if 1
+	fhImageData imageData;
+	bool ok = imageData.LoadFile(name.c_str(), true);
+	if (ok && imageData.IsValid()) {
+		if (pic) {
+			*pic = (byte*)R_StaticAlloc(imageData.GetSize(0));
+			memcpy(*pic, imageData.GetData(0, 0), imageData.GetSize(0));
 		}
-	} else if ( ext == "pcx" ) {
-		LoadPCX32( name.c_str(), pic, width, height, timestamp );
-	} else if ( ext == "bmp" ) {
-		LoadBMP( name.c_str(), pic, width, height, timestamp );
-	} else if ( ext == "jpg" ) {
-		LoadJPG( name.c_str(), pic, width, height, timestamp );
-	}
 
-	if ( ( width && *width < 1 ) || ( height && *height < 1 ) ) {
-		if ( pic && *pic ) {
-			R_StaticFree( *pic );
+		if (width) {
+			*width = imageData.GetWidth(0);
+		}
+
+		if (height) {
+			*height = imageData.GetHeight(0);
+		}
+
+		if (timestamp) {
+			*timestamp = imageData.GetTimeStamp();
+		}
+
+		imageData.Clear();
+	}
+	else {
+#endif
+		if (ext == "tga") {
+			LoadTGA(name.c_str(), pic, width, height, timestamp);            // try tga first
+			if ((pic && *pic == 0) || (timestamp && *timestamp == -1)) {
+				name.StripFileExtension();
+				name.DefaultFileExtension(".jpg");
+				LoadJPG(name.c_str(), pic, width, height, timestamp);
+			}
+		}
+		else if (ext == "pcx") {
+			LoadPCX32(name.c_str(), pic, width, height, timestamp);
+		}
+		else if (ext == "bmp") {
+			LoadBMP(name.c_str(), pic, width, height, timestamp);
+		}
+		else if (ext == "jpg") {
+			LoadJPG(name.c_str(), pic, width, height, timestamp);
+		}
+#if 1
+	}
+#endif
+
+	if ((width && *width < 1) || (height && *height < 1)) {
+		if (pic && *pic) {
+			R_StaticFree(*pic);
 			*pic = 0;
 		}
 	}
