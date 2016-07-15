@@ -78,7 +78,7 @@ void main(void)
   vec3 L = vec3(0.0, 0.0, 0.0);
   if(rpAmbientLight == 1)
   {
-	const vec3 ambientLightVector = vec3(0.5, 9.5 - 0.385, 0.8925);
+	const vec3 ambientLightVector = vec3(0.5, 0.5 - 0.385, 0.8925);
 	L = normalize(ambientLightVector);
   }
   else

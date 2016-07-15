@@ -188,6 +188,7 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 
 	fhRenderProgram::SetShading( r_shading.GetInteger() );
 	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
+	fhRenderProgram::SetAmbientLight( backEnd.vLight->lightDef->lightShader->IsAmbientLight() ? 1 : 0 );
 
 	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
