@@ -3,6 +3,7 @@
 
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
@@ -298,148 +299,6 @@ void	R_WriteTGA( const char *filename, const byte *data, int width, int height, 
 void	R_WritePalTGA( const char *filename, const byte *data, const byte *palette, int width, int height, bool flipVertical = false );
 // data is in top-to-bottom raster order unless flipVertical is set
 
-
-
-class fhFramebuffer {
-public:
-	fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
-		width = w;
-		height = h;
-		name = (!color && !depth) ? 0 : -1;
-		colorAttachment = color;
-		depthAttachment = depth;
-	}
-
-	void Bind() {
-		if (currentDrawBuffer == this) {
-			return;
-		}
-
-		if (name == -1) {			
-			glGenFramebuffers( 1, &name );
-			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
-			currentDrawBuffer = this;
-
-			if (colorAttachment)
-				colorAttachment->AttachColorToFramebuffer( this );
-
-			if (depthAttachment)
-				depthAttachment->AttachDepthToFramebuffer( this );
-
-			SetDrawBuffer();
-
-			if (glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
-				common->Warning("failed to generate framebuffer, framebuffer incomplete");
-				name = 0;
-			}
-		}
-		else {
-			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
-			currentDrawBuffer = this;
-			SetDrawBuffer();
-		}
-	}
-
-	bool IsDefault() const {
-		return (name == 0);
-	}
-
-	void Resize( int width, int height );
-
-	int GetWidth() const;
-	int GetHeight() const;
-
-	void Purge() {
-		if(name != 0 && name != -1) {
-			glDeleteFramebuffers(1, &name);
-			name = -1;
-		}
-	}
-
-	void BlitToCurrentFramebuffer() {
-		if (currentDrawBuffer && currentDrawBuffer != this) {
-			glBindFramebuffer( GL_READ_FRAMEBUFFER, name );
-			glReadBuffer( GL_COLOR_ATTACHMENT0 );
-
-			const int src_x2 = width;
-			const int src_y2 = height;
-
-			const int dst_x2 = currentDrawBuffer->GetWidth();
-			const int dst_y2 = currentDrawBuffer->GetHeight();
-
-			if (src_x2 != dst_x2 ||
-				src_y2 != dst_y2) {
-				common->Warning( "size mismatch!?" );
-			}
-
-			glBlitFramebuffer(
-				0, 0, src_x2, src_y2,
-				0, 0, dst_x2, dst_y2,
-				GL_COLOR_BUFFER_BIT, GL_LINEAR );
-
-			glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
-		}
-		else {
-			common->Warning( "no current framebuffer!?" );
-		}
-	}
-
-	void BlitDepthToCurrentFramebuffer() {
-		if (currentDrawBuffer && currentDrawBuffer != this) {
-			glBindFramebuffer( GL_READ_FRAMEBUFFER, name );
-			glReadBuffer( GL_NONE );
-
-			const int src_x2 = width;
-			const int src_y2 = height;
-
-			const int dst_x2 = currentDrawBuffer->GetWidth();
-			const int dst_y2 = currentDrawBuffer->GetHeight();
-
-			if (src_x2 != dst_x2 ||
-				src_y2 != dst_y2) {
-				common->Warning( "size mismatch!?" );
-			}
-
-			glBlitFramebuffer(
-				0, 0, src_x2, src_y2,
-				0, 0, dst_x2, dst_y2,
-				GL_DEPTH_BUFFER_BIT, GL_NEAREST );
-
-			glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
-		}
-		else {
-			common->Warning( "no current framebuffer!?" );
-		}
-	}
-
-
-	static fhFramebuffer* GetCurrentDrawBuffer() {
-		return currentDrawBuffer;
-	}
-
-private:
-	static fhFramebuffer* currentDrawBuffer;
-
-	void SetDrawBuffer() {
-		if (!colorAttachment && !depthAttachment) {
-			glDrawBuffer( GL_BACK );
-		}
-		else if (!colorAttachment) {
-			glDrawBuffer( GL_NONE );
-		}
-		else {
-			glDrawBuffer( GL_COLOR_ATTACHMENT0 );
-		}
-	}
-
-	int width;
-	int height;
-	GLuint name;
-	idImage* colorAttachment;
-	idImage* depthAttachment;
-};
-
-
 class idImageManager {
 public:
 	void				Init();
@@ -553,17 +412,10 @@ public:
 	idImage *			borderClampImage;			// white inside, black outside
 	idImage *           jitterImage;
 
-	fhFramebuffer*		defaultFramebuffer;
-
-	fhFramebuffer*		renderFramebuffer;
 	idImage *			renderDepthImage;
 	idImage *			renderColorImage;
 
 	idImage *			shadowmapImage;
-	fhFramebuffer*		shadowmapFramebuffer;
-
-	fhFramebuffer*      currentDepthFramebuffer;
-	fhFramebuffer*      currentRenderFramebuffer;
 
 	//--------------------------------------------------------
 	

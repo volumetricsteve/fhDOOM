@@ -26,38 +26,46 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-#include "../idlib/precompiled.h"
-#pragma hdrstop
-
-#include "tr_local.h"
-
 #pragma once
 
-class fhShadowMapAllocator {
-public:
-	fhShadowMapAllocator();
-	~fhShadowMapAllocator();
+class idImage;
 
-	bool Allocate( int lod, int num, shadowCoord_t* coords );
-	void FreeAll();
+class fhFramebuffer {
+public:
+	     fhFramebuffer( int w, int h, idImage* color, idImage* depth );
+
+	bool IsDefault() const;
+	int  GetWidth() const;
+	int  GetHeight() const;
+
+	void Purge();
+	void Bind();	
+	void Resize( int width, int height );
+	
+	void BlitToCurrentFramebuffer();
+	void BlitDepthToCurrentFramebuffer();
+
+	static fhFramebuffer* GetCurrentDrawBuffer() {
+		return currentDrawBuffer;
+	}
+
+	static fhFramebuffer* defaultFramebuffer;
+	static fhFramebuffer* renderFramebuffer;
+	static fhFramebuffer* shadowmapFramebuffer;
+	static fhFramebuffer* currentDepthFramebuffer;
+	static fhFramebuffer* currentRenderFramebuffer;
+
+	static void Init();
 
 private:
-	enum class ShadowMapSize
-	{
-		SM4096,
-		SM2048,
-		SM1024,
-		SM512,
-		SM256,
-		NUM
-	};
+	static fhFramebuffer* currentDrawBuffer;
 
-	bool Allocate( ShadowMapSize size, int num, shadowCoord_t* coords );
-	bool Allocate( ShadowMapSize size, shadowCoord_t& coords );
-	bool Make( int sizeIndex );
-	void Split( const shadowCoord_t& src, shadowCoord_t* dst, idVec2 scale, float size );
+	void SetDrawBuffer();
 
-	idList<shadowCoord_t> freelist[(int)ShadowMapSize::NUM];
+	int      width;
+	int      height;
+	GLuint   name;
+	idImage* colorAttachment;
+	idImage* depthAttachment;
 };
 
-extern fhShadowMapAllocator shadowMapAllocator;

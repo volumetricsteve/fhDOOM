@@ -3,6 +3,7 @@
 
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 

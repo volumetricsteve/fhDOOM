@@ -1,3 +1,31 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
 #include "../idlib/precompiled.h"
 #pragma hdrstop
 
@@ -5,6 +33,7 @@
 #include "RenderProgram.h"
 #include "ImmediateMode.h"
 #include "RenderList.h"
+#include "Framebuffer.h"
 
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
@@ -931,9 +960,9 @@ void RB_GLSL_DrawInteractions( void ) {
 			glEnable( GL_DEPTH_TEST );
 
 			globalImages->BindNull( 6 );
-			globalImages->shadowmapFramebuffer->Bind();
-			glViewport( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
-			glScissor( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+			fhFramebuffer::shadowmapFramebuffer->Bind();
+			glViewport( 0, 0, fhFramebuffer::shadowmapFramebuffer->GetWidth(), fhFramebuffer::shadowmapFramebuffer->GetHeight() );
+			glScissor( 0, 0, fhFramebuffer::shadowmapFramebuffer->GetWidth(), fhFramebuffer::shadowmapFramebuffer->GetHeight() );
 			glClear( GL_DEPTH_BUFFER_BIT );
 
 			for(int lod = 0; lod < 3; ++lod) {

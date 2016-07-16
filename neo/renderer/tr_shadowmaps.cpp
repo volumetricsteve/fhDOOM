@@ -5,6 +5,7 @@
 #include "RenderProgram.h"
 #include "RenderMatrix.h"
 #include "RenderList.h"
+#include "Framebuffer.h"
 #include "ShadowMapAllocator.h"
 
 idCVar r_smLightSideCulling( "r_smLightSideCulling", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "cull sides of point lights against current view frustum" );
@@ -612,7 +613,7 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 			continue;
 		}
 
-		const fhFramebuffer* framebuffer = globalImages->shadowmapFramebuffer;
+		const fhFramebuffer* framebuffer = fhFramebuffer::shadowmapFramebuffer;
 
 		const int width = framebuffer->GetWidth() * vLight->shadowCoords[side].scale.x;
 		const int height = framebuffer->GetHeight() * vLight->shadowCoords[side].scale.y;

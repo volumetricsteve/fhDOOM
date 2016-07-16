@@ -344,6 +344,9 @@ SET(SOURCES
   renderer/Interaction.cpp
   renderer/Interaction.h
 
+  renderer/Framebuffer.h
+  renderer/Framebuffer.cpp
+
   renderer/Material.cpp
   renderer/Material.h
   renderer/MegaTexture.cpp

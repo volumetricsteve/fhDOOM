@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "ImmediateMode.h"
 #include "RenderProgram.h"
+#include "Framebuffer.h"
 
 frameData_t		*frameData;
 backEndState_t	backEnd;
@@ -631,11 +632,11 @@ static void	RB_SetBuffer( const void *data ) {
 		int width = glConfig.vidWidth;
 		int height = glConfig.vidHeight;
 
-		globalImages->renderFramebuffer->Resize( width, height );
-		globalImages->renderFramebuffer->Bind();
+		fhFramebuffer::renderFramebuffer->Resize( width, height );
+		fhFramebuffer::renderFramebuffer->Bind();
 	}
 	else {
-		globalImages->defaultFramebuffer->Bind();
+		fhFramebuffer::defaultFramebuffer->Bind();
 	}
 
 	// clear screen for debugging
@@ -739,8 +740,8 @@ const void	RB_SwapBuffers( const void *data ) {
     RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
 	
 	if (r_useFramebuffer.GetBool()) {		
-		globalImages->defaultFramebuffer->Bind();
-		globalImages->renderFramebuffer->BlitToCurrentFramebuffer();		
+		fhFramebuffer::defaultFramebuffer->Bind();
+		fhFramebuffer::renderFramebuffer->BlitToCurrentFramebuffer();
 	}
 
     GLimp_SwapBuffers();

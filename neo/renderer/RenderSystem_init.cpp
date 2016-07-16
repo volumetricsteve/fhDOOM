@@ -32,6 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "RenderProgram.h"
 #include "RenderList.h"
+#include "Framebuffer.h"
 
 // Vista OpenGL wrapper check
 #ifdef _WIN32
@@ -2008,6 +2009,7 @@ void idRenderSystemLocal::Init( void ) {
 	R_InitTriSurfData();
 
 	globalImages->Init();
+	fhFramebuffer::Init();
 
 	idCinematic::InitCinematic( );
 

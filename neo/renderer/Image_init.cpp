@@ -3,6 +3,7 @@
 
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
@@ -72,46 +73,6 @@ idCVar idImageManager::image_downSizeLimit( "image_downSizeLimit", "256", CVAR_R
 // a private virtual subclass
 idImageManager	imageManager;
 idImageManager	*globalImages = &imageManager;
-
-fhFramebuffer* fhFramebuffer::currentDrawBuffer = nullptr;
-
-void fhFramebuffer::Resize( int width, int height ) {
-	if (!colorAttachment && !depthAttachment) {
-		return;
-	}
-
-	if (this->width == width && this->height == height) {
-		return;
-	}
-
-	const bool isCurrent = (GetCurrentDrawBuffer() == this);
-	if (isCurrent) {
-		glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
-	}
-	
-	Purge();
-
-	this->width = width;
-	this->height = height;
-
-	if (isCurrent) {
-		Bind();
-	}
-}
-
-int fhFramebuffer::GetWidth() const {
-	if (!colorAttachment && !depthAttachment) {
-		return glConfig.vidWidth;
-	}
-	return width;
-}
-
-int fhFramebuffer::GetHeight() const {
-	if (!colorAttachment && !depthAttachment) {
-		return glConfig.vidHeight;
-	}
-	return height;
-}
 
 enum IMAGE_CLASSIFICATION {
 	IC_NPC,
@@ -1972,16 +1933,10 @@ void idImageManager::Init() {
 	jitterImage = ImageFromFunction("_jitter", R_JitterImage );
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
-	shadowmapFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, shadowmapImage );
-
-	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr);
 
 	renderColorImage = ImageFromFunction( "_renderColorImage", R_RGBA8Image );
 	renderDepthImage = ImageFromFunction( "_renderDepthImage", R_Depth );
-	renderFramebuffer = new fhFramebuffer( 1024, 1024, renderColorImage, renderDepthImage );
 
-	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, currentDepthImage );
-	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, currentRenderImage, nullptr );
 	// should forceLoadImages be here?
 }
 

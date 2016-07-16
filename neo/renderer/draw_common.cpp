@@ -31,6 +31,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "ImmediateMode.h"
 #include "RenderList.h"
+#include "Framebuffer.h"
+
 /*
 =====================
 RB_BakeTextureMatrixIntoTexgen
@@ -337,8 +339,8 @@ void	RB_STD_DrawView( void ) {
 				backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1 );
 		}
 		else {
-			globalImages->currentDepthFramebuffer->Resize( currentDrawBuffer->GetWidth(), currentDrawBuffer->GetHeight() );
-			globalImages->currentDepthFramebuffer->Bind();
+			fhFramebuffer::currentDepthFramebuffer->Resize( currentDrawBuffer->GetWidth(), currentDrawBuffer->GetHeight() );
+			fhFramebuffer::currentDepthFramebuffer->Bind();
 			currentDrawBuffer->BlitDepthToCurrentFramebuffer();
 			currentDrawBuffer->Bind();
 		}
