@@ -1626,6 +1626,8 @@ CopyFramebuffer
 ====================
 */
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
+	if (r_useFramebuffer.GetBool())
+		return;
 
 	glReadBuffer( GL_BACK );
 
@@ -1666,7 +1668,7 @@ CopyDepthbuffer
 This should just be part of copyFramebuffer once we have a proper image type field
 ====================
 */
-void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
+void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {		
 
 	glReadBuffer( GL_BACK );	
 
@@ -1732,7 +1734,7 @@ void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
 
 		uploadWidth = framebuffer->GetWidth();
 		uploadHeight = framebuffer->GetHeight();
-		internalFormat = GL_RGB;
+		internalFormat = GL_RGBA8;
 		filter = TF_LINEAR;
 		repeat = TR_CLAMP;
 		type = TT_2D;

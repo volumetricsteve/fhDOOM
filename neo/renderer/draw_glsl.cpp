@@ -921,6 +921,8 @@ void RB_GLSL_DrawInteractions( void ) {
 	}
 
 	while(true) {
+		fhFramebuffer* renderBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+
 		if (shadowCastingViewLights[0].Num() != 0 || shadowCastingViewLights[1].Num() != 0 || shadowCastingViewLights[2].Num() != 0) {
 			GL_UseProgram( shadowmapProgram );
 			glStencilFunc( GL_ALWAYS, 0, 255 );
@@ -950,11 +952,12 @@ void RB_GLSL_DrawInteractions( void ) {
 					}
 				}
 			}
-
-			globalImages->defaultFramebuffer->Bind();
-			globalImages->shadowmapImage->Bind( 6 );
-			globalImages->jitterImage->Bind( 7 );
 		}
+
+		renderBuffer->Bind();
+
+		globalImages->shadowmapImage->Bind( 6 );
+		globalImages->jitterImage->Bind( 7 );
 
 		glDisable( GL_POLYGON_OFFSET_FILL );
 		glEnable( GL_CULL_FACE );

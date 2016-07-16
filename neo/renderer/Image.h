@@ -170,6 +170,7 @@ public:
 						textureFilter_t filter, bool allowDownSize, 
 						textureDepth_t depth );
 
+
 	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
 	void		CopyDepthbuffer( int x, int y, int width, int height );
 
@@ -310,9 +311,14 @@ public:
 	}
 
 	void Bind() {
+		if (currentDrawBuffer == this) {
+			return;
+		}
+
 		if (name == -1) {			
 			glGenFramebuffers( 1, &name );
-			glBindFramebuffer( GL_FRAMEBUFFER, name );
+			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
+			currentDrawBuffer = this;
 
 			if (colorAttachment)
 				colorAttachment->AttachColorToFramebuffer( this );
@@ -322,20 +328,26 @@ public:
 
 			SetDrawBuffer();
 
-			if (glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
+			if (glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
 				common->Warning("failed to generate framebuffer, framebuffer incomplete");
 				name = 0;
 			}
 		}
 		else {
-			glBindFramebuffer( GL_FRAMEBUFFER, name );
+			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
+			currentDrawBuffer = this;
 			SetDrawBuffer();
 		}
-
 	}
 
-	int GetWidth() const { return width; }
-	int GetHeight() const { return height; }
+	bool IsDefault() const {
+		return (name == 0);
+	}
+
+	void Resize( int width, int height );
+
+	int GetWidth() const;
+	int GetHeight() const;
 
 	void Purge() {
 		if(name != 0 && name != -1) {
@@ -344,13 +356,79 @@ public:
 		}
 	}
 
+	void BlitToCurrentFramebuffer() {
+		if (currentDrawBuffer && currentDrawBuffer != this) {
+			glBindFramebuffer( GL_READ_FRAMEBUFFER, name );
+			glReadBuffer( GL_COLOR_ATTACHMENT0 );
+
+			const int src_x2 = width;
+			const int src_y2 = height;
+
+			const int dst_x2 = currentDrawBuffer->GetWidth();
+			const int dst_y2 = currentDrawBuffer->GetHeight();
+
+			if (src_x2 != dst_x2 ||
+				src_y2 != dst_y2) {
+				common->Warning( "size mismatch!?" );
+			}
+
+			glBlitFramebuffer(
+				0, 0, src_x2, src_y2,
+				0, 0, dst_x2, dst_y2,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
+			glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
+		}
+		else {
+			common->Warning( "no current framebuffer!?" );
+		}
+	}
+
+	void BlitDepthToCurrentFramebuffer() {
+		if (currentDrawBuffer && currentDrawBuffer != this) {
+			glBindFramebuffer( GL_READ_FRAMEBUFFER, name );
+			glReadBuffer( GL_NONE );
+
+			const int src_x2 = width;
+			const int src_y2 = height;
+
+			const int dst_x2 = currentDrawBuffer->GetWidth();
+			const int dst_y2 = currentDrawBuffer->GetHeight();
+
+			if (src_x2 != dst_x2 ||
+				src_y2 != dst_y2) {
+				common->Warning( "size mismatch!?" );
+			}
+
+			glBlitFramebuffer(
+				0, 0, src_x2, src_y2,
+				0, 0, dst_x2, dst_y2,
+				GL_DEPTH_BUFFER_BIT, GL_NEAREST );
+
+			glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
+		}
+		else {
+			common->Warning( "no current framebuffer!?" );
+		}
+	}
+
+
+	static fhFramebuffer* GetCurrentDrawBuffer() {
+		return currentDrawBuffer;
+	}
+
 private:
+	static fhFramebuffer* currentDrawBuffer;
+
 	void SetDrawBuffer() {
 		if (!colorAttachment && !depthAttachment) {
 			glDrawBuffer( GL_BACK );
 		}
 		else if (!colorAttachment) {
 			glDrawBuffer( GL_NONE );
+		}
+		else {
+			glDrawBuffer( GL_COLOR_ATTACHMENT0 );
 		}
 	}
 
@@ -477,8 +555,15 @@ public:
 
 	fhFramebuffer*		defaultFramebuffer;
 
+	fhFramebuffer*		renderFramebuffer;
+	idImage *			renderDepthImage;
+	idImage *			renderColorImage;
+
 	idImage *			shadowmapImage;
 	fhFramebuffer*		shadowmapFramebuffer;
+
+	fhFramebuffer*      currentDepthFramebuffer;
+	fhFramebuffer*      currentRenderFramebuffer;
 
 	//--------------------------------------------------------
 	

@@ -627,7 +627,16 @@ static void	RB_SetBuffer( const void *data ) {
 
 	backEnd.frameCount = cmd->frameCount;
 
-	glDrawBuffer( cmd->buffer );
+	if (r_useFramebuffer.GetBool()) {
+		int width = glConfig.vidWidth;
+		int height = glConfig.vidHeight;
+
+		globalImages->renderFramebuffer->Resize( width, height );
+		globalImages->renderFramebuffer->Bind();
+	}
+	else {
+		globalImages->defaultFramebuffer->Bind();
+	}
 
 	// clear screen for debugging
 	// automatically enable this with several other debug tools
@@ -644,7 +653,7 @@ static void	RB_SetBuffer( const void *data ) {
 			glClearColor( 0.4f, 0.0f, 0.25f, 1.0f );
 		}
 		glClear( GL_COLOR_BUFFER_BIT );
-	}
+	}	
 }
 
 /*
@@ -688,8 +697,8 @@ void RB_ShowImages( void ) {
 			h *= image->uploadHeight / 512.0f;
 		}
 
-    fhImmediateMode im;
-    im.Color3f(1,1,1);
+		fhImmediateMode im;
+		im.Color3f(1,1,1);
 		im.SetTexture(image);
 		im.Begin (GL_QUADS);
 		im.TexCoord2f( 0, 0 );
@@ -728,11 +737,13 @@ const void	RB_SwapBuffers( const void *data ) {
 	}
 
     RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
-
-	// don't flip if drawing to front buffer
-	if ( !r_frontBuffer.GetBool() ) {
-	    GLimp_SwapBuffers();
+	
+	if (r_useFramebuffer.GetBool()) {		
+		globalImages->defaultFramebuffer->Bind();
+		globalImages->renderFramebuffer->BlitToCurrentFramebuffer();		
 	}
+
+    GLimp_SwapBuffers();
 }
 
 /*

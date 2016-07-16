@@ -310,9 +310,18 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 
 			// only dump if in a 3d view
 			if (backEnd.viewDef->viewEntitys) {
-				globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
-					backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
-					backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true );
+				fhFramebuffer* currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+				if (currentDrawBuffer->IsDefault()) {
+					globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
+						backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+						backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true );
+				}
+				else {
+					globalImages->currentRenderFramebuffer->Resize( currentDrawBuffer->GetWidth(), currentDrawBuffer->GetHeight() );
+					globalImages->currentRenderFramebuffer->Bind();
+					currentDrawBuffer->BlitToCurrentFramebuffer();
+					currentDrawBuffer->Bind();
+				}
 			}
 			currentRenderCopied = true;
 		}

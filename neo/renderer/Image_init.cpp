@@ -73,6 +73,45 @@ idCVar idImageManager::image_downSizeLimit( "image_downSizeLimit", "256", CVAR_R
 idImageManager	imageManager;
 idImageManager	*globalImages = &imageManager;
 
+fhFramebuffer* fhFramebuffer::currentDrawBuffer = nullptr;
+
+void fhFramebuffer::Resize( int width, int height ) {
+	if (!colorAttachment && !depthAttachment) {
+		return;
+	}
+
+	if (this->width == width && this->height == height) {
+		return;
+	}
+
+	const bool isCurrent = (GetCurrentDrawBuffer() == this);
+	if (isCurrent) {
+		glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
+	}
+	
+	Purge();
+
+	this->width = width;
+	this->height = height;
+
+	if (isCurrent) {
+		Bind();
+	}
+}
+
+int fhFramebuffer::GetWidth() const {
+	if (!colorAttachment && !depthAttachment) {
+		return glConfig.vidWidth;
+	}
+	return width;
+}
+
+int fhFramebuffer::GetHeight() const {
+	if (!colorAttachment && !depthAttachment) {
+		return glConfig.vidHeight;
+	}
+	return height;
+}
 
 enum IMAGE_CLASSIFICATION {
 	IC_NPC,
@@ -1935,8 +1974,14 @@ void idImageManager::Init() {
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
 	shadowmapFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, shadowmapImage );
 
-	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
+	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr);
 
+	renderColorImage = ImageFromFunction( "_renderColorImage", R_RGBA8Image );
+	renderDepthImage = ImageFromFunction( "_renderDepthImage", R_Depth );
+	renderFramebuffer = new fhFramebuffer( 1024, 1024, renderColorImage, renderDepthImage );
+
+	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, currentDepthImage );
+	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, currentRenderImage, nullptr );
 	// should forceLoadImages be here?
 }
 

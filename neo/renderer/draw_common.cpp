@@ -330,9 +330,18 @@ void	RB_STD_DrawView( void ) {
 	RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
 
 	if (backEnd.viewDef->viewEntitys) {
-		globalImages->currentDepthImage->CopyDepthbuffer(backEnd.viewDef->viewport.x1,
-			backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
-			backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1);
+		fhFramebuffer* currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+		if (currentDrawBuffer->IsDefault()) {
+			globalImages->currentDepthImage->CopyDepthbuffer( backEnd.viewDef->viewport.x1,
+				backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
+				backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1 );
+		}
+		else {
+			globalImages->currentDepthFramebuffer->Resize( currentDrawBuffer->GetWidth(), currentDrawBuffer->GetHeight() );
+			globalImages->currentDepthFramebuffer->Bind();
+			currentDrawBuffer->BlitDepthToCurrentFramebuffer();
+			currentDrawBuffer->Bind();
+		}
 	}
 
 	// main light renderer
