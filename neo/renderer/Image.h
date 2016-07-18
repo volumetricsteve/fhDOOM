@@ -58,12 +58,6 @@ glDisable( GL_TEXTURE_* )
 
 #pragma once
 
-typedef enum {
-	IS_UNLOADED,	// no gl texture number
-	IS_PARTIAL,		// has a texture number and the low mip levels loaded
-	IS_LOADED		// has a texture number and the full mip hierarchy
-} imageState_t;
-
 static const int	MAX_TEXTURE_LEVELS = 14;
 
 // surface description flags
