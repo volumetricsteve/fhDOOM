@@ -26,7 +26,7 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
-#include "model_obj.h"
+#include "Model_obj.h"
 #include "idlib/StrRef.h"
 
 static idVec3 ParseVec3(fhStrRef s) {	
