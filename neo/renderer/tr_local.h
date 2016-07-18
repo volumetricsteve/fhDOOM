@@ -783,48 +783,49 @@ static const int	MAX_RENDER_CROPS = 8;
 class idRenderSystemLocal : public idRenderSystem {
 public:
 	// external functions
-	virtual void			Init( void );
-	virtual void			Shutdown( void );
-	virtual void			InitOpenGL( void );
-	virtual void			ShutdownOpenGL( void );
-	virtual bool			IsOpenGLRunning( void ) const;
-	virtual bool			IsFullScreen( void ) const;
-	virtual int				GetScreenWidth( void ) const;
-	virtual int				GetScreenHeight( void ) const;
-	virtual int				GetScreenAspectRatio( void ) const;
-	virtual idRenderWorld *	AllocRenderWorld( void );
-	virtual void			FreeRenderWorld( idRenderWorld *rw );
-	virtual void			BeginLevelLoad( void );
-	virtual void			EndLevelLoad( void );
-	virtual bool			RegisterFont( const char *fontName, fontInfoEx_t &font );
-	virtual void			SetColor( const idVec4 &rgba );
-	virtual void			SetColor4( float r, float g, float b, float a );
+	virtual void			Init( void ) override;
+	virtual void			Shutdown( void ) override;
+	virtual void			InitOpenGL( void ) override;
+	virtual void			ShutdownOpenGL( void ) override;
+	virtual bool			IsOpenGLRunning( void ) const override;
+	virtual bool			IsFullScreen( void ) const override;
+	virtual int				GetScreenWidth( void ) const override;
+	virtual int				GetScreenHeight( void ) const override;
+	virtual int				GetScreenAspectRatio( void ) const override;
+	virtual idRenderWorld *	AllocRenderWorld( void ) override;
+	virtual void			FreeRenderWorld( idRenderWorld *rw ) override;
+	virtual void			BeginLevelLoad( void ) override;
+	virtual void			EndLevelLoad( void ) override;
+	virtual bool			RegisterFont( const char *fontName, fontInfoEx_t &font ) override;
+	virtual void			SetColor( const idVec4 &rgba ) override;
+	virtual void			SetColor4( float r, float g, float b, float a ) override;
 	virtual void			DrawStretchPic ( const idDrawVert *verts, const glIndex_t *indexes, int vertCount, int indexCount, const idMaterial *material,
-											bool clip = true, float x = 0.0f, float y = 0.0f, float w = 640.0f, float h = 0.0f );
-	virtual void			DrawStretchPic ( float x, float y, float w, float h, float s1, float t1, float s2, float t2, const idMaterial *material );
+		                                     bool clip = true, float x = 0.0f, float y = 0.0f, float w = 640.0f, float h = 0.0f ) override;
+	virtual void			DrawStretchPic( float x, float y, float w, float h, float s1, float t1, float s2, float t2, const idMaterial *material ) override;
 
-	virtual void			DrawStretchTri ( idVec2 p1, idVec2 p2, idVec2 p3, idVec2 t1, idVec2 t2, idVec2 t3, const idMaterial *material );
-	virtual void			GlobalToNormalizedDeviceCoordinates( const idVec3 &global, idVec3 &ndc );
-	virtual void			GetGLSettings( int& width, int& height );
-	virtual void			PrintMemInfo( MemInfo_t *mi );
+	virtual void			DrawStretchTri( idVec2 p1, idVec2 p2, idVec2 p3, idVec2 t1, idVec2 t2, idVec2 t3, const idMaterial *material ) override;
+	virtual void			GlobalToNormalizedDeviceCoordinates( const idVec3 &global, idVec3 &ndc ) override;
+	virtual void			GetGLSettings( int& width, int& height ) override;
+	virtual void			PrintMemInfo( MemInfo_t *mi ) override;
 
-	virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *materia, float scale );
-	virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale );  
-	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material );
-	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material );
-	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material );
-	virtual void			DrawBigStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material );
-	virtual void			WriteDemoPics();
-	virtual void			DrawDemoPics();
-	virtual void			BeginFrame( int windowWidth, int windowHeight );
-	virtual void			EndFrame( int *frontEndMsec, int *backEndMsec );
-	virtual void			TakeScreenshot( int width, int height, const char *fileName, int downSample, renderView_t *ref );
-	virtual void			CropRenderSize( int width, int height, bool makePowerOfTwo = false, bool forceDimensions = false );
-	virtual void			CaptureRenderToImage( const char *imageName );
-	virtual void			CaptureRenderToFile( const char *fileName, bool fixAlpha );
-	virtual void			UnCrop();
-	virtual bool			UploadImage( const char *imageName, const byte *data, int width, int height );
-	virtual backEndStats_t  GetBackEndStats() const;
+	virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *materia, float scale ) override;
+	virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) override;
+	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material ) override;
+	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) override;
+	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material ) override;
+	virtual void			DrawBigStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) override;
+	virtual void			WriteDemoPics() override;
+	virtual void			DrawDemoPics() override;
+	virtual void			BeginFrame( int windowWidth, int windowHeight ) override;
+	virtual void			BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) override;
+	virtual void			EndFrame( int *frontEndMsec, int *backEndMsec ) override;
+	virtual void			TakeScreenshot( int width, int height, const char *fileName, int downSample, renderView_t *ref ) override;
+	virtual void			CropRenderSize( int width, int height, bool makePowerOfTwo = false, bool forceDimensions = false ) override;
+	virtual void			CaptureRenderToImage( const char *imageName ) override;
+	virtual void			CaptureRenderToFile( const char *fileName, bool fixAlpha ) override;
+	virtual void			UnCrop() override;
+	virtual bool			UploadImage( const char *imageName, const byte *data, int width, int height ) override;
+	virtual backEndStats_t  GetBackEndStats() const override;
 
 public:
 	// internal functions
@@ -1427,8 +1428,6 @@ void	RB_GLSL_DrawInteractions( void );
 const	fhRenderProgram*  R_FindGlslProgram( const char* vertexShaderName, const char* fragmentShaderName );
 void	R_ReloadGlslPrograms_f( const idCmdArgs &args );
 void	RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
-void	RB_GLSL_RenderSpecialShaderStage( const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const drawSurf_t *surf );
-void	RB_GLSL_RenderShaderStage( const drawSurf_t *surf, const shaderStage_t* pStage );
 void	RB_GLSL_FogPass( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
 void	RB_GLSL_BlendLight( const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2 );
 
