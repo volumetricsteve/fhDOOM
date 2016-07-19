@@ -89,6 +89,13 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 	bool ok = false;
 	if (ext == "tga") {
 		ok = LoadTGA(name.c_str(), toRgba);            // try tga first
+		if (!ok) {
+			name.StripFileExtension();
+			name.DefaultFileExtension( ".jpg" );
+			common->Warning( "jpg loading not implemented yet" );
+			ok = false;
+			//ok = LoadJPG( name.c_str(), pic, width, height, timestamp );
+		}
 	}	
 	else if (ext == "dds") {
 		if (toRgba) {
@@ -96,6 +103,21 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 			return false;
 		}
 		ok = LoadDDS(name.c_str());
+	}
+	else if (ext == "pcx") {
+		assert( false && "pcx loading not implemented yet" );
+		ok = false;
+		//ok = LoadPCX32( name.c_str(), pic, width, height, timestamp );
+	}
+	else if (ext == "bmp") {
+		assert( false && "bmp loading not implemented yet" );
+		ok = false;
+		//ok = LoadBMP( name.c_str(), pic, width, height, timestamp );
+	}
+	else if (ext == "jpg") {
+		assert( false && "jpg loading not implemented yet" );
+		ok = false;
+		//ok = LoadJPG( name.c_str(), pic, width, height, timestamp );
 	}
 
 	//

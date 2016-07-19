@@ -1652,52 +1652,24 @@ void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) 
 			// fall through to load the normal image
 		}
 
-		if (true) {
-//			idStr extension;
-//			imgName.ExtractFileExtension(extension);
 
-			fhImageData imgData;
-			bool ok = imgData.LoadProgram(imgName);
-			if (!ok || !imgData.IsValid()) {
-				common->Warning("Couldn't load image: %s", imgName.c_str());
-				MakeDefault();
-				return;
-			}	
-
-			
-			this->timestamp = imgData.GetTimeStamp();
-
-			//GenerateImage(imgData);
-			GenerateImage(imgData.GetData(), imgData.GetWidth(), imgData.GetHeight(), filter, allowDownSize, repeat, depth);
-			
-			//this->depth = TD_HIGH_QUALITY;
-			
-			this->precompressedFile = false;
+		fhImageData imgData;
+		bool ok = imgData.LoadProgram(imgName);
+		if (!ok || !imgData.IsValid()) {
+			common->Warning("Couldn't load image: %s", imgName.c_str());
+			MakeDefault();
+			return;
 		}
-		else {
-			int	width = -1;
-			int height = -1;
-			byte *pic = nullptr;
+			
+		this->timestamp = imgData.GetTimeStamp();
 
-			R_LoadImageProgram(imgName, &pic, &width, &height, &timestamp, &depth);
+		//GenerateImage(imgData);
+		GenerateImage(imgData.GetData(), imgData.GetWidth(), imgData.GetHeight(), filter, allowDownSize, repeat, depth);
+			
+		//this->depth = TD_HIGH_QUALITY;
+			
+		this->precompressedFile = false;
 
-			if (pic == NULL) {
-				common->Warning("Couldn't load image: %s", imgName.c_str());
-				MakeDefault();
-				return;
-			}
-
-			// build a hash for checking duplicate image files
-			// NOTE: takes about 10% of image load times (SD)
-			// may not be strictly necessary, but some code uses it, so let's leave it in
-			//imageHash = MD4_BlockChecksum(pic, width * height * 4);
-
-			GenerateImage(pic, width, height, filter, allowDownSize, repeat, depth);
-			//timestamp = timestamp;
-			precompressedFile = false;
-
-			R_StaticFree(pic);
-		}
 
 		// write out the precompressed version of this file if needed
 		WritePrecompressedImage();
