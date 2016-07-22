@@ -74,6 +74,26 @@ bool fhImageData::IsValid() const {
 	return true;
 }
 
+bool fhImageData::LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 height ) {
+	Clear();
+
+	const int numBytes = width * height * 4;
+	
+	this->format = PixelFormat::RGBA;
+	this->numFaces = 1;
+	this->numLevels = 1;
+	this->data = (byte*)R_StaticAlloc( numBytes );
+	memcpy( this->data, pic, numBytes );
+
+	auto& level = this->faces[0].levels[0];
+	level.height = height;
+	level.width = width;
+	level.size = numBytes;
+	level.offset = 0;
+
+	return true;
+}
+
 bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 	idStr name = filename;
 	name.DefaultFileExtension(".tga");
@@ -540,6 +560,16 @@ const byte* fhImageData::GetData(uint32 face, uint32 level) const {
 	return data + faces[face].levels[level].offset;
 }
 
+byte* fhImageData::GetData( uint32 face, uint32 level ) {
+	if (face >= numFaces)
+		return nullptr;
+
+	if (level >= numLevels)
+		return nullptr;
+
+	return data + faces[face].levels[level].offset;
+}
+
 byte* fhImageData::GetCanonicalData() {
 	if (format != PixelFormat::RGBA)
 		return nullptr;
@@ -573,6 +603,114 @@ bool fhImageData::LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>&
 	buffer.Allocate(len);
 	file->Read(buffer.Get(), len);
 	file.Close();
+
+	return true;
+}
+
+static const char* axisSides[] = { 
+	"_px.tga", 
+	"_nx.tga", 
+	"_py.tga", 
+	"_ny.tga",
+	"_pz.tga", 
+	"_nz.tga" 
+};
+
+static const char* cameraSides[] = {
+	"_forward.tga",
+	"_back.tga",
+	"_left.tga",
+	"_right.tga",
+	"_up.tga",
+	"_down.tga"
+};
+
+bool fhImageData::LoadCubeMap( const char* filename, cubeFiles_t cubeLayout ) {
+	assert( cubeLayout == CF_CAMERA || cubeLayout == CF_NATIVE );
+
+	const char	**sides = (cubeLayout == CF_CAMERA) ? cameraSides : axisSides;
+	int	size = 0;
+	int bytesPerSide = 0;
+	ID_TIME_T timestamp = 0;
+	PixelFormat format = PixelFormat::None;
+	fhStaticBuffer<byte> buffer;
+
+	Clear();
+	
+	for (int i = 0; i < 6; i++) {
+		char	fullName[MAX_IMAGE_NAME];
+		idStr::snPrintf( fullName, sizeof( fullName ), "%s%s", filename, sides[i] );
+
+		fhImageData side;
+		if (!side.LoadProgram( fullName )) {
+			return false;
+		}		
+
+		if (i == 0) {
+			timestamp = side.GetTimeStamp();
+			size = side.GetWidth();
+			bytesPerSide = size * size * 4; //4 bytes, due to RGBA
+			format = side.GetPixelFormat();
+			buffer.Allocate( bytesPerSide * 6 );
+		}
+
+		if (side.GetWidth() != size || side.GetHeight() != size) {
+			common->Warning( "Mismatched sizes on cube map '%s'", fullName );
+			return false;
+		}
+
+		if (side.GetPixelFormat() != format ) {
+			common->Warning( "Mismatched pixel format on cube map '%s'", fullName );
+			return false;
+		}
+
+		if (side.GetSize( 0 ) != bytesPerSide) {
+			common->Warning( "Unexpected size of cube map side '%s'", fullName );
+			return false;
+		}
+
+		if (cubeLayout == CF_CAMERA) {
+			// convert from "camera" images to native cube map images
+			switch (i) {
+			case 0:	// forward
+				R_RotatePic( side.GetData(), size );
+				break;
+			case 1:	// back
+				R_RotatePic( side.GetData(), size );
+				R_HorizontalFlip( side.GetData(), size, size );
+				R_VerticalFlip( side.GetData(), size, size );
+				break;
+			case 2:	// left
+				R_VerticalFlip( side.GetData(), size, size );
+				break;
+			case 3:	// right
+				R_HorizontalFlip( side.GetData(), size, size );
+				break;
+			case 4:	// up
+				R_RotatePic( side.GetData(), size );
+				break;
+			case 5: // down
+				R_RotatePic( side.GetData(), size );
+				break;
+			}
+		}
+
+		memcpy( &buffer.Get()[i * bytesPerSide], side.GetData(), bytesPerSide );
+	}
+
+	this->data = buffer.Release();
+	this->numFaces = 6;
+	this->numLevels = 1;
+	this->format = format;
+	this->timestamp = timestamp;
+
+	for (int i = 0; i < 6; ++i) {
+		auto& level = this->faces[i].levels[0];
+		level.width = size;
+		level.height = size;
+		level.offset = bytesPerSide * i;
+		level.size = bytesPerSide;
+	}
 
 	return true;
 }

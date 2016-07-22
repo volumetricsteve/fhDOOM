@@ -27,6 +27,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #pragma once
+#include "Image.h"
 
 enum class PixelFormat {
 	None,
@@ -37,7 +38,8 @@ enum class PixelFormat {
 	DXT1_RGB,
 	DXT1_RGBA,
 	DXT3_RGBA,
-	DXT5_RGBA
+	DXT5_RGBA,
+	DXT5_RxGB
 };
 
 template<typename T>
@@ -114,6 +116,8 @@ public:
 	bool        LoadDDS(const char* filename);
 	bool        LoadTGA(const char* filename, bool toRgba = false);	
 	bool        LoadProgram(const char* program);
+	bool        LoadCubeMap( const char* filename, cubeFiles_t cubeLayout );
+	bool        LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 height );
 
 	uint32      GetSize(uint32 level = 0) const;
 	uint32      GetWidth(uint32 level = 0) const;
@@ -123,6 +127,7 @@ public:
 	PixelFormat GetPixelFormat() const;
 
 	const byte* GetData(uint32 face = 0, uint32 level = 0) const;
+	byte*       GetData( uint32 face = 0, uint32 level = 0 );
 	ID_TIME_T   GetTimeStamp() const;
 	const char* GetName() const;
 
@@ -130,7 +135,13 @@ public:
 	void        Clear();
 
 private:
-	bool        IsRGBA() const;
+	//TODO(johl): hard coded maximum level num limits the maximum texture size, but that's ok for now
+	static const int maximumLevelNum = 16; //max tex size = 2^(16-1) = 32768
+
+	//TODO(johl): hard coded maximum face num limits us to 2D texture (1 face) and cubemaps (6 face)
+	//            This must be changed for 3D textures or even generalized texture arrays (not need right now).
+	static const int maximumFaceNum = 6;
+
 	byte*       GetCanonicalData();
 
 	bool        LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>& buffer);
@@ -139,6 +150,11 @@ private:
 
 	bool        ParseImageProgram_r(idLexer& src, bool noload, bool toRgba);
 
+	//TODO(johl): storing with, height and size inside the level is a bit redundant,
+	//            because this kind of stuff could be deduced from the depth of the 
+	//            current level and the given pixel format. 
+	//            But storing it explicitly does not hurt that much and makes the code
+	//            a bit easier :)
 	struct level_t {
 		uint32 width;
 		uint32 height;
@@ -147,18 +163,18 @@ private:
 	};
 
 	struct face_t {
-		level_t levels[16];
+		level_t levels[maximumLevelNum];
 	};
 
 	uint32      numFaces;
 	uint32      numLevels;
-	face_t      faces[6];
+	face_t      faces[maximumFaceNum];
 	PixelFormat format;
 	char        name[256];
 	ID_TIME_T   timestamp;
 	byte*       data;
 };
 
-ID_INLINE bool fhImageData::IsRGBA() const {
-	return GetPixelFormat() == PixelFormat::RGBA;
+ID_INLINE const char* fhImageData::GetName() const {
+	return name;
 }

@@ -167,11 +167,8 @@ public:
 	void		GenerateImage( const byte *pic, int width, int height, 
 					   textureFilter_t filter, bool allowDownSize, 
 					   textureRepeat_t repeat, textureDepth_t depth );
-	void		GenerateCubeImage( const byte *pic[6], int size, 
-						textureFilter_t filter, bool allowDownSize, 
-						textureDepth_t depth );
 
-	void		GenerateImage(const fhImageData& imgeData);
+	void		GenerateImage( const fhImageData& imgeData );
 
 	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
 	void		CopyDepthbuffer( int x, int y, int width, int height );
@@ -208,8 +205,6 @@ public:
 	void		StartBackgroundImageLoad();
 	int			BitsForInternalFormat( int internalFormat ) const;
 	void		UploadCompressedNormalMap( int width, int height, const byte *rgba, int mipLevel );
-	GLenum		SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, int width, int height,
-									 textureDepth_t minimumDepth, bool *monochromeResult, bool *hasAlpha = 0 ) const;
 	void		ImageProgramStringToCompressedFileName( const char *imageProg, char *fileName ) const;
 	int			NumLevelsForImageSize( int width, int height ) const;
 
@@ -459,8 +454,7 @@ public:
 
 	// built-in images
 	idImage *			defaultImage;
-	idImage *			flatNormalMap;				// 128 128 255 in all pixels
-	idImage *			ambientNormalMap;			// tr.ambientLightVector encoded in all pixels
+	idImage *			flatNormalMap;				// 128 128 255 in all pixels	
 	idImage *			rampImage;					// 0-255 in RGBA in S
 	idImage *			alphaRampImage;				// 0-255 in alpha, 255 in RGB
 	idImage *			alphaNotchImage;			// 2x1 texture with just 1110 and 1111 with point sampling
