@@ -45,11 +45,44 @@ vec4 specular(vec2 texcoord, vec3 N, vec3 L, vec3 V)
   return spec;
 }
 
+vec3 normal(vec2 texcoord)
+{
+#if 0
+  vec3 N = normalize(2.0 * texture(normalMap, texcoord).rgb - 1.0);
+#else
+  const int NORMAL_RGB = 0;
+  const int NORMAL_RxGB = 1;
+  const int NORMAL_AG = 2;
+  const int NORMAL_RG = 3;
+
+  vec3 N;
+
+  if(rpNormalMapEncoding == NORMAL_RxGB)
+  {
+    N = normalize(2.0 * texture(normalMap, texcoord).agb - 1.0);
+  }
+  else if(rpNormalMapEncoding == NORMAL_AG)
+  {
+    N = 2.0 * texture(normalMap, texcoord).agb - 1.0;  
+    N.z = sqrt(1.0 - N.x * N.x - N.y * N.y);
+  }
+  else if(rpNormalMapEncoding == NORMAL_RG)
+  {
+    N = 2.0 * texture(normalMap, texcoord).rgb - 1.0;  
+    N.z = sqrt(1.0 - N.x * N.x - N.y * N.y);  
+  }  
+  else /*if(rpNormalMapEncoding == NORMAL_RGB)*/
+  {
+    N = normalize(2.0 * texture(normalMap, texcoord).rgb - 1.0);
+  }
+
+#endif
+  return N;
+}
+
 vec4 shadow()
 {
   vec4 shadowness = vec4(1,1,1,1);
-
-
 
   if(rpShadowMappingMode == 1)  
   {
@@ -79,12 +112,12 @@ void main(void)
   vec3 V = normalize(frag.V);
   vec3 L = normalize(frag.L);  
   vec2 offset = parallaxOffset(specularMap, frag.texSpecular.st, V);      
-  //vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).agb - 1.0);
-  vec3 N = normalize(2.0 * texture(normalMap, frag.texNormal + offset).rgb - 1.0);
+  vec3 N = normal(frag.texNormal + offset);
+ 
 
   result = vec4(0,0,0,0);
 
-  result += diffuse(frag.texDiffuse + offset, N, L);  
+  result += diffuse(frag.texDiffuse + offset, N, L);    
   result += specular(frag.texSpecular + offset, N, L, V);
 
   result *= frag.color;

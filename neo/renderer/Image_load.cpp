@@ -175,7 +175,15 @@ SetImageFilterAndRepeat
 ==================
 */
 void idImage::SetImageFilterAndRepeat() {
-	sampler = fhSampler::GetSampler(filter, repeat, true, true);
+	
+	auto swizzle = textureSwizzle_t::None;
+	/*
+	if (pixelFormat == pixelFormat_t::DXT5_RxGB) {
+		swizzle = textureSwizzle_t::AGBR;
+	}
+	*/
+
+	sampler = fhSampler::GetSampler( filter, repeat, swizzle, true, true );
 }
 
 /*
@@ -287,28 +295,34 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	GenerateImage( data );
 }
 
-static GLenum SelectInteralFormat( PixelFormat pf ) {
+static GLenum SelectInteralFormat( pixelFormat_t pf ) {
 	switch (pf) {
-	case PixelFormat::DXT1_RGB:
+	case pixelFormat_t::DXT1_RGB:
 		return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		break;
-	case PixelFormat::DXT3_RGBA:
+	case pixelFormat_t::DXT1_RGBA:
+		return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+		break;
+	case pixelFormat_t::DXT3_RGBA:
 		return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
 		break;
-	case PixelFormat::DXT5_RGBA:
+	case pixelFormat_t::DXT5_RGBA:
 		return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		break;
-	case PixelFormat::RGBA:
+	case pixelFormat_t::RGBA:
 		return GL_RGBA8;
 		break;
-	case PixelFormat::RGB:
+	case pixelFormat_t::RGB:
 		return GL_RGB8;
 		break;
-	case PixelFormat::BGRA:
+	case pixelFormat_t::RED_GREEN_3DC:
+		return GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+		break;
+	case pixelFormat_t::BGRA:
 		assert( false && "not implemented yet" );
 		common->FatalError( "PixelFormat BGRA not implemented yet" );
 		break;
-	case PixelFormat::BGR:
+	case pixelFormat_t::BGR:
 		assert( false && "not implemented yet" );
 		common->FatalError( "PixelFormat BGR not implemented yet" );
 		break;
@@ -321,8 +335,8 @@ static GLenum SelectInteralFormat( PixelFormat pf ) {
 	return GL_INVALID_ENUM;
 }
 
-static bool IsCompressed( PixelFormat pf ) {
-	return pf == PixelFormat::DXT1_RGB || pf == PixelFormat::DXT1_RGBA || pf == PixelFormat::DXT3_RGBA || pf == PixelFormat::DXT5_RGBA;
+static bool IsCompressed( pixelFormat_t pf ) {
+	return pf == pixelFormat_t::DXT1_RGB || pf == pixelFormat_t::DXT1_RGBA || pf == pixelFormat_t::DXT3_RGBA || pf == pixelFormat_t::DXT5_RGBA || pf == pixelFormat_t::RED_GREEN_3DC;
 }
 
 /*
@@ -332,8 +346,9 @@ GenerateImage
 */
 void idImage::GenerateImage( const fhImageData& imageData ) {
 	PurgeImage();
+	pixelFormat = imageData.GetPixelFormat();
 
-	internalFormat = SelectInteralFormat( imageData.GetPixelFormat() );
+	internalFormat = SelectInteralFormat( pixelFormat );
 
 	if (imageData.GetNumFaces() == 1) {
 		type = TT_2D;
@@ -344,6 +359,8 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 	else {
 		common->Error( "image %s has invalid number of faces (%d)\n", imageData.GetName(), imageData.GetNumFaces() );
 	}
+
+
 
 	// if we don't have a rendering context, just return after we
 	// have filled in the parms.  We must have the values set, or
@@ -363,7 +380,7 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 
 
 	//FIXME(johl): do we really need this?
-	if (imageData.GetPixelFormat() == PixelFormat::RGBA && imageData.GetNumFaces() == 1 && imageData.GetNumLevels() == 1) {
+	if (imageData.GetPixelFormat() == pixelFormat_t::RGBA && imageData.GetNumFaces() == 1 && imageData.GetNumLevels() == 1) {
 
 		// zero the border if desired, allowing clamped projection textures
 		// even after picmip resampling or careless artists.
@@ -873,6 +890,7 @@ bool idImage::CheckPrecompressedImage( bool fullLoad ) {
 	UploadPrecompressedImage( data, len );
 
 	R_StaticFree( data );
+
 
 	return true;
 }

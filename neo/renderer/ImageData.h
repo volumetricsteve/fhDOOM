@@ -29,19 +29,6 @@ If you have questions concerning this license or the applicable additional terms
 #pragma once
 #include "Image.h"
 
-enum class PixelFormat {
-	None,
-	RGBA,
-	BGRA,
-	RGB,
-	BGR,
-	DXT1_RGB,
-	DXT1_RGBA,
-	DXT3_RGBA,
-	DXT5_RGBA,
-	DXT5_RxGB
-};
-
 template<typename T>
 class fhStaticBuffer {
 public:
@@ -124,7 +111,7 @@ public:
 	uint32      GetHeight(uint32 level = 0) const;
 	uint32      GetNumFaces() const;
 	uint32      GetNumLevels() const;
-	PixelFormat GetPixelFormat() const;
+	pixelFormat_t GetPixelFormat() const;
 
 	const byte* GetData(uint32 face = 0, uint32 level = 0) const;
 	byte*       GetData( uint32 face = 0, uint32 level = 0 );
@@ -169,7 +156,7 @@ private:
 	uint32      numFaces;
 	uint32      numLevels;
 	face_t      faces[maximumFaceNum];
-	PixelFormat format;
+	pixelFormat_t format;
 	char        name[256];
 	ID_TIME_T   timestamp;
 	byte*       data;

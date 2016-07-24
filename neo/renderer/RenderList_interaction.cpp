@@ -5,6 +5,24 @@
 
 /*
 =================
+RB_GetNormalEncoding
+=================
+*/
+static int RB_GetNormalEncoding( const idImage* image ) {
+	switch (image->pixelFormat) {
+	case pixelFormat_t::RED_GREEN_3DC:
+		return fhRenderProgram::normal_map_encoding_rg;
+	case pixelFormat_t::DXT5_RxGB:
+		return fhRenderProgram::normal_map_encoding_dxrg;
+	case pixelFormat_t::DXT5_RGBA:
+		return fhRenderProgram::normal_map_encoding_ag;
+	default:
+		return fhRenderProgram::normal_map_encoding_rgb;
+	}
+}
+
+/*
+=================
 RB_SubmittInteraction
 =================
 */
@@ -407,6 +425,8 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 				fhRenderProgram::SetPomMaxHeight( -1 );
 			}
 		}
+
+		fhRenderProgram::SetNormalMapEncoding( RB_GetNormalEncoding( din.bumpImage ) );
 
 		din.bumpImage->Bind( 1 );
 		din.lightFalloffImage->Bind( 2 );

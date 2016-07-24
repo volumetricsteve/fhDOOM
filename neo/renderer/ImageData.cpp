@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 fhImageData::fhImageData()
 	: data(nullptr)
-	, format(PixelFormat::None)
+	, format(pixelFormat_t::None)
 	, numFaces(0)
 	, numLevels(0)
 	, timestamp(0) {
@@ -50,7 +50,7 @@ void fhImageData::Clear() {
 		data = nullptr;
 	}
 
-	format = PixelFormat::None;
+	format = pixelFormat_t::None;
 	numFaces = 0;
 	numLevels = 0;
 	timestamp = 0;
@@ -68,7 +68,7 @@ bool fhImageData::IsValid() const {
 	if (numLevels == 0)
 		return false;
 
-	if (format == PixelFormat::None)
+	if (format == pixelFormat_t::None)
 		return false;
 
 	return true;
@@ -79,7 +79,7 @@ bool fhImageData::LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 heig
 
 	const int numBytes = width * height * 4;
 	
-	this->format = PixelFormat::RGBA;
+	this->format = pixelFormat_t::RGBA;
 	this->numFaces = 1;
 	this->numLevels = 1;
 	this->data = (byte*)R_StaticAlloc( numBytes );
@@ -143,7 +143,7 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 	//
 	// convert to exact power of 2 sizes
 	//
-	if (ok && this->data && this->numFaces == 1 && this->numLevels == 1 && this->format == PixelFormat::RGBA) {
+	if (ok && this->data && this->numFaces == 1 && this->numLevels == 1 && this->format == pixelFormat_t::RGBA) {
 
 		int		scaled_width, scaled_height;
 		byte	*resampledBuffer;
@@ -226,26 +226,26 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
 	header->ddspf.dwBBitMask = LittleLong(header->ddspf.dwBBitMask);
 	header->ddspf.dwABitMask = LittleLong(header->ddspf.dwABitMask);
 
+	const char* fourcc = (const char*)&header->ddspf.dwFourCC;
+
 	if (header->ddspf.dwFlags & DDSF_FOURCC) {
 		switch (header->ddspf.dwFourCC) {
 		case DDS_MAKEFOURCC('D', 'X', 'T', '1'):
 			if (header->ddspf.dwFlags & DDSF_ALPHAPIXELS) {
-				common->Warning("Invalid compressed internal format\n");
-				return false;
-				//internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+				format = pixelFormat_t::DXT1_RGBA;
 			}
 			else {
-				//internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-				format = PixelFormat::DXT1_RGB;
+				format = pixelFormat_t::DXT1_RGB;
 			}
 			break;
 		case DDS_MAKEFOURCC('D', 'X', 'T', '3'):
-			//internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-			format = PixelFormat::DXT3_RGBA;
+			format = pixelFormat_t::DXT3_RGBA;
 			break;
 		case DDS_MAKEFOURCC('D', 'X', 'T', '5'):
-			format = PixelFormat::DXT5_RGBA;
-			//internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			format = pixelFormat_t::DXT5_RGBA;
+			break;
+		case DDS_MAKEFOURCC( 'A', 'T', 'I', '2' ):
+			format = pixelFormat_t::RED_GREEN_3DC;
 			break;
 		//case DDS_MAKEFOURCC('R', 'X', 'G', 'B'):
 		//	internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
@@ -265,7 +265,7 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
 
 	for (uint32 i = 0; i < numLevels; i++) {
 
-		int size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == PixelFormat::DXT1_RGB) ? 8 : 16);
+		int size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == pixelFormat_t::DXT1_RGB) ? 8 : 16);
 
 		faces[0].levels[i].offset = static_cast<uint32>((uintptr_t)imagedata - (uintptr_t)this->data);
 		faces[0].levels[i].width = uw;
@@ -512,7 +512,7 @@ bool fhImageData::LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba) {
 	this->numFaces = 1;
 	this->numLevels = 1;
 	this->data = rgba.Release();
-	this->format = PixelFormat::RGBA;
+	this->format = pixelFormat_t::RGBA;
 	
 	return true;
 }
@@ -542,7 +542,7 @@ uint32 fhImageData::GetNumLevels() const {
 	return numLevels;
 }
 
-PixelFormat fhImageData::GetPixelFormat() const {
+pixelFormat_t fhImageData::GetPixelFormat() const {
 	return format;
 }
 
@@ -571,7 +571,7 @@ byte* fhImageData::GetData( uint32 face, uint32 level ) {
 }
 
 byte* fhImageData::GetCanonicalData() {
-	if (format != PixelFormat::RGBA)
+	if (format != pixelFormat_t::RGBA)
 		return nullptr;
 
 	if (numFaces != 1)
@@ -632,7 +632,7 @@ bool fhImageData::LoadCubeMap( const char* filename, cubeFiles_t cubeLayout ) {
 	int	size = 0;
 	int bytesPerSide = 0;
 	ID_TIME_T timestamp = 0;
-	PixelFormat format = PixelFormat::None;
+	pixelFormat_t format = pixelFormat_t::None;
 	fhStaticBuffer<byte> buffer;
 
 	Clear();

@@ -5,11 +5,11 @@
 static const int maxSamplerSettings = 128;
 static fhSampler samplers[maxSamplerSettings];
 
-
 fhSampler::fhSampler()
 	: num(0)
 	, filter(TF_DEFAULT)
 	, repeat(TR_REPEAT)
+	, swizzle(textureSwizzle_t::None)
 	, useAf(true)
 	, useLodBias(true) {
 }
@@ -28,7 +28,7 @@ void fhSampler::Bind( int textureUnit ) {
 	}
 }
 
-fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat, bool useAf, bool useLodBias ) {
+fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat, textureSwizzle_t swizzle, bool useAf, bool useLodBias ) {
 
 	int i = 0;
 	for(; i < maxSamplerSettings; ++i) {
@@ -49,6 +49,9 @@ fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat
 		if (s.useLodBias != useLodBias)
 			continue;
 
+		if (s.swizzle != swizzle)
+			continue;
+
 		return &samplers[i];
 	}
 
@@ -60,20 +63,11 @@ fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat
 	sampler.repeat = repeat;
 	sampler.useAf = useAf;
 	sampler.useLodBias = useLodBias;
+	sampler.swizzle = swizzle;
 
 	sampler.Init();
 
 	return &sampler;
-}
-
-fhSampler* fhSampler::CreateSampler(textureFilter_t filter, textureRepeat_t repeat, bool useAf /* = true */, bool useLodBias /* = true */) {
-	fhSampler* sampler = new fhSampler;
-	sampler->filter = filter;
-	sampler->repeat = repeat;
-	sampler->useAf = useAf;
-	sampler->useLodBias = useLodBias;
-	sampler->Init();
-	return sampler;
 }
 
 void fhSampler::Purge() {
@@ -123,8 +117,19 @@ void fhSampler::Init() {
 	default:
 		common->FatalError( "fhSampler: bad texture repeat" );
 	}
-	
-	
+		
+	static const GLint const swizzle_AGBR[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
+
+	switch (swizzle) {
+	case textureSwizzle_t::AGBR:		
+		glSamplerParameteriv( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle_AGBR );
+		break;
+	case textureSwizzle_t::None:
+		//do nothing
+		break;
+	default:
+		common->FatalError( "fhSampler: bad texture swizzle" );
+	}	
 
 	if (glConfig.anisotropicAvailable) {
 		// only do aniso filtering on mip mapped images
@@ -141,13 +146,4 @@ void fhSampler::Init() {
 	} else {
 		glSamplerParameterf( num, GL_TEXTURE_LOD_BIAS, 0 );
 	}
-}
-
-void fhSampler::SetParams(textureFilter_t filter, textureRepeat_t repeat, bool useAf, bool useLodBias) {
-	this->filter = filter;
-	this->repeat = repeat;
-	this->useAf = useAf;
-	this->useLodBias = useLodBias;
-	Purge();
-	Init();
 }

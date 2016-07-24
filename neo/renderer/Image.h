@@ -120,6 +120,20 @@ typedef struct
 } ddsFileHeader_t;
 
 
+enum class pixelFormat_t {
+	None,
+	RGBA,
+	BGRA,
+	RGB,
+	BGR,
+	DXT1_RGB,
+	DXT1_RGBA,
+	DXT3_RGBA,
+	DXT5_RGBA,
+	DXT5_RxGB,
+	RED_GREEN_3DC
+};
+
 // increasing numeric values imply more information is stored
 typedef enum {
 	TD_SPECULAR,			// may be compressed, and always zeros the alpha channel
@@ -140,6 +154,11 @@ typedef enum {
 	CF_NATIVE,		// _px, _nx, _py, etc, directly sent to GL
 	CF_CAMERA		// _forward, _back, etc, rotated and flipped as needed before sending to GL
 } cubeFiles_t;
+
+enum class textureSwizzle_t {
+	None,
+	AGBR
+};
 
 #define	MAX_IMAGE_NAME	256
 
@@ -227,6 +246,7 @@ public:
 	idStr				imgName;				// game path, including extension (except for cube maps), may be an image program
 	void				(*generatorFunction)( idImage *image );	// NULL for files
 	bool				allowDownSize;			// this also doubles as a don't-partially-load flag
+
 	textureFilter_t		filter;
 	textureRepeat_t		repeat;
 	textureDepth_t		depth;
@@ -247,6 +267,7 @@ public:
 	// data for listImages
 	int					uploadWidth, uploadHeight, uploadDepth;	// after power of two, downsample, and MAX_TEXTURE_SIZE
 	int					internalFormat;
+	pixelFormat_t       pixelFormat;
 
 	idImage 			*cacheUsagePrev, *cacheUsageNext;	// for dynamic cache purging of old images
 

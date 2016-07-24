@@ -46,6 +46,7 @@ struct fhUniform {
 		CascadeDistances,
 		ShadowMapSize,
 		InverseLightRotation,
+		NormalMapEncoding,
 		NUM
 	};
 
@@ -66,6 +67,11 @@ public:
 	static const int vertex_attrib_binormal = 4;
 	static const int vertex_attrib_tangent = 5;
 	static const int vertex_attrib_position_shadow = 6;
+
+	static const int normal_map_encoding_rgb = 0;
+	static const int normal_map_encoding_dxrg = 1;
+	static const int normal_map_encoding_ag = 2;
+	static const int normal_map_encoding_rg = 3;
 
 public:
 	fhRenderProgram();
@@ -125,6 +131,8 @@ public:
 	static void SetShadowMapSize(const idVec4* sizes, int numSizes);
 
 	static void SetInverseLightRotation(const float* m);
+
+	static void SetNormalMapEncoding( int encoding );
 private:
 	static bool dirty[fhUniform::NUM];
 	static idVec4 currentColorModulate;
@@ -137,6 +145,7 @@ private:
 	static bool   currentAlphaTestEnabled;
 	static float  currentAlphaTestThreshold;
 	static float  currentPomMaxHeight;
+	static int    currentNormalMapEncoding;
 
 	static const GLint* currentUniformLocations;
 	void Load();
@@ -361,4 +370,8 @@ ID_INLINE void fhRenderProgram::SetShadowMapSize(const idVec4* sizes, int numSiz
 
 ID_INLINE void fhRenderProgram::SetInverseLightRotation(const float* m) {
 	glUniformMatrix4fv( currentUniformLocations[fhUniform::InverseLightRotation], 1, GL_FALSE, m);
+}
+
+ID_INLINE void fhRenderProgram::SetNormalMapEncoding( int encoding ) {
+	glUniform1i( currentUniformLocations[fhUniform::NormalMapEncoding], encoding );
 }

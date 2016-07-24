@@ -1773,8 +1773,10 @@ void CSyntaxRichEditCtrl::OnMouseMove( UINT nFlags, CPoint point ) {
 		// remove tool tip and activate the tool tip control, otherwise
 		// tool tips stop working until the mouse moves over another window first
 		AFX_MODULE_THREAD_STATE *state = AfxGetModuleThreadState();
-		state->m_pToolTip->Pop();
-		state->m_pToolTip->Activate( TRUE );
+		if (state->m_pToolTip) {
+			state->m_pToolTip->Pop();
+			state->m_pToolTip->Activate( TRUE );
+		}
 	}
 }
 

@@ -2,6 +2,8 @@
 
 #include "Material.h"
 
+enum class textureSwizzle_t;
+
 class fhSampler {
 public:
 	fhSampler();
@@ -10,16 +12,15 @@ public:
 	void Bind(int textureUnit);
 	void Purge();
 
-	void SetParams(textureFilter_t filter, textureRepeat_t repeat, bool useAf = true, bool useLodBias = true);
+	static fhSampler* GetSampler( textureFilter_t filter, textureRepeat_t repeat, textureSwizzle_t swizzle = textureSwizzle_t::None, bool useAf = true, bool useLodBias = true );
 
-	static fhSampler* GetSampler(textureFilter_t filter, textureRepeat_t repeat, bool useAf = true, bool useLodBias = true);
-	static fhSampler* CreateSampler(textureFilter_t filter, textureRepeat_t repeat, bool useAf = true, bool useLodBias = true);
 private:
 	void Init();
 
-	GLuint          num;
-	textureFilter_t filter;
-	textureRepeat_t repeat;
-	bool            useAf;
-	bool            useLodBias;
+	GLuint				num;
+	textureFilter_t		filter;
+	textureRepeat_t		repeat;
+	textureSwizzle_t	swizzle;
+	bool				useAf;
+	bool				useLodBias;
 };

@@ -44,6 +44,7 @@ uniform int rpShading;
 uniform float rpSpecularExp;
 
 uniform int rpShadowMappingMode;
+uniform int rpNormalMapEncoding;
 uniform mat4 rpSpotlightProjection;
 uniform mat4 rpPointlightProjection[6];
 

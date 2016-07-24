@@ -18,6 +18,7 @@ idVec4 fhRenderProgram::currentBumpMatrix[2];
 bool   fhRenderProgram::currentAlphaTestEnabled;
 float  fhRenderProgram::currentAlphaTestThreshold;
 float  fhRenderProgram::currentPomMaxHeight;
+int    fhRenderProgram::currentNormalMapEncoding = -1;
 
 #define MAX_GLPROGS 128
 static fhRenderProgram glslPrograms[MAX_GLPROGS];// = { 0 };
@@ -420,6 +421,7 @@ void fhRenderProgram::Load() {
 		uniformLocations[fhUniform::CascadeDistances] = glGetUniformLocation( program, "rpCascadeDistances" );
 		uniformLocations[fhUniform::ShadowMapSize] = glGetUniformLocation( program, "rpShadowMapSize" );
 		uniformLocations[fhUniform::InverseLightRotation] = glGetUniformLocation( program, "rpInverseLightRotation" );
+		uniformLocations[fhUniform::NormalMapEncoding] = glGetUniformLocation( program, "rpNormalMapEncoding" );
 	} else {
 		for(int i=0; i<fhUniform::NUM; ++i) {
 			uniformLocations[i] = -1;
