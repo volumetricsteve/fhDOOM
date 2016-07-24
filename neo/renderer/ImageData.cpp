@@ -287,18 +287,7 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
 	int uw = header->dwWidth;
 	int uh = header->dwHeight;
 
-#if 0
-	if (FormatIsDXT( internalFormat )) {
-		size = ((uw + 3) / 4) * ((uh + 3) / 4) * (internalFormat <= GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);
-	}
-	else {
-		size = uw * uh * (header->ddspf.dwRGBBitCount / 8);
-	}
-#endif
 	for (uint32 i = 0; i < numLevels; i++) {
-#if 0
-		int size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == pixelFormat_t::DXT1_RGB) ? 8 : 16);
-#else
 		int size;
 		if ((int)format >= (int)pixelFormat_t::DXT1_RGB) {
 			size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == pixelFormat_t::DXT1_RGBA || format == pixelFormat_t::DXT1_RGB) ? 8 : 16);
@@ -306,7 +295,7 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
 		else {
 			size = uw * uh * (header->ddspf.dwRGBBitCount / 8);
 		}
-#endif
+
 		faces[0].levels[i].offset = static_cast<uint32>((uintptr_t)imagedata - (uintptr_t)this->data);
 		faces[0].levels[i].width = uw;
 		faces[0].levels[i].height = uh;
