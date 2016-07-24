@@ -107,65 +107,6 @@ int idImage::BitsForInternalFormat( int internalFormat ) const {
 	return 0;
 }
 
-/*
-==================
-UploadCompressedNormalMap
-
-Create a 256 color palette to be used by compressed normal maps
-==================
-*/
-void idImage::UploadCompressedNormalMap( int width, int height, const byte *rgba, int mipLevel ) {
-	byte	*normals;
-	const byte	*in;
-	byte	*out;
-	int		i, j;
-	int		x, y, z;
-	int		row;
-
-	// OpenGL's pixel packing rule
-	row = width < 4 ? 4 : width;
-
-	normals = (byte *)_alloca( row * height );
-	if ( !normals ) {
-		common->Error( "R_UploadCompressedNormalMap: _alloca failed" );
-	}
-
-	in = rgba;
-	out = normals;
-	for ( i = 0 ; i < height ; i++, out += row, in += width * 4 ) {
-		for ( j = 0 ; j < width ; j++ ) {
-			x = in[ j * 4 + 0 ];
-			y = in[ j * 4 + 1 ];
-			z = in[ j * 4 + 2 ];
-
-			int c;
-			if ( x == 128 && y == 128 && z == 128 ) {
-				// the "nullnormal" color
-				c = 255;
-			} else {
-				c = ( globalImages->originalToCompressed[x] << 4 ) | globalImages->originalToCompressed[y];
-				if ( c == 255 ) {
-					c = 254;	// don't use the nullnormal color
-				}
-			}
-			out[j] = c;
-		}
-	}
-
-	if ( mipLevel == 0 ) {
-		// Optionally write out the paletized normal map to a .tga
-		if ( globalImages->image_writeNormalTGAPalletized.GetBool() ) {
-			char filename[MAX_IMAGE_NAME];
-			ImageProgramStringToCompressedFileName( imgName, filename );
-			char *ext = strrchr(filename, '.');
-			if ( ext ) {
-				strcpy(ext, "_pal.tga");
-				R_WritePalTGA( filename, normals, globalImages->compressedPalette, width, height);
-			}
-		}
-	}
-}
-
 
 //=======================================================================
 
@@ -941,18 +882,23 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
         case DDS_MAKEFOURCC( 'D', 'X', 'T', '1' ):
 			if ( header->ddspf.dwFlags & DDSF_ALPHAPIXELS ) {
 				internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+				pixelFormat = pixelFormat_t::DXT1_RGBA;
 			} else {
 				internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+				pixelFormat = pixelFormat_t::DXT1_RGB;
 			}
             break;
         case DDS_MAKEFOURCC( 'D', 'X', 'T', '3' ):
             internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+			pixelFormat = pixelFormat_t::DXT3_RGBA;
             break;
         case DDS_MAKEFOURCC( 'D', 'X', 'T', '5' ):
             internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			pixelFormat = pixelFormat_t::DXT5_RGBA;
             break;
 		case DDS_MAKEFOURCC( 'R', 'X', 'G', 'B' ):
 			internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			pixelFormat = pixelFormat_t::DXT5_RxGB;
 			break;
         default:
             common->Warning( "Invalid compressed internal format\n" );
@@ -964,8 +910,9 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
     } else if ( ( header->ddspf.dwFlags & DDSF_RGB ) && header->ddspf.dwRGBBitCount == 32 ) {
         externalFormat = GL_BGRA_EXT;
 		internalFormat = GL_RGBA8;
-    } else if ( ( header->ddspf.dwFlags & DDSF_RGB ) && header->ddspf.dwRGBBitCount == 24 ) {
+    } else if ( ( header->ddspf.dwFlags & DDSF_RGB ) && header->ddspf.dwRGBBitCount == 24 ) {		
 		if ( header->ddspf.dwFlags & DDSF_ID_INDEXCOLOR ) { 
+			assert( false && "not supported" );
 			externalFormat = GL_COLOR_INDEX;
 			internalFormat = GL_COLOR_INDEX8_EXT;
 		} else {
@@ -973,6 +920,7 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 			internalFormat = GL_RGB8;
 		}
 	} else if ( header->ddspf.dwRGBBitCount == 8 ) {
+		assert( false && "not supported" );
 		externalFormat = GL_ALPHA;
 		internalFormat = GL_ALPHA8;
 	} else {
