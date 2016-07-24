@@ -250,22 +250,23 @@ static GLenum SelectInteralFormat( pixelFormat_t pf ) {
 	case pixelFormat_t::DXT5_RGBA:
 		return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		break;
+	case pixelFormat_t::DXT5_RxGB:
+		return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		break;
 	case pixelFormat_t::RGBA:
 		return GL_RGBA8;
 		break;
 	case pixelFormat_t::RGB:
 		return GL_RGB8;
 		break;
-	case pixelFormat_t::RED_GREEN_3DC:
+	case pixelFormat_t::RGTC:
 		return GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
 		break;
 	case pixelFormat_t::BGRA:
-		assert( false && "not implemented yet" );
-		common->FatalError( "PixelFormat BGRA not implemented yet" );
+		return GL_RGBA8;
 		break;
 	case pixelFormat_t::BGR:
-		assert( false && "not implemented yet" );
-		common->FatalError( "PixelFormat BGR not implemented yet" );
+		return GL_RGB8;
 		break;
 	default:
 		assert( false && "format not implemented or unknown?" );
@@ -276,8 +277,31 @@ static GLenum SelectInteralFormat( pixelFormat_t pf ) {
 	return GL_INVALID_ENUM;
 }
 
+static GLenum SelectExternalFormat( pixelFormat_t pf ) {
+	switch (pf) {
+	case pixelFormat_t::RGBA:
+		return GL_RGBA;
+		break;
+	case pixelFormat_t::RGB:
+		return GL_RGB;
+		break;
+	case pixelFormat_t::BGRA:
+		return GL_BGRA;
+		break;
+	case pixelFormat_t::BGR:
+		return GL_BGR;
+		break;
+	default:
+		assert(false && "no external format specified");
+		common->FatalError( "no external format specified" );
+		break;
+	}
+
+	return GL_INVALID_ENUM;
+}
+
 static bool IsCompressed( pixelFormat_t pf ) {
-	return pf == pixelFormat_t::DXT1_RGB || pf == pixelFormat_t::DXT1_RGBA || pf == pixelFormat_t::DXT3_RGBA || pf == pixelFormat_t::DXT5_RGBA || pf == pixelFormat_t::RED_GREEN_3DC;
+	return pf == pixelFormat_t::DXT1_RGB || pf == pixelFormat_t::DXT1_RGBA || pf == pixelFormat_t::DXT3_RGBA || pf == pixelFormat_t::DXT5_RGBA || pf == pixelFormat_t::DXT5_RxGB || pf == pixelFormat_t::RGTC;
 }
 
 /*
@@ -345,6 +369,10 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 	glGenTextures( 1, &texnum );	
 
 	const bool compressed = IsCompressed( imageData.GetPixelFormat() );	
+	GLenum externalFormat = GL_INVALID_ENUM;
+	if (!compressed) {
+		externalFormat = SelectExternalFormat( imageData.GetPixelFormat() );
+	}
 
 	// upload the main image level
 	if (glConfig.extDirectStateAccessAvailable) {
@@ -361,7 +389,7 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 					glCompressedTextureImage2DEXT( texnum, target, level, internalFormat, width, height, 0, size, data );
 				}
 				else {
-					glTextureImage2DEXT( texnum, target, level, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+					glTextureImage2DEXT( texnum, target, level, internalFormat, width, height, 0, externalFormat, GL_UNSIGNED_BYTE, data );
 				}
 			}
 		}
@@ -785,7 +813,16 @@ bool idImage::CheckPrecompressedImage( bool fullLoad ) {
 	}
 
 	timestamp = precompTimestamp;
+#if 1
+	fhImageData data;
+	if(!data.LoadFile( filename )) {
+		return false;
+	}
 
+	GenerateImage( data );
+	return true;
+
+#else
 	// open it and just read the header
 	idFile *f;
 
@@ -834,6 +871,7 @@ bool idImage::CheckPrecompressedImage( bool fullLoad ) {
 
 
 	return true;
+#endif
 }
 
 /*
@@ -874,6 +912,8 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 	int externalFormat = 0;
 
 	precompressedFile = true;
+
+	const char* fourCC = (const char*)&header->ddspf.dwFourCC;
 
 	uploadWidth = header->dwWidth;
 	uploadHeight = header->dwHeight;
@@ -956,8 +996,7 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 	for ( int i = 0 ; i < numMipmaps; i++ ) {
 		int size = 0;
 		if ( FormatIsDXT( internalFormat ) ) {
-			size = ( ( uw + 3 ) / 4 ) * ( ( uh + 3 ) / 4 ) *
-				(internalFormat <= GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);
+			size = ( ( uw + 3 ) / 4 ) * ( ( uh + 3 ) / 4 ) * (internalFormat <= GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);
 		} else {
 			size = uw * uh * (header->ddspf.dwRGBBitCount / 8);
 		}

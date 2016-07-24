@@ -131,7 +131,7 @@ enum class pixelFormat_t {
 	DXT3_RGBA,
 	DXT5_RGBA,
 	DXT5_RxGB,
-	RED_GREEN_3DC
+	RGTC
 };
 
 // increasing numeric values imply more information is stored

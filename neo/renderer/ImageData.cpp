@@ -245,15 +245,39 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
 			format = pixelFormat_t::DXT5_RGBA;
 			break;
 		case DDS_MAKEFOURCC( 'A', 'T', 'I', '2' ):
-			format = pixelFormat_t::RED_GREEN_3DC;
+			format = pixelFormat_t::RGTC;
 			break;
-		//case DDS_MAKEFOURCC('R', 'X', 'G', 'B'):
-		//	internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		//	break;
+		case DDS_MAKEFOURCC('R', 'X', 'G', 'B'):
+			format = pixelFormat_t::DXT5_RxGB;
+			break;
 		default:
 			common->Warning("Invalid compressed internal format\n");
 			return false;
 		}
+	}
+	else if ((header->ddspf.dwFlags & DDSF_RGBA) && header->ddspf.dwRGBBitCount == 32) {
+		format = pixelFormat_t::BGRA;
+	}
+	else if ((header->ddspf.dwFlags & DDSF_RGB) && header->ddspf.dwRGBBitCount == 32) {
+		format = pixelFormat_t::BGRA;
+	}
+	else if ((header->ddspf.dwFlags & DDSF_RGB) && header->ddspf.dwRGBBitCount == 24) {
+		if (header->ddspf.dwFlags & DDSF_ID_INDEXCOLOR) {
+			common->Warning( "Invalid uncompressed internal format\n" );
+			return false;
+		}
+		else {
+			format = pixelFormat_t::BGR;
+		}
+	}
+	else if (header->ddspf.dwRGBBitCount == 8) {
+		assert( false && "not supported" );
+		common->Warning( "Invalid uncompressed internal format\n" );
+		return false;
+	}
+	else {
+		common->Warning( "Invalid uncompressed internal format\n" );
+		return false;
 	}
 
 	this->numFaces = 1;
@@ -263,10 +287,26 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
 	int uw = header->dwWidth;
 	int uh = header->dwHeight;
 
+#if 0
+	if (FormatIsDXT( internalFormat )) {
+		size = ((uw + 3) / 4) * ((uh + 3) / 4) * (internalFormat <= GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ? 8 : 16);
+	}
+	else {
+		size = uw * uh * (header->ddspf.dwRGBBitCount / 8);
+	}
+#endif
 	for (uint32 i = 0; i < numLevels; i++) {
-
+#if 0
 		int size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == pixelFormat_t::DXT1_RGB) ? 8 : 16);
-
+#else
+		int size;
+		if ((int)format >= (int)pixelFormat_t::DXT1_RGB) {
+			size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == pixelFormat_t::DXT1_RGBA || format == pixelFormat_t::DXT1_RGB) ? 8 : 16);
+		}
+		else {
+			size = uw * uh * (header->ddspf.dwRGBBitCount / 8);
+		}
+#endif
 		faces[0].levels[i].offset = static_cast<uint32>((uintptr_t)imagedata - (uintptr_t)this->data);
 		faces[0].levels[i].width = uw;
 		faces[0].levels[i].height = uh;

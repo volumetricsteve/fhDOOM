@@ -10,7 +10,7 @@ RB_GetNormalEncoding
 */
 static int RB_GetNormalEncoding( const idImage* image ) {
 	switch (image->pixelFormat) {
-	case pixelFormat_t::RED_GREEN_3DC:
+	case pixelFormat_t::RGTC:
 		return fhRenderProgram::normal_map_encoding_rg;
 	case pixelFormat_t::DXT5_RxGB:
 		return fhRenderProgram::normal_map_encoding_dxrg;
