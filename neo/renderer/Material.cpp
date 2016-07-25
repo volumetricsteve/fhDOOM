@@ -101,6 +101,12 @@ static void replaceBuildinFragmentShader(const idStr& name, glslShaderStage_t& g
 }
 
 
+static void R_ParsePastImageProgram( idLexer &src, char* buffer ) {
+	fhImageProgram program;
+	const char* s = program.ParsePastImageProgram( src );
+	strcpy( buffer, s );
+}
+
 /*
 =============
 idMaterial::CommonInit
@@ -1000,12 +1006,11 @@ idMaterial::ParseShaderMap
 ================
 */
 void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
-  const char			*str;
   textureFilter_t		tf;
   textureRepeat_t		trp;
   textureDepth_t		td;
   cubeFiles_t			cubeMap;
-  bool				allowPicmip;
+  bool					allowPicmip;
   idToken				token;
 
   tf = TF_DEFAULT;
@@ -1086,7 +1091,8 @@ void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
     src.UnreadToken(&token);
     break;
   }
-  str = R_ParsePastImageProgram(src);
+  char str[MAX_IMAGE_NAME];
+  R_ParsePastImageProgram(src, str);
 
   newStage->shaderMap[unit] =
     globalImages->ImageFromFile(str, tf, allowPicmip, trp, td, cubeMap);
@@ -1156,7 +1162,6 @@ An open brace has been parsed
 */
 void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	idToken				token;
-	const char			*str;
 	shaderStage_t		*ss;
 	textureStage_t		*ts;
 	textureFilter_t		tf;
@@ -1226,8 +1231,8 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 
 		if (  !token.Icmp( "map" ) ) {
-			fhImageProgram program;
-			str = program.ParsePastImageProgram( src );
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
 			idStr::Copynz( imageName, str, sizeof( imageName ) );
 			continue;
 		}
@@ -1298,14 +1303,16 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 
 		if ( !token.Icmp( "cubeMap" ) ) {
-			str = R_ParsePastImageProgram( src );
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
 			idStr::Copynz( imageName, str, sizeof( imageName ) );
 			cubeMap = CF_NATIVE;
 			continue;
 		}
 
 		if ( !token.Icmp( "cameraCubeMap" ) ) {
-			str = R_ParsePastImageProgram( src );
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
 			idStr::Copynz( imageName, str, sizeof( imageName ) );
 			cubeMap = CF_CAMERA;
 			continue;
@@ -1892,7 +1899,6 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 	idToken		token;
 	int			s;
 	char		buffer[1024];
-	const char	*str;
 	idLexer		newSrc;
 	int			i;
 
@@ -2064,10 +2070,9 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		// specifies the image to use for the third axis of projected
 		// light volumes
 		else if ( !token.Icmp( "lightFalloffImage" ) ) {
-			str = R_ParsePastImageProgram( src );
-			idStr	copy;
-
-			copy = str;	// so other things don't step on it
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
+			idStr copy = str;	// so other things don't step on it //TODO(johl): is that still needed?
 			lightFalloffImage = globalImages->ImageFromFile( copy, TF_DEFAULT, false, TR_CLAMP /* TR_CLAMP_TO_ZERO */, TD_DEFAULT );
 			continue;
 		}
@@ -2115,7 +2120,8 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		}
 		// diffusemap for stage shortcut
 		else if ( !token.Icmp( "diffusemap" ) ) {
-			str = R_ParsePastImageProgram( src );
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( buffer, sizeof( buffer ), "blend diffusemap\nmap %s\n}\n", str );
 			newSrc.LoadMemory( buffer, strlen(buffer), "diffusemap" );
 			newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
@@ -2125,7 +2131,8 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		}
 		// specularmap for stage shortcut
 		else if ( !token.Icmp( "specularmap" ) ) {
-			str = R_ParsePastImageProgram( src );
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( buffer, sizeof( buffer ), "blend specularmap\nmap %s\n}\n", str );
 			newSrc.LoadMemory( buffer, strlen(buffer), "specularmap" );
 			newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
@@ -2135,7 +2142,8 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		}
 		// normalmap for stage shortcut
 		else if ( !token.Icmp( "bumpmap" ) ) {
-			str = R_ParsePastImageProgram( src );
+			char str[MAX_IMAGE_NAME];
+			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( buffer, sizeof( buffer ), "blend bumpmap\nmap %s\n}\n", str );
 			newSrc.LoadMemory( buffer, strlen(buffer), "bumpmap" );
 			newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );

@@ -630,15 +630,3 @@ void R_LoadImageProgram( const char *name, byte **pic, int *width, int *height, 
 
 	src.FreeSource();
 }
-
-/*
-===================
-R_ParsePastImageProgram
-===================
-*/
-const char *R_ParsePastImageProgram( idLexer &src ) {
-	parseBuffer[0] = 0;
-	R_ParseImageProgram_r( src, NULL, NULL, NULL, NULL, NULL );
-	return parseBuffer;
-}
-

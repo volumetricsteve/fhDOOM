@@ -509,5 +509,3 @@ IMAGEPROGRAM
 */
 
 void R_LoadImageProgram( const char *name, byte **pic, int *width, int *height, ID_TIME_T *timestamp, textureDepth_t *depth = NULL );
-const char *R_ParsePastImageProgram( idLexer &src );
-

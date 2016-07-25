@@ -38,6 +38,7 @@ fhImageData::fhImageData()
 	, numFaces(0)
 	, numLevels(0)
 	, timestamp(0) {
+	name[0] = '\0';
 }
 
 fhImageData::fhImageData(fhImageData&& other)
@@ -770,5 +771,6 @@ bool fhImageData::LoadProgram( const char* program ) {
 	Clear();
 
 	fhImageProgram imageProgram;
+	idStr::Copynz( name, program, sizeof( name ) - 1 );
 	return imageProgram.LoadImageProgram( program, this, nullptr );
 }
