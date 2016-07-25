@@ -343,7 +343,8 @@ SET(SOURCES
   renderer/Image_program.cpp
   renderer/ImageData.h
   renderer/ImageData.cpp
-  renderer/ImageData_program.cpp
+  renderer/ImageProgram.h
+  renderer/ImageProgram.cpp
   renderer/Interaction.cpp
   renderer/Interaction.h
 

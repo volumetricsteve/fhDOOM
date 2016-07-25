@@ -97,7 +97,12 @@ private:
 class fhImageData {
 public:
 	            fhImageData();
+				fhImageData( const fhImageData& ) = delete;
+				fhImageData( fhImageData&& );
 	            ~fhImageData();
+
+	fhImageData& operator=(const fhImageData&) = delete;
+	fhImageData& operator=(fhImageData&& other);
 
 	bool        LoadFile(const char* filename, bool toRgba = false);
 	bool        LoadDDS(const char* filename);
@@ -121,8 +126,6 @@ public:
 	bool        IsValid() const;
 	void        Clear();
 
-	static const char* ParsePastImageProgram( idLexer& src );
-
 private:
 	//TODO(johl): hard coded maximum level num limits the maximum texture size, but that's ok for now
 	static const int maximumLevelNum = 16; //max tex size = 2^(16-1) = 32768
@@ -130,9 +133,7 @@ private:
 	//TODO(johl): hard coded maximum face num limits us to 2D texture (1 face) and cubemaps (6 face)
 	//            This must be changed for 3D textures or even generalized texture arrays (not need right now).
 	static const int maximumFaceNum = 6;
-
-	byte*       GetCanonicalData();
-
+	
 	bool        LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>& buffer);
 	bool        LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba);
 	bool        LoadDDS(fhStaticBuffer<byte>& buffer);
@@ -159,7 +160,7 @@ private:
 	uint32      numLevels;
 	face_t      faces[maximumFaceNum];
 	pixelFormat_t format;
-	char        name[256];
+	char        name[MAX_IMAGE_NAME];
 	ID_TIME_T   timestamp;
 	byte*       data;
 };

@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "ImageData.h"
+#include "ImageProgram.h"
 
 /*
 
@@ -1402,7 +1403,8 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 
 		if (  !token.Icmp( "map" ) ) {
-			str = fhImageData::ParsePastImageProgram( src );
+			fhImageProgram program;
+			str = program.ParsePastImageProgram( src );
 			idStr::Copynz( imageName, str, sizeof( imageName ) );
 			continue;
 		}

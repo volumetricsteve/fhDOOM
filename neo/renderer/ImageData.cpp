@@ -27,7 +27,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #include "ImageData.h"
-#include "Image.h"
+#include "ImageProgram.h"
 #include "../framework/FileSystem.h"
 #include "../framework/File.h"
 #include "tr_local.h"
@@ -40,8 +40,44 @@ fhImageData::fhImageData()
 	, timestamp(0) {
 }
 
+fhImageData::fhImageData(fhImageData&& other)
+	: data( other.data )
+	, format( other.format )
+	, numFaces( other.numFaces )
+	, numLevels( other.numLevels )
+	, timestamp( other.timestamp ) {
+
+	memcpy( &this->faces, &other.faces, sizeof( this->faces ) );
+
+	other.data = nullptr;
+	other.format = pixelFormat_t::None;
+	other.numFaces = 0;
+	other.numLevels = 0;
+	other.timestamp = 0;
+}
+
 fhImageData::~fhImageData() {
 	Clear();
+}
+
+fhImageData& fhImageData::operator=(fhImageData&& other) {
+	Clear();
+
+	this->data = other.data;
+	this->format = other.format;
+	this->numFaces = other.numFaces;
+	this->numLevels = other.numLevels;
+	this->timestamp = other.timestamp;
+
+	memcpy( &this->faces, &other.faces, sizeof( this->faces ) );
+
+	other.data = nullptr;
+	other.format = pixelFormat_t::None;
+	other.numFaces = 0;
+	other.numLevels = 0;
+	other.timestamp = 0;
+
+	return *this;
 }
 
 void fhImageData::Clear() {
@@ -145,8 +181,7 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 	//
 	if (ok && this->data && this->numFaces == 1 && this->numLevels == 1 && this->format == pixelFormat_t::RGBA) {
 
-		int		scaled_width, scaled_height;
-		byte	*resampledBuffer;
+		int	scaled_width, scaled_height;
 
 		int w = GetWidth();
 		int h = GetHeight();
@@ -370,7 +405,7 @@ bool fhImageData::LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba) {
 
 	if (targa_header.image_type == 2 || targa_header.image_type == 3) {
 		numBytes = targa_header.width * targa_header.height * (targa_header.pixel_size >> 3);
-		if (numBytes > buffer.Num() - 18 - targa_header.id_length) {
+		if (numBytes > static_cast<int>(buffer.Num()) - 18 - targa_header.id_length) {
 			common->Error("LoadTGA( %s ): incomplete file\n", name);
 		}
 	}
@@ -599,19 +634,6 @@ byte* fhImageData::GetData( uint32 face, uint32 level ) {
 	return data + faces[face].levels[level].offset;
 }
 
-byte* fhImageData::GetCanonicalData() {
-	if (format != pixelFormat_t::RGBA)
-		return nullptr;
-
-	if (numFaces != 1)
-		return nullptr;
-
-	if (numLevels != 1)
-		return nullptr;
-
-	return data + faces[0].levels[0].offset;
-}
-
 bool fhImageData::LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>& buffer) {
 
 	fhFileHandle file = fileSystem->OpenFileRead(filename);
@@ -742,4 +764,11 @@ bool fhImageData::LoadCubeMap( const char* filename, cubeFiles_t cubeLayout ) {
 	}
 
 	return true;
+}
+
+bool fhImageData::LoadProgram( const char* program ) {
+	Clear();
+
+	fhImageProgram imageProgram;
+	return imageProgram.LoadImageProgram( program, this, nullptr );
 }
