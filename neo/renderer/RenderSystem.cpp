@@ -599,6 +599,15 @@ BeginFrame
 ====================
 */
 void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
+	BeginFrame( windowWidth, windowHeight, windowWidth, windowHeight );
+}
+
+/*
+====================
+BeginFrame
+====================
+*/
+void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) {
 	setBufferCommand_t	*cmd;
 
 	if ( !glConfig.isInitialized ) {
@@ -611,10 +620,16 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
 	if ( tiledViewport[0] ) {
 		windowWidth = tiledViewport[0];
 		windowHeight = tiledViewport[1];
+
+		renderWidth = windowWidth;
+		renderHeight = windowHeight;
 	}
 
 	glConfig.vidWidth = windowWidth;
 	glConfig.vidHeight = windowHeight;
+
+	glConfig.renderWidth = renderWidth;
+	glConfig.renderHeight = renderHeight;
 
 	renderCrops[0].x = 0;
 	renderCrops[0].y = 0;
@@ -652,12 +667,6 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
 	cmd = (setBufferCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
 	cmd->commandId = RC_SET_BUFFER;
 	cmd->frameCount = frameCount;
-
-	if ( r_frontBuffer.GetBool() ) {
-		cmd->buffer = (int)GL_FRONT;
-	} else {
-		cmd->buffer = (int)GL_BACK;
-	}
 }
 
 void idRenderSystemLocal::WriteDemoPics() {

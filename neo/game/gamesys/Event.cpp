@@ -612,12 +612,12 @@ idEvent::Save
 ================
 */
 void idEvent::Save( idSaveGame *savefile ) {
-	char *str;
 	int i, size;
 	idEvent	*event;
 	byte *dataPtr;
 	bool validTrace;
 	const char	*format;
+	idStr str;
 
 	savefile->WriteInt( EventQueue.Num() );
 
@@ -646,6 +646,12 @@ void idEvent::Save( idSaveGame *savefile ) {
 					savefile->WriteVec3( *reinterpret_cast<idVec3 *>( dataPtr ) );
 					size += sizeof( idVec3 );
 					break;
+				case D_EVENT_STRING:
+					str.Clear();
+					str.Append( reinterpret_cast<char *>(dataPtr) );
+					savefile->WriteString( str );
+					size += MAX_STRING_LEN;
+					break;
 				case D_EVENT_TRACE :
 					validTrace = *reinterpret_cast<bool *>( dataPtr );
 					savefile->WriteBool( validTrace );
@@ -656,8 +662,8 @@ void idEvent::Save( idSaveGame *savefile ) {
 						SaveTrace( savefile, t );
 						if ( t.c.material ) {
 							size += MAX_STRING_LEN;
-							str = reinterpret_cast<char *>( dataPtr + sizeof( bool ) + sizeof( trace_t ) );
-							savefile->Write( str, MAX_STRING_LEN );
+							const char* s = reinterpret_cast<char *>( dataPtr + sizeof( bool ) + sizeof( trace_t ) );
+							savefile->Write( s, MAX_STRING_LEN );
 						}
 					}
 					break;

@@ -1,3 +1,31 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
 #include "../idlib/precompiled.h"
 #pragma hdrstop
 
@@ -5,6 +33,7 @@
 #include "RenderProgram.h"
 #include "ImmediateMode.h"
 #include "RenderList.h"
+#include "Framebuffer.h"
 
 idCVar r_pomEnabled("r_pomEnabled", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "POM enabled or disabled");
 idCVar r_pomMaxHeight("r_pomMaxHeight", "0.045", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_FLOAT, "maximum height for POM");
@@ -552,7 +581,6 @@ void RB_GLSL_StencilShadowPass(const drawSurf_t *drawSurfs) {
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 }
 
-
 /*
 =====================
 RB_GLSL_FillDepthBuffer
@@ -570,67 +598,6 @@ void RB_GLSL_FillDepthBuffer(drawSurf_t **drawSurfs, int numDrawSurfs) {
 	depthRenderList.Submit();
 }
 
-
-/*
-=====================
-RB_GLSL_RenderSpecialShaderStage
-=====================
-*/
-void RB_GLSL_RenderSpecialShaderStage(const float* regs, const shaderStage_t* pStage, glslShaderStage_t* glslStage, const drawSurf_t *surf) {  
-	assert(surf);
-	const srfTriangles_t* tri = surf->geo;
-	GL_State(pStage->drawStateBits);
-	GL_UseProgram(glslStage->program);
-
-	const auto offset = vertexCache.Bind(tri->ambientCache);  
-	GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
-
-	fhRenderProgram::SetModelViewMatrix(surf->space->modelViewMatrix);	
-
-	if (surf->space->modelDepthHack != 0.0f) {
-		RB_EnterModelDepthHack( surf->space->modelDepthHack );
-	}
-	else if (surf->space->weaponDepthHack) {
-		RB_EnterWeaponDepthHack();
-	}
-	else {
-		fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
-	}
-
-	for (int i = 0; i < glslStage->numShaderParms; i++) {
-		idVec4 parm;
-		parm[0] = regs[glslStage->shaderParms[i][0]];
-		parm[1] = regs[glslStage->shaderParms[i][1]];
-		parm[2] = regs[glslStage->shaderParms[i][2]];
-		parm[3] = regs[glslStage->shaderParms[i][3]];
-		fhRenderProgram::SetShaderParm(i, parm);    
-	}
-
-	// current render
-	const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-	const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-
-	fhRenderProgram::SetCurrentRenderSize(
-		idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
-		idVec2(w, h));
-
-	// set textures
-	for (int i = 0; i < glslStage->numShaderMaps; i++) {
-		if (glslStage->shaderMap[i]) {
-			glslStage->shaderMap[i]->Bind(i);
-		}
-	}
-
-	// draw it
-	RB_DrawElementsWithCounters(tri);
-
-	if (surf->space->modelDepthHack != 0.0f || surf->space->weaponDepthHack) {
-		RB_LeaveDepthHack();
-	}
-}
-
-
-
 /*
 =================
 R_ReloadGlslPrograms_f
@@ -640,426 +607,8 @@ void R_ReloadGlslPrograms_f( const idCmdArgs &args ) {
 	fhRenderProgram::ReloadAll();
 }
 
-
-/*
-====================
-RB_GLSL_RenderShaderStage
-====================
-*/
-void RB_GLSL_RenderShaderStage(const drawSurf_t *surf, const shaderStage_t* pStage) {
-  assert(defaultProgram);
-  assert(skyboxProgram);
-  assert(bumpyEnvProgram);
-
-  // set the color  
-  float color[4];
-  color[0] = surf->shaderRegisters[pStage->color.registers[0]];
-  color[1] = surf->shaderRegisters[pStage->color.registers[1]];
-  color[2] = surf->shaderRegisters[pStage->color.registers[2]];
-  color[3] = surf->shaderRegisters[pStage->color.registers[3]];
-
-  // skip the entire stage if an add would be black
-  if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE)
-    && color[0] <= 0 && color[1] <= 0 && color[2] <= 0) {
-    return;
-  }
-
-  // skip the entire stage if a blend would be completely transparent
-  if ((pStage->drawStateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) == (GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
-    && color[3] <= 0) {
-    return;
-  }
-  
-  const auto offset = vertexCache.Bind(surf->geo->ambientCache); 
-
-  bool programWasReset = false;
-
-  if (pStage->texture.texgen == TG_DIFFUSE_CUBE) {
-    return;
-  }
-  else if (pStage->texture.texgen == TG_SKYBOX_CUBE || pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
-    programWasReset = GL_UseProgram(skyboxProgram);    
-
-    idMat4 textureMatrix = mat4_identity;
-    if (pStage->texture.texgen == TG_WOBBLESKY_CUBE) {
-      R_CreateWobbleskyTexMatrix(surf, backEnd.viewDef->floatTime, textureMatrix.ToFloatPtr());
-    }
-
-    idVec4 localViewOrigin;
-    R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3() );
-    localViewOrigin[3] = 1.0f;
-    fhRenderProgram::SetLocalViewOrigin(localViewOrigin);
-	fhRenderProgram::SetTextureMatrix(textureMatrix.ToFloatPtr());    
-
-	GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorOnly, offset);
-  }
-  else if (pStage->texture.texgen == TG_SCREEN) {
-    return;
-  }
-  else if (pStage->texture.texgen == TG_GLASSWARP) {
-    return;
-  }
-  else if (pStage->texture.texgen == TG_REFLECT_CUBE) {
-
-    programWasReset = GL_UseProgram(bumpyEnvProgram);
-
-    idMat4 textureMatrix = mat4_identity;
-
-    idVec4 localViewOrigin;
-    R_GlobalPointToLocal(surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, localViewOrigin.ToVec3());
-    localViewOrigin[3] = 1.0f;
-	fhRenderProgram::SetLocalViewOrigin(localViewOrigin);        
-	fhRenderProgram::SetTextureMatrix(textureMatrix.ToFloatPtr());
-
-	GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
-
-    // set the texture matrix
-    idVec4 textureMatrixST[2];
-    textureMatrixST[0][0] = 1;
-    textureMatrixST[0][1] = 0;
-    textureMatrixST[0][2] = 0;
-    textureMatrixST[0][3] = 0;
-    textureMatrixST[1][0] = 0;
-    textureMatrixST[1][1] = 1;
-    textureMatrixST[1][2] = 0;
-    textureMatrixST[1][3] = 0;
-
-    // see if there is also a bump map specified
-    if(const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
-      RB_GetShaderTextureMatrix(surf->shaderRegisters, &bumpStage->texture, textureMatrixST);
-
-      //void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
-      bumpStage->texture.image->Bind(2);
-    } else {
-      globalImages->flatNormalMap->Bind(2);
-    }
-
-	fhRenderProgram::SetBumpMatrix(textureMatrixST[0], textureMatrixST[1]);
-  }
-  else {    
-
-    //prefer depth blend settings from material. If material does not define a 
-    // depth blend mode, look at the geometry for depth blend settings (usually
-    // set by particle systems for soft particles)
-
-    depthBlendMode_t depthBlendMode = pStage->depthBlendMode;
-    float depthBlendRange = pStage->depthBlendRange;
-
-    if(depthBlendMode == DBM_UNDEFINED) {
-      depthBlendMode = surf->geo->depthBlendMode;
-      depthBlendRange = surf->geo->depthBlendRange;
-    }      
-    
-    if (depthBlendMode == DBM_AUTO) {
-      if (pStage->drawStateBits & (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE))
-        depthBlendMode = DBM_COLORALPHA_ZERO;
-      else if (pStage->drawStateBits & (GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO))
-        depthBlendMode = DBM_COLORALPHA_ONE;
-      else
-        depthBlendMode = DBM_OFF;
-    }
-
-    if(depthBlendMode != DBM_OFF && depthBlendRange > 0.0f) {
-      programWasReset = GL_UseProgram(depthblendProgram);
-
-      globalImages->currentDepthImage->Bind(2);
-
-      fhRenderProgram::SetDepthBlendRange(depthBlendRange);
-      fhRenderProgram::SetDepthBlendMode(static_cast<int>(depthBlendMode));      
-	  fhRenderProgram::SetClipRange(backEnd.viewDef->viewFrustum.GetNearDistance(), backEnd.viewDef->viewFrustum.GetFarDistance());      
-    }
-    else {
-      programWasReset = GL_UseProgram(defaultProgram);
-    }
-
-	GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
-  }
-
-  // bind the texture
-  if (pStage->texture.cinematic) {
-	  if (r_skipDynamicTextures.GetBool()) {
-		  globalImages->defaultImage->Bind(1);		  
-	  }
-	  else {
-		  // offset time by shaderParm[7] (FIXME: make the time offset a parameter of the shader?)
-		  // We make no attempt to optimize for multiple identical cinematics being in view, or
-		  // for cinematics going at a lower framerate than the renderer.
-		  cinData_t	cin = pStage->texture.cinematic->ImageForTime( (int)(1000 * (backEnd.viewDef->floatTime + backEnd.viewDef->renderView.shaderParms[11])) );
-
-		  if (cin.image) {
-			  globalImages->cinematicImage->UploadScratch( 1, cin.image, cin.imageWidth, cin.imageHeight );
-		  }
-		  else {
-			  globalImages->blackImage->Bind(1);
-		  }
-	  }
-  }
-  else {
-	  //FIXME: see why image is invalid
-	  if (pStage->texture.image) {
-		  pStage->texture.image->Bind(1);
-	  }
-  }
-  
-  // set the state
-  GL_State(pStage->drawStateBits);  
-
-	if(programWasReset) {
-		// current render
-		const int	w = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
-		const int	h = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
-		fhRenderProgram::SetCurrentRenderSize(
-			idVec2( globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight ),
-			idVec2( w, h ) );
-	}
-  
-	if (surf->space->modelDepthHack != 0.0f) {
-		RB_EnterModelDepthHack( surf->space->modelDepthHack );
-	}
-	else if (surf->space->weaponDepthHack) {
-		RB_EnterWeaponDepthHack();
-	}
-	else if (programWasReset) {
-		fhRenderProgram::SetProjectionMatrix(backEnd.viewDef->projectionMatrix);
-	}
-
-	if(surf->space != backEnd.currentSpace || programWasReset) {
-		fhRenderProgram::SetModelMatrix( surf->space->modelMatrix );
-		fhRenderProgram::SetModelViewMatrix( surf->space->modelViewMatrix );	
-	}  
-
-  switch (pStage->vertexColor) {
-  case SVC_IGNORE:
-	fhRenderProgram::SetColorModulate(idVec4::zero);
-	fhRenderProgram::SetColorAdd(idVec4::one);
-    break;
-  case SVC_MODULATE:
-	fhRenderProgram::SetColorModulate(idVec4::one);
-	fhRenderProgram::SetColorAdd(idVec4::zero);
-    break;
-  case SVC_INVERSE_MODULATE:
-	fhRenderProgram::SetColorModulate(idVec4::negOne);
-	fhRenderProgram::SetColorAdd(idVec4::one);
-    break;
-  }     
-
-  // set privatePolygonOffset if necessary
-  if (pStage->privatePolygonOffset) {
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * pStage->privatePolygonOffset);
-  }
-
-  if(pStage->texture.image) {
-    // set the texture matrix
-    idVec4 textureMatrix[2];
-    textureMatrix[0][0] = 1;
-    textureMatrix[0][1] = 0;
-    textureMatrix[0][2] = 0;
-    textureMatrix[0][3] = 0;
-    textureMatrix[1][0] = 0;
-    textureMatrix[1][1] = 1;
-    textureMatrix[1][2] = 0;
-    textureMatrix[1][3] = 0;
-    if(pStage->texture.hasMatrix) {
-      RB_GetShaderTextureMatrix(surf->shaderRegisters, &pStage->texture, textureMatrix);
-	}
-
-	fhRenderProgram::SetBumpMatrix(textureMatrix[0], textureMatrix[1]);  
-
-    pStage->texture.image->Bind(1);    
-  }
-
-  fhRenderProgram::SetDiffuseColor(idVec4(color));
-
-  // draw it
-  RB_DrawElementsWithCounters(surf->geo);  
-
-  if (surf->space->modelDepthHack != 0.0f || surf->space->weaponDepthHack) {
-	  RB_LeaveDepthHack();
-  }
-}
-
-
-/*
-==================
-RB_GLSL_DrawInteraction
-==================
-*/
-void RB_GLSL_DrawInteraction(const drawInteraction_t *din) {  
-
-	// change the matrix and light projection vectors if needed
-	if (din->surf->space != backEnd.currentSpace) {		
-		fhRenderProgram::SetModelViewMatrix( din->surf->space->modelViewMatrix );
-		fhRenderProgram::SetModelMatrix(din->surf->space->modelMatrix);				
-
-		if (din->surf->space->modelDepthHack != 0.0f) {
-			RB_EnterModelDepthHack( din->surf->space->modelDepthHack );
-		}
-		else 	if (din->surf->space->weaponDepthHack) {
-			RB_EnterWeaponDepthHack();
-		}
-		else if (!backEnd.currentSpace || backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack) {
-			RB_LeaveDepthHack();
-		}
-
-		backEnd.currentSpace = din->surf->space;
-	}
-
-	fhRenderProgram::SetLocalViewOrigin( din->localViewOrigin );
-	fhRenderProgram::SetLocalLightOrigin( din->localLightOrigin );
-	fhRenderProgram::SetLightProjectionMatrix( din->lightProjection[0], din->lightProjection[1], din->lightProjection[2] );
-	fhRenderProgram::SetLightFallOff( din->lightProjection[3] );	
-	fhRenderProgram::SetBumpMatrix(din->bumpMatrix[0], din->bumpMatrix[1]);
-	fhRenderProgram::SetDiffuseMatrix(din->diffuseMatrix[0], din->diffuseMatrix[1]);
-	fhRenderProgram::SetSpecularMatrix(din->specularMatrix[0], din->specularMatrix[1]);
-
-	switch (din->vertexColor) {
-	case SVC_IGNORE:
-		fhRenderProgram::SetColorModulate( idVec4::zero );
-		fhRenderProgram::SetColorAdd( idVec4::one );
-		break;
-	case SVC_MODULATE:
-		fhRenderProgram::SetColorModulate( idVec4::one );
-		fhRenderProgram::SetColorAdd( idVec4::zero );
-		break;
-	case SVC_INVERSE_MODULATE:
-		fhRenderProgram::SetColorModulate( idVec4::negOne );
-		fhRenderProgram::SetColorAdd( idVec4::one );
-		break;
-	}
-
-	fhRenderProgram::SetDiffuseColor(din->diffuseColor);
-	fhRenderProgram::SetSpecularColor(din->specularColor * r_specularScale.GetFloat());
-
-	if( r_pomEnabled.GetBool() && din->specularImage->hasAlpha ) {
-		fhRenderProgram::SetPomMaxHeight(r_pomMaxHeight.GetFloat());
-	} else {
-		fhRenderProgram::SetPomMaxHeight(-1);	  
-	}
-
-	// texture 1 will be the per-surface bump map  
-	din->bumpImage->Bind(1);
-
-	// texture 2 will be the light falloff texture  
-	din->lightFalloffImage->Bind(2);
-
-	// texture 3 will be the light projection texture  
-	din->lightImage->Bind(3);
-
-	// texture 4 is the per-surface diffuse map  
-	din->diffuseImage->Bind(4);
-
-	// texture 5 is the per-surface specular map  
-	din->specularImage->Bind(5);
-
-	// draw it
-	RB_DrawElementsWithCounters(din->surf->geo);
-}
-
-/*
-=============
-RB_GLSL_CreateDrawInteractions
-
-=============
-*/
-void RB_GLSL_CreateDrawInteractions(const drawSurf_t *surf) {
-	assert(interactionProgram);
-
-	if (!surf) {
-		return;
-	}
-
-	// perform setup here that will be constant for all interactions
-	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHMASK | backEnd.depthFunc);
-  
-	GL_UseProgram( interactionProgram );
-
-	fhRenderProgram::SetShading( r_shading.GetInteger() );
-	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
-
-	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
-		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );
-		fhRenderProgram::SetGlobalLightOrigin( globalLightOrigin );
-
-		const float shadowBrightness = backEnd.vLight->lightDef->ShadowBrightness();
-		const float shadowSoftness = backEnd.vLight->lightDef->ShadowSoftness();
-		fhRenderProgram::SetShadowParams( idVec4( shadowSoftness, shadowBrightness, backEnd.vLight->nearClip[0], backEnd.vLight->farClip[0] ) );
-
-		if (backEnd.vLight->lightDef->parms.pointLight) {
-			//point light
-			fhRenderProgram::SetShadowMappingMode( 1 );
-			fhRenderProgram::SetPointLightProjectionMatrices( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
-		}
-		else {
-			//projected light
-			fhRenderProgram::SetShadowMappingMode( 2 );
-			fhRenderProgram::SetSpotLightProjectionMatrix( backEnd.vLight->viewProjectionMatrices[0].ToFloatPtr() );
-		}
-	}
-	else {
-		//no shadows
-		fhRenderProgram::SetShadowMappingMode( 0 );
-	}
-
-	backEnd.currentSpace = nullptr;
-	for (; surf; surf = surf->nextOnLight) {
-		// perform setup here that will not change over multiple interaction passes
-
-		// set the vertex pointers
-		const auto offset = vertexCache.Bind(surf->geo->ambientCache);
-		GL_SetupVertexAttributes(fhVertexLayout::Draw, offset);
-
-		// this may cause RB_ARB2_DrawInteraction to be exacuted multiple
-		// times with different colors and images if the surface or light have multiple layers
-		RB_CreateSingleDrawInteractions(surf, RB_GLSL_DrawInteraction);
-	}  
-
-	//just make sure no depth hack is active anymore.
-	if (backEnd.currentSpace && (backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack)) {
-		RB_LeaveDepthHack();		
-	}
-	backEnd.currentSpace = nullptr;	
-}
-
-
-
-/*
-=================
-RB_SubmittInteraction
-=================
-*/
-static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList ) {
-	if (!din->bumpImage) {
-		return;
-	}
-
-	if (!din->diffuseImage || r_skipDiffuse.GetBool()) {
-		din->diffuseImage = globalImages->blackImage;
-	}
-	if (!din->specularImage || r_skipSpecular.GetBool() || din->ambientLight) {
-		din->specularImage = globalImages->blackImage;
-	}
-	if (!din->bumpImage || r_skipBump.GetBool()) {
-		din->bumpImage = globalImages->flatNormalMap;
-	}
-
-	// if we wouldn't draw anything, don't call the Draw function
-	if (
-		((din->diffuseColor[0] > 0 ||
-		din->diffuseColor[1] > 0 ||
-		din->diffuseColor[2] > 0) && din->diffuseImage != globalImages->blackImage)
-		|| ((din->specularColor[0] > 0 ||
-		din->specularColor[1] > 0 ||
-		din->specularColor[2] > 0) && din->specularImage != globalImages->blackImage)) {
-
-		interactionList.Append(*din);
-	}
-}
-
 static idList<viewLight_t*> shadowCastingViewLights[3];
 static idList<viewLight_t*> batch;
-
-
 
 /*
 ==================
@@ -1100,6 +649,8 @@ void RB_GLSL_DrawInteractions( void ) {
 	}
 
 	while(true) {
+		fhFramebuffer* renderBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+
 		if (shadowCastingViewLights[0].Num() != 0 || shadowCastingViewLights[1].Num() != 0 || shadowCastingViewLights[2].Num() != 0) {
 			GL_UseProgram( shadowmapProgram );
 			glStencilFunc( GL_ALWAYS, 0, 255 );
@@ -1108,9 +659,9 @@ void RB_GLSL_DrawInteractions( void ) {
 			glEnable( GL_DEPTH_TEST );
 
 			globalImages->BindNull( 6 );
-			globalImages->shadowmapFramebuffer->Bind();
-			glViewport( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
-			glScissor( 0, 0, globalImages->shadowmapFramebuffer->GetWidth(), globalImages->shadowmapFramebuffer->GetHeight() );
+			fhFramebuffer::shadowmapFramebuffer->Bind();
+			glViewport( 0, 0, fhFramebuffer::shadowmapFramebuffer->GetWidth(), fhFramebuffer::shadowmapFramebuffer->GetHeight() );
+			glScissor( 0, 0, fhFramebuffer::shadowmapFramebuffer->GetWidth(), fhFramebuffer::shadowmapFramebuffer->GetHeight() );
 			glClear( GL_DEPTH_BUFFER_BIT );
 
 			for(int lod = 0; lod < 3; ++lod) {
@@ -1129,11 +680,12 @@ void RB_GLSL_DrawInteractions( void ) {
 					}
 				}
 			}
-
-			globalImages->defaultFramebuffer->Bind();
-			globalImages->shadowmapImage->Bind( 6 );
-			globalImages->jitterImage->Bind( 7 );
 		}
+
+		renderBuffer->Bind();
+
+		globalImages->shadowmapImage->Bind( 6 );
+		globalImages->jitterImage->Bind( 7 );
 
 		glDisable( GL_POLYGON_OFFSET_FILL );
 		glEnable( GL_CULL_FACE );

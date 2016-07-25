@@ -79,6 +79,8 @@ static void replaceBuildinVertexShader(const idStr& name, glslShaderStage_t& gls
     strcpy(glslShaderStage.vertexShaderName, "heathazeWithMask.vp");
   else if (!name.Icmp("colorProcess.vfp"))
     strcpy(glslShaderStage.vertexShaderName, "colorProcess.vp");
+  else if (!name.Icmp( "enviroSuit.vfp" ))
+	  strcpy( glslShaderStage.vertexShaderName, "envirosuit.vp" );
   else
     common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
 }
@@ -92,6 +94,8 @@ static void replaceBuildinFragmentShader(const idStr& name, glslShaderStage_t& g
     strcpy(glslShaderStage.fragmentShaderName, "heathazeWithMaskAndVertex.fp");
   else if (!name.Icmp("colorProcess.vfp"))
     strcpy(glslShaderStage.fragmentShaderName, "colorProcess.fp");
+  else if (!name.Icmp( "enviroSuit.vfp" ))
+	  strcpy( glslShaderStage.fragmentShaderName, "envirosuit.fp" );
   else
     common->Warning("No GLSL replacement for ARB2 program '%s' found.", name.c_str());
 }
@@ -188,14 +192,10 @@ void idMaterial::FreeData() {
 				delete stages[i].texture.cinematic;
 				stages[i].texture.cinematic = NULL;
 			}
-			if ( stages[i].newStage != NULL ) {
-				Mem_Free( stages[i].newStage );
-				stages[i].newStage = NULL;
+			if ( stages[i].glslStage != NULL ) {
+				Mem_Free(stages[i].glslStage);
+				stages[i].glslStage = NULL;
 			}
-      if ( stages[i].glslStage != NULL ) {
-        Mem_Free(stages[i].glslStage);
-        stages[i].glslStage = NULL;
-      }
 		}
 		R_StaticFree( stages );
 		stages = NULL;
@@ -949,7 +949,7 @@ If there are two values, 3 = 0.0, 4 = 1.0
 if there are three values, 4 = 1.0
 ================
 */
-void idMaterial::ParseVertexParm( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage ) {
+void idMaterial::ParseVertexParm( idLexer &src, glslShaderStage_t* glslStage ) {
 	idToken				token;
 
 	src.ReadTokenOnLine( &token );
@@ -959,53 +959,40 @@ void idMaterial::ParseVertexParm( idLexer &src, newShaderStage_t *newStage, glsl
 		SetMaterialFlag( MF_DEFAULTED );
 		return;
 	}
-	if ( parm >= newStage->numVertexParms ) {
-		newStage->numVertexParms = parm+1;
-	}
-  glslStage->numShaderParms = newStage->numVertexParms;
 
-	newStage->vertexParms[parm][0] = ParseExpression( src );
-  glslStage->shaderParms[parm][0] = newStage->vertexParms[parm][0];
+	if (parm >= glslStage->numShaderParms) {
+		glslStage->numShaderParms = parm + 1;
+	}	
+
+	glslStage->shaderParms[parm][0] = ParseExpression( src );
 
 	src.ReadTokenOnLine( &token );
 	if ( !token[0] || token.Icmp( "," ) ) {
-		newStage->vertexParms[parm][1] =
-		newStage->vertexParms[parm][2] =
-		newStage->vertexParms[parm][3] = newStage->vertexParms[parm][0];
-
-    glslStage->shaderParms[parm][1] = newStage->vertexParms[parm][1];
-    glslStage->shaderParms[parm][2] = newStage->vertexParms[parm][2];
-    glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
+		glslStage->shaderParms[parm][1] = 
+		glslStage->shaderParms[parm][2] = 
+		glslStage->shaderParms[parm][3] = glslStage->shaderParms[parm][0];
 		return;
 	}
-
-	newStage->vertexParms[parm][1] = ParseExpression( src );
-  glslStage->shaderParms[parm][1] = newStage->vertexParms[parm][1];
+	
+	glslStage->shaderParms[parm][1] = ParseExpression( src );
 
 	src.ReadTokenOnLine( &token );
 	if ( !token[0] || token.Icmp( "," ) ) {
-		newStage->vertexParms[parm][2] = GetExpressionConstant( 0 );
-		newStage->vertexParms[parm][3] = GetExpressionConstant( 1 );
-
-    glslStage->shaderParms[parm][2] = newStage->vertexParms[parm][2];
-    glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
+		glslStage->shaderParms[parm][2] = GetExpressionConstant( 0 );
+		glslStage->shaderParms[parm][3] = GetExpressionConstant( 1 );
     
 		return;
 	}
 
-	newStage->vertexParms[parm][2] = ParseExpression( src );
-  glslStage->shaderParms[parm][2] = newStage->vertexParms[parm][2];
+	glslStage->shaderParms[parm][2] = ParseExpression( src );
 
 	src.ReadTokenOnLine( &token );
 	if ( !token[0] || token.Icmp( "," ) ) {
-		newStage->vertexParms[parm][3] = GetExpressionConstant( 1 );
-
-    glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
+		glslStage->shaderParms[parm][3] = GetExpressionConstant( 1 );
 		return;
 	}
 
-	newStage->vertexParms[parm][3] = ParseExpression( src );
-  glslStage->shaderParms[parm][3] = newStage->vertexParms[parm][3];
+	glslStage->shaderParms[parm][3] = ParseExpression( src );
 }
 
 
@@ -1068,7 +1055,7 @@ void idMaterial::ParseShaderParm(idLexer &src, glslShaderStage_t *glslStage) {
 idMaterial::ParseFragmentMap
 ================
 */
-void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage ) {
+void idMaterial::ParseFragmentMap( idLexer &src, glslShaderStage_t* glslStage ) {
 	const char			*str;
 	textureFilter_t		tf;
 	textureRepeat_t		trp;
@@ -1096,8 +1083,8 @@ void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, gls
 		td = TD_BUMP;
 	}
 
-	if ( unit >= newStage->numFragmentProgramImages ) {
-		newStage->numFragmentProgramImages = unit+1;
+	if (unit >= glslStage->numShaderMaps) {
+		glslStage->numShaderMaps = unit + 1;
 	}
 
 	while( 1 ) {
@@ -1157,16 +1144,10 @@ void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, gls
 	}
 	str = R_ParsePastImageProgram( src );
 
-	newStage->fragmentProgramImages[unit] = 
-		globalImages->ImageFromFile( str, tf, allowPicmip, trp, td, cubeMap );
-	if ( !newStage->fragmentProgramImages[unit] ) {
-		newStage->fragmentProgramImages[unit] = globalImages->defaultImage;
+	glslStage->shaderMap[unit] = globalImages->ImageFromFile( str, tf, allowPicmip, trp, td, cubeMap );
+	if (!glslStage->shaderMap[unit]) {
+		glslStage->shaderMap[unit] = globalImages->defaultImage;
 	}
-
-  if(glslStage) {
-    glslStage->numShaderMaps = newStage->numFragmentProgramImages;
-    glslStage->shaderMap[unit] = newStage->fragmentProgramImages[unit];
-  }
 }
 
 /*
@@ -1341,8 +1322,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	bool				allowPicmip;
 	char				imageName[MAX_IMAGE_NAME];
 	int					a, b;
-	int					matrix[2][3];
-	newShaderStage_t	newStage;
+	int					matrix[2][3];	
 	glslShaderStage_t	glslStage;
 
 	if ( numStages >= MAX_SHADER_STAGES ) {
@@ -1357,8 +1337,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	cubeMap = CF_2D;
 
 	imageName[0] = 0;
-
-	memset( &newStage, 0, sizeof( newStage ) );
+	
 	memset( &glslStage, 0, sizeof(glslStage) );
 
 	ss = &pd->parseStages[numStages];
@@ -1754,11 +1733,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			continue;
 		}
 		if ( !token.Icmp( "program" ) ) {
-			if ( src.ReadTokenOnLine( &token ) ) {
-				
-				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
-				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
-
+			if ( src.ReadTokenOnLine( &token ) ) {				
 				replaceBuildinVertexShader( token, glslStage );
 				replaceBuildinFragmentShader( token, glslStage );
 			}
@@ -1766,14 +1741,12 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 		if ( !token.Icmp( "fragmentProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
-				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
 				replaceBuildinFragmentShader( token, glslStage );
 			}
 			continue;
 		}
 		if ( !token.Icmp( "vertexProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
-				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
 				replaceBuildinVertexShader( token, glslStage );
 			}
 			continue;
@@ -1792,14 +1765,15 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 		if (!token.Icmp( "megaTexture" )) {
 			if (src.ReadTokenOnLine( &token )) {
-				newStage.megaTexture = new idMegaTexture;
-				if (!newStage.megaTexture->InitFromMegaFile( token.c_str() )) {
-					delete newStage.megaTexture;
+				assert( false && "this is not ported to GLSL yet" );
+				auto megaTexture = new idMegaTexture;
+				if (!megaTexture->InitFromMegaFile( token.c_str() )) {
+					delete megaTexture;
 					SetMaterialFlag( MF_DEFAULTED );
 					continue;
 				}
-				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, "megaTexture.vfp" );
-				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, "megaTexture.vfp" );
+				//auto vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, "megaTexture.vfp" );
+				//auto fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, "megaTexture.vfp" );
 				continue;
 			}
 		}
@@ -1812,11 +1786,11 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			continue;
 		}
 		if ( !token.Icmp( "vertexParm" ) ) {
-			ParseVertexParm( src, &newStage, &glslStage );
+			ParseVertexParm( src, &glslStage );
 			continue;
 		}
 		if (  !token.Icmp( "fragmentMap" ) ) {	
-			ParseFragmentMap( src, &newStage, &glslStage );
+			ParseFragmentMap( src, &glslStage );
 			continue;
 		}
 
@@ -1832,12 +1806,6 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			ss->glslStage = (glslShaderStage_t *)Mem_Alloc( sizeof(glslStage) );
 			*(ss->glslStage) = glslStage;
 		}
-	}
-
-	// if we are using newStage, allocate a copy of it
-	if ( newStage.fragmentProgram || newStage.vertexProgram ) {
-		ss->newStage = (newShaderStage_t *)Mem_Alloc( sizeof( newStage ) );
-		*(ss->newStage) = newStage;
 	}
 
 	// successfully parsed a stage
@@ -1866,7 +1834,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}
-	} else if ( !ts->cinematic && !ts->dynamic && !ss->newStage && !ss->glslStage ) {
+	} else if ( !ts->cinematic && !ts->dynamic && !ss->glslStage ) {
 		common->Warning( "material '%s' had stage with no image", GetName() );
 		ts->image = globalImages->defaultImage;
 	}
@@ -2523,10 +2491,10 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 			}
 			break;
 		}
-		if ( pStage->newStage ) {
-			for ( int j = 0 ; j < pStage->newStage->numFragmentProgramImages ; j++ ) {
-				if ( pStage->newStage->fragmentProgramImages[j] == globalImages->currentRenderImage ) {
-					if ( sort != SS_PORTAL_SKY ) {
+		if (pStage->glslStage) {
+			for (int j = 0; j < pStage->glslStage->numShaderMaps; j++) {
+				if (pStage->glslStage->shaderMap[j] == globalImages->currentRenderImage || pStage->glslStage->shaderMap[j] == globalImages->currentDepthImage ) {
+					if (sort != SS_PORTAL_SKY) {
 						sort = SS_POST_PROCESS;
 						coverage = MC_TRANSLUCENT;
 					}
@@ -2535,18 +2503,6 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 				}
 			}
 		}
-    if (pStage->glslStage) {
-      for (int j = 0; j < pStage->glslStage->numShaderMaps; j++) {
-        if (pStage->glslStage->shaderMap[j] == globalImages->currentRenderImage || pStage->glslStage->shaderMap[j] == globalImages->currentDepthImage ) {
-          if (sort != SS_PORTAL_SKY) {
-            sort = SS_POST_PROCESS;
-            coverage = MC_TRANSLUCENT;
-          }
-          i = numStages;
-          break;
-        }
-      }
-    }
 	}
 
 	// set the drawStateBits depth flags
@@ -3069,23 +3025,16 @@ bool idMaterial::SurfaceCastsSoftShadow() const {
 idMaterial::ReloadImages
 ===================
 */
-void idMaterial::ReloadImages( bool force ) const
-{
+void idMaterial::ReloadImages( bool force ) const {
 	for ( int i = 0 ; i < numStages ; i++ ) {
-    if (stages[i].glslStage) {
-      for (int j = 0; j < stages[i].glslStage->numShaderMaps; j++) {
-        if (stages[i].glslStage->shaderMap[j]) {
-          stages[i].glslStage->shaderMap[j]->Reload(false, force);
-        }
-      }
-    } else	if ( stages[i].newStage ) {
-			for ( int j = 0 ; j < stages[i].newStage->numFragmentProgramImages ; j++ ) {
-				if ( stages[i].newStage->fragmentProgramImages[j] ) {
-					stages[i].newStage->fragmentProgramImages[j]->Reload( false, force );
+		if (stages[i].glslStage) {
+			for (int j = 0; j < stages[i].glslStage->numShaderMaps; j++) {
+				if (stages[i].glslStage->shaderMap[j]) {
+					stages[i].glslStage->shaderMap[j]->Reload(false, force);
 				}
 			}
 		} else if ( stages[i].texture.image ) {
-			stages[i].texture.image->Reload( false, force );
+				stages[i].texture.image->Reload( false, force );
 		}
 	}
 }

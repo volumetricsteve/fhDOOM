@@ -43,12 +43,7 @@ out vs_output
 
 void main(void)
 {
-  gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);  
-
-  result.texcoord = vertex_texcoord;
-
-  result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;
+  gl_Position = rpProjectionMatrix * rpModelViewMatrix * vec4(vertex_position, 1.0);
+  result.color = shaderParm1;
+  result.texcoord = vec2(vertex_texcoord.x, 1.0 - vertex_texcoord.y);
 }
-
-
-vec2 transformTexCoord(vec2 texcoord, vec4 s, vec4 t);

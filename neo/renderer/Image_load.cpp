@@ -3,6 +3,7 @@
 
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
@@ -32,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "Sampler.h"
 #include "ImageData.h"
+#include "Framebuffer.h"
 
 /*
 PROBLEM: compressed textures may break the zero clamp rule!
@@ -1224,6 +1226,8 @@ CopyFramebuffer
 ====================
 */
 void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
+	if (r_useFramebuffer.GetBool())
+		return;
 
 	glReadBuffer( GL_BACK );
 
@@ -1264,7 +1268,7 @@ CopyDepthbuffer
 This should just be part of copyFramebuffer once we have a proper image type field
 ====================
 */
-void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
+void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {		
 
 	glReadBuffer( GL_BACK );	
 
@@ -1330,7 +1334,7 @@ void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
 
 		uploadWidth = framebuffer->GetWidth();
 		uploadHeight = framebuffer->GetHeight();
-		internalFormat = GL_RGB;
+		internalFormat = GL_RGBA8;
 		filter = TF_LINEAR;
 		repeat = TR_CLAMP;
 		type = TT_2D;

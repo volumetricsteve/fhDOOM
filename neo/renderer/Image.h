@@ -3,6 +3,7 @@
 
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
@@ -56,12 +57,6 @@ glDisable( GL_TEXTURE_* )
 */
 
 #pragma once
-
-typedef enum {
-	IS_UNLOADED,	// no gl texture number
-	IS_PARTIAL,		// has a texture number and the low mip levels loaded
-	IS_LOADED		// has a texture number and the full mip hierarchy
-} imageState_t;
 
 static const int	MAX_TEXTURE_LEVELS = 14;
 
@@ -189,6 +184,7 @@ public:
 
 	void		GenerateImage( const fhImageData& imgeData );
 
+
 	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
 	void		CopyDepthbuffer( int x, int y, int width, int height );
 
@@ -315,71 +311,6 @@ void	R_WriteTGA( const char *filename, const byte *data, int width, int height, 
 void	R_WritePalTGA( const char *filename, const byte *data, const byte *palette, int width, int height, bool flipVertical = false );
 // data is in top-to-bottom raster order unless flipVertical is set
 
-
-
-class fhFramebuffer {
-public:
-	fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
-		width = w;
-		height = h;
-		name = (!color && !depth) ? 0 : -1;
-		colorAttachment = color;
-		depthAttachment = depth;
-	}
-
-	void Bind() {
-		if (name == -1) {			
-			glGenFramebuffers( 1, &name );
-			glBindFramebuffer( GL_FRAMEBUFFER, name );
-
-			if (colorAttachment)
-				colorAttachment->AttachColorToFramebuffer( this );
-
-			if (depthAttachment)
-				depthAttachment->AttachDepthToFramebuffer( this );
-
-			SetDrawBuffer();
-
-			if (glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
-				common->Warning("failed to generate framebuffer, framebuffer incomplete");
-				name = 0;
-			}
-		}
-		else {
-			glBindFramebuffer( GL_FRAMEBUFFER, name );
-			SetDrawBuffer();
-		}
-
-	}
-
-	int GetWidth() const { return width; }
-	int GetHeight() const { return height; }
-
-	void Purge() {
-		if(name != 0 && name != -1) {
-			glDeleteFramebuffers(1, &name);
-			name = -1;
-		}
-	}
-
-private:
-	void SetDrawBuffer() {
-		if (!colorAttachment && !depthAttachment) {
-			glDrawBuffer( GL_BACK );
-		}
-		else if (!colorAttachment) {
-			glDrawBuffer( GL_NONE );
-		}
-	}
-
-	int width;
-	int height;
-	GLuint name;
-	idImage* colorAttachment;
-	idImage* depthAttachment;
-};
-
-
 class idImageManager {
 public:
 	void				Init();
@@ -492,10 +423,10 @@ public:
 	idImage *			borderClampImage;			// white inside, black outside
 	idImage *           jitterImage;
 
-	fhFramebuffer*		defaultFramebuffer;
+	idImage *			renderDepthImage;
+	idImage *			renderColorImage;
 
 	idImage *			shadowmapImage;
-	fhFramebuffer*		shadowmapFramebuffer;
 
 	//--------------------------------------------------------
 	

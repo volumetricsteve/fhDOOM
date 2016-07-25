@@ -1187,6 +1187,7 @@ void FullscreenFX_Warp::DrawWarp( WarpPolygon_t wp, float interp ) {
 	drawPts[3].Set( trans.outer1.z, trans.outer1.w );
 	drawPts[4].Set( mid2_uv.z, mid2_uv.w );
 	drawPts[5].Set( mid1_uv.z, mid1_uv.w );
+	
 	for ( int j = 0; j < 3; j++ ) {
 		drawPts[j+3].x *= shiftScale.x;
 		drawPts[j+3].y *= shiftScale.y;
@@ -1594,7 +1595,6 @@ FullscreenFXManager::FullscreenFXManager
 ==================
 */
 FullscreenFXManager::FullscreenFXManager() {
-	highQualityMode = false;
 	playerView = NULL;
 	blendBackMaterial = NULL;
 	shiftScale.Set( 0, 0 );
@@ -1716,7 +1716,7 @@ FullscreenFXManager::Save
 ==================
 */
 void FullscreenFXManager::Save( idSaveGame *savefile ) {
-	savefile->WriteBool( highQualityMode );
+	savefile->WriteBool( true );//savefile->WriteBool( highQualityMode );  <= fhDOOM removed LoRes mode, highQuality is always enabled
 	savefile->WriteVec2( shiftScale );
 
 	for ( int i = 0; i < fx.Num(); i++ ) {
@@ -1731,6 +1731,7 @@ FullscreenFXManager::Restore
 ==================
 */
 void FullscreenFXManager::Restore( idRestoreGame *savefile ) {
+	bool highQualityMode; //unused, fhDOOM removed LoRes mode, highQuality is always enabled
 	savefile->ReadBool( highQualityMode );
 	savefile->ReadVec2( shiftScale );
 
@@ -1762,33 +1763,8 @@ void FullscreenFXManager::Process( const renderView_t *view ) {
 		allpass = true;
 	}
 
-	if ( g_lowresFullscreenFX.GetBool() ) {
-		highQualityMode = false;
-	}
-	else {
-		highQualityMode = true;
-	}
-
-	// compute the shift scale
-	if ( highQualityMode ) {
-		int vidWidth, vidHeight;
-		renderSystem->GetGLSettings( vidWidth, vidHeight );
-
-		float pot;
-		int	 w = vidWidth;
-		pot = MakePowerOfTwo( w );
-		shiftScale.x = (float)w / pot;
-
-		int	 h = vidHeight;
-		pot = MakePowerOfTwo( h );
-		shiftScale.y = (float)h / pot;
-	}
-	else {
-		// if we're in low-res mode, shrink view down
-		shiftScale.x = 1;
-		shiftScale.y = 1;
-		renderSystem->CropRenderSize( 512, 512, true );
-	}
+	shiftScale.x = 1;
+	shiftScale.y = 1;	
 
 	// do the first render
 	gameRenderWorld->RenderScene( view );
@@ -1833,18 +1809,6 @@ void FullscreenFXManager::Process( const renderView_t *view ) {
 			// do the blendback
 			Blendback( pfx->GetFadeAlpha() );
 		}
-	}
-
-	if ( !highQualityMode ) {
-		// we need to dump to _currentRender
-		CaptureCurrentRender();
-
-		// uncrop view
-		renderSystem->UnCrop();
-
-		// draw the final full-screen image
-		renderSystem->SetColor4( 1, 1, 1, 1 );
-		renderSystem->DrawStretchPic( 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1, 1, 0.f, blendBackMaterial );
 	}
 }
 

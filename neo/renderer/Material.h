@@ -197,18 +197,6 @@ typedef enum {
 static const int	MAX_FRAGMENT_IMAGES = 8;
 static const int	MAX_VERTEX_PARMS = 4;
 
-typedef struct {
-	int					vertexProgram;
-	int					numVertexParms;
-	int					vertexParms[MAX_VERTEX_PARMS][4];	// evaluated register indexes
-
-	int					fragmentProgram;
-	int					numFragmentProgramImages;
-	idImage *			fragmentProgramImages[MAX_FRAGMENT_IMAGES];
-
-	idMegaTexture		*megaTexture;		// handles all the binding and parameter setting 
-} newShaderStage_t;
-
 struct fhRenderProgram;
 
 typedef struct {
@@ -235,11 +223,10 @@ typedef struct {
 	bool				ignoreAlphaTest;	// this stage should act as translucent, even
 											// if the surface is alpha tested
 	float				privatePolygonOffset;	// a per-stage polygon offset
-  depthBlendMode_t depthBlendMode;
-  float            depthBlendRange;
-
-	newShaderStage_t	*newStage;			// vertex / fragment program based stage
-  glslShaderStage_t *glslStage;
+	depthBlendMode_t	depthBlendMode;
+	float				depthBlendRange;
+	
+	glslShaderStage_t*	glslStage;
 } shaderStage_t;
 
 typedef enum {
@@ -625,9 +612,9 @@ private:
 	void				ParseSort( idLexer &src );
 	void				ParseBlend( idLexer &src, shaderStage_t *stage );
 	void				ParseDepthBlendMode( idLexer &src, shaderStage_t *stage );
-	void				ParseVertexParm( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage );
+	void				ParseVertexParm( idLexer &src, glslShaderStage_t* glslStage );
 	void				ParseShaderParm( idLexer &src, glslShaderStage_t *glslStage );
-	void				ParseFragmentMap( idLexer &src, newShaderStage_t *newStage, glslShaderStage_t* glslStage );
+	void				ParseFragmentMap( idLexer &src, glslShaderStage_t* glslStage );
 	void				ParseShaderMap( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseStage( idLexer &src, const textureRepeat_t trpDefault = TR_REPEAT );
 	void				ParseDeform( idLexer &src );

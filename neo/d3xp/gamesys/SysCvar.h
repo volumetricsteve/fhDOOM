@@ -239,7 +239,6 @@ extern idCVar	g_slowmoStepRate;
 extern idCVar	g_testFullscreenFX;
 extern idCVar	g_testHelltimeFX;
 extern idCVar	g_testMultiplayerFX;
-extern idCVar	g_lowresFullscreenFX;
 extern idCVar	g_moveableDamageScale;
 extern idCVar	g_testBloomSpeed;
 extern idCVar	g_testBloomIntensity;

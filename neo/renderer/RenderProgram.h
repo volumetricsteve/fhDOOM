@@ -1,5 +1,31 @@
-#pragma once
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+#pragma once
 
 struct fhUniform {
 	enum Value {
@@ -23,6 +49,7 @@ struct fhUniform {
 		ColorAdd,
 		DiffuseColor,
 		SpecularColor,
+		AmbientLight,
 		ShaderParm0,
 		ShaderParm1,
 		ShaderParm2,
@@ -131,8 +158,9 @@ public:
 	static void SetShadowMapSize(const idVec4* sizes, int numSizes);
 
 	static void SetInverseLightRotation(const float* m);
-
 	static void SetNormalMapEncoding( int encoding );
+	static void SetAmbientLight(int amb);
+
 private:
 	static bool dirty[fhUniform::NUM];
 	static idVec4 currentColorModulate;
@@ -330,6 +358,10 @@ ID_INLINE void fhRenderProgram::SetSpecularExp( float e ) {
 
 ID_INLINE void fhRenderProgram::SetShadowMappingMode( int m ) {
 	glUniform1i(currentUniformLocations[fhUniform::ShadowMappingMode], m);
+}
+
+ID_INLINE void fhRenderProgram::SetAmbientLight(int amb) {
+	glUniform1i(currentUniformLocations[fhUniform::AmbientLight], amb);
 }
 
 ID_INLINE void fhRenderProgram::SetSpotLightProjectionMatrix( const float* m ) {

@@ -3,6 +3,7 @@
 
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
@@ -72,7 +73,6 @@ idCVar idImageManager::image_downSizeLimit( "image_downSizeLimit", "256", CVAR_R
 // a private virtual subclass
 idImageManager	imageManager;
 idImageManager	*globalImages = &imageManager;
-
 
 enum IMAGE_CLASSIFICATION {
 	IC_NPC,
@@ -1910,9 +1910,9 @@ void idImageManager::Init() {
 	jitterImage = ImageFromFunction("_jitter", R_JitterImage );
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
-	shadowmapFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, shadowmapImage );
 
-	defaultFramebuffer = new fhFramebuffer(0,0, nullptr, nullptr);
+	renderColorImage = ImageFromFunction( "_renderColorImage", R_RGBA8Image );
+	renderDepthImage = ImageFromFunction( "_renderDepthImage", R_Depth );
 
 	// should forceLoadImages be here?
 }

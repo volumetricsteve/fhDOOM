@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 #include "tr_local.h"
 #include "RenderList.h"
 #include "RenderProgram.h"
@@ -26,7 +53,7 @@ static int RB_GetNormalEncoding( const idImage* image ) {
 RB_SubmittInteraction
 =================
 */
-static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList ) {
+static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& interactionList, bool isAmbientLight ) {
 	if (!din->bumpImage) {
 		return;
 	}
@@ -34,7 +61,7 @@ static void RB_SubmittInteraction( drawInteraction_t *din, InteractionList& inte
 	if (!din->diffuseImage || r_skipDiffuse.GetBool()) {
 		din->diffuseImage = globalImages->blackImage;
 	}
-	if (!din->specularImage || r_skipSpecular.GetBool() || din->ambientLight) {
+	if (!din->specularImage || r_skipSpecular.GetBool() || isAmbientLight) {
 		din->specularImage = globalImages->blackImage;
 	}
 	if (!din->bumpImage || r_skipBump.GetBool()) {
@@ -87,7 +114,6 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 		R_GlobalPointToLocal( surf->space->modelMatrix, backEnd.viewDef->renderView.vieworg, inter.localViewOrigin.ToVec3() );
 		inter.localLightOrigin[3] = 0;
 		inter.localViewOrigin[3] = 1;
-		inter.ambientLight = lightShader->IsAmbientLight();
 
 		// the base projections may be modified by texture matrix on light stages
 		idPlane lightProject[4];
@@ -142,7 +168,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 						break;
 					}
 					// draw any previous interaction
-					RB_SubmittInteraction( &inter, interactionList );
+					RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 					inter.diffuseImage = NULL;
 					inter.specularImage = NULL;
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.bumpImage, inter.bumpMatrix, NULL );
@@ -155,7 +181,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 						break;
 					}
 					if (inter.diffuseImage) {
-						RB_SubmittInteraction( &inter, interactionList );
+						RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 					}
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.diffuseImage,
 						inter.diffuseMatrix, inter.diffuseColor.ToFloatPtr() );
@@ -173,7 +199,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 						break;
 					}
 					if (inter.specularImage) {
-						RB_SubmittInteraction( &inter, interactionList );
+						RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 					}
 					R_SetDrawInteraction( surfaceStage, surfaceRegs, &inter.specularImage,
 						inter.specularMatrix, inter.specularColor.ToFloatPtr() );
@@ -190,7 +216,7 @@ static void RB_GLSL_CreateDrawInteractions( const drawSurf_t *surf, InteractionL
 			}
 
 			// draw the final interaction
-			RB_SubmittInteraction( &inter, interactionList );
+			RB_SubmittInteraction( &inter, interactionList, lightShader->IsAmbientLight() );
 		}
 	}
 }
@@ -206,6 +232,7 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 
 	fhRenderProgram::SetShading( r_shading.GetInteger() );
 	fhRenderProgram::SetSpecularExp( r_specularExp.GetFloat() );
+	fhRenderProgram::SetAmbientLight( backEnd.vLight->lightDef->lightShader->IsAmbientLight() ? 1 : 0 );
 
 	if (backEnd.vLight->lightDef->ShadowMode() == shadowMode_t::ShadowMap) {
 		const idVec4 globalLightOrigin = idVec4( backEnd.vLight->globalLightOrigin, 1 );

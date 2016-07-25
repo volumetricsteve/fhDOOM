@@ -71,6 +71,7 @@ typedef struct glconfig_s {
 	bool                arbDirectStateAccessAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
+	int					renderWidth, renderHeight;	// passed to R_BeginFrame
 	int					vidAspectRatio;
 
 	int					displayFrequency;
@@ -233,7 +234,7 @@ public:
 	virtual bool			IsFullScreen( void ) const = 0;
 	virtual int				GetScreenWidth( void ) const = 0;
 	virtual int				GetScreenHeight( void ) const = 0;
-  virtual int       GetScreenAspectRatio( void ) const = 0;
+	virtual int				GetScreenAspectRatio( void ) const = 0;
 
 	// allocate a renderWorld to be used for drawing
 	virtual idRenderWorld *	AllocRenderWorld( void ) = 0;
@@ -262,8 +263,8 @@ public:
 	virtual void			GetGLSettings( int& width, int& height ) = 0;
 	virtual void			PrintMemInfo( MemInfo_t *mi ) = 0;
 
-  virtual void      DrawScaledChar( int x, int y, int ch, const idMaterial *material, float scale ) = 0;
-  virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) = 0;  
+	virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *material, float scale ) = 0;
+	virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) = 0;  
 	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material ) = 0;
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) = 0;
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material ) = 0;
@@ -281,6 +282,7 @@ public:
 	// a frame cam consist of 2D drawing and potentially multiple 3D scenes
 	// window sizes are needed to convert SCREEN_WIDTH / SCREEN_HEIGHT values
 	virtual void			BeginFrame( int windowWidth, int windowHeight ) = 0;
+	virtual void			BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) = 0;
 
 	// if the pointers are not NULL, timing info will be returned
 	virtual void			EndFrame( int *frontEndMsec, int *backEndMsec ) = 0;
