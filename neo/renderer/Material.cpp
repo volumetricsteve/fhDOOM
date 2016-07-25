@@ -940,65 +940,10 @@ void idMaterial::ParseDepthBlendMode( idLexer &src, shaderStage_t *stage )
   stage->depthBlendMode = DBM_OFF;
 }
 
-/*
-================
-idMaterial::ParseVertexParm
-
-If there is a single value, it will be repeated across all elements
-If there are two values, 3 = 0.0, 4 = 1.0
-if there are three values, 4 = 1.0
-================
-*/
-void idMaterial::ParseVertexParm( idLexer &src, glslShaderStage_t* glslStage ) {
-	idToken				token;
-
-	src.ReadTokenOnLine( &token );
-	int	parm = token.GetIntValue();
-	if ( !token.IsNumeric() || parm < 0 || parm >= MAX_VERTEX_PARMS ) {
-		common->Warning( "bad vertexParm number\n" );
-		SetMaterialFlag( MF_DEFAULTED );
-		return;
-	}
-
-	if (parm >= glslStage->numShaderParms) {
-		glslStage->numShaderParms = parm + 1;
-	}	
-
-	glslStage->shaderParms[parm][0] = ParseExpression( src );
-
-	src.ReadTokenOnLine( &token );
-	if ( !token[0] || token.Icmp( "," ) ) {
-		glslStage->shaderParms[parm][1] = 
-		glslStage->shaderParms[parm][2] = 
-		glslStage->shaderParms[parm][3] = glslStage->shaderParms[parm][0];
-		return;
-	}
-	
-	glslStage->shaderParms[parm][1] = ParseExpression( src );
-
-	src.ReadTokenOnLine( &token );
-	if ( !token[0] || token.Icmp( "," ) ) {
-		glslStage->shaderParms[parm][2] = GetExpressionConstant( 0 );
-		glslStage->shaderParms[parm][3] = GetExpressionConstant( 1 );
-    
-		return;
-	}
-
-	glslStage->shaderParms[parm][2] = ParseExpression( src );
-
-	src.ReadTokenOnLine( &token );
-	if ( !token[0] || token.Icmp( "," ) ) {
-		glslStage->shaderParms[parm][3] = GetExpressionConstant( 1 );
-		return;
-	}
-
-	glslStage->shaderParms[parm][3] = ParseExpression( src );
-}
-
 
 /*
 ================
-idMaterial::ParseVertexParm
+idMaterial::ParseShaderParm
 
 If there is a single value, it will be repeated across all elements
 If there are two values, 3 = 0.0, 4 = 1.0
@@ -1047,107 +992,6 @@ void idMaterial::ParseShaderParm(idLexer &src, glslShaderStage_t *glslStage) {
   }
 
   glslStage->shaderParms[parm][3] = ParseExpression(src);
-}
-
-
-/*
-================
-idMaterial::ParseFragmentMap
-================
-*/
-void idMaterial::ParseFragmentMap( idLexer &src, glslShaderStage_t* glslStage ) {
-	const char			*str;
-	textureFilter_t		tf;
-	textureRepeat_t		trp;
-	textureDepth_t		td;
-	cubeFiles_t			cubeMap;
-	bool				allowPicmip;
-	idToken				token;
-
-	tf = TF_DEFAULT;
-	trp = TR_REPEAT;
-	td = TD_DEFAULT;
-	allowPicmip = true;
-	cubeMap = CF_2D;
-
-	src.ReadTokenOnLine( &token );
-	int	unit = token.GetIntValue();
-	if ( !token.IsNumeric() || unit < 0 || unit >= MAX_FRAGMENT_IMAGES ) {
-		common->Warning( "bad fragmentMap number\n" );
-		SetMaterialFlag( MF_DEFAULTED );
-		return;
-	}
-
-	// unit 1 is the normal map.. make sure it gets flagged as the proper depth
-	if ( unit == 1 ) {
-		td = TD_BUMP;
-	}
-
-	if (unit >= glslStage->numShaderMaps) {
-		glslStage->numShaderMaps = unit + 1;
-	}
-
-	while( 1 ) {
-		src.ReadTokenOnLine( &token );
-
-		if ( !token.Icmp( "cubeMap" ) ) {
-			cubeMap = CF_NATIVE;
-			continue;
-		}
-		if ( !token.Icmp( "cameraCubeMap" ) ) {
-			cubeMap = CF_CAMERA;
-			continue;
-		}
-		if ( !token.Icmp( "nearest" ) ) {
-			tf = TF_NEAREST;
-			continue;
-		}
-		if ( !token.Icmp( "linear" ) ) {
-			tf = TF_LINEAR;
-			continue;
-		}
-		if ( !token.Icmp( "clamp" ) ) {
-			trp = TR_CLAMP;
-			continue;
-		}
-		if ( !token.Icmp( "noclamp" ) ) {
-			trp = TR_REPEAT;
-			continue;
-		}
-		if ( !token.Icmp( "zeroclamp" ) ) {
-			trp = TR_CLAMP_TO_ZERO;
-			continue;
-		}
-		if ( !token.Icmp( "alphazeroclamp" ) ) {
-			trp = TR_CLAMP_TO_ZERO_ALPHA;
-			continue;
-		}
-		if ( !token.Icmp( "forceHighQuality" ) ) {
-			td = TD_HIGH_QUALITY;
-			continue;
-		}
-
-		if ( !token.Icmp( "uncompressed" ) || !token.Icmp( "highquality" ) ) {
-			if ( !globalImages->image_ignoreHighQuality.GetInteger() ) {
-				td = TD_HIGH_QUALITY;
-			}
-			continue;
-		}
-		if ( !token.Icmp( "nopicmip" ) ) {
-			allowPicmip = false;
-			continue;
-		}
-
-		// assume anything else is the image name
-		src.UnreadToken( &token );
-		break;
-	}
-	str = R_ParsePastImageProgram( src );
-
-	glslStage->shaderMap[unit] = globalImages->ImageFromFile( str, tf, allowPicmip, trp, td, cubeMap );
-	if (!glslStage->shaderMap[unit]) {
-		glslStage->shaderMap[unit] = globalImages->defaultImage;
-	}
 }
 
 /*
@@ -1785,12 +1629,12 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			ParseShaderMap( src, &glslStage );
 			continue;
 		}
-		if ( !token.Icmp( "vertexParm" ) ) {
-			ParseVertexParm( src, &glslStage );
+		if ( !token.Icmp( "vertexParm" ) ) { 	//ARB2 'newstage_t' legacy support
+			ParseShaderParm( src, &glslStage );
 			continue;
 		}
-		if (  !token.Icmp( "fragmentMap" ) ) {	
-			ParseFragmentMap( src, &glslStage );
+		if (  !token.Icmp( "fragmentMap" ) ) {	//ARB2 'newstage_t' legacy support
+			ParseShaderMap( src, &glslStage );
 			continue;
 		}
 

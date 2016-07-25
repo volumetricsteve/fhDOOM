@@ -612,9 +612,7 @@ private:
 	void				ParseSort( idLexer &src );
 	void				ParseBlend( idLexer &src, shaderStage_t *stage );
 	void				ParseDepthBlendMode( idLexer &src, shaderStage_t *stage );
-	void				ParseVertexParm( idLexer &src, glslShaderStage_t* glslStage );
 	void				ParseShaderParm( idLexer &src, glslShaderStage_t *glslStage );
-	void				ParseFragmentMap( idLexer &src, glslShaderStage_t* glslStage );
 	void				ParseShaderMap( idLexer &src, glslShaderStage_t *glslStage );
 	void				ParseStage( idLexer &src, const textureRepeat_t trpDefault = TR_REPEAT );
 	void				ParseDeform( idLexer &src );
