@@ -59,3 +59,31 @@ textures/fhdoom/normaltest_3Dc
     diffusemap textures/glsltest/dds/testgrey_3Dc.dds
     bumpmap textures/glsltest/dds/normal_3Dc.dds
 }
+
+textures/fhdoom/skyboxprogram
+{
+    qer_editorimage textures/env/cloudy_back.tga
+    noFragment
+    noshadows
+    nooverlays
+    forceOpaque             // so transparent windows can draw on top of it
+    {
+        blend           add     // so transparent windows can draw on top of it
+        cameraCubeMap   env/cloudy
+        texgen          skybox
+    }
+}
+
+textures/fhdoom/skyboxprogram2
+{
+    qer_editorimage textures/env/cloudy_back.tga
+    noFragment
+    noshadows
+    nooverlays
+    forceOpaque             // so transparent windows can draw on top of it
+    {
+        blend   add     // so transparent windows can draw on top of it
+        map     cameraCubeMap(env/cloudy)
+        texgen  skybox
+    }
+}

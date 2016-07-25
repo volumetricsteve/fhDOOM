@@ -542,6 +542,66 @@ bool fhImageData::ParseImageProgram_r(idLexer &src, bool noload, bool toRgba) {
 		return true;
 	}
 
+	if (!token.Icmp( "cameraCubeMap" )) {
+		MatchAndAppendToken( src, "(" );
+
+		int from = strlen( parseBuffer );
+		if (!ParseImageProgram_r( src, true, false )) {
+			return false;
+		}
+
+		if (!noload) {
+			int to = strlen( parseBuffer );
+
+			while (from < to && idStr::CharIsWhitespace( parseBuffer[from] )) {
+				++from;
+			}
+
+			while (to > from && idStr::CharIsWhitespace( parseBuffer[to] )) {
+				--to;
+			}
+
+			idStr filename = idStr( parseBuffer, from, to );
+			
+			if (!LoadCubeMap( filename, CF_CAMERA )) {
+				return false;
+			}
+		}
+
+		MatchAndAppendToken( src, ")" );
+		return true;
+	}
+
+	if (!token.Icmp( "cubeMap" )) {
+		MatchAndAppendToken( src, "(" );
+
+		int from = strlen( parseBuffer );
+		if (!ParseImageProgram_r( src, true, false )) {
+			return false;
+		}
+
+		if (!noload) {
+			int to = strlen( parseBuffer );
+
+			while (from < to && idStr::CharIsWhitespace( parseBuffer[from] )) {
+				++from;
+			}
+
+			while (to > from && idStr::CharIsWhitespace( parseBuffer[to] )) {
+				--to;
+			}
+
+			idStr filename = idStr( parseBuffer, from, to );
+
+			if (!LoadCubeMap( filename, CF_NATIVE )) {
+				return false;
+			}
+		}
+
+		MatchAndAppendToken( src, ")" );
+		return true;
+	}
+
 	// if we are just parsing instead of loading or checking,
 	// don't do the R_LoadImage
 	if (noload) {
@@ -581,4 +641,15 @@ bool fhImageData::LoadProgram(const char* program) {
 	src.FreeSource();
 
 	return ret;
+}
+
+
+const char* fhImageData::ParsePastImageProgram( idLexer& src ) {
+	fhImageData dummy;
+	parseBuffer[0] = 0;
+	if (dummy.ParseImageProgram_r( src, true, false )) {
+		return parseBuffer;
+	}
+
+	return "";
 }

@@ -631,7 +631,7 @@ void R_InitOpenGL( void ) {
 		}
 	}
 #endif
-
+	glEnable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
 }
 
 /*

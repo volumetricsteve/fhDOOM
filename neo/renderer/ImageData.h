@@ -121,6 +121,8 @@ public:
 	bool        IsValid() const;
 	void        Clear();
 
+	static const char* ParsePastImageProgram( idLexer& src );
+
 private:
 	//TODO(johl): hard coded maximum level num limits the maximum texture size, but that's ok for now
 	static const int maximumLevelNum = 16; //max tex size = 2^(16-1) = 32768

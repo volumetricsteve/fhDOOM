@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImageData.h"
 
 /*
 
@@ -1401,7 +1402,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 
 		if (  !token.Icmp( "map" ) ) {
-			str = R_ParsePastImageProgram( src );
+			str = fhImageData::ParsePastImageProgram( src );
 			idStr::Copynz( imageName, str, sizeof( imageName ) );
 			continue;
 		}
