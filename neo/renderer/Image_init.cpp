@@ -31,6 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "tr_local.h"
+#include "ImageProgram.h"
 
 const char *imageFilter[] = {
 	"GL_LINEAR_MIPMAP_NEAREST",
@@ -912,8 +913,9 @@ idImage::Reload
 void idImage::Reload( bool checkPrecompressed, bool force ) {
 	// always regenerate functional images
 	if ( generatorFunction ) {
-		common->DPrintf( "regenerating %s.\n", imgName.c_str() );
-		generatorFunction( this );
+		//FIXME(johl): re-generating some images fails currently (because those image are currently bound? as texture or render target?
+		//common->DPrintf( "regenerating %s.\n", imgName.c_str() );
+		//generatorFunction( this );
 		return;
 	}
 
@@ -921,12 +923,11 @@ void idImage::Reload( bool checkPrecompressed, bool force ) {
 	if ( !force ) {
 		ID_TIME_T	current;
 
-		if ( cubeFiles != CF_2D ) {
-			R_LoadCubeImages( imgName, cubeFiles, NULL, NULL, &current );
-		} else {
-			// get the current values
-			R_LoadImageProgram( imgName, NULL, NULL, NULL, &current );
+		fhImageProgram program;
+		if (!program.LoadImageProgram( imgName, nullptr, &current )) {
+			return;
 		}
+
 		if ( current <= timestamp ) {
 			return;
 		}
@@ -1382,7 +1383,7 @@ Loading of the image may be deferred for dynamic loading.
 ==============
 */
 idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filter, bool allowDownSize,
-						 textureRepeat_t repeat, textureDepth_t depth, cubeFiles_t cubeMap ) {
+						 textureRepeat_t repeat, textureDepth_t depth ) {
 	idStr name;
 	idImage	*image;
 	int hash;
@@ -1407,9 +1408,6 @@ idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filte
 			// the built in's, like _white and _flat always match the other options
 			if ( name[0] == '_' ) {
 				return image;
-			}
-			if ( image->cubeFiles != cubeMap ) {
-				common->Error( "Image '%s' has been referenced with conflicting cube map states", _name );
 			}
 
 			if ( image->filter != filter || image->repeat != repeat ) {
@@ -1474,7 +1472,7 @@ idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filte
 	image->repeat = repeat;
 	image->depth = depth;
 	image->type = TT_2D;
-	image->cubeFiles = cubeMap;
+	image->cubeFiles = CF_2D;
 	image->filter = filter;
 	
 	image->levelLoadReferenced = true;
@@ -1488,7 +1486,7 @@ idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filte
 		image->partialImage->repeat = repeat;
 		image->partialImage->depth = depth;
 		image->partialImage->type = TT_2D;
-		image->partialImage->cubeFiles = cubeMap;
+		image->partialImage->cubeFiles = CF_2D;
 		image->partialImage->filter = filter;
 
 		image->partialImage->levelLoadReferenced = true;

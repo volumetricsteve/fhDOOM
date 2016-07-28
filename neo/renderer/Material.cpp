@@ -1009,7 +1009,6 @@ void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
   textureFilter_t		tf;
   textureRepeat_t		trp;
   textureDepth_t		td;
-  cubeFiles_t			cubeMap;
   bool					allowPicmip;
   idToken				token;
 
@@ -1017,7 +1016,6 @@ void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
   trp = TR_REPEAT;
   td = TD_DEFAULT;
   allowPicmip = true;
-  cubeMap = CF_2D;
 
   src.ReadTokenOnLine(&token);
   int	unit = token.GetIntValue();
@@ -1039,14 +1037,6 @@ void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
   while (1) {
     src.ReadTokenOnLine(&token);
 
-    if (!token.Icmp("cubeMap")) {
-      cubeMap = CF_NATIVE;
-      continue;
-    }
-    if (!token.Icmp("cameraCubeMap")) {
-      cubeMap = CF_CAMERA;
-      continue;
-    }
     if (!token.Icmp("nearest")) {
       tf = TF_NEAREST;
       continue;
@@ -1095,7 +1085,7 @@ void idMaterial::ParseShaderMap(idLexer &src, glslShaderStage_t *newStage) {
   R_ParsePastImageProgram(src, str);
 
   newStage->shaderMap[unit] =
-    globalImages->ImageFromFile(str, tf, allowPicmip, trp, td, cubeMap);
+    globalImages->ImageFromFile(str, tf, allowPicmip, trp, td);
   if (!newStage->shaderMap[unit]) {
     newStage->shaderMap[unit] = globalImages->defaultImage;
   }
@@ -1167,7 +1157,6 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	textureFilter_t		tf;
 	textureRepeat_t		trp;
 	textureDepth_t		td;
-	cubeFiles_t			cubeMap;
 	bool				allowPicmip;
 	char				imageName[MAX_IMAGE_NAME];
 	int					a, b;
@@ -1182,8 +1171,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	tf = TF_DEFAULT;
 	trp = trpDefault;
 	td = TD_DEFAULT;
-	allowPicmip = true;
-	cubeMap = CF_2D;
+	allowPicmip = true;	
 
 	imageName[0] = 0;
 	
@@ -1303,18 +1291,20 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		}
 
 		if ( !token.Icmp( "cubeMap" ) ) {
+			//cubemaps are assembled by an image program,
+			//process 'cubeMap <filename>' as 'map cubeMap(<filename>)'			
 			char str[MAX_IMAGE_NAME];
-			R_ParsePastImageProgram( src, str );
-			idStr::Copynz( imageName, str, sizeof( imageName ) );
-			cubeMap = CF_NATIVE;
+			R_ParsePastImageProgram( src, str );			
+			idStr::snPrintf( imageName, MAX_IMAGE_NAME, "cubeMap(%s)", str ); 
 			continue;
 		}
 
 		if ( !token.Icmp( "cameraCubeMap" ) ) {
+			//cubemaps are assembled by an image program,
+			//process 'cameraCubeMap <filename>' as 'map cameraCubeMap(<filename>)'			
 			char str[MAX_IMAGE_NAME];
 			R_ParsePastImageProgram( src, str );
-			idStr::Copynz( imageName, str, sizeof( imageName ) );
-			cubeMap = CF_CAMERA;
+			idStr::snPrintf( imageName, MAX_IMAGE_NAME, "cameraCubeMap(%s)", str );
 			continue;
 		}
 
@@ -1681,7 +1671,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 
 	// now load the image with all the parms we parsed
 	if ( imageName[0] ) {
-		ts->image = globalImages->ImageFromFile( imageName, tf, allowPicmip, trp, td, cubeMap );
+		ts->image = globalImages->ImageFromFile( imageName, tf, allowPicmip, trp, td );
 		if ( !ts->image ) {
 			ts->image = globalImages->defaultImage;
 		}

@@ -301,6 +301,100 @@ static void R_ImageAdd( byte *data1, int width1, int height1, byte *data2, int w
 	}
 }
 
+static const char* axisSides[] = {
+	"_px.tga",
+	"_nx.tga",
+	"_py.tga",
+	"_ny.tga",
+	"_pz.tga",
+	"_nz.tga"
+};
+
+static const char* cameraSides[] = {
+	"_forward.tga",
+	"_back.tga",
+	"_left.tga",
+	"_right.tga",
+	"_up.tga",
+	"_down.tga"
+};
+
+/*
+===================
+????
+
+===================
+*/
+static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageData* data, ID_TIME_T* timestamp ) {
+
+	assert( cubeFiles == CF_CAMERA || cubeFiles == CF_NATIVE );
+
+	const char	**sides = (cubeFiles == CF_CAMERA) ? cameraSides : axisSides;
+
+	fhImageData images[6];
+
+	for (int i = 0; i < 6; i++) {
+		char	fullName[MAX_IMAGE_NAME];
+		idStr::snPrintf( fullName, sizeof( fullName ), "%s%s", filename, sides[i] );	
+
+		ID_TIME_T time = 0;		
+
+		if (data) {
+			if (!fhImageData::LoadFile( fullName, &images[i], &time )) {
+				return false;
+			}
+
+			const int size = images[i].GetWidth();
+
+			if (images[i].GetHeight() != size){
+				common->Warning( "cube image not quadratic '%s'", fullName );
+				return false;
+			}
+
+			if (cubeFiles == CF_CAMERA) {
+				// convert from "camera" images to native cube map images
+				switch (i) {
+				case 0:	// forward
+					R_RotatePic( images[i].GetData(), size );
+					break;
+				case 1:	// back
+					R_RotatePic( images[i].GetData(), size );
+					R_HorizontalFlip( images[i].GetData(), size, size );
+					R_VerticalFlip( images[i].GetData(), size, size );
+					break;
+				case 2:	// left
+					R_VerticalFlip( images[i].GetData(), size, size );
+					break;
+				case 3:	// right
+					R_HorizontalFlip( images[i].GetData(), size, size );
+					break;
+				case 4:	// up
+					R_RotatePic( images[i].GetData(), size );
+					break;
+				case 5: // down
+					R_RotatePic( images[i].GetData(), size );
+					break;
+				}
+			}
+		}
+		else {
+			if (!fhImageData::LoadFile( fullName, nullptr, &time )) {
+				return false;
+			}
+		}
+
+		if (timestamp && *timestamp < time) {
+			*timestamp = time;
+		}
+	}
+
+	if (data) {
+		return data->LoadCubeMap( images, filename );
+	}
+
+	return true;
+}
+
 /*
 ===================
 AppendToken
@@ -545,31 +639,12 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 	if (!token.Icmp( "cameraCubeMap" )) {
 		MatchAndAppendToken( src, "(" );
 
-		int from = strlen( parseBuffer );
-		if (!ParseImageProgram_r( src, true, nullptr, timestamp ) ) {
+		fhImageProgram p;
+		const char* filename = p.ParsePastImageProgram( src );
+		idStr::Append( parseBuffer, MAX_IMAGE_NAME, filename );
+
+		if (!R_LoadCubeMap( filename, CF_CAMERA, imageData, timestamp )){
 			return false;
-		}
-
-		if (imageData) {
-			int to = strlen( parseBuffer );
-
-			while (from < to && idStr::CharIsWhitespace( parseBuffer[from] )) {
-				++from;
-			}
-
-			while (to > from && idStr::CharIsWhitespace( parseBuffer[to] )) {
-				--to;
-			}
-
-			idStr filename = idStr( parseBuffer, from, to );
-
-			if (!imageData->LoadCubeMap( filename, CF_CAMERA )) {
-				return false;
-			}
-
-			if (timestamp && *timestamp < imageData->GetTimeStamp()) {
-				*timestamp = imageData->GetTimeStamp();
-			}
 		}
 
 		MatchAndAppendToken( src, ")" );
@@ -577,53 +652,21 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 	}
 
 	if (!token.Icmp( "cubeMap" )) {
-		MatchAndAppendToken( src, "(" );
+		MatchAndAppendToken( src, "(" );		
+		
+		fhImageProgram p;
+		const char* filename = p.ParsePastImageProgram( src );		
+		idStr::Append( parseBuffer, MAX_IMAGE_NAME, filename );
 
-		int from = strlen( parseBuffer );
-		if (!ParseImageProgram_r( src, true, nullptr, timestamp )) {
+		if (!R_LoadCubeMap( filename, CF_NATIVE, imageData, timestamp )){
 			return false;
-		}
-
-		if (imageData) {
-			int to = strlen( parseBuffer );
-
-			while (from < to && idStr::CharIsWhitespace( parseBuffer[from] )) {
-				++from;
-			}
-
-			while (to > from && idStr::CharIsWhitespace( parseBuffer[to] )) {
-				--to;
-			}
-
-			idStr filename = idStr( parseBuffer, from, to );
-
-			if (!imageData->LoadCubeMap( filename, CF_NATIVE )) {
-				return false;
-			}
-
-			if (timestamp && *timestamp < imageData->GetTimeStamp()) {
-				*timestamp = imageData->GetTimeStamp();
-			}
 		}
 
 		MatchAndAppendToken( src, ")" );
 		return true;
 	}
 
-	// load it as an image
-	if (imageData) {
-		bool ret = imageData->LoadFile( token.c_str(), toRgba );
-		if (ret && timestamp && imageData->GetTimeStamp() > *timestamp) {
-			*timestamp = imageData->GetTimeStamp();
-		}
-		return ret;
-	}
-
-	if (timestamp) {
-		fileSystem->ReadFile( token.c_str(), nullptr, timestamp );
-	}
-
-	return true;
+	return fhImageData::LoadFile( token.c_str(), imageData, timestamp );
 }
 
 bool fhImageProgram::LoadImageProgram( const char* program, fhImageData* imageData, ID_TIME_T* timestamp ) {

@@ -815,65 +815,14 @@ bool idImage::CheckPrecompressedImage( bool fullLoad ) {
 	}
 
 	timestamp = precompTimestamp;
-#if 1
+
 	fhImageData data;
-	if(!data.LoadFile( filename )) {
+	if (!fhImageData::LoadFile(filename, &data, nullptr)) {
 		return false;
 	}
 
 	GenerateImage( data );
 	return true;
-
-#else
-	// open it and just read the header
-	idFile *f;
-
-	f = fileSystem->OpenFileRead( filename );
-	if ( !f ) {
-		return false;
-	}
-
-	int	len = f->Length();
-	if ( len < sizeof( ddsFileHeader_t ) ) {
-		fileSystem->CloseFile( f );
-		return false;
-	}
-
-	if ( !fullLoad && len > globalImages->image_cacheMinK.GetInteger() * 1024 ) {
-		len = globalImages->image_cacheMinK.GetInteger() * 1024;
-	}
-
-	byte *data = (byte *)R_StaticAlloc( len );
-
-	f->Read( data, len );
-
-	fileSystem->CloseFile( f );
-
-	unsigned long magic = LittleLong( *(unsigned long *)data );
-	ddsFileHeader_t	*_header = (ddsFileHeader_t *)(data + 4);
-	int ddspf_dwFlags = LittleLong( _header->ddspf.dwFlags );
-
-	if ( magic != DDS_MAKEFOURCC('D', 'D', 'S', ' ')) {
-		common->Printf( "CheckPrecompressedImage( %s ): magic != 'DDS '\n", imgName.c_str() );
-		R_StaticFree( data );
-		return false;
-	}
-
-	// if we don't support color index textures, we must load the full image
-	// should we just expand the 256 color image to 32 bit for upload?
-	if ( ddspf_dwFlags & DDSF_ID_INDEXCOLOR ) {
-		R_StaticFree( data );
-		return false;
-	}
-
-	// upload all the levels
-	UploadPrecompressedImage( data, len );
-
-	R_StaticFree( data );
-
-
-	return true;
-#endif
 }
 
 /*
@@ -1065,49 +1014,33 @@ void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) 
 	//
 	// load the image from disk
 	//
-	if ( cubeFiles != CF_2D ) {
-		fhImageData imgData;
-		if (!imgData.LoadCubeMap( imgName, cubeFiles )) {
-			common->Warning( "Couldn't load cube image: %s", imgName.c_str() );
-			MakeDefault();
+
+	// see if we have a pre-generated image file that is
+	// already image processed and compressed
+	if ( checkForPrecompressed && globalImages->image_usePrecompressedTextures.GetBool() ) {
+		if ( CheckPrecompressedImage( true ) ) {
+			// we got the precompressed image
 			return;
 		}
+		// fall through to load the normal image
+	}
 
-		this->timestamp = imgData.GetTimeStamp();		
-
-		repeat = TR_CLAMP;
-		GenerateImage( imgData );	
-
-		precompressedFile = false;
-	} else {
-		// see if we have a pre-generated image file that is
-		// already image processed and compressed
-		if ( checkForPrecompressed && globalImages->image_usePrecompressedTextures.GetBool() ) {
-			if ( CheckPrecompressedImage( true ) ) {
-				// we got the precompressed image
-				return;
-			}
-			// fall through to load the normal image
-		}
-
-
-		fhImageData imgData;
-		bool ok = imgData.LoadProgram(imgName);
-		if (!ok || !imgData.IsValid()) {
-			common->Warning("Couldn't load image: %s", imgName.c_str());
-			MakeDefault();
-			return;
-		}
+	fhImageData imgData;
+	bool ok = imgData.LoadProgram(imgName);
+	if (!ok || !imgData.IsValid()) {
+		common->Warning("Couldn't load image: %s", imgName.c_str());
+		MakeDefault();
+		return;
+	}
 			
-		this->timestamp = imgData.GetTimeStamp();
+	this->timestamp = imgData.GetTimeStamp();
 
-		GenerateImage(imgData);
+	GenerateImage(imgData);
 			
-		this->precompressedFile = false;
+	this->precompressedFile = false;
 
-		// write out the precompressed version of this file if needed
-		WritePrecompressedImage();
-	}	
+	// write out the precompressed version of this file if needed
+	WritePrecompressedImage();	
 }
 
 //=========================================================================================================

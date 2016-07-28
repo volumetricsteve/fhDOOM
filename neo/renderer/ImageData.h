@@ -105,10 +105,11 @@ public:
 	fhImageData& operator=(fhImageData&& other);
 
 	bool        LoadFile(const char* filename, bool toRgba = false);
-	bool        LoadDDS(const char* filename);
+	bool        LoadDDS( const char* filename, bool toRgba = false );
 	bool        LoadTGA(const char* filename, bool toRgba = false);	
 	bool        LoadProgram(const char* program);
 	bool        LoadCubeMap( const char* filename, cubeFiles_t cubeLayout );
+	bool        LoadCubeMap( const fhImageData sides[6], const char* name );
 	bool        LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 height );
 
 	uint32      GetSize(uint32 level = 0) const;
@@ -126,6 +127,8 @@ public:
 	bool        IsValid() const;
 	void        Clear();
 
+	static bool LoadFile( const char* filename, fhImageData* imageData, ID_TIME_T* timestamp );
+
 private:
 	//TODO(johl): hard coded maximum level num limits the maximum texture size, but that's ok for now
 	static const int maximumLevelNum = 16; //max tex size = 2^(16-1) = 32768
@@ -133,10 +136,12 @@ private:
 	//TODO(johl): hard coded maximum face num limits us to 2D texture (1 face) and cubemaps (6 face)
 	//            This must be changed for 3D textures or even generalized texture arrays (not need right now).
 	static const int maximumFaceNum = 6;
-	
-	bool        LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>& buffer);
+
+	static bool TryLoadFile( const char* filename, const char* ext, fhImageData* imageData, ID_TIME_T* timestamp, bool (fhImageData::*f)(fhStaticBuffer<byte>&, bool) );
+	bool        LoadFileIntoBuffer( const char* filename, fhStaticBuffer<byte>& buffer );
+
 	bool        LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba);
-	bool        LoadDDS(fhStaticBuffer<byte>& buffer);
+	bool        LoadDDS(fhStaticBuffer<byte>& buffer, bool toRgba);
 
 	bool        ParseImageProgram_r(idLexer& src, bool noload, bool toRgba);
 

@@ -32,6 +32,56 @@ If you have questions concerning this license or the applicable additional terms
 #include "../framework/File.h"
 #include "tr_local.h"
 
+bool fhImageData::TryLoadFile( const char* filename, const char* ext, fhImageData* imageData, ID_TIME_T* timestamp, bool (fhImageData::*f)(fhStaticBuffer<byte>&, bool) ) {
+
+	idStr filenameExt = filename;
+
+	if (ext) {
+		filenameExt.SetFileExtension( ext );
+	}
+
+	fhFileHandle file = fileSystem->OpenFileRead( filenameExt );
+	if (!file) {
+		return false;
+	}
+
+	int	len = file->Length();
+
+	if (timestamp) {
+		*timestamp = file->Timestamp();
+	}
+
+	if (imageData) {
+		fhStaticBuffer<byte> buffer;
+		buffer.Allocate( len );
+		file->Read( buffer.Get(), len );
+
+		bool ret = ((*imageData).*f)(buffer, false);
+
+		if (ret){
+			idStr::Copynz( imageData->name, filenameExt.c_str(), MAX_IMAGE_NAME );
+			imageData->timestamp = file->Timestamp();
+		}
+
+		return ret;
+	}
+
+	return true;
+}
+
+
+bool fhImageData::LoadFile( const char* filename, fhImageData* imageData, ID_TIME_T* timestamp ) {
+	if (TryLoadFile( filename, "dds", imageData, timestamp, &fhImageData::LoadDDS )){
+		return true;
+	}
+
+	if (TryLoadFile( filename, "tga", imageData, timestamp, &fhImageData::LoadTGA )){
+		return true;
+	}	
+
+	return false;
+}
+
 fhImageData::fhImageData()
 	: data(nullptr)
 	, format(pixelFormat_t::None)
@@ -213,10 +263,10 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 	return ok;
 }
 
-bool fhImageData::LoadDDS(const char* filename) {
+bool fhImageData::LoadDDS( const char* filename, bool toRgba ) {
 	fhStaticBuffer<byte> buffer;
 	if (LoadFileIntoBuffer(filename, buffer)) {
-		return LoadDDS(buffer);
+		return LoadDDS(buffer, toRgba);
 	}
 
 	return false;
@@ -231,7 +281,13 @@ bool fhImageData::LoadTGA(const char* filename, bool toRgba) {
 	return false;
 }
 
-bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer) {
+bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer, bool toRgba) {
+
+	if (toRgba) {
+		//TODO(johl): currently we just assume, that data from dds files can not be
+		//            converted to RGBA. 
+		return false;
+	}
 
 	if (buffer.Num() < sizeof(ddsFileHeader_t)) {
 		return false;
@@ -655,6 +711,62 @@ bool fhImageData::LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>&
 	buffer.Allocate(len);
 	file->Read(buffer.Get(), len);
 	file.Close();
+
+	return true;
+}
+
+bool fhImageData::LoadCubeMap( const fhImageData sides[6], const char* name ) {
+	Clear();
+	strncpy( this->name, name, MAX_IMAGE_NAME );
+	
+	int	size = 0;
+	int bytesPerSide = 0;
+	ID_TIME_T timestamp = 0;
+	pixelFormat_t format = pixelFormat_t::None;
+	fhStaticBuffer<byte> buffer;
+
+	for (int i = 0; i < 6; i++) {
+		const fhImageData& side = sides[i];
+
+		if (i == 0) {
+			timestamp = side.GetTimeStamp();
+			size = side.GetWidth();
+			bytesPerSide = size * size * 4; //4 bytes, due to RGBA
+			format = side.GetPixelFormat();
+			buffer.Allocate( bytesPerSide * 6 );
+		}
+
+		if (side.GetWidth() != size || side.GetHeight() != size) {
+			common->Warning( "Mismatched sizes on cube map '%s'", side.GetName() );
+			return false;
+		}
+
+		if (side.GetPixelFormat() != format) {
+			common->Warning( "Mismatched pixel format on cube map '%s'", side.GetName() );
+			return false;
+		}
+
+		if (side.GetSize( 0 ) != bytesPerSide) {
+			common->Warning( "Unexpected size of cube map side '%s'", side.GetName() );
+			return false;
+		}
+
+		memcpy( &buffer.Get()[i * bytesPerSide], side.GetData(), bytesPerSide );
+	}
+
+	this->data = buffer.Release();
+	this->numFaces = 6;
+	this->numLevels = 1;
+	this->format = format;
+	this->timestamp = timestamp;
+
+	for (int i = 0; i < 6; ++i) {
+		auto& level = this->faces[i].levels[0];
+		level.width = size;
+		level.height = size;
+		level.offset = bytesPerSide * i;
+		level.size = bytesPerSide;
+	}
 
 	return true;
 }

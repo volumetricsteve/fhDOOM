@@ -325,7 +325,7 @@ public:
 	// Will automatically resample non-power-of-two images and execute image programs if needed.
 	idImage *			ImageFromFile( const char *name,
 							 textureFilter_t filter, bool allowDownSize,
-							 textureRepeat_t repeat, textureDepth_t depth, cubeFiles_t cubeMap = CF_2D );
+							 textureRepeat_t repeat, textureDepth_t depth );
 
 	// look for a loaded image, whatever the parameters
 	idImage *			GetImage( const char *name ) const;
