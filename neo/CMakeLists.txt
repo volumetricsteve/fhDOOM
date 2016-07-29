@@ -337,7 +337,6 @@ SET(SOURCES
   renderer/Image_init.cpp
   renderer/Image_load.cpp
   renderer/Image_process.cpp
-  renderer/Image_program.cpp
   renderer/ImageData.h
   renderer/ImageData.cpp
   renderer/ImageProgram.h

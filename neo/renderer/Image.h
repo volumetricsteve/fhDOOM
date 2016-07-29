@@ -497,13 +497,3 @@ IMAGEFILES
 */
 
 void R_LoadImage( const char *name, byte **pic, int *width, int *height, ID_TIME_T *timestamp, bool makePowerOf2 );
-
-/*
-====================================================================
-
-IMAGEPROGRAM
-
-====================================================================
-*/
-
-void R_LoadImageProgram( const char *name, byte **pic, int *width, int *height, ID_TIME_T *timestamp, textureDepth_t *depth = NULL );

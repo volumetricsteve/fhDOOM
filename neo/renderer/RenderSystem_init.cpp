@@ -33,6 +33,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "RenderProgram.h"
 #include "RenderList.h"
 #include "Framebuffer.h"
+#include "ImageData.h"
+#include "ImageProgram.h"
 
 // Vista OpenGL wrapper check
 #ifdef _WIN32
@@ -903,10 +905,11 @@ void R_ReportImageDuplication_f( const idCmdArgs &args ) {
 		if ( image1->defaulted ) {
 			continue;
 		}
-		byte	*data1;
-		int		w1, h1;
 
-		R_LoadImageProgram( image1->imgName, &data1, &w1, &h1, NULL );
+		fhImageData imageData;
+		if (!imageData.LoadProgram( image1->imgName )) {
+			continue;
+		}
 
 		for ( j = 0 ; j < i ; j++ ) {
 			idImage	*image2 = globalImages->images[j];
@@ -917,7 +920,7 @@ void R_ReportImageDuplication_f( const idCmdArgs &args ) {
 			if ( image2->generatorFunction ) {
 				continue;
 			}
-			if ( image2->cubeFiles != CF_2D ) {
+			if ( image2->type != image1->type ) {
 				continue;
 			}
 			if ( image2->defaulted ) {
@@ -935,30 +938,48 @@ void R_ReportImageDuplication_f( const idCmdArgs &args ) {
 				continue;
 			}
 
-			byte	*data2;
-			int		w2, h2;
 
-			R_LoadImageProgram( image2->imgName, &data2, &w2, &h2, NULL );
-
-			if ( w2 != w1 || h2 != h1 ) {
-				R_StaticFree( data2 );
+			fhImageData imageData2;
+			if (!imageData2.LoadProgram( image2->imgName )) {
 				continue;
 			}
 
-			if ( memcmp( data1, data2, w1*h1*4 ) ) {
-				R_StaticFree( data2 );
+			if (imageData2.GetWidth() != imageData.GetWidth() || imageData2.GetHeight() != imageData.GetHeight()) {
 				continue;
 			}
 
-			R_StaticFree( data2 );
+			if (imageData2.GetPixelFormat() != imageData.GetPixelFormat() ) {
+				continue;
+			}
 
-			common->Printf( "%s == %s\n", image1->imgName.c_str(), image2->imgName.c_str() );
-			session->UpdateScreen( true );
-			count++;
-			break;
+			if (imageData2.GetNumFaces() != imageData.GetNumFaces()) {
+				continue;
+			}
+
+			if (imageData2.GetNumLevels() != imageData.GetNumLevels()) {
+				continue;
+			}
+
+			if (imageData2.GetSize() != imageData.GetSize()) {
+				continue;
+			}
+
+			//TODO(johl): we compare only the first level. Should we compare all levels?
+			bool equal = true;;
+			for (uint32 f = 0; f < imageData.GetNumFaces(); ++f) {				
+				if (memcmp( imageData2.GetData( f ), imageData.GetData( f ), imageData.GetSize() ) != 0) {
+					equal = false;
+					break;
+				}
+			}
+			
+			if (equal) {
+				common->Printf( "%s == %s\n", image1->imgName.c_str(), image2->imgName.c_str() );
+				session->UpdateScreen( true );
+				count++;
+				break;
+			}
 		}
-
-		R_StaticFree( data1 );
 	}
 	common->Printf( "%i / %i collisions\n", count, globalImages->images.Num() );
 }
