@@ -84,3 +84,8 @@ uniform vec4 rpShadowMapSize[6];  //xy = width/height of far plane, zw = near/fa
                                   //TODO(johl): is width/height correctly set for non-parallel lights? 
 uniform float rpCascadeDistances[5];
 uniform mat4 rpInverseLightRotation;
+
+
+vec3 toOpenGlCorrdinates(vec3 v) {
+	return vec3( -v.y, v.z, -v.x );
+}

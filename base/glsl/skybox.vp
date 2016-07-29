@@ -47,10 +47,8 @@ void main(void)
 
   
   vec4 cubecoord = textureMatrix0 * vec4(vertex_position - rpLocalViewOrigin.xyz, 1.0);
-  
 
-
-  result.cubecoord = cubecoord.xyz;
+  result.cubecoord = toOpenGlCorrdinates(cubecoord.xyz);
 
   result.color = (vertex_color / 255.0) * rpColorModulate + rpColorAdd;
 }

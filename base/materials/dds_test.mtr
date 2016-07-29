@@ -83,8 +83,10 @@ textures/fhdoom/skyboxprogram2
     forceOpaque             // so transparent windows can draw on top of it
     {
         blend   add     // so transparent windows can draw on top of it
-        map     textures/glsltest/dds/violentdays
-        //map     cameraCubeMap(env/cloudy)
+        //map     textures/glsltest/dds/violentdays
+        //map     cameraCubeMap(env/desert)
+        //map     cubeMap(textures/glsltest/cubetest)
+        map     cubeMap(env/souls)
         texgen  skybox
     }
 }

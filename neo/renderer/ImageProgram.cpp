@@ -302,27 +302,28 @@ static void R_ImageAdd( byte *data1, int width1, int height1, byte *data2, int w
 }
 
 static const char* axisSides[] = {
-	"_px.tga",
-	"_nx.tga",
-	"_py.tga",
 	"_ny.tga",
+	"_py.tga",
 	"_pz.tga",
-	"_nz.tga"
+	"_nz.tga",	
+	"_nx.tga",
+	"_px.tga",
 };
 
 static const char* cameraSides[] = {
-	"_forward.tga",
-	"_back.tga",
-	"_left.tga",
 	"_right.tga",
+	"_left.tga",	
 	"_up.tga",
-	"_down.tga"
+	"_down.tga",
+	"_back.tga",
+	"_forward.tga"
 };
 
 /*
 ===================
-????
-
+Load 6 individual cube map files and assemble single cubemap image.
+'filename' is the common prefix of all files for that cube map
+e.g. 'foo' for 'foo_forward','foo_back', etc.
 ===================
 */
 static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageData* data, ID_TIME_T* timestamp ) {
@@ -339,11 +340,12 @@ static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageD
 
 		ID_TIME_T time = 0;		
 
-		if (data) {
-			if (!fhImageData::LoadFile( fullName, &images[i], &time )) {
-				return false;
-			}
+		if (!fhImageData::LoadFile( fullName, (!data ? nullptr : &images[i]), &time )) {
+			common->Warning( "failed to load cube map file: %s", fullName );
+			return false;
+		}
 
+		if (data) {
 			const int size = images[i].GetWidth();
 
 			if (images[i].GetHeight() != size){
@@ -351,37 +353,57 @@ static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageD
 				return false;
 			}
 
+			//convert coordinate system/orientation of cubemaps to match DDS files.
+			//This way we can use one skybox shader for all cubemaps (Doom3's own cubemaps and DDS files).
 			if (cubeFiles == CF_CAMERA) {
-				// convert from "camera" images to native cube map images
 				switch (i) {
-				case 0:	// forward
-					R_RotatePic( images[i].GetData(), size );
-					break;
-				case 1:	// back
-					R_RotatePic( images[i].GetData(), size );
-					R_HorizontalFlip( images[i].GetData(), size, size );
-					R_VerticalFlip( images[i].GetData(), size, size );
-					break;
-				case 2:	// left
-					R_VerticalFlip( images[i].GetData(), size, size );
-					break;
-				case 3:	// right
+				case 0:	// right
 					R_HorizontalFlip( images[i].GetData(), size, size );
 					break;
-				case 4:	// up
-					R_RotatePic( images[i].GetData(), size );
+				case 1:	// left
+					R_HorizontalFlip( images[i].GetData(), size, size );
 					break;
-				case 5: // down
-					R_RotatePic( images[i].GetData(), size );
+				case 2:	// up
+					R_VerticalFlip( images[i].GetData(), size, size );
+					break;
+				case 3:	// down
+					R_VerticalFlip( images[i].GetData(), size, size );
+					break;
+				case 4:	// forward
+					R_HorizontalFlip( images[i].GetData(), size, size );
+					break;
+				case 5: // back
+					R_HorizontalFlip( images[i].GetData(), size, size );
 					break;
 				}
 			}
-		}
-		else {
-			if (!fhImageData::LoadFile( fullName, nullptr, &time )) {
-				return false;
+			else {
+				switch (i) {
+				case 0:	// right
+					break;
+				case 1:	// left
+					R_VerticalFlip( images[i].GetData(), size, size );
+					R_HorizontalFlip( images[i].GetData(), size, size );
+					break;
+				case 2:	// up
+					R_RotatePic( images[i].GetData(), size );
+					R_VerticalFlip( images[i].GetData(), size, size );
+					break;
+				case 3:	// down
+					R_HorizontalFlip( images[i].GetData(), size, size );
+					R_RotatePic( images[i].GetData(), size );
+					break;
+				case 4:	// forward
+					R_RotatePic( images[i].GetData(), size );
+					R_VerticalFlip( images[i].GetData(), size, size );
+					break;
+				case 5: // back
+					R_RotatePic( images[i].GetData(), size );
+					R_HorizontalFlip( images[i].GetData(), size, size );
+					break;
+				}
 			}
-		}
+		}		
 
 		if (timestamp && *timestamp < time) {
 			*timestamp = time;

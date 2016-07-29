@@ -32,6 +32,43 @@ If you have questions concerning this license or the applicable additional terms
 #include "../framework/File.h"
 #include "tr_local.h"
 
+namespace {
+	//The dwCaps2 member of the DDSCAPS2 structure can be set to one or more of the following values.Flag	Value
+	const uint32 DDSCAPS2_CUBEMAP = 0x00000200;
+	const uint32 DDSCAPS2_CUBEMAP_POSITIVEX = 0x00000400;
+	const uint32 DDSCAPS2_CUBEMAP_NEGATIVEX = 0x00000800;
+	const uint32 DDSCAPS2_CUBEMAP_POSITIVEY = 0x00001000;
+	const uint32 DDSCAPS2_CUBEMAP_NEGATIVEY = 0x00002000;
+	const uint32 DDSCAPS2_CUBEMAP_POSITIVEZ = 0x00004000;
+	const uint32 DDSCAPS2_CUBEMAP_NEGATIVEZ = 0x00008000;
+	const uint32 DDSCAPS2_VOLUME = 0x00200000;
+
+
+	uint32 DataSize( uint32 width, uint32 height, pixelFormat_t format ) {
+		switch (format)	{
+		case pixelFormat_t::BGR:
+		case pixelFormat_t::RGB:
+			return width * height * 3;
+		case pixelFormat_t::RGBA:
+		case pixelFormat_t::BGRA:
+			return width * height * 4;
+		case pixelFormat_t::DXT1_RGBA:
+		case pixelFormat_t::DXT1_RGB:
+			return ((width + 3) / 4) * ((height + 3) / 4) * 8;
+		case pixelFormat_t::DXT3_RGBA:
+		case pixelFormat_t::DXT5_RGBA:
+		case pixelFormat_t::DXT5_RxGB:
+		case pixelFormat_t::RGTC:
+			return ((width + 3) / 4) * ((height + 3) / 4) * 16;
+		default:
+			assert( false && "unknown pixel format!?" );
+		}
+
+		return 0;
+	}
+
+}
+
 bool fhImageData::TryLoadFile( const char* filename, const char* ext, fhImageData* imageData, ID_TIME_T* timestamp, bool (fhImageData::*f)(fhStaticBuffer<byte>&, bool) ) {
 
 	idStr filenameExt = filename;
@@ -372,35 +409,59 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer, bool toRgba) {
 		return false;
 	}
 
-	this->numFaces = 1;
+	if (header->dwCaps2 & DDSCAPS2_CUBEMAP) {
+		const char* missingFace = nullptr;
+		if (!(header->dwCaps2 & DDSCAPS2_CUBEMAP_POSITIVEX))
+			missingFace = "positiv x";
+		else if (!(header->dwCaps2 & DDSCAPS2_CUBEMAP_NEGATIVEX))
+			missingFace = "negative x";
+		else if (!(header->dwCaps2 & DDSCAPS2_CUBEMAP_POSITIVEY))
+			missingFace = "positiv y";
+		else if (!(header->dwCaps2 & DDSCAPS2_CUBEMAP_NEGATIVEY))
+			missingFace = "negative y";
+		else if (!(header->dwCaps2 & DDSCAPS2_CUBEMAP_POSITIVEZ))
+			missingFace = "positiv z";
+		else if (!(header->dwCaps2 & DDSCAPS2_CUBEMAP_NEGATIVEZ))
+			missingFace = "negative z";
+
+		if (missingFace) {
+			common->Warning( "not a valid cube map, face '%s' is missing", missingFace );
+			return false;
+		}	
+
+		this->numFaces = 6;
+	} 
+	else {
+		this->numFaces = 1;
+	}
+	
 	this->numLevels = header->dwMipMapCount;
 
 	byte *imagedata = this->data + sizeof(ddsFileHeader_t) + 4;
-	int uw = header->dwWidth;
-	int uh = header->dwHeight;
 
-	for (uint32 i = 0; i < numLevels; i++) {
-		int size;
-		if ((int)format >= (int)pixelFormat_t::DXT1_RGB) {
-			size = ((uw + 3) / 4) * ((uh + 3) / 4) * ((format == pixelFormat_t::DXT1_RGBA || format == pixelFormat_t::DXT1_RGB) ? 8 : 16);
-		}
-		else {
-			size = uw * uh * (header->ddspf.dwRGBBitCount / 8);
-		}
+	for (uint32 j = 0; j < this->numFaces; ++j) {
+		int uw = header->dwWidth;
+		int uh = header->dwHeight;
 
-		faces[0].levels[i].offset = static_cast<uint32>((uintptr_t)imagedata - (uintptr_t)this->data);
-		faces[0].levels[i].width = uw;
-		faces[0].levels[i].height = uh;
-		faces[0].levels[i].size = size;
+		for (uint32 i = 0; i < numLevels; i++) {
+			uint32 numBytes = DataSize( uw, uh, format );
 
-		imagedata += size;
-		uw /= 2;
-		uh /= 2;
-		if (uw < 1) {
-			uw = 1;
-		}
-		if (uh < 1) {
-			uh = 1;
+			uint32 faceIndex = j;// ddsFace2doomFace[j];
+
+			faces[faceIndex].levels[i].offset = static_cast<uint32>((uintptr_t)imagedata - (uintptr_t)this->data);
+			faces[faceIndex].levels[i].width = uw;
+			faces[faceIndex].levels[i].height = uh;
+			faces[faceIndex].levels[i].size = numBytes;
+
+			imagedata += numBytes;
+			uw /= 2;
+			uh /= 2;
+			if (uw < 1) {
+				uw = 1;
+			}
+			if (uh < 1) {
+				uh = 1;
+			}
 		}
 	}
 
@@ -749,114 +810,6 @@ bool fhImageData::LoadCubeMap( const fhImageData sides[6], const char* name ) {
 		if (side.GetSize( 0 ) != bytesPerSide) {
 			common->Warning( "Unexpected size of cube map side '%s'", side.GetName() );
 			return false;
-		}
-
-		memcpy( &buffer.Get()[i * bytesPerSide], side.GetData(), bytesPerSide );
-	}
-
-	this->data = buffer.Release();
-	this->numFaces = 6;
-	this->numLevels = 1;
-	this->format = format;
-	this->timestamp = timestamp;
-
-	for (int i = 0; i < 6; ++i) {
-		auto& level = this->faces[i].levels[0];
-		level.width = size;
-		level.height = size;
-		level.offset = bytesPerSide * i;
-		level.size = bytesPerSide;
-	}
-
-	return true;
-}
-
-static const char* axisSides[] = { 
-	"_px.tga", 
-	"_nx.tga", 
-	"_py.tga", 
-	"_ny.tga",
-	"_pz.tga", 
-	"_nz.tga" 
-};
-
-static const char* cameraSides[] = {
-	"_forward.tga",
-	"_back.tga",
-	"_left.tga",
-	"_right.tga",
-	"_up.tga",
-	"_down.tga"
-};
-
-bool fhImageData::LoadCubeMap( const char* filename, cubeFiles_t cubeLayout ) {
-	assert( cubeLayout == CF_CAMERA || cubeLayout == CF_NATIVE );
-
-	const char	**sides = (cubeLayout == CF_CAMERA) ? cameraSides : axisSides;
-	int	size = 0;
-	int bytesPerSide = 0;
-	ID_TIME_T timestamp = 0;
-	pixelFormat_t format = pixelFormat_t::None;
-	fhStaticBuffer<byte> buffer;
-
-	Clear();
-	
-	for (int i = 0; i < 6; i++) {
-		char	fullName[MAX_IMAGE_NAME];
-		idStr::snPrintf( fullName, sizeof( fullName ), "%s%s", filename, sides[i] );
-
-		fhImageData side;
-		if (!side.LoadProgram( fullName )) {
-			return false;
-		}		
-
-		if (i == 0) {
-			timestamp = side.GetTimeStamp();
-			size = side.GetWidth();
-			bytesPerSide = size * size * 4; //4 bytes, due to RGBA
-			format = side.GetPixelFormat();
-			buffer.Allocate( bytesPerSide * 6 );
-		}
-
-		if (side.GetWidth() != size || side.GetHeight() != size) {
-			common->Warning( "Mismatched sizes on cube map '%s'", fullName );
-			return false;
-		}
-
-		if (side.GetPixelFormat() != format ) {
-			common->Warning( "Mismatched pixel format on cube map '%s'", fullName );
-			return false;
-		}
-
-		if (side.GetSize( 0 ) != bytesPerSide) {
-			common->Warning( "Unexpected size of cube map side '%s'", fullName );
-			return false;
-		}
-
-		if (cubeLayout == CF_CAMERA) {
-			// convert from "camera" images to native cube map images
-			switch (i) {
-			case 0:	// forward
-				R_RotatePic( side.GetData(), size );
-				break;
-			case 1:	// back
-				R_RotatePic( side.GetData(), size );
-				R_HorizontalFlip( side.GetData(), size, size );
-				R_VerticalFlip( side.GetData(), size, size );
-				break;
-			case 2:	// left
-				R_VerticalFlip( side.GetData(), size, size );
-				break;
-			case 3:	// right
-				R_HorizontalFlip( side.GetData(), size, size );
-				break;
-			case 4:	// up
-				R_RotatePic( side.GetData(), size );
-				break;
-			case 5: // down
-				R_RotatePic( side.GetData(), size );
-				break;
-			}
 		}
 
 		memcpy( &buffer.Get()[i * bytesPerSide], side.GetData(), bytesPerSide );

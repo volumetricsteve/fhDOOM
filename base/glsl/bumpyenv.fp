@@ -60,5 +60,5 @@ void main(void)
   mat3 TBN = mat3(tangent, binormal, normal);  
 
   vec3 r = reflect(frag.cubecoord, TBN * localNormal);
-  result = texture(texture1, r) * frag.color * rpDiffuseColor;
+  result = texture(texture1, toOpenGlCorrdinates(r)) * frag.color * rpDiffuseColor;
 }
