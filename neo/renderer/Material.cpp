@@ -1886,17 +1886,10 @@ If there is any error during parsing, defaultShader will be set.
 =================
 */
 void idMaterial::ParseMaterial( idLexer &src ) {
-	idToken		token;
-	int			s;
-	char		buffer[1024];
-	idLexer		newSrc;
-	int			i;
-
-	s = 0;
 
 	numOps = 0;
 	numRegisters = EXP_REG_NUM_PREDEFINED;	// leave space for the parms to be copied in
-	for ( i = 0 ; i < numRegisters ; i++ ) {
+	for ( int i = 0 ; i < numRegisters ; i++ ) {
 		pd->registerIsTemporary[i] = true;		// they aren't constants that can be folded
 	}
 
@@ -1908,6 +1901,8 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		if ( TestMaterialFlag( MF_DEFAULTED ) ) {	// we have a parse error
 			return;
 		}
+
+		idToken token;
 		if ( !src.ExpectAnyToken( &token ) ) {
 			SetMaterialFlag( MF_DEFAULTED );
 			return;
@@ -2110,35 +2105,38 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		}
 		// diffusemap for stage shortcut
 		else if ( !token.Icmp( "diffusemap" ) ) {
+			idLexer newSrc;
 			char str[MAX_IMAGE_NAME];
+			char buffer[1024];
 			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( buffer, sizeof( buffer ), "blend diffusemap\nmap %s\n}\n", str );
 			newSrc.LoadMemory( buffer, strlen(buffer), "diffusemap" );
 			newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
 			ParseStage( newSrc, trpDefault );
-			newSrc.FreeSource();
 			continue;
 		}
 		// specularmap for stage shortcut
 		else if ( !token.Icmp( "specularmap" ) ) {
+			idLexer newSrc;
 			char str[MAX_IMAGE_NAME];
+			char buffer[1024];
 			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( buffer, sizeof( buffer ), "blend specularmap\nmap %s\n}\n", str );
 			newSrc.LoadMemory( buffer, strlen(buffer), "specularmap" );
 			newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
 			ParseStage( newSrc, trpDefault );
-			newSrc.FreeSource();
 			continue;
 		}
 		// normalmap for stage shortcut
 		else if ( !token.Icmp( "bumpmap" ) ) {
+			idLexer newSrc;
 			char str[MAX_IMAGE_NAME];
+			char buffer[1024];
 			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( buffer, sizeof( buffer ), "blend bumpmap\nmap %s\n}\n", str );
 			newSrc.LoadMemory( buffer, strlen(buffer), "bumpmap" );
 			newSrc.SetFlags( LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
 			ParseStage( newSrc, trpDefault );
-			newSrc.FreeSource();
 			continue;
 		}
 		// DECAL_MACRO for backwards compatibility with the preprocessor macros
@@ -2184,7 +2182,7 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 	// we can't just call ReceivesLighting(), because the stages are still
 	// in temporary form
 	if ( cullType == CT_TWO_SIDED ) {
-		for ( i = 0 ; i < numStages ; i++ ) {
+		for ( int i = 0 ; i < numStages ; i++ ) {
 			if ( pd->parseStages[i].lighting != SL_AMBIENT || pd->parseStages[i].texture.texgen != TG_EXPLICIT ) {
 				if ( cullType == CT_TWO_SIDED ) {
 					cullType = CT_FRONT_SIDED;
@@ -2197,7 +2195,7 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 
 	// currently a surface can only have one unique texgen for all the stages on old hardware
 	texgen_t firstGen = TG_EXPLICIT;
-	for ( i = 0; i < numStages; i++ ) {
+	for ( int i = 0; i < numStages; i++ ) {
 		if ( pd->parseStages[i].texture.texgen != TG_EXPLICIT ) {
 			if ( firstGen == TG_EXPLICIT ) {
 				firstGen = pd->parseStages[i].texture.texgen;
