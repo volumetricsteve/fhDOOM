@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,116 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma once
 #endif // _MSC_VER > 1000
 
-/////////////////////////////////////////////////////////////////////////////
-// idGLWidget window
-
-enum class MouseButton {
-	Left,
-	Right,
-	Middle
-};
-
-class idGLDrawable {
-public:
-	idGLDrawable();
-	~idGLDrawable() {};
-	virtual void draw(int x, int y, int w, int h);
-	virtual void setMedia(const char *name){}
-	virtual void buttonDown(int button, float x, float y);
-	virtual void buttonUp(int button, float x, float y);
-	virtual void mouseMove(float x, float y);
-	virtual int getRealTime() {return realTime;};
-	virtual bool ScreenCoords() { 
-		return true;
-	}
-	void SetRealTime(int i) {
-		realTime = i;
-	}
-	virtual void Update() {};
-	float getScale() {
-		return scale;
-	}
-	void setScale(float f) {
-		scale = f;
-	}
-protected:
-	float scale;
-	float xOffset;
-	float yOffset;
-	float zOffset;
-	float pressX;
-	float pressY;
-	bool  handleMove;
-	int button;
-	int realTime;
-};
-
-class idGLDrawableWorld : public idGLDrawable {
-public:
-	idGLDrawableWorld();
-	~idGLDrawableWorld();
-	void AddTris(srfTriangles_t *tris, const idMaterial *mat);
-	virtual void draw(int x, int y, int w, int h) override;
-	virtual void mouseMove( float x, float y ) override;
-	virtual void Update() override { worldDirty = true; };
-	virtual void buttonDown( int button, float x, float y ) override;
-	void InitWorld();
-protected:
-	
-	void InitLight(const idVec3& position);
-
-	idRenderWorld *world;
-	idRenderModel *worldModel;
-	qhandle_t	worldModelDef;
-	qhandle_t	lightDef;
-	qhandle_t   modelDef;
-	float       light;
-
-//model
-	bool worldDirty;
-	idStr skinStr;
-	idQuat rotation;
-	idVec3 lastPress;
-	float radius;
-	idVec4 rect;
-};
-
-class idGLDrawableMaterial : public idGLDrawableWorld {
-public:
-	idGLDrawableMaterial(const idMaterial *mat) {
-		material = mat;
-		scale = 2.0;
-		light = 1.0;
-		worldDirty = true;
-	}
-
-	idGLDrawableMaterial() {
-		material = NULL;
-		light = 1.0;
-		worldDirty = true;
-		realTime = 50;
-	}
-	
-	virtual void setMedia(const char *name) override;
-	virtual void draw(int x, int y, int w, int h) override;
-
-//protected:
-	const idMaterial *material;
-};
-
-class idGLDrawableModel : public idGLDrawableWorld {
-public:
-	idGLDrawableModel(const char *name);
-	idGLDrawableModel();
-
-	virtual void setMedia(const char *name) override;
-
-	virtual void draw(int x, int y, int w, int h) override;
-	virtual bool ScreenCoords() override { 
-		return false;
-	}
-	void SetSkin( const char *skin );
-};
+class idGLDrawable;
 
 class idGLWidget : public CWnd
 {

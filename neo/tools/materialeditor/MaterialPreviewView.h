@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "MaterialView.h"
 #include "../radiant/GLWidget.h"
+#include "../radiant/GLDrawable.h"
 
 
 class idGLDrawableView : public idGLDrawable {
@@ -37,12 +38,11 @@ public:
 	idGLDrawableView();
 	~idGLDrawableView();
 
-	virtual void setMedia(const char *name);
-	virtual void draw(int x, int y, int w, int h);
-	virtual void buttonUp(int button){}
-	virtual void buttonDown(int _button, float x, float y);
-	virtual void mouseMove(float x, float y);
-	virtual void Update() {};
+	virtual void setMedia(const char *name) override;
+	virtual void draw(int x, int y, int w, int h) override;
+	virtual void buttonDown( MouseButton _button, float x, float y ) override;
+	virtual void mouseMove(float x, float y) override;
+	virtual void Update() override {};
 
 	void UpdateCamera( renderView_t *refdef );
 	void UpdateModel( void );

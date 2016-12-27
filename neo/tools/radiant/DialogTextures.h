@@ -32,6 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 //
 
 #include <afxtempl.h>
+#include "GLDrawable.h"
 #include "GLWidget.h"
 
 /////////////////////////////////////////////////////////////////////////////

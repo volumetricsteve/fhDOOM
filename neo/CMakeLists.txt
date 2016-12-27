@@ -541,7 +541,8 @@ SET(SOURCES
 
   tools/edit_public.h
   tools/edit_stub.cpp
-
+  tools/radiant/GLDrawable.h
+  tools/radiant/GLDrawable.cpp
 
   sys/sys_local.cpp
   sys/sys_local.h

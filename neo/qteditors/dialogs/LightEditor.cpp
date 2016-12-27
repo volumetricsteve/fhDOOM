@@ -1,3 +1,31 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
 #include "LightEditor.h"
 #include <qlayout.h>
 #include <qgroupbox.h>
@@ -18,7 +46,7 @@
 fhLightEditor::fhLightEditor(QWidget* parent)
 : QDialog(parent) {
 
-	QVBoxLayout* mainLayout = new QVBoxLayout;	
+	QVBoxLayout* mainLayout = new QVBoxLayout;
 	QHBoxLayout* leftRightLayout = new QHBoxLayout;
 	leftRightLayout->setSpacing(0);
 	leftRightLayout->setMargin(0);
@@ -49,7 +77,7 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	auto colorLayout = new QHBoxLayout;
 	colorLayout->addWidget( new QLabel( "Color" ) );
 	colorLayout->addWidget( m_coloredit );
-	rightLayout->addLayout( colorLayout );	
+	rightLayout->addLayout( colorLayout );
 
 	auto shadowGroup = new QGroupBox("Shadows", this);
 	auto shadowLayout = new QGridLayout(this);
@@ -59,7 +87,7 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	m_shadowMode->addItem("Stencil Shadows", QVariant((int)shadowMode_t::StencilShadow));
 	m_shadowMode->addItem("Shadow Mapping", QVariant((int)shadowMode_t::ShadowMap));
 
-	m_shadowBrightnessEdit = new fhSliderNumEdit(this);	
+	m_shadowBrightnessEdit = new fhSliderNumEdit(this);
 	m_shadowBrightnessEdit->setMaximum(1.0f);
 	m_shadowBrightnessEdit->setMinimum(0.0f);
 	m_shadowBrightnessEdit->setAdjustStepSize(0.01);
@@ -83,11 +111,11 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	m_shadowOffsetFactor->setAdjustStepSize( 0.1f );
 	m_shadowOffsetFactor->setPrecision( 1 );
 
-	shadowGroup->setLayout(shadowLayout);	
+	shadowGroup->setLayout(shadowLayout);
 	shadowLayout->addWidget( new QLabel( "Mode", this ), 0, 0 );
 	shadowLayout->addWidget( m_shadowMode, 0, 1 );
 	shadowLayout->addWidget(new QLabel("Softness", this), 1, 0);
-	shadowLayout->addWidget(m_shadowSoftnessEdit, 1, 1);	
+	shadowLayout->addWidget(m_shadowSoftnessEdit, 1, 1);
 	shadowLayout->addWidget(new QLabel("Brightness", this), 2, 0);
 	shadowLayout->addWidget( m_shadowBrightnessEdit, 2, 1 );
 	shadowLayout->addWidget( new QLabel( "Offset Bias", this ), 3, 0 );
@@ -95,14 +123,14 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	shadowLayout->addWidget( new QLabel( "Offset Factor", this ), 4, 0 );
 	shadowLayout->addWidget( m_shadowOffsetFactor, 4, 1 );
 
-	rightLayout->addWidget(shadowGroup);	
+	rightLayout->addWidget(shadowGroup);
 
 	mainLayout->addLayout(leftRightLayout);
 
 	QHBoxLayout* buttonLayout = new QHBoxLayout;
 	m_cancelButton = new QPushButton("Cancel", this);
 	m_applyButton = new QPushButton("Save", this);
-	m_okButton = new QPushButton("OK", this);	
+	m_okButton = new QPushButton("OK", this);
 
 	buttonLayout->addWidget(m_cancelButton);
 	buttonLayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Minimum));
@@ -113,17 +141,17 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 
 	auto materialGroup = new QGroupBox("Material", this);
 	auto materialVLayout = new QVBoxLayout(this);
-	materialGroup->setLayout(materialVLayout);	
+	materialGroup->setLayout(materialVLayout);
 	m_material = new QComboBox(this);
 	materialVLayout->addWidget(m_material);
 
 	m_materialFile = new QLabel(this);
 	materialVLayout->addWidget(m_materialFile);
-	LoadMaterials();	
+	LoadMaterials();
 
 	m_drawableMaterial = new idGLDrawableMaterial();
 	fhRenderWidget* renderWidget = new fhRenderWidget(this);
-	renderWidget->setDrawable(m_drawableMaterial);		
+	renderWidget->setDrawable(m_drawableMaterial);
 	materialVLayout->addWidget(renderWidget);
 
 	rightLayout->addWidget(materialGroup);
@@ -137,7 +165,7 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 		UpdateLightParameters();
 	});
 
-	QObject::connect(m_coloredit, &fhColorEdit::valueChanged, [=](idVec3 color){ 
+	QObject::connect(m_coloredit, &fhColorEdit::valueChanged, [=](idVec3 color){
 		this->m_currentData.color = color;
 		this->m_modified = true;
 		this->UpdateGame();
@@ -243,7 +271,7 @@ fhLightEditor::fhLightEditor(QWidget* parent)
 	QObject::connect( m_cancelButton, &QPushButton::clicked, [=](){
 		this->m_currentData = this->m_originalData;
 		this->m_modified = false;
-		this->UpdateGame();		
+		this->UpdateGame();
 		this->close();
 	} );
 
@@ -294,7 +322,7 @@ void fhLightEditor::closeEvent(QCloseEvent* event) {
 		if (resBtn == QMessageBox::Save) {
 			this->UpdateGame();
 			this->m_originalData = this->m_currentData;
-			this->m_modified = false;			
+			this->m_modified = false;
 			event->accept();
 			return;
 		}
@@ -306,18 +334,18 @@ void fhLightEditor::closeEvent(QCloseEvent* event) {
 			event->accept();
 			return;
 		}
-		
+
 		event->ignore();
-		return;		
+		return;
 	}
 
 	event->accept();
 }
 
-QWidget* fhLightEditor::CreatePointLightParameters() {		
+QWidget* fhLightEditor::CreatePointLightParameters() {
 
 	QGroupBox* pointlightGroup = new QGroupBox( tr( "Point Light Parameters" ) );;
-	QGridLayout* pointlightgrid = new QGridLayout;	
+	QGridLayout* pointlightgrid = new QGridLayout;
 
 	m_pointlightParameters.radius = new fhVec3Edit(true, this);
 	m_pointlightParameters.radius->setMinimumValue(idVec3(0,0,0));
@@ -339,7 +367,7 @@ QWidget* fhLightEditor::CreatePointLightParameters() {
 QWidget* fhLightEditor::CreateParallelLightParameters() {
 
 	QGroupBox* group = new QGroupBox( tr( "Parallel Light Parameters" ) );;
-	QGridLayout* grid = new QGridLayout;	
+	QGridLayout* grid = new QGridLayout;
 
 	m_parallellightParameters.radius = new fhVec3Edit(true, this);
 	m_parallellightParameters.radius->setMinimumValue(idVec3(0,0,0));
@@ -351,7 +379,7 @@ QWidget* fhLightEditor::CreateParallelLightParameters() {
 	grid->addWidget( m_parallellightParameters.radius, 0, 1 );
 
 	grid->addWidget( new QLabel( "Center" ), 1, 0, Qt::AlignBottom );
-	grid->addWidget( m_parallellightParameters.direction, 1, 1 );	
+	grid->addWidget( m_parallellightParameters.direction, 1, 1 );
 
 	group->setLayout( grid );
 
@@ -361,7 +389,7 @@ QWidget* fhLightEditor::CreateParallelLightParameters() {
 QWidget* fhLightEditor::CreateProjectedLightParameters() {
 
 	QGroupBox* group = new QGroupBox( tr( "Projected Light Parameters" ) );;
-	QGridLayout* grid = new QGridLayout;	
+	QGridLayout* grid = new QGridLayout;
 
 	m_projectedlightParameters.target = new fhVec3Edit(true, this);
 	m_projectedlightParameters.right = new fhVec3Edit(this);
@@ -463,7 +491,7 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 	if(spawnArgs->GetInt("shadowMode", "0", shadowModeInt)) {
 		shadowMode = static_cast<shadowMode_t>(shadowModeInt);
 	} else if(spawnArgs->GetBool("noshadows", "0")) {
-		shadowMode = shadowMode_t::NoShadows;		
+		shadowMode = shadowMode_t::NoShadows;
 	}
 	shadowBrightness = spawnArgs->GetFloat("shadowBrightness", "0.15");
 	shadowSoftness = spawnArgs->GetFloat("shadowSoftness", "1");
@@ -475,7 +503,7 @@ void fhLightEditor::Data::initFromSpawnArgs( const idDict* spawnArgs ) {
 	material = spawnArgs->GetString("texture");
 }
 
-void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {	
+void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 
 	spawnArgs->Delete("light_right");
 	spawnArgs->Delete("light_up");
@@ -515,7 +543,7 @@ void fhLightEditor::Data::toSpawnArgs(idDict* spawnArgs) {
 		break;
 	};
 
-	spawnArgs->SetVector("_color", color);	
+	spawnArgs->SetVector("_color", color);
 
 	spawnArgs->SetInt("shadowMode", (int)shadowMode);
 	if(shadowMode == shadowMode_t::ShadowMap) {
@@ -542,7 +570,7 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 		this->setWindowTitle(QString("Light Editor: <no light selected>"));
 		return;
 	}
-	
+
 	m_currentData.initFromSpawnArgs(spawnArgs);
 	m_originalData = m_currentData;
 	m_modified = false;
@@ -561,7 +589,7 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_projectedlightParameters.right->set( m_currentData.right );
 	m_projectedlightParameters.up->set( m_currentData.up );
 	m_projectedlightParameters.start->set( m_currentData.start );
-	m_projectedlightParameters.end->set( m_currentData.end );	
+	m_projectedlightParameters.end->set( m_currentData.end );
 	m_projectedlightParameters.explicitStartEnd->setChecked( m_currentData.explicitStartEnd );
 	m_material->setCurrentText(m_currentData.material.c_str());
 	m_coloredit->set(m_currentData.color);
@@ -575,7 +603,7 @@ void fhLightEditor::initFromSpawnArgs(const idDict* spawnArgs) {
 	m_shadowSoftnessEdit->setValue(m_currentData.shadowSoftness);
 	m_shadowOffsetBias->setValue(m_currentData.shadowPolygonOffsetBias);
 	m_shadowOffsetFactor->setValue(m_currentData.shadowPolygonOffsetFactor);
-	
+
 	UpdateLightParameters();
 	this->setWindowTitle(QString("Light Editor: %1").arg(m_currentData.name.c_str()));
 }
@@ -600,7 +628,7 @@ void fhLightEditor::UpdateGame() {
 		}
 	}
 	else
-	{	
+	{
 		// used from Radiant
 		for (brush_t *b = selected_brushes.next; b && b != &selected_brushes; b = b->next) {
 			if ((b->owner->eclass->nShowFlags & ECLASS_LIGHT) && !b->entityModel) {
@@ -615,7 +643,7 @@ void fhLightEditor::UpdateGame() {
 
 void fhLightEditor::LoadMaterials() {
 	m_material->clear();
-	int count = declManager->GetNumDecls( DECL_MATERIAL );		
+	int count = declManager->GetNumDecls( DECL_MATERIAL );
 	m_material->addItem("");
 	for (int i = 0; i < count; i++) {
 		const idMaterial *mat = declManager->MaterialByIndex( i, false );

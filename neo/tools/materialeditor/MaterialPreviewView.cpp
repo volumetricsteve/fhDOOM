@@ -253,11 +253,11 @@ void idGLDrawableView::InitWorld() {
 	viewLights.Clear();
 }
 
-void idGLDrawableView::buttonDown(int _button, float x, float y) {
+void idGLDrawableView::buttonDown( MouseButton _button, float x, float y ) {
 	pressX = x;
 	pressY = y;
 	button = _button;
-	if ( button == MK_RBUTTON || button == MK_LBUTTON || button == MK_MBUTTON ) {
+	if (button == MouseButton::Left || button == MouseButton::Right || button == MouseButton::Middle) {
 		handleMove = true;
 	}
 }
@@ -269,7 +269,7 @@ void idGLDrawableView::mouseMove(float x, float y) {
 	if (handleMove) {
 
 		// Left mouse button rotates and zooms the view
-		if (button == MK_LBUTTON) {
+		if (button == MouseButton::Left) {
 			doZoom = Sys_KeyDown(VK_MENU);
 			if (doZoom) {
 				if ( y != pressY ) {
@@ -296,7 +296,8 @@ void idGLDrawableView::mouseMove(float x, float y) {
 			}
 
 		// Right mouse button moves lights in the view plane
-		} else if (button == MK_RBUTTON) {
+		}
+		else if (button == MouseButton::Right) {
 			int		i;
 			float	lightMovement = 0;
 			idVec3	lightForward, lightRight, lightUp;
@@ -341,7 +342,8 @@ void idGLDrawableView::mouseMove(float x, float y) {
 			}
 
 		// Middle mouse button moves object up and down
-		} else if ( button == MK_MBUTTON ) {
+		}
+		else if (button == MouseButton::Middle) {
 			float yo = 0.f;
 
 			if (y != pressY) {
