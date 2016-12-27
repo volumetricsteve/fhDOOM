@@ -41,52 +41,6 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 
-
-/////////////////////////////////////////////////////////////////////////////
-// idGLWidget
-class idMiniDrawVert {
-public:
-	idVec3 xyz;
-	idVec2 st;
-	idMiniDrawVert(float x, float y, float z, float s, float t) : xyz(x,y,z), st(s, t) {
-	};
-};
-
-static idMiniDrawVert cubeData[] = {
-	idMiniDrawVert(-1.0, -1.0, +1.0, 0.0, 0.0),
-	idMiniDrawVert(+1.0, -1.0, +1.0, 1.0, 0.0),
-	idMiniDrawVert(+1.0, +1.0, +1.0, 1.0, 1.0),
-	idMiniDrawVert(-1.0, +1.0, +1.0, 0.0, 1.0),
-
-	idMiniDrawVert(-1.0, -1.0, -1.0, 1.0, 0.0),
-	idMiniDrawVert(-1.0, +1.0, +1.0, 1.0, 1.0),
-	idMiniDrawVert(+1.0, +1.0, -1.0, 0.0, 1.0),
-	idMiniDrawVert(+1.0, -1.0, -1.0, 0.0, 0.0),
-
-	idMiniDrawVert(-1.0, +1.0, -1.0, 0.0, 1.0),
-	idMiniDrawVert(-1.0, +1.0, +1.0, 0.0, 0.0),
-	idMiniDrawVert(+1.0, +1.0, +1.0, 1.0, 0.0),
-	idMiniDrawVert(+1.0, +1.0, -1.0, 1.0, 1.0),
-
-	idMiniDrawVert(-1.0, -1.0, -1.0, 1.0, 1.0),
-	idMiniDrawVert(+1.0, -1.0, -1.0, 0.0, 1.0),
-	idMiniDrawVert(+1.0, -1.0, +1.0, 0.0, 0.0),
-	idMiniDrawVert(-1.0, -1.0, +1.0, 1.0, 0.0),
-
-	idMiniDrawVert(+1.0, -1.0, -1.0, 1.0, 0.0),
-	idMiniDrawVert(+1.0, +1.0, -1.0, 1.0, 1.0),
-	idMiniDrawVert(+1.0, +1.0, +1.0, 0.0, 1.0),
-	idMiniDrawVert(+1.0, -1.0, +1.0, 0.0, 0.0),
-
-	idMiniDrawVert(-1.0, -1.0, -1.0, 0.0, 0.0),
-	idMiniDrawVert(-1.0, -1.0, +1.0, 1.0, 0.0),
-	idMiniDrawVert(-1.0, +1.0, +1.0, 1.0, 1.0),
-	idMiniDrawVert(-1.0, +1.0, -1.0, 0.0, 1.0)
-};
-
-static int cubeSides = sizeof(cubeData) / sizeof(idMiniDrawVert);
-static int numQuads = cubeSides / 4;
-
 idGLWidget::idGLWidget()
 {
 	initialized = false;
@@ -157,14 +111,14 @@ void idGLWidget::OnPaint()
 	glViewport(0, 0, rect.Width(), rect.Height());
 	glScissor(0, 0, rect.Width(), rect.Height());
 
-  GL_ProjectionMatrix.LoadIdentity();
-  GL_ProjectionMatrix.Ortho(0, rect.Width(), 0, rect.Height(), -256, 256);
+	GL_ProjectionMatrix.LoadIdentity();
+	GL_ProjectionMatrix.Ortho(0, rect.Width(), 0, rect.Height(), -256, 256);
 
-  glClearColor(0.4f, 0.4f, 0.4f, 0.7f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.4f, 0.4f, 0.4f, 0.7f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 
 	if (drawable) {
 		drawable->draw(1, 1, rect.Width()-1, rect.Height()-1);
@@ -227,7 +181,7 @@ void idGLDrawable::mouseMove(float x, float y) {
 			}
 
 			*px2 = *px;
-			::SetCursorPos(pressX, pressY);
+			//::SetCursorPos(pressX, pressY);
 
 		} else if (Sys_KeyDown(VK_SHIFT)) {
 			// rotate
@@ -255,8 +209,8 @@ void idGLDrawable::draw(int x, int y, int w, int h) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth(0.5);
 
-  globalImages->BindNull();
-  fhImmediateMode im;
+	globalImages->BindNull();
+	fhImmediateMode im;
 	im.Color3f(1, 1, 1);
 	
 	im.Begin(GL_LINE_LOOP);
@@ -272,71 +226,6 @@ void idGLDrawable::draw(int x, int y, int w, int h) {
 }
 
 static int viewAngle = -98;
-void idGLDrawableMaterial::buttonDown(int button, float x, float y) {
-	idGLDrawable::buttonDown(button, x, y);
-	//viewAngle += (button == MK_LBUTTON) ? 15 : -15;
-}
-
-
-void idGLDrawableMaterial::mouseMove(float x, float y) {
-	if (handleMove) {
-		Update();
-		bool doScale = Sys_KeyDown(VK_MENU);
-		bool doLight = Sys_KeyDown(VK_SHIFT);
-		if (doScale || doLight) {
-			// scale
-			float *px = &x;
-			float *px2 = &pressX;
-
-			if (fDiff(y, pressY) > fDiff(x, pressX)) {
-				px = &y;
-				px2 = &pressY;
-			}
-
-			if (*px > *px2) {
-				// zoom in
-				if (doScale) {
-					scale += 0.1f;
-					if ( scale > 10.0f ) {
-						scale = 10.0f;
-					}
-				} else {
-					light += 0.05f;
-					if ( light > 2.0f ) {
-						light = 2.0f;
-					}
-				}
-			} else if (*px < *px2) {
-				// zoom out
-				if (doScale) {
-					scale -= 0.1f;
-					if ( scale <= 0.001f ) {
-						scale = 0.001f;
-					}
-				} else {
-					light -= 0.05f;
-					if ( light < 0.0f ) {
-						light = 0.0f;
-					}
-				}
-			}
-			*px2 = *px;
-			::SetCursorPos(pressX, pressY);
-		} else {
-			// origin
-			if (x != pressX) {
-				xOffset += (x - pressX);
-				pressX = x;
-			}
-			if (y != pressY) {
-				yOffset -= (y - pressY);
-				pressY = y;
-			}
-			//::SetCursorPos(pressX, pressY);
-		}
-	}
-}
-
 
 void idGLDrawableMaterial::draw(int x, int y, int w, int h) {
 	const idMaterial *mat = material;
@@ -348,16 +237,7 @@ void idGLDrawableMaterial::draw(int x, int y, int w, int h) {
 
 		if (worldDirty) {
 			InitWorld();
-			renderLight_t	parms;
-			idDict spawnArgs;
-			spawnArgs.Set("classname", "light");
-			spawnArgs.Set("name", "light_1");
-			spawnArgs.Set("origin", "0 0 0");
-			idStr str;
-			sprintf(str, "%f %f %f", light, light, light);
-			spawnArgs.Set("_color", str);
-			gameEdit->ParseSpawnArgsToRenderLight( &spawnArgs, &parms );
-			lightDef = world->AddLightDef( &parms );
+			InitLight(idVec3(0,0,0));
 
 			idImage *img = (mat->GetNumStages() > 0) ? mat->GetStage(0)->texture.image : mat->GetEditorImage();
 
@@ -514,95 +394,18 @@ void idGLDrawableModel::SetSkin( const char *skin ) {
 	skinStr = skin;
 }
 
-
-void idGLDrawableModel::buttonDown(int _button, float x, float y) {
+void idGLDrawableWorld::buttonDown( int button, float x, float y ) {
 	pressX = x;
 	pressY = y;
 
-	lastPress.y = -( float )( 2 * x - rect.z ) / rect.z;
-	lastPress.x = -( float )( 2 * y - rect.w ) / rect.w;
+	lastPress.y = -(float)(2 * x - rect.z) / rect.z;
+	lastPress.x = -(float)(2 * y - rect.w) / rect.w;
 	lastPress.z = 0.0f;
-	button = _button;
+	this->button = button;
 	if (button == MK_RBUTTON || button == MK_LBUTTON) {
 		handleMove = true;
 	}
 }
-
-void idGLDrawableModel::mouseMove(float x, float y) {
-	if (handleMove) {
-		Update();
-		if (button == MK_LBUTTON) {
-			float cury = ( float )( 2 * x - rect.z ) / rect.z;
-			float curx = ( float )( 2 * y - rect.w ) / rect.w;
-			idVec3 to( -curx, -cury, 0.0f );
-			to.ProjectSelfOntoSphere( radius );
-			lastPress.ProjectSelfOntoSphere( radius );
-			idVec3 axis;
-			axis.Cross( to, lastPress );
-			float len = ( lastPress - to ).Length() / ( 2.0f * radius );
-			len = idMath::ClampFloat( -1.0f, 1.0f, len );
-			float phi = 2.0f * asin ( len ) ;
-
-			axis.Normalize();
-			axis *= sin( phi / 2.0f );
-			idQuat rot( axis.z, axis.y, axis.x, cos( phi / 2.0f ) );
-			rot.Normalize();
-
-			rotation *= rot;
-			rotation.Normalize();
-
-			lastPress = to;
-			lastPress.z = 0.0f;
-		} else {
-			bool doScale = Sys_KeyDown(VK_MENU);
-			bool doLight = Sys_KeyDown(VK_SHIFT);
-			if (doLight) {
-				// scale
-				float *px = &x;
-				float *px2 = &pressX;
-
-				if (fDiff(y, pressY) > fDiff(x, pressX)) {
-					px = &y;
-					px2 = &pressY;
-				}
-
-				if (*px > *px2) {
-					light += 0.05f;
-					if ( light > 2.0f ) {
-						light = 2.0f;
-					}
-				} else if (*px < *px2) {
-					light -= 0.05f;
-					if ( light < 0.0f ) {
-						light = 0.0f;
-					}
-				}
-				*px2 = *px;
-				::SetCursorPos(pressX, pressY);
-			} else {
-				// origin
-				if (x != pressX) {
-					if (doScale) {
-						zOffset += (x - pressX);
-					} else {
-						xOffset += (x - pressX);
-					}
-					pressX = x;
-				}
-				if (y != pressY) {
-					if (doScale) {
-						zOffset -= (y - pressY);
-					} else {
-						yOffset -= (y - pressY);
-					}
-					pressY = y;
-				}
-				//::SetCursorPos(pressX, pressY);
-			}
-		}
-	}
-}
-
 
 void idGLDrawableModel::draw(int x, int y, int w, int h) {
 	if ( !worldModel ) {
@@ -622,17 +425,9 @@ void idGLDrawableModel::draw(int x, int y, int w, int h) {
 	if (worldDirty) {
 		//InitWorld();
 		world->InitFromMap( NULL );
-		renderLight_t	parms;
-		idDict spawnArgs;
-		spawnArgs.Set("classname", "light");
-		spawnArgs.Set("name", "light_1");
-		spawnArgs.Set("origin", "-128 0 0");
-		idStr str;
-		sprintf(str, "%f %f %f", light, light, light);
-		spawnArgs.Set("_color", str);
-		gameEdit->ParseSpawnArgsToRenderLight( &spawnArgs, &parms );
-		lightDef = world->AddLightDef( &parms );
+		InitLight( idVec3( -128, 0, 0 ) );
 
+		idDict spawnArgs;
 		renderEntity_t worldEntity;
 		memset( &worldEntity, 0, sizeof( worldEntity ) );
 		spawnArgs.Clear();
@@ -807,78 +602,6 @@ idGLDrawable::idGLDrawable() {
 
 }
 
-void idGLDrawableConsole::draw(int x, int y, int w, int h) {
-	glPushAttrib( GL_ALL_ATTRIB_BITS );
-	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
-	glScissor( 0, 0, w, h );
-	glClear( GL_COLOR_BUFFER_BIT );
-	renderSystem->BeginFrame( w, h );
-
-	console->Draw( true );
-
-	renderSystem->EndFrame( NULL, NULL );
-	glPopAttrib();
-}
-
-void idGLConsoleWidget::init() {
-	setDrawable(&console);
-}
-
-void idGLConsoleWidget::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) 
-{
-	sysEvent_t	ev;
-
-	memset( &ev, 0, sizeof( ev ) );
-	ev.evType = SE_KEY;
-	ev.evValue2 = 1;
-	ev.evValue = nChar;
-
-	::console->ProcessEvent( &ev, true );
-}
-
-BEGIN_MESSAGE_MAP(idGLConsoleWidget, idGLWidget)
-	//{{AFX_MSG_MAP(idGLConsoleWidget)
-	ON_WM_PAINT()
-	ON_WM_KEYDOWN()
-	ON_WM_KEYUP()
-	ON_WM_CHAR()
-	ON_WM_LBUTTONDOWN()
-	//}}AFX_MSG_MAP
-END_MESSAGE_MAP()
-
-
-
-void idGLConsoleWidget::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags) 
-{
-	sysEvent_t	ev;
-
-	memset( &ev, 0, sizeof( ev ) );
-	ev.evType = SE_KEY;
-	ev.evValue2 = 0;
-	ev.evValue = nChar;
-
-	::console->ProcessEvent( &ev, true );
-}
-
-void idGLConsoleWidget::OnPaint() {
-	idGLWidget::OnPaint();
-}
-
-void idGLConsoleWidget::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) 
-{
-	sysEvent_t	ev;
-
-	memset( &ev, 0, sizeof( ev ) );
-	ev.evType = SE_CHAR;
-	ev.evValue = nChar;
-
-	::console->ProcessEvent( &ev, true );
-}
-
-void idGLConsoleWidget::OnLButtonDown(UINT nFlags, CPoint point) {
-	SetFocus();
-}
-
 BOOL idGLWidget::OnEraseBkgnd(CDC* pDC) 
 {
 	return FALSE;
@@ -917,4 +640,99 @@ void idGLDrawableWorld::InitWorld() {
 	}
 	world->InitFromMap( NULL );
 	worldModel->InitEmpty( va( "GLWorldModel_%i", Sys_Milliseconds() ) );
+}
+
+void idGLDrawableWorld::InitLight(const idVec3& position) {
+	renderLight_t	parms;
+	idDict spawnArgs;
+	spawnArgs.Set( "classname", "light" );
+	spawnArgs.Set( "name", "light_1" );
+	spawnArgs.SetVector( "origin", position );
+	idStr str;
+	sprintf( str, "%f %f %f", light, light, light );
+	spawnArgs.Set( "_color", str );
+	gameEdit->ParseSpawnArgsToRenderLight( &spawnArgs, &parms );
+	lightDef = world->AddLightDef( &parms );
+}
+
+void idGLDrawableWorld::mouseMove( float x, float y ) {
+	if (handleMove) {
+		Update();
+		if (button == MK_LBUTTON) {
+			float cury = (float)(2 * x - rect.z) / rect.z;
+			float curx = (float)(2 * y - rect.w) / rect.w;
+			idVec3 to( -curx, -cury, 0.0f );
+			to.ProjectSelfOntoSphere( radius );
+			lastPress.ProjectSelfOntoSphere( radius );
+			idVec3 axis;
+			axis.Cross( to, lastPress );
+			float len = (lastPress - to).Length() / (2.0f * radius);
+			len = idMath::ClampFloat( -1.0f, 1.0f, len );
+			float phi = 2.0f * asin( len );
+
+			axis.Normalize();
+			axis *= sin( phi / 2.0f );
+			idQuat rot( axis.z, axis.y, axis.x, cos( phi / 2.0f ) );
+			rot.Normalize();
+
+			rotation *= rot;
+			rotation.Normalize();
+
+			lastPress = to;
+			lastPress.z = 0.0f;
+		}
+		else {
+			bool doScale = Sys_KeyDown( VK_MENU );
+			bool doLight = Sys_KeyDown( VK_SHIFT );
+			if (doLight) {
+				// scale
+				float *px = &x;
+				float *px2 = &pressX;
+
+				if (fDiff( y, pressY ) > fDiff( x, pressX )) {
+					px = &y;
+					px2 = &pressY;
+				}
+
+				if (*px > *px2) {
+					light += 0.05f;
+					if (light > 2.0f) {
+						light = 2.0f;
+					}
+				}
+				else if (*px < *px2) {
+					light -= 0.05f;
+					if (light < 0.0f) {
+						light = 0.0f;
+					}
+				}
+				*px2 = *px;
+				//::SetCursorPos( pressX, pressY );
+			}
+			else {
+				// origin
+				if (x != pressX) {
+					if (doScale) {
+						zOffset += (x - pressX);
+						scale = Min( 10.0f, scale + (x - pressX)*0.01f );
+					}
+					else {
+						xOffset += (x - pressX);
+					}
+					pressX = x;
+				}
+				if (y != pressY) {
+					if (doScale) {
+						zOffset -= (y - pressY);
+						scale = Max( 0.001f, scale - (y - pressY)*0.01f );
+					}
+					else {
+						yOffset -= (y - pressY);
+					}
+					pressY = y;
+				}
+				//::SetCursorPos(pressX, pressY);
+			}
+		}
+	}
 }

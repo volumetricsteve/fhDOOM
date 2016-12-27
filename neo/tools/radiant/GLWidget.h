@@ -35,6 +35,12 @@ If you have questions concerning this license or the applicable additional terms
 /////////////////////////////////////////////////////////////////////////////
 // idGLWidget window
 
+enum class MouseButton {
+	Left,
+	Right,
+	Middle
+};
+
 class idGLDrawable {
 public:
 	idGLDrawable();
@@ -75,22 +81,36 @@ public:
 	idGLDrawableWorld();
 	~idGLDrawableWorld();
 	void AddTris(srfTriangles_t *tris, const idMaterial *mat);
-	virtual void draw(int x, int y, int w, int h);
+	virtual void draw(int x, int y, int w, int h) override;
+	virtual void mouseMove( float x, float y ) override;
+	virtual void Update() override { worldDirty = true; };
+	virtual void buttonDown( int button, float x, float y ) override;
 	void InitWorld();
 protected:
+	
+	void InitLight(const idVec3& position);
+
 	idRenderWorld *world;
 	idRenderModel *worldModel;
 	qhandle_t	worldModelDef;
 	qhandle_t	lightDef;
 	qhandle_t   modelDef;
+	float       light;
+
+//model
+	bool worldDirty;
+	idStr skinStr;
+	idQuat rotation;
+	idVec3 lastPress;
+	float radius;
+	idVec4 rect;
 };
 
 class idGLDrawableMaterial : public idGLDrawableWorld {
 public:
-
 	idGLDrawableMaterial(const idMaterial *mat) {
 		material = mat;
-		scale = 1.0;
+		scale = 2.0;
 		light = 1.0;
 		worldDirty = true;
 	}
@@ -101,76 +121,27 @@ public:
 		worldDirty = true;
 		realTime = 50;
 	}
+	
+	virtual void setMedia(const char *name) override;
+	virtual void draw(int x, int y, int w, int h) override;
 
-	~idGLDrawableMaterial() {
-	}
-
-	virtual void setMedia(const char *name);
-	virtual void draw(int x, int y, int w, int h);
-	virtual void buttonUp(int button){}
-	virtual void buttonDown(int button, float x, float y);
-	virtual void mouseMove(float x, float y);
-	virtual void Update() { worldDirty = true ;};
-
-protected:
+//protected:
 	const idMaterial *material;
-	bool worldDirty;
-	float light;
 };
 
 class idGLDrawableModel : public idGLDrawableWorld {
 public:
-
 	idGLDrawableModel(const char *name);
-
 	idGLDrawableModel();
 
-	~idGLDrawableModel() {}
+	virtual void setMedia(const char *name) override;
 
-	virtual void setMedia(const char *name);
-
-	virtual void buttonDown(int button, float x, float y);
-	virtual void mouseMove(float x, float y);
-	virtual void draw(int x, int y, int w, int h);
-	virtual void Update() { worldDirty = true ;};
-	virtual bool ScreenCoords() { 
+	virtual void draw(int x, int y, int w, int h) override;
+	virtual bool ScreenCoords() override { 
 		return false;
 	}
 	void SetSkin( const char *skin );
-
-protected:
-	bool worldDirty;
-	float light;
-	idStr skinStr;
-	idQuat rotation;
-	idVec3 lastPress;
-	float radius;
-	idVec4 rect;
-
 };
-
-class idGLDrawableConsole : public idGLDrawable {
-public:
-
-	idGLDrawableConsole () {
-	}
-
-	~idGLDrawableConsole() {
-	}
-
-	virtual void setMedia(const char *name) {
-	}
-
-
-	virtual void draw(int x, int y, int w, int h);
-
-	virtual int getRealTime() {return 0;};
-
-protected:
-
-};
-
-
 
 class idGLWidget : public CWnd
 {
@@ -217,26 +188,6 @@ protected:
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
-};
-
-class idGLConsoleWidget : public idGLWidget {
-	idGLDrawableConsole console;
-public:
-	idGLConsoleWidget() {
-	};
-	~idGLConsoleWidget() {
-	}
-	void init();
-protected:
-	//{{AFX_MSG(idGLConsoleWidget)
-	afx_msg void OnPaint();
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
-
 };
 
 /////////////////////////////////////////////////////////////////////////////

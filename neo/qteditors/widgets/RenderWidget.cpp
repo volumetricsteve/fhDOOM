@@ -98,7 +98,7 @@ public:
 		glDisable( GL_BLEND );
 
 		if (m_drawable && *m_drawable) {
-			(*m_drawable)->draw( 1, 1, rect.width() - 1, rect.height() - 1 );
+			(*m_drawable)->draw( 1, 1, rect.width(), rect.height());
 		}
 
 		m_context->swapBuffers( this );
@@ -135,7 +135,8 @@ private:
 
 	QOpenGLContext* m_context;
 	bool            m_initialized;
-	idGLDrawable**   m_drawable;
+	idGLDrawable**  m_drawable;
+	QPoint          m_previousCursorPos;
 };
 
 
