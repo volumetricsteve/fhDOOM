@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "../renderer/Image.h"
+#include "../qteditors/qteditors_public.h"
 
 #define	MAX_PRINT_MSG_SIZE	4096
 #define MAX_WARNING_LIST	256
@@ -477,7 +478,7 @@ prints message that only shows up if the "developer" cvar is set
 void idCommonLocal::DPrintf( const char *fmt, ... ) {
 	va_list		argptr;
 	char		msg[MAX_PRINT_MSG_SIZE];
-		
+
 	if ( !cvarSystem->IsInitialized() || !com_developer.GetBool() ) {
 		return;			// don't confuse non-developers with techie stuff...
 	}
@@ -486,7 +487,7 @@ void idCommonLocal::DPrintf( const char *fmt, ... ) {
 	idStr::vsnPrintf( msg, sizeof(msg), fmt, argptr );
 	va_end( argptr );
 	msg[sizeof(msg)-1] = '\0';
-	
+
 	// never refresh the screen, which could cause reentrency problems
 	bool temp = com_refreshOnPrint;
 	com_refreshOnPrint = false;
@@ -506,7 +507,7 @@ prints warning message in yellow that only shows up if the "developer" cvar is s
 void idCommonLocal::DWarning( const char *fmt, ... ) {
 	va_list		argptr;
 	char		msg[MAX_PRINT_MSG_SIZE];
-		
+
 	if ( !com_developer.GetBool() ) {
 		return;			// don't confuse non-developers with techie stuff...
 	}
@@ -529,7 +530,7 @@ prints WARNING %s and adds the warning message to a queue to be printed later on
 void idCommonLocal::Warning( const char *fmt, ... ) {
 	va_list		argptr;
 	char		msg[MAX_PRINT_MSG_SIZE];
-		
+
 	va_start( argptr, fmt );
 	idStr::vsnPrintf( msg, sizeof(msg), fmt, argptr );
 	va_end( argptr );
@@ -893,7 +894,7 @@ void idCommonLocal::CheckToolMode( void ) {
 		else if ( !idStr::Icmp( com_consoleLines[ i ].Argv(0), "materialEditor" ) ) {
 			com_editors |= EDITOR_MATERIAL;
 		}
-		
+
 		if ( !idStr::Icmp( com_consoleLines[ i ].Argv(0), "renderbump" )
 			|| !idStr::Icmp( com_consoleLines[ i ].Argv(0), "editor" )
 			|| !idStr::Icmp( com_consoleLines[ i ].Argv(0), "guieditor" )
@@ -1220,11 +1221,22 @@ static void PrintMemInfo_f( const idCmdArgs &args ) {
 		return;
 	}
 
-	f->Printf( "total(%s ) image(%s ) model(%s ) sound(%s ): %s\n", idStr::FormatNumber( mi.assetTotals ).c_str(), idStr::FormatNumber( mi.imageAssetsTotal ).c_str(), 
+	f->Printf( "total(%s ) image(%s ) model(%s ) sound(%s ): %s\n", idStr::FormatNumber( mi.assetTotals ).c_str(), idStr::FormatNumber( mi.imageAssetsTotal ).c_str(),
 		idStr::FormatNumber( mi.modelAssetsTotal ).c_str(), idStr::FormatNumber( mi.soundAssetsTotal ).c_str(), mi.filebase.c_str() );
 
 	fileSystem->CloseFile( f );
 }
+
+#ifdef ID_ALLOW_QT
+/*
+==================
+Com_EditLights_f
+==================
+*/
+static void Com_BrowseMaterials_f( const idCmdArgs &args ) {
+	QtMaterialBrowserInit();
+}
+#endif
 
 #ifdef ID_ALLOW_TOOLS
 /*
@@ -1586,7 +1598,7 @@ idCommonLocal::FilterLangList
 ===============
 */
 void idCommonLocal::FilterLangList( idStrList* list, idStr lang ) {
-	
+
 	idStr temp;
 	for( int i = 0; i < list->Num(); i++ ) {
 		temp = (*list)[i];
@@ -1614,7 +1626,7 @@ void idCommonLocal::InitLanguageDict( void ) {
 	//to add new strings to the english language dictionary
 	idFileList*	langFiles;
 	langFiles =  fileSystem->ListFilesTree( "strings", ".lang", true );
-	
+
 	idStrList langList = langFiles->GetList();
 
 	StartupVariable( "sys_lang", false );	// let it be set on the command line - this is needed because this init happens very early
@@ -1623,7 +1635,7 @@ void idCommonLocal::InitLanguageDict( void ) {
 	//Loop through the list and filter
 	idStrList currentLangList = langList;
 	FilterLangList(&currentLangList, langName);
-	
+
 	if ( currentLangList.Num() == 0 ) {
 		// reset cvar to default and try to load again
 		cmdSystem->BufferCommandText( CMD_EXEC_NOW, "reset sys_lang" );
@@ -1733,7 +1745,7 @@ void idCommonLocal::LocalizeGui( const char *fileName, idLangDict &langDict ) {
 	if ( fileSystem->ReadFile( fileName, (void**)&buffer ) > 0 ) {
 		src.LoadMemory( buffer, strlen(buffer), fileName );
 		if ( src.IsLoaded() ) {
-			idFile *outFile = fileSystem->OpenFileWrite( fileName ); 
+			idFile *outFile = fileSystem->OpenFileWrite( fileName );
 			common->Printf( "Processing %s\n", fileName );
 			session->UpdateScreen();
 			idToken token;
@@ -1935,7 +1947,7 @@ int LocalizeMap(const char* mapName, idLangDict &langDict, ListHash& listHash, i
 	common->Printf("Localizing Map '%s'\n", mapName);
 
 	int strCount = 0;
-	
+
 	idMapFile map;
 	if ( map.Parse(mapName, false, false ) ) {
 		int count = map.GetNumEntities();
@@ -1955,13 +1967,13 @@ int LocalizeMap(const char* mapName, idLangDict &langDict, ListHash& listHash, i
 					for(int k = 0; k < list->Num(); k++) {
 
 						idStr val = ent->epairs.GetString((*list)[k], "");
-						
+
 						if(val.Length() && classname == "info_location" && (*list)[k] == "location") {
 							hasLocation = true;
 						}
 
 						if(val.Length() && TestMapVal(val)) {
-							
+
 							if(!hasLocation || (*list)[k] == "location") {
 								//Localize it!!!
 								strCount++;
@@ -2001,7 +2013,7 @@ int LocalizeMap(const char* mapName, idLangDict &langDict, ListHash& listHash, i
 			idStr bak = file.Left(file.Length() - 4);
 			bak.Append(".bak_loc");
 			fileSystem->CopyFile( file, bak );
-			
+
 			map.Write( mapName, ".map" );
 		}
 	}
@@ -2022,7 +2034,7 @@ void Com_LocalizeMaps_f( const idCmdArgs &args ) {
 	}
 
 	int strCount = 0;
-	
+
 	bool count = false;
 	bool dictUpdate = false;
 	bool write = false;
@@ -2051,7 +2063,7 @@ void Com_LocalizeMaps_f( const idCmdArgs &args ) {
 	}
 
 	common->SetRefreshOnPrint( true );
-	
+
 	ListHash listHash;
 	LoadMapLocalizeData(listHash);
 
@@ -2065,7 +2077,7 @@ void Com_LocalizeMaps_f( const idCmdArgs &args ) {
 		GetFileList("z:/d3xp/d3xp/maps/game", "*.map", files);
 		for ( int i = 0; i < files.Num(); i++ ) {
 			idStr file =  fileSystem->OSPathToRelativePath(files[i]);
-			strCount += LocalizeMap(file, strTable, listHash, excludeList, write);		
+			strCount += LocalizeMap(file, strTable, listHash, excludeList, write);
 		}
 	}
 
@@ -2118,7 +2130,7 @@ void Com_LocalizeGuis_f( const idCmdArgs &args ) {
 		} else {
 			files = fileSystem->ListFilesTree( "guis", "*.pd", true, "d3xp" );
 		}
-		
+
 		for ( int i = 0; i < files->GetNumFiles(); i++ ) {
 			commonLocal.LocalizeGui( files->GetFile( i ), strTable );
 		}
@@ -2134,8 +2146,8 @@ void Com_LocalizeGuiParmsTest_f( const idCmdArgs &args ) {
 
 	common->SetRefreshOnPrint( true );
 
-	idFile *localizeFile = fileSystem->OpenFileWrite( "gui_parm_localize.csv" ); 
-	idFile *noLocalizeFile = fileSystem->OpenFileWrite( "gui_parm_nolocalize.csv" ); 
+	idFile *localizeFile = fileSystem->OpenFileWrite( "gui_parm_localize.csv" );
+	idFile *noLocalizeFile = fileSystem->OpenFileWrite( "gui_parm_nolocalize.csv" );
 
 	idStrList excludeList;
 	LoadGuiParmExcludeList(excludeList);
@@ -2144,7 +2156,7 @@ void Com_LocalizeGuiParmsTest_f( const idCmdArgs &args ) {
 	GetFileList("z:/d3xp/d3xp/maps/game", "*.map", files);
 
 	for ( int i = 0; i < files.Num(); i++ ) {
-		
+
 		common->Printf("Testing Map '%s'\n", files[i].c_str());
 		idMapFile map;
 
@@ -2169,7 +2181,7 @@ void Com_LocalizeGuiParmsTest_f( const idCmdArgs &args ) {
 			}
 		}
 	}
-	
+
 	fileSystem->CloseFile( localizeFile );
 	fileSystem->CloseFile( noLocalizeFile );
 
@@ -2185,8 +2197,8 @@ void Com_LocalizeMapsTest_f( const idCmdArgs &args ) {
 
 	common->SetRefreshOnPrint( true );
 
-	idFile *localizeFile = fileSystem->OpenFileWrite( "map_localize.csv" ); 
-	
+	idFile *localizeFile = fileSystem->OpenFileWrite( "map_localize.csv" );
+
 	idStrList files;
 	GetFileList("z:/d3xp/d3xp/maps/game", "*.map", files);
 
@@ -2201,7 +2213,7 @@ void Com_LocalizeMapsTest_f( const idCmdArgs &args ) {
 			for ( int j = 0; j < count; j++ ) {
 				idMapEntity *ent = map.GetEntity( j );
 				if ( ent ) {
-					
+
 					//Temp code to get a list of all entity key value pairs
 					/*idStr classname = ent->epairs.GetString("classname");
 					if(classname == "worldspawn" || classname == "func_static" || classname == "light" || classname == "speaker" || classname.Left(8) == "trigger_") {
@@ -2214,7 +2226,7 @@ void Com_LocalizeMapsTest_f( const idCmdArgs &args ) {
 					}*/
 
 					idStr classname = ent->epairs.GetString("classname");
-					
+
 					//Hack: for info_location
 					bool hasLocation = false;
 
@@ -2225,13 +2237,13 @@ void Com_LocalizeMapsTest_f( const idCmdArgs &args ) {
 						for(int k = 0; k < list->Num(); k++) {
 
 							idStr val = ent->epairs.GetString((*list)[k], "");
-							
+
 							if(classname == "info_location" && (*list)[k] == "location") {
 								hasLocation = true;
 							}
 
 							if(val.Length() && TestMapVal(val)) {
-								
+
 								if(!hasLocation || (*list)[k] == "location") {
 									idStr out = va("%s,%s,%s\r\n", val.c_str(), (*list)[k].c_str(), file.c_str());
 									localizeFile->Write( out.c_str(), out.Length() );
@@ -2335,6 +2347,10 @@ void idCommonLocal::InitCommands( void ) {
 	cmdSystem->AddCommand( "roq", RoQFileEncode_f, CMD_FL_TOOL, "encodes a roq file" );
 #endif
 
+#ifdef ID_ALLOW_QT
+	cmdSystem->AddCommand( "browseMaterials", Com_BrowseMaterials_f, CMD_FL_TOOL, "launches the material browser" );
+#endif
+
 #ifdef ID_ALLOW_TOOLS
 	// editors
 	cmdSystem->AddCommand( "editor", Com_Editor_f, CMD_FL_TOOL, "launches the level editor Radiant" );
@@ -2433,7 +2449,7 @@ void idCommonLocal::Frame( void ) {
 		Sys_GenerateEvents();
 
 		// write config file if anything changed
-		WriteConfiguration(); 
+		WriteConfiguration();
 
 		// change SIMD implementation if required
 		if ( com_forceGenericSIMD.IsModified() ) {
@@ -2467,7 +2483,7 @@ void idCommonLocal::Frame( void ) {
 			Printf( "frame:%i all:%3i gfr:%3i rf:%3i bk:%3i\n", com_frameNumber, com_frameMsec, time_gameFrame, time_frontend, time_backend );
 			time_gameFrame = 0;
 			time_gameDraw = 0;
-		}	
+		}
 
 		com_frameNumber++;
 
@@ -2499,7 +2515,7 @@ void idCommonLocal::GUIFrame( bool execCmd, bool network ) {
 		idAsyncNetwork::RunFrame();
 	}
 	session->Frame();
-	session->UpdateScreen( false );	
+	session->UpdateScreen( false );
 }
 
 /*
@@ -2623,7 +2639,7 @@ void idCommonLocal::LoadGameDLL( void ) {
 	gameImport_t	gameImport;
 	gameExport_t	gameExport;
 	GetGameAPI_t	GetGameAPI;
-  
+
   idStr gamelib = com_gamelib.GetString();
 
 	fileSystem->FindDLL( gamelib, dllPath, true );
@@ -2763,7 +2779,7 @@ void idCommonLocal::Init( int argc, const char **argv, const char *cmdline ) {
 
 		// clear warning buffer
 		ClearWarnings( GAME_NAME " initialization" );
-		
+
 		// parse command line options
 		idCmdArgs args;
 		if ( cmdline ) {
@@ -2841,7 +2857,7 @@ void idCommonLocal::Init( int argc, const char **argv, const char *cmdline ) {
 
 		// remove any prints from the notify lines
 		console->ClearNotifyLines();
-		
+
 		ClearCommandLine();
 
 		com_fullyInitialized = true;
@@ -2926,7 +2942,7 @@ void idCommonLocal::InitGame( void ) {
 		file = fileSystem->OpenFileWrite( CONFIG_SPEC );
 		fileSystem->CloseFile( file );
 	}
-	
+
 	idCmdArgs args;
 	if ( sysDetect ) {
 		SetMachineSpec();
@@ -3013,7 +3029,7 @@ void idCommonLocal::InitGame( void ) {
 
 	// load the game dll
 	LoadGameDLL();
-	
+
 	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04351" ) );
 
 	// init the session
@@ -3021,7 +3037,7 @@ void idCommonLocal::InitGame( void ) {
 
 	// have to do this twice.. first one sets the correct r_mode for the renderer init
 	// this time around the backend is all setup correct.. a bit fugly but do not want
-	// to mess with all the gl init at this point.. an old vid card will never qualify for 
+	// to mess with all the gl init at this point.. an old vid card will never qualify for
 	if ( sysDetect ) {
 		SetMachineSpec();
 		Com_ExecMachineSpec_f( args );

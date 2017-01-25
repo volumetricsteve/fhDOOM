@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -173,7 +173,7 @@ This routine is responsible for setting the most commonly changed state
 */
 void GL_State( int stateBits ) {
 	int	diff;
-	
+
 	if ( !r_useStateCaching.GetBool() || backEnd.glState.forceGlState ) {
 		// make sure everything is set all the time, so we
 		// can see if our delta checking is screwing up
@@ -314,10 +314,10 @@ void GL_State( int stateBits ) {
 bool  GL_UseProgram( const fhRenderProgram* program ) {
   if(program) {
 	  return program->Bind();
-  } 
+  }
 
   fhRenderProgram::Unbind();
-  return false;  
+  return false;
 }
 
 
@@ -370,10 +370,10 @@ void GL_SetVertexLayout( fhVertexLayout layout ) {
 		const bool shouldBeEnabled = (target & bit) != 0;
 
 		if (shouldBeEnabled && !isEnabled) {
-			glEnableVertexAttribArray(i);			
+			glEnableVertexAttribArray(i);
 		}
 		else if (!shouldBeEnabled && isEnabled) {
-			glDisableVertexAttribArray(i);			
+			glDisableVertexAttribArray(i);
 		}
 	}
 
@@ -442,18 +442,18 @@ joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
   LoadIdentity();
 }
 
-void joGLMatrixStack::Load(const float* m) { 
+void joGLMatrixStack::Load(const float* m) {
   memcpy(Data(size), m, sizeof(Matrix));
 }
 
 void joGLMatrixStack::LoadIdentity() {
-  static const float identity [16] = 
+  static const float identity [16] =
   { 1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1 };
-  
-  Load(&identity[0]);  
+
+  Load(&identity[0]);
 }
 
 void joGLMatrixStack::Push() {
@@ -493,7 +493,7 @@ void joGLMatrixStack::Rotate(float angle, float x, float y, float z) {
   if (mag > 0.0f)
   {
     const float sinAngle = sinf(DEG2RAD(angle));
-    const float cosAngle = cosf(DEG2RAD(angle));    
+    const float cosAngle = cosf(DEG2RAD(angle));
 
     x /= mag;
     y /= mag;
@@ -533,17 +533,17 @@ void joGLMatrixStack::Rotate(float angle, float x, float y, float z) {
     rotMat[3][3] = 1.0F;
 
     float current[16];
-    Get(&current[0]);    
+    Get(&current[0]);
 
-    float result[16]; 
-    myGlMultMatrix(&rotMat[0][0], &current[0], &result[0]);    
+    float result[16];
+    myGlMultMatrix(&rotMat[0][0], &current[0], &result[0]);
 
     Load(&result[0]);
   }
 }
 
 void joGLMatrixStack::Translate(float x, float y, float z) {
-  const float translate[16] = { 
+  const float translate[16] = {
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
@@ -560,7 +560,7 @@ void joGLMatrixStack::Translate(float x, float y, float z) {
 }
 
 void joGLMatrixStack::Get(float* dst) const {
-  memcpy(dst, Data(size), sizeof(Matrix));   
+  memcpy(dst, Data(size), sizeof(Matrix));
 }
 
 float* joGLMatrixStack::Data(int StackIndex) {
@@ -654,7 +654,7 @@ static void	RB_SetBuffer( const void *data ) {
 			glClearColor( 0.4f, 0.0f, 0.25f, 1.0f );
 		}
 		glClear( GL_COLOR_BUFFER_BIT );
-	}	
+	}
 }
 
 /*
@@ -738,8 +738,8 @@ const void	RB_SwapBuffers( const void *data ) {
 	}
 
     RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
-	
-	if (r_useFramebuffer.GetBool()) {		
+
+	if (r_useFramebuffer.GetBool()) {
 		fhFramebuffer::defaultFramebuffer->Bind();
 		fhFramebuffer::renderFramebuffer->BlitToCurrentFramebuffer();
 	}

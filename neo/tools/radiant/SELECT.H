@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -110,7 +110,6 @@ void Select_AllOfType();
 void Select_Reselect();
 void Select_FitTexture(float height = 1.0, float width = 1.0);
 void Select_InitializeRotation();
-void Select_FinalizeRotation();
 
 // absolute texture coordinates
 // TTimo NOTE: this is stuff for old brushes format and rotation texture lock .. sort of in-between with bush primitives
@@ -127,7 +126,6 @@ void Select_UpdateTextureName(const char *name);
 
 void Select_FlipTexture(bool y);
 void Select_SetPatchFit(float dim1, float dim2, float srcWidth, float srcHeight, float rot);
-void Select_SetPatchST(float s1, float t1, float s2, float t2);
 void Select_ProjectFaceOntoPatch( face_t *face );
 void Select_CopyPatchTextureCoords( patchMesh_t *p );
 void Select_AllTargets();
