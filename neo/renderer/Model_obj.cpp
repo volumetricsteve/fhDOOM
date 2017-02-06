@@ -144,6 +144,7 @@ static fhStrRef OBJ_ParseLine(fhStrRef line, objModel_t* model) {
 	}
 	else if(line.StartsWith("vt ")) {
 		idVec2 st = ParseVec2( line.Substr( 3 ) );
+		st.y = 1.0f - st.y;
 		model->st.Append( st );
 	}
 	else if (line.StartsWith( "vn " )) {

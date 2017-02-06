@@ -35,9 +35,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "RenderProgram.h"
 #include "RenderMatrix.h"
 
-class idRenderWorldLocal;
+void testFramebuffer();
 
-const int FALLOFF_TEXTURE_SIZE =	64;
+class idRenderWorldLocal;
 
 const float	DEFAULT_FOG_DISTANCE = 500.0f;
 
@@ -621,8 +621,6 @@ void R_AddDrawViewCmd( viewDef_t *parms );
 void R_ReloadGuis_f( const idCmdArgs &args );
 void R_ListGuis_f( const idCmdArgs &args );
 
-void *R_GetCommandBuffer( int bytes );
-
 // this allows a global override of all materials
 bool R_GlobalShaderOverride( const idMaterial **shader );
 
@@ -758,6 +756,7 @@ typedef struct {
 	int					c_copyFrameBuffer;
 
 	bool				glslReplaceArb2;
+	const fhRenderProgram*    currentProgram;
 } backEndState_t;
 
 
@@ -813,7 +812,7 @@ public:
 	virtual void			DrawDemoPics() override;
 	virtual void			BeginFrame( int windowWidth, int windowHeight ) override;
 	virtual void			BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) override;
-	virtual void			EndFrame( int *frontEndMsec, int *backEndMsec ) override;
+	virtual renderSystemTime EndFrame() override;
 	virtual void			TakeScreenshot( int width, int height, const char *fileName, int downSample, renderView_t *ref ) override;
 	virtual void			CropRenderSize( int width, int height, bool makePowerOfTwo = false, bool forceDimensions = false ) override;
 	virtual void			CaptureRenderToImage( const char *imageName ) override;
@@ -1086,6 +1085,9 @@ extern idCVar r_shading;
 extern idCVar r_specularExp;
 extern idCVar r_specularScale;
 
+extern idCVar r_useFramebuffer;
+extern idCVar r_framebufferScale;
+
 /*
 ====================================================================
 
@@ -1098,7 +1100,7 @@ void	GL_SelectTexture( int unit );
 void	GL_CheckErrors( void );
 void	GL_State( int stateVector );
 void	GL_Cull( int cullType );
-bool	GL_UseProgram( const fhRenderProgram* program );
+void	GL_UseProgram( const fhRenderProgram* program );
 void    GL_SetVertexLayout( fhVertexLayout layout );
 void    GL_SetupVertexAttributes( fhVertexLayout layout, int offset );
 
@@ -1199,10 +1201,12 @@ typedef struct {
 	int			width;
 	int			height;
 	bool		fullScreen;
-	bool		stereo;
 	int			displayHz;
 	int			multiSamples;
-  bool    glCoreProfile;
+	bool		coreProfile;
+	int			minorVersion;
+	int			majorVersion;
+	bool        debug;
 } glimpParms_t;
 
 bool		GLimp_Init( glimpParms_t parms );

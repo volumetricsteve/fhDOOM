@@ -661,7 +661,8 @@ void RB_GLSL_DrawInteractions( void ) {
 			fhFramebuffer::shadowmapFramebuffer->Bind();
 			glViewport( 0, 0, fhFramebuffer::shadowmapFramebuffer->GetWidth(), fhFramebuffer::shadowmapFramebuffer->GetHeight() );
 			glScissor( 0, 0, fhFramebuffer::shadowmapFramebuffer->GetWidth(), fhFramebuffer::shadowmapFramebuffer->GetHeight() );
-			glClear( GL_DEPTH_BUFFER_BIT );
+			const float clearDepth = 1.0f;
+			glClearBufferfv( GL_DEPTH, 0, &clearDepth );
 
 			for(int lod = 0; lod < 3; ++lod) {
 				idList<viewLight_t*>& lights = shadowCastingViewLights[lod];
@@ -721,7 +722,8 @@ void RB_GLSL_DrawInteractions( void ) {
 						backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
 						backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
 				}
-				glClear( GL_STENCIL_BUFFER_BIT );
+				int clearStencil = 1 << (glConfig.stencilBits - 1);
+				glClearBufferiv( GL_STENCIL, 0, &clearStencil );
 			}
 			else {
 				// no shadows, so no need to read or write the stencil buffer

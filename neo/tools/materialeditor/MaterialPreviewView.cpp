@@ -538,7 +538,7 @@ void idGLDrawableView::draw(int x, int y, int w, int h) {
 			drawLights( &refdef );
 		}
 
-		renderSystem->EndFrame( NULL, NULL );
+		renderSystem->EndFrame();
 
 		world->DebugClearLines( refdef.time );
 

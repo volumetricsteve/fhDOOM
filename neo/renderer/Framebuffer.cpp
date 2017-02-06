@@ -35,6 +35,7 @@ fhFramebuffer* fhFramebuffer::shadowmapFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::defaultFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentDepthFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentRenderFramebuffer = nullptr;
+fhFramebuffer* fhFramebuffer::renderFramebuffer = nullptr;
 
 fhFramebuffer::fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
 	width = w;
@@ -42,6 +43,33 @@ fhFramebuffer::fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
 	name = (!color && !depth) ? 0 : -1;
 	colorAttachment = color;
 	depthAttachment = depth;
+	samples = 1;
+}
+
+static const char* GetFrameBufferStatusMessage( int status ) {
+	switch (status) {
+	case GL_FRAMEBUFFER_UNDEFINED:
+		return "GL_FRAMEBUFFER_UNDEFINED";
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		return "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+		return "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER";
+	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+		return "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER";
+	case GL_FRAMEBUFFER_UNSUPPORTED:
+		return "GL_FRAMEBUFFER_UNSUPPORTED";
+	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+		return "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
+	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+		return "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+	case GL_FRAMEBUFFER_COMPLETE:
+		return nullptr;
+	default:
+		return "FRAMEBUFFER_STATUS_UNKNOWN";
+	}
 }
 
 void fhFramebuffer::Bind() {
@@ -63,19 +91,25 @@ bool fhFramebuffer::IsDefault() const {
 	return (name == 0);
 }
 
-void fhFramebuffer::Resize( int width, int height ) {
+void fhFramebuffer::Resize( int width, int height, int samples ) {
 	if (!colorAttachment && !depthAttachment) {
 		return;
 	}
 
-	if (this->width == width && this->height == height) {
+	if (this->width == width && this->height == height && this->samples == samples) {
 		return;
+	}
+
+
+	if (currentDrawBuffer == this) {
+		defaultFramebuffer->Bind();
 	}
 
 	Purge();
 
 	this->width = width;
 	this->height = height;
+	this->samples = samples;
 }
 
 int fhFramebuffer::GetWidth() const {
@@ -92,6 +126,12 @@ int fhFramebuffer::GetHeight() const {
 	return height;
 }
 
+int fhFramebuffer::GetSamples() const {
+	if (!colorAttachment && !depthAttachment) {
+		return 1;
+	}
+	return samples;
+}
 
 void fhFramebuffer::Purge() {
 	if (name != 0 && name != -1) {
@@ -118,7 +158,7 @@ void fhFramebuffer::Allocate() {
 	currentDrawBuffer = this;
 
 	if (colorAttachment) {
-		colorAttachment->AllocateStorage( pixelFormat_t::RGBA, width, height, 1, 1 );
+		colorAttachment->AllocateMultiSampleStorage( pixelFormat_t::RGBA, width, height, samples );
 		colorAttachment->filter = TF_LINEAR;
 		colorAttachment->repeat = TR_CLAMP;
 		colorAttachment->SetImageFilterAndRepeat();
@@ -126,15 +166,16 @@ void fhFramebuffer::Allocate() {
 	}
 
 	if (depthAttachment) {
-		depthAttachment->AllocateStorage( pixelFormat_t::DEPTH_24, width, height, 1, 1 );
+		depthAttachment->AllocateMultiSampleStorage( pixelFormat_t::DEPTH_24, width, height, samples );
 		depthAttachment->filter = TF_LINEAR;
 		depthAttachment->repeat = TR_CLAMP;
 		depthAttachment->SetImageFilterAndRepeat();
 		glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthAttachment->texnum, 0 );
 	}
 
-	if (glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
-		common->Warning( "failed to generate framebuffer, framebuffer incomplete" );
+	auto status = GetFrameBufferStatusMessage( glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) );
+	if (status) {
+		common->Warning( "failed to generate framebuffer: %s", status );
 		name = 0;
 	}
 }
@@ -144,6 +185,7 @@ void fhFramebuffer::Init() {
 	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr );
 	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, globalImages->currentDepthImage );
 	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->currentRenderImage, nullptr );
+	currentDrawBuffer = defaultFramebuffer;
 }
 
 void fhFramebuffer::PurgeAll() {
@@ -156,31 +198,28 @@ void fhFramebuffer::PurgeAll() {
 }
 
 void fhFramebuffer::BlitColor( fhFramebuffer* source, fhFramebuffer* dest ) {
-	BlitColor(source, dest, source->GetWidth(), source->GetHeight());
+	Blit( source, 0, 0, source->GetWidth(), source->GetHeight(),
+		dest, 0, 0, dest->GetWidth(), dest->GetHeight(),
+		GL_COLOR_BUFFER_BIT, TF_LINEAR );
 }
 
-void fhFramebuffer::BlitColor(fhFramebuffer* source, fhFramebuffer* dest, int src_width, int src_height) {
-	if (source == dest) {
-		return;
-	}
-
-	auto currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
-
-	if (dest->name == -1) {
-		dest->Allocate();
-	}
-
-	glBlitNamedFramebuffer(source->name,
-		dest->name,
-		0, 0, src_width, src_height,
-		0, 0, dest->GetWidth(), dest->GetHeight(),
-		GL_COLOR_BUFFER_BIT,
-		GL_LINEAR);
-
-	currentDrawBuffer->Bind();
+void fhFramebuffer::BlitColor( fhFramebuffer* source, uint32 sourceX, uint32 sourceY, uint32 sourceWidth, uint32 sourceHeight, fhFramebuffer* dest ) {
+	Blit( source, sourceX, sourceY, sourceWidth, sourceHeight,
+		dest, 0, 0, dest->GetWidth(), dest->GetHeight(),
+		GL_COLOR_BUFFER_BIT, TF_LINEAR );
 }
 
 void fhFramebuffer::BlitDepth( fhFramebuffer* source, fhFramebuffer* dest ) {
+	Blit( source, 0, 0, source->GetWidth(), source->GetHeight(),
+		dest, 0, 0, dest->GetWidth(), dest->GetHeight(),
+		GL_DEPTH_BUFFER_BIT, TF_NEAREST );
+}
+
+void fhFramebuffer::Blit(
+	fhFramebuffer* source, uint32 sourceX, uint32 sourceY, uint32 sourceWidth, uint32 sourceHeight,
+	fhFramebuffer* dest, uint32 destX, uint32 destY, uint32 destWidth, uint32 destHeight,
+	GLint bufferMask, textureFilter_t filter ) {
+
 	if (source == dest) {
 		return;
 	}
@@ -193,10 +232,10 @@ void fhFramebuffer::BlitDepth( fhFramebuffer* source, fhFramebuffer* dest ) {
 
 	glBlitNamedFramebuffer( source->name,
 		dest->name,
-		0, 0, source->GetWidth(), source->GetHeight(),
-		0, 0, dest->GetWidth(), dest->GetHeight(),
-		GL_DEPTH_BUFFER_BIT,
-		GL_NEAREST );
+		sourceX, sourceY, sourceWidth, sourceHeight,
+		destX, destY, destWidth, destHeight,
+		bufferMask,
+		filter == TF_LINEAR ? GL_LINEAR : GL_NEAREST );
 
 	currentDrawBuffer->Bind();
 }

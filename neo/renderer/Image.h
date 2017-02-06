@@ -184,10 +184,10 @@ public:
 
 	void		GenerateImage( const fhImageData& imgeData );
 
-	bool		IsStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps ) const;
+	bool		IsStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps, uint32 samples ) const;
 	void		AllocateStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps );
+	void		AllocateMultiSampleStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 samples );
 	void        UploadImage( pixelFormat_t format, uint32 width, uint32 height, uint32 face, uint32 mipmapLevel, uint32 size, const void* data );
-
 	void		UploadScratch( int textureUnit, const byte *pic, int width, int height );
 
 	// just for resource tracking
@@ -257,6 +257,7 @@ public:
 
 	// data for listImages
 	int					uploadWidth, uploadHeight;	// after power of two, downsample, and MAX_TEXTURE_SIZE
+	int                 samples;
 	int					internalFormat;
 	pixelFormat_t       pixelFormat;
 	uint32              mipmaps;
@@ -297,6 +298,7 @@ ID_INLINE idImage::idImage() {
 	timestamp = 0;
 	bindCount = 0;
 	uploadWidth = uploadHeight = 0;
+	samples = 0;
 	internalFormat = 0;
 	mipmaps = 0;
 	cacheUsagePrev = cacheUsageNext = NULL;
@@ -423,6 +425,8 @@ public:
 	idImage *			currentDepthImage;
 	idImage *			borderClampImage;			// white inside, black outside
 	idImage *           jitterImage;
+	idImage *			renderColorImage;
+	idImage *			renderDepthImage;
 	idImage *			shadowmapImage;
 
 	//--------------------------------------------------------

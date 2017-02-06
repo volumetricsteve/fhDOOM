@@ -83,8 +83,6 @@ void RB_SetDefaultGLState(void) {
 	currentVertexLayout = fhVertexLayout::None;
 	RB_LogComment("--- R_SetDefaultGLState ---\n");
 
-	glClearDepth(1.0f);
-
 	//
 	// make sure our GL state vector is set correctly
 	//
@@ -106,7 +104,8 @@ void RB_SetDefaultGLState(void) {
 	glCullFace(GL_FRONT_AND_BACK);
 
 	if (r_useScissor.GetBool()) {
-		glScissor(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+		auto fb = fhFramebuffer::GetCurrentDrawBuffer();
+		glScissor( 0, 0, fb->GetWidth(), fb->GetHeight() );
 	}
 }
 
@@ -346,13 +345,19 @@ void GL_State( int stateBits ) {
 	backEnd.glState.glStateBits = stateBits;
 }
 
-bool  GL_UseProgram( const fhRenderProgram* program ) {
-  if(program) {
-	  return program->Bind();
-  }
+void  GL_UseProgram( const fhRenderProgram* program ) {
+	if (backEnd.currentProgram == program) {
+		return;
+	}
 
-  fhRenderProgram::Unbind();
-  return false;
+	if(program) {
+		program->Bind();
+	}
+	else {
+		fhRenderProgram::Unbind();
+	}
+
+	backEnd.currentProgram = program;
 }
 
 void GL_SetVertexLayout( fhVertexLayout layout ) {
@@ -592,15 +597,17 @@ This is not used by the normal game paths, just by some tools
 */
 void RB_SetGL2D( void ) {
 	// set 2D virtual screen size
-	glViewport( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+	auto fb = fhFramebuffer::GetCurrentDrawBuffer();
+
+	glViewport( 0, 0, fb->GetWidth(), fb->GetHeight() );
 	if ( r_useScissor.GetBool() ) {
-		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		glScissor( 0, 0, fb->GetWidth(), fb->GetHeight() );
 	}
 
-  GL_ProjectionMatrix.LoadIdentity();
-  GL_ProjectionMatrix.Ortho( 0, 640, 480, 0, 0, 1 ); // always assume 640x480 virtual coordinates
+	GL_ProjectionMatrix.LoadIdentity();
+	GL_ProjectionMatrix.Ortho( 0, 640, 480, 0, 0, 1 ); // always assume 640x480 virtual coordinates
 
-  GL_ModelViewMatrix.LoadIdentity();
+	GL_ModelViewMatrix.LoadIdentity();
 
 	GL_State( GLS_DEPTHFUNC_ALWAYS |
 			  GLS_SRCBLEND_SRC_ALPHA |
@@ -629,23 +636,31 @@ static void	RB_SetBuffer( const void *data ) {
 
 	backEnd.frameCount = cmd->frameCount;
 
-	fhFramebuffer::defaultFramebuffer->Bind();
-
 	// clear screen for debugging
 	// automatically enable this with several other debug tools
 	// that might leave unrendered portions of the screen
 	if ( r_clear.GetFloat() || idStr::Length( r_clear.GetString() ) != 1 || r_lockSurfaces.GetBool() || r_singleArea.GetBool() || r_showOverDraw.GetBool() ) {
-		float c[3];
+		float c[4];
 		if ( sscanf( r_clear.GetString(), "%f %f %f", &c[0], &c[1], &c[2] ) == 3 ) {
-			glClearColor( c[0], c[1], c[2], 1 );
+			c[3] = 1.0f;
 		} else if ( r_clear.GetInteger() == 2 ) {
-			glClearColor( 0.0f, 0.0f,  0.0f, 1.0f );
+			c[0] = 0.0f;
+			c[1] = 0.0f;
+			c[2] = 0.0f;
+			c[3] = 1.0f;
 		} else if ( r_showOverDraw.GetBool() ) {
-			glClearColor( 1.0f, 1.0f, 1.0f, 1.0f );
+			c[0] = 1.0f;
+			c[1] = 1.0f;
+			c[2] = 1.0f;
+			c[3] = 1.0f;
 		} else {
-			glClearColor( 0.4f, 0.0f, 0.25f, 1.0f );
+			c[0] = 0.4f;
+			c[1] = 0.0f;
+			c[2] = 0.25f;
+			c[3] = 1.0f;
 		}
-		glClear( GL_COLOR_BUFFER_BIT );
+
+		glClearBufferfv( GL_COLOR, 0, c );
 	}
 }
 
@@ -664,9 +679,6 @@ void RB_ShowImages( void ) {
 	int		start, end;
 
 	RB_SetGL2D();
-
-	//glClearColor( 0.2, 0.2, 0.2, 1 );
-	//glClear( GL_COLOR_BUFFER_BIT );
 
 	glFinish();
 
@@ -718,6 +730,7 @@ RB_SwapBuffers
 
 =============
 */
+
 static void	RB_SwapBuffers( const void *data ) {
 	// texture swapping test
 	if ( r_showImages.GetInteger() != 0 ) {
@@ -754,9 +767,12 @@ static void	RB_CopyRender( const void *data ) {
 
 	if (auto image = cmd->image) {
 		//TODO(johl): Can we get rid of RB_CopyRender completely?
-		//            If we know in advance we will copy render to a texture, we could render directly into that texture!
+		//            If we know i advance we will copy render to a texture, we could render directly into that texture!
+		//            CopyRender and CropRender commands are stored in demo files, is that an issue?
 		fhFramebuffer framebuffer( cmd->imageWidth, cmd->imageHeight, image, nullptr );
-		fhFramebuffer::BlitColor(fhFramebuffer::GetCurrentDrawBuffer(), &framebuffer, cmd->imageWidth, cmd->imageHeight);
+		fhFramebuffer::BlitColor( fhFramebuffer::GetCurrentDrawBuffer(),
+			cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight,
+			&framebuffer );
 		framebuffer.Purge();
 	}
 }

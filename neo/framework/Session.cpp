@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma hdrstop
 
 #include "Session_local.h"
+#include <thread>
 
 idCVar	idSessionLocal::com_showAngles( "com_showAngles", "0", CVAR_SYSTEM | CVAR_BOOL, "" );
 idCVar	idSessionLocal::com_minTics( "com_minTics", "1", CVAR_SYSTEM, "" );
@@ -2497,11 +2498,9 @@ void idSessionLocal::UpdateScreen( bool outOfSequence ) {
 	// draw everything
 	Draw();
 
-	if ( com_speeds.GetBool() ) {
-		renderSystem->EndFrame( &time_frontend, &time_backend );
-	} else {
-		renderSystem->EndFrame( NULL, NULL );
-	}
+	const auto time = renderSystem->EndFrame();
+	time_frontend = time.frontEndMsec;
+	time_backend = time.backEndMsec;
 
 	insideUpdateScreen = false;
 }
@@ -2593,7 +2592,9 @@ void idSessionLocal::Frame() {
 		if ( latchedTicNumber >= minTic ) {
 			break;
 		}
-		Sys_Sleep( 1 );
+
+		std::this_thread::yield();
+		//Sys_Sleep( 1 );
 	}
 #else
 	while( 1 ) {

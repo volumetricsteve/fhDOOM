@@ -260,13 +260,6 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 	} else {
 		// this is the "classic" choose pixel format path
 
-		// eventually we may need to have more fallbacks, but for
-		// now, ask for everything
-		if ( parms.stereo ) {
-			common->Printf( "...attempting to use stereo\n" );
-			src.dwFlags |= PFD_STEREO;
-		}
-
 		//
 		// choose, set, and describe our desired pixel format.  If we're
 		// using a minidriver then we need to bypass the GDI functions,
@@ -330,11 +323,15 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
   }
   common->Printf( "succeeded\n" );
 
-  if(parms.glCoreProfile) {
-    int flags = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+  if(parms.coreProfile) {
+	int flags = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+	if (parms.debug) {
+		flags |= WGL_CONTEXT_DEBUG_BIT_ARB;
+	}
+
     int attribs[] = {
-      WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-      WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+      WGL_CONTEXT_MAJOR_VERSION_ARB, parms.majorVersion,
+      WGL_CONTEXT_MINOR_VERSION_ARB, parms.minorVersion,
       WGL_CONTEXT_FLAGS_ARB, flags,
       0 };
 
@@ -383,6 +380,7 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
     common->Printf("succeeded\n");
   }
 
+//  testFramebuffer();
 	return true;
 }
 
