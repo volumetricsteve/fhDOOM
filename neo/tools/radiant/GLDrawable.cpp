@@ -125,10 +125,11 @@ void idGLDrawable::draw( int x, int y, int w, int h ) {
 	GL_State( GLS_DEFAULT );
 	glViewport( x, y, w, h );
 	glScissor( x, y, w, h );
-	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
-	glClear( GL_COLOR_BUFFER_BIT );
+
+	float clearColor[] = { 0.1f, 0.1f, 0.1f, 0.0f };
+	glClearBufferfv( GL_COLOR, 0, clearColor );
+
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-	glLineWidth( 0.5 );
 
 	globalImages->BindNull();
 	fhImmediateMode im;
@@ -145,8 +146,6 @@ void idGLDrawable::draw( int x, int y, int w, int h ) {
 	im.Vertex2f( w - 3, y + 3 );
 	im.End();
 }
-
-
 
 idGLDrawableWorld::idGLDrawableWorld() {
 	world = NULL;
@@ -292,8 +291,9 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 	if (mat) {
 		glViewport( x, y, w, h );
 		glScissor( x, y, w, h );
-		glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
-		glClear( GL_COLOR_BUFFER_BIT );
+
+		float clearColor[] = { 0.1f, 0.1f, 0.1f, 0.0f };
+		glClearBufferfv( GL_COLOR, 0, clearColor );
 
 		if (worldDirty) {
 			InitWorld();
@@ -390,8 +390,8 @@ void idGLDrawableMaterial::draw( int x, int y, int w, int h ) {
 		refdef.time = eventLoop->Milliseconds();
 
 		world->RenderScene( &refdef );
-		int frontEnd, backEnd;
-		renderSystem->EndFrame( &frontEnd, &backEnd );
+
+		renderSystem->EndFrame();
 
 		GL_ModelViewMatrix.LoadIdentity();
 	}
@@ -469,8 +469,9 @@ void idGLDrawableModel::draw( int x, int y, int w, int h ) {
 
 	glViewport( x, y, w, h );
 	glScissor( x, y, w, h );
-	glClearColor( 0.1f, 0.1f, 0.1f, 0.0f );
-	glClear( GL_COLOR_BUFFER_BIT );
+
+	float clearColor[] = { 0.1f, 0.1f, 0.1f, 0.0f };
+	glClearBufferfv( GL_COLOR, 0, clearColor );
 
 	if (worldDirty) {
 		//InitWorld();
@@ -521,8 +522,8 @@ void idGLDrawableModel::draw( int x, int y, int w, int h ) {
 	refdef.time = eventLoop->Milliseconds();
 
 	world->RenderScene( &refdef );
-	int frontEnd, backEnd;
-	renderSystem->EndFrame( &frontEnd, &backEnd );
+
+	renderSystem->EndFrame();
 
 	GL_ModelViewMatrix.LoadIdentity();
 }

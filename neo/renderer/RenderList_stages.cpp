@@ -343,6 +343,7 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 				dest->Resize( source->GetWidth(), source->GetHeight() );
 				fhFramebuffer::BlitColor( source, dest );
 			}
+
 			currentRenderCopied = true;
 		}
 
@@ -480,11 +481,12 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 	}
 
 	if (r_useScissor.GetBool()) {
-		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		auto fb = fhFramebuffer::GetCurrentDrawBuffer();
+		glScissor( 0, 0, fb->GetWidth(), fb->GetHeight() );
 		backEnd.currentScissor.x1 = 0;
 		backEnd.currentScissor.y1 = 0;
-		backEnd.currentScissor.x2 = glConfig.vidWidth;
-		backEnd.currentScissor.y2 = glConfig.vidHeight;
+		backEnd.currentScissor.x2 = fb->GetWidth();
+		backEnd.currentScissor.y2 = fb->GetHeight();
 	}
 
 	GL_UseProgram( nullptr );

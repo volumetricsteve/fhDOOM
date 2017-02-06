@@ -2002,10 +2002,7 @@ void CCamWnd::Cam_Render() {
 
 	g_qeglobals.rw->RenderScene( &refdef );
 
-	int	frontEnd, backEnd;
-
-	renderSystem->EndFrame( &frontEnd, &backEnd );
-//common->Printf( "front:%i back:%i\n", frontEnd, backEnd );
+	renderSystem->EndFrame();
 
 	//wglSwapBuffers(dc.m_hDC);
 	// get back to the editor state

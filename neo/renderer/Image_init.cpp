@@ -94,6 +94,8 @@ namespace {
 	} sortedImage_t;
 
 	idImageManager imageManager;
+
+	static const int FALLOFF_TEXTURE_SIZE = 64;
 }
 
 idCVar idImageManager::image_filter( "image_filter", imageFilter[1], CVAR_RENDERER | CVAR_ARCHIVE, "changes texture filtering on mipmapped images", imageFilter, idCmdSystem::ArgCompletion_String<imageFilter> );
@@ -1500,6 +1502,8 @@ void idImageManager::PurgeAllImages() {
 	shadowmapImage->PurgeImage();
 	currentDepthImage->PurgeImage();
 	currentRenderImage->PurgeImage();
+	renderColorImage->PurgeImage();
+	renderDepthImage->PurgeImage();
 }
 
 /*
@@ -1769,7 +1773,8 @@ void idImageManager::BindNull(int textureUnit) {
 				glBindMultiTextureEXT(GL_TEXTURE0 +  textureUnit, GL_TEXTURE_CUBE_MAP, 0 );
 			}
 		} else {
-			GL_SelectTexture( textureUnit );
+			//FIXME(johl): delete this code path?
+			//GL_SelectTexture( textureUnit );
 
 			if (tmu->currentTextureType == TT_2D) {
 				glBindTexture( GL_TEXTURE_2D, 0 );
@@ -1836,7 +1841,8 @@ void idImageManager::Init() {
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
 
-	// should forceLoadImages be here?
+	renderColorImage = ImageFromFunction("_renderColorImage", R_RGBA8Image);
+	renderDepthImage = ImageFromFunction("_renderDepthImage", R_Depth);
 }
 
 /*

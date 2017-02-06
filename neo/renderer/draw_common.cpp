@@ -204,6 +204,7 @@ RB_STD_DrawView
 =============
 */
 void	RB_STD_DrawView( void ) {
+
 	fhTimeElapsed timeElapsed(&backEnd.stats.totaltime);
 
 	drawSurf_t	 **drawSurfs;
@@ -263,5 +264,6 @@ void	RB_STD_DrawView( void ) {
 			RB_GLSL_SubmitStageRenderList(stageRenderlist);
 		}
 	}
+
 	RB_RenderDebugTools( drawSurfs, numDrawSurfs );
 }

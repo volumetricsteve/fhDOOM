@@ -472,9 +472,6 @@ bool rvGEViewer::SetupPixelFormat ( void )
 
 void rvGEViewer::Render	( HDC dc )
 {
-	int	frontEnd;
-	int	backEnd;
-
 	// Switch GL contexts to our dc
 	if (!wglMakeCurrent( dc, win32.hGLRC ))
 	{
@@ -531,7 +528,7 @@ void rvGEViewer::Render	( HDC dc )
 		mInterface->Redraw ( mTime );
 
 		// We are done using the renderSystem now
-		renderSystem->EndFrame( &frontEnd, &backEnd );
+		renderSystem->EndFrame();
 	}
 
 	glFinish ( );

@@ -37,12 +37,18 @@ public:
 	bool IsDefault() const;
 	int  GetWidth() const;
 	int  GetHeight() const;
+	int  GetSamples() const;
 
 	void Purge();
 	void Bind();
-	void Resize( int width, int height );
+	void Resize( int width, int height, int samples = 1 );
+
+	GLuint GetName() const { return name; }
 
 	static fhFramebuffer* GetCurrentDrawBuffer() {
+		if (currentDrawBuffer == nullptr) {
+			currentDrawBuffer = defaultFramebuffer;
+		}
 		return currentDrawBuffer;
 	}
 
@@ -55,17 +61,22 @@ public:
 	static void Init();
 	static void PurgeAll();
 	static void BlitColor( fhFramebuffer* source, fhFramebuffer* dest );
-	static void BlitColor(fhFramebuffer* source, fhFramebuffer* dest, int src_width, int src_height);
+	static void BlitColor( fhFramebuffer* source, uint32 sourceX, uint32 sourceY, uint32 sourceWidth, uint32 sourceHeight, fhFramebuffer* dest );
 	static void BlitDepth( fhFramebuffer* source, fhFramebuffer* dest );
 
 private:
 	static fhFramebuffer* currentDrawBuffer;
+	static void Blit(
+		fhFramebuffer* source, uint32 sourceX, uint32 sourceY, uint32 sourceWidth, uint32 sourceHeight,
+		fhFramebuffer* dest, uint32 destX, uint32 destY, uint32 destWidth, uint32 destHeight,
+		GLint bufferMask, textureFilter_t filter);
 
 	void SetDrawBuffer();
 	void Allocate();
 
 	int      width;
 	int      height;
+	int      samples;
 	GLuint   name;
 	idImage* colorAttachment;
 	idImage* depthAttachment;

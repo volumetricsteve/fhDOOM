@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "RenderList.h"
 #include "RenderProgram.h"
+#include "Framebuffer.h"
 
 
 /*
@@ -338,11 +339,12 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 	glDepthRange(0, 1);
 
 	if (r_useScissor.GetBool()) {
-		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		auto fb = fhFramebuffer::GetCurrentDrawBuffer();
+		glScissor( 0, 0, fb->GetWidth(), fb->GetHeight() );
 		currentScissor.x1 = 0;
 		currentScissor.y1 = 0;
-		currentScissor.x2 = glConfig.vidWidth;
-		currentScissor.y2 = glConfig.vidHeight;
+		currentScissor.x2 = fb->GetWidth();
+		currentScissor.y2 = fb->GetHeight();
 	}
 
 	const int num = interactionList.Num();
@@ -474,11 +476,12 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 	}
 
 	if (r_useScissor.GetBool()) {
-		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		auto fb = fhFramebuffer::GetCurrentDrawBuffer();
+		glScissor( 0, 0, fb->GetWidth(), fb->GetHeight() );
 		backEnd.currentScissor.x1 = 0;
 		backEnd.currentScissor.y1 = 0;
-		backEnd.currentScissor.x2 = glConfig.vidWidth;
-		backEnd.currentScissor.y2 = glConfig.vidHeight;
+		backEnd.currentScissor.x2 = fb->GetWidth();
+		backEnd.currentScissor.y2 = fb->GetHeight();
 	}
 }
 

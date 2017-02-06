@@ -316,12 +316,13 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 IsStorage
 ================
 */
-bool idImage::IsStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps ) const {
+bool idImage::IsStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps, uint32 samples ) const {
 	return texnum != TEXTURE_NOT_LOADED &&
 		pixelFormat == format &&
 		uploadHeight == height &&
 		uploadWidth == width &&
 		this->mipmaps == mipmaps &&
+		this->samples == samples &&
 		(faces == 1 && type == TT_2D || faces == 6 && type == TT_CUBIC);
 }
 
@@ -331,7 +332,7 @@ AllocateStorage
 ================
 */
 void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps ) {
-	if ( IsStorage(format, width, height, faces, mipmaps) ) {
+	if ( IsStorage(format, width, height, faces, mipmaps, 1) ) {
 		return;
 	}
 
@@ -341,6 +342,7 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 	uploadWidth = width;
 	uploadHeight = height;
 	this->mipmaps = mipmaps;
+	this->samples = 1;
 
 	int target;
 	if (faces == 1) {
@@ -358,7 +360,6 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 	auto internalformat2 = SelectInteralFormat( format );
 	this->internalFormat = internalformat2;
 
-	// select proper internal format before we resample
 	hasAlpha = false;
 	isMonochrome = false;
 
@@ -370,6 +371,40 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 		static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
 		glTextureParameteriv( texnum, GL_TEXTURE_SWIZZLE_RGBA, agbr );
 	}
+}
+
+/*
+================
+AllocateStorage
+================
+*/
+void idImage::AllocateMultiSampleStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 samples ) {
+	if (samples <= 1) {
+		AllocateStorage( format, width, height, 1, 1 );
+		return;
+	}
+
+	if (IsStorage( format, width, height, 1, 1, samples )) {
+		return;
+	}
+
+	PurgeImage();
+
+	this->pixelFormat = format;
+	uploadWidth = width;
+	uploadHeight = height;
+	this->mipmaps = mipmaps;
+	this->samples = samples;
+	type = TT_2D;
+
+	auto internalformat2 = SelectInteralFormat( format );
+	this->internalFormat = internalformat2;
+
+	hasAlpha = false;
+	isMonochrome = false;
+
+	glGenTextures( 1, &texnum );
+	glTextureStorage2DMultisampleEXT( texnum, GL_TEXTURE_2D_MULTISAMPLE, samples, internalformat2, width, height, GL_FALSE );
 }
 
 /*

@@ -33,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "ImmediateMode.h"
 #include "RenderProgram.h"
+#include "Framebuffer.h"
 
 /*
 
@@ -473,8 +474,11 @@ void RB_BeginDrawingView (void) {
 		glStencilMask( 0xff );
 		// some cards may have 7 bit stencil buffers, so don't assume this
 		// should be 128
-		glClearStencil( 1<<(glConfig.stencilBits-1) );
-		glClear( GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+		const int clearStencil = 1 << (glConfig.stencilBits - 1);
+		glClearBufferiv( GL_STENCIL, 0, &clearStencil );
+		const float clearDepth = 1.0f;
+		glClearBufferfv( GL_DEPTH, 0, &clearDepth );
+
 		glEnable( GL_DEPTH_TEST );
 	} else {
 		glDisable( GL_DEPTH_TEST );
@@ -545,9 +549,7 @@ RB_DrawView
 =============
 */
 void RB_DrawView( const void *data ) {
-	const drawSurfsCommand_t	*cmd;
-
-	cmd = (const drawSurfsCommand_t *)data;
+	auto cmd = (const drawSurfsCommand_t *)data;
 
 	backEnd.viewDef = cmd->viewDef;
 
@@ -575,6 +577,14 @@ void RB_DrawView( const void *data ) {
 
 	backEnd.pc.c_surfaces += backEnd.viewDef->numDrawSurfs;
 
+	if (r_useFramebuffer.GetBool()) {
+		float scale = r_framebufferScale.GetFloat();
+		int samples = Min( r_multiSamples.GetInteger(), glConfig.maxSamples );
+		fhFramebuffer::renderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, samples );
+		fhFramebuffer::currentRenderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, 1 );
+		fhFramebuffer::renderFramebuffer->Bind();
+	}
+
 	RB_ShowOverdraw();
 
 	// render the scene, jumping to the hardware specific interaction renderers
@@ -584,5 +594,19 @@ void RB_DrawView( const void *data ) {
 	if ( r_skipRenderContext.GetBool() && backEnd.viewDef->viewEntitys ) {
 		GLimp_ActivateContext();
 		RB_SetDefaultGLState();
+	}
+
+	if (r_useFramebuffer.GetBool()) {
+		fhFramebuffer::defaultFramebuffer->Bind();
+		glViewport( 0, 0, fhFramebuffer::GetCurrentDrawBuffer()->GetWidth(), fhFramebuffer::GetCurrentDrawBuffer()->GetHeight() );
+		glScissor( 0, 0, fhFramebuffer::GetCurrentDrawBuffer()->GetWidth(), fhFramebuffer::GetCurrentDrawBuffer()->GetHeight() );
+
+		if (fhFramebuffer::renderFramebuffer->GetSamples() > 1) {
+			fhFramebuffer::BlitColor( fhFramebuffer::renderFramebuffer, fhFramebuffer::currentRenderFramebuffer );
+			fhFramebuffer::BlitColor( fhFramebuffer::currentRenderFramebuffer, fhFramebuffer::defaultFramebuffer );
+		}
+		else {
+			fhFramebuffer::BlitColor( fhFramebuffer::renderFramebuffer, fhFramebuffer::defaultFramebuffer );
+		}
 	}
 }

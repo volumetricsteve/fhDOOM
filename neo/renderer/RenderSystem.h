@@ -45,7 +45,6 @@ typedef struct glconfig_s {
 	const char			*renderer_string;
 	const char			*vendor_string;
 	const char			*version_string;
-	const char			*wgl_extensions_string;
 
 	float				glVersion;				// atof( version_string )
 
@@ -54,25 +53,19 @@ typedef struct glconfig_s {
 	int					maxTextureCoords;
 	int					maxTextureImageUnits;
 	float				maxTextureAnisotropy;
+	int                 maxSamples;
 
 	int					colorBits, depthBits, stencilBits;
 
-	bool				multitextureAvailable;
 	bool				textureCompressionAvailable;
 	bool				anisotropicAvailable;
-	bool				textureEnvAddAvailable;
-	bool				cubeMapAvailable;
-	bool				envDot3Available;
-	bool				textureNonPowerOfTwoAvailable;
+
 	bool				depthBoundsTestAvailable;
 	bool                extDirectStateAccessAvailable;
 	bool                arbDirectStateAccessAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
-	int					renderWidth, renderHeight;	// passed to R_BeginFrame
 	int					vidAspectRatio;
-
-	int					displayFrequency;
 
 	bool				isFullscreen;
 
@@ -210,6 +203,11 @@ const int SCREEN_HEIGHT			= 480;
 
 class idRenderWorld;
 
+struct renderSystemTime {
+	int frontEndMsec;
+	int backEndMsec;
+};
+
 
 class idRenderSystem {
 public:
@@ -283,7 +281,7 @@ public:
 	virtual void			BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) = 0;
 
 	// if the pointers are not NULL, timing info will be returned
-	virtual void			EndFrame( int *frontEndMsec, int *backEndMsec ) = 0;
+	virtual renderSystemTime EndFrame() = 0;
 
 	// aviDemo uses this.
 	// Will automatically tile render large screen shots if necessary

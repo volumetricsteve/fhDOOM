@@ -34,7 +34,6 @@ If you have questions concerning this license or the applicable additional terms
 idRenderSystemLocal	tr;
 idRenderSystem	*renderSystem = &tr;
 
-
 /*
 =====================
 R_PerformanceCounters
@@ -159,7 +158,7 @@ drawSurfsCommand_t, etc) and links it to the end of the
 current command chain.
 ============
 */
-void *R_GetCommandBuffer( int bytes ) {
+static void *R_GetCommandBuffer( int bytes ) {
 	emptyCommand_t	*cmd;
 
 	cmd = (emptyCommand_t *)R_FrameAlloc( bytes );
@@ -607,7 +606,7 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
 BeginFrame
 ====================
 */
-void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) {
+void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int /*renderWidth*/, int /*renderHeight*/ ) {
 	setBufferCommand_t	*cmd;
 
 	if ( !glConfig.isInitialized ) {
@@ -620,21 +619,15 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int ren
 	if ( tiledViewport[0] ) {
 		windowWidth = tiledViewport[0];
 		windowHeight = tiledViewport[1];
-
-		renderWidth = windowWidth;
-		renderHeight = windowHeight;
 	}
 
 	glConfig.vidWidth = windowWidth;
 	glConfig.vidHeight = windowHeight;
 
-	glConfig.renderWidth = renderWidth;
-	glConfig.renderHeight = renderHeight;
-
 	renderCrops[0].x = 0;
 	renderCrops[0].y = 0;
-	renderCrops[0].width = windowWidth;
-	renderCrops[0].height = windowHeight;
+	renderCrops[0].width = windowWidth * r_framebufferScale.GetFloat();
+	renderCrops[0].height = windowHeight * r_framebufferScale.GetFloat();
 	currentRenderCrop = 0;
 
 	// screenFraction is just for quickly testing fill rate limitations
@@ -686,11 +679,11 @@ EndFrame
 Returns the number of msec spent in the back end
 =============
 */
-void idRenderSystemLocal::EndFrame( int *frontEndMsec, int *backEndMsec ) {
+renderSystemTime idRenderSystemLocal::EndFrame() {
 	emptyCommand_t *cmd;
 
 	if ( !glConfig.isInitialized ) {
-		return;
+		return renderSystemTime{ 0, 0 };
 	}
 
 	// close any gui drawing
@@ -698,12 +691,9 @@ void idRenderSystemLocal::EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	guiModel->Clear();
 
 	// save out timing information
-	if ( frontEndMsec ) {
-		*frontEndMsec = pc.frontEndMsec;
-	}
-	if ( backEndMsec ) {
-		*backEndMsec = backEnd.pc.msec;
-	}
+	renderSystemTime time;
+	time.frontEndMsec = pc.frontEndMsec;
+	time.backEndMsec = backEnd.pc.msec;
 
 	// print any other statistics and clear all of them
 	R_PerformanceCounters();
@@ -739,6 +729,7 @@ void idRenderSystemLocal::EndFrame( int *frontEndMsec, int *backEndMsec ) {
 		}
 	}
 
+	return time;
 }
 
 /*
