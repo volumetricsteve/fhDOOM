@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 
 Model viewing can begin with either "testmodel <modelname>"
 
-The names must be the full pathname after the basedir, like 
+The names must be the full pathname after the basedir, like
 "models/weapons/v_launch/tris.md3" or "players/male/tris.md3"
 
 Extension will default to ".ase" if not specified.
@@ -55,7 +55,7 @@ move around it to view it from different angles.
 
 CLASS_DECLARATION( idAnimatedEntity, idTestModel )
 	EVENT( EV_FootstepLeft,			idTestModel::Event_Footstep )
-	EVENT( EV_FootstepRight,		idTestModel::Event_Footstep )	
+	EVENT( EV_FootstepRight,		idTestModel::Event_Footstep )
 END_CLASS
 
 /*
@@ -120,7 +120,7 @@ void idTestModel::Spawn( void ) {
 	physicsObj.SetSelf( this );
 	physicsObj.SetOrigin( GetPhysics()->GetOrigin() );
 	physicsObj.SetAxis( GetPhysics()->GetAxis() );
-	
+
 	if ( spawnArgs.GetVector( "mins", NULL, bounds[0] ) ) {
 		spawnArgs.GetVector( "maxs", NULL, bounds[1] );
 		physicsObj.SetClipBox( bounds, 1.0f );
@@ -157,7 +157,7 @@ void idTestModel::Spawn( void ) {
 			head.GetEntity()->SetOrigin( origin );
 			head.GetEntity()->SetAxis( GetPhysics()->GetAxis() );
 			head.GetEntity()->BindToJoint( this, animator.GetJointName( joint ), true );
-		
+
 			headAnimator = head.GetEntity()->GetAnimator();
 
 			// set up the list of joints to copy to the head
@@ -324,7 +324,7 @@ void idTestModel::Think( void ) {
 				}
 				break;
 			}
-			
+
 			mode = g_testModelAnimate.GetInteger();
 		}
 
@@ -766,8 +766,8 @@ void idTestModel::TestModel_f( const idCmdArgs &args ) {
 			// without appending an ase
 			if ( name[ 0 ] != '_' ) {
 				name.DefaultFileExtension( ".ase" );
-			} 
-			
+			}
+
 #ifndef _D3XP
 			// Maya ascii format is supported natively now
 			if ( strstr( name, ".ma" ) || strstr( name, ".mb" ) ) {

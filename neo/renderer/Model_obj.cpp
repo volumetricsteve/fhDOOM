@@ -29,12 +29,12 @@ If you have questions concerning this license or the applicable additional terms
 #include "Model_obj.h"
 #include "idlib/StrRef.h"
 
-static idVec3 ParseVec3(fhStrRef s) {	
+static idVec3 ParseVec3(fhStrRef s) {
 	idVec3 ret;
 
-	s = s.TrimmedLeft();	
+	s = s.TrimmedLeft();
 	ret.x = atof(s.c_str());
-	
+
 	while(!s.IsEmpty() && s[0] != ' ') {
 		++s;
 	}
@@ -64,7 +64,7 @@ static idVec2 ParseVec2( fhStrRef s ) {
 	s = s.TrimmedLeft();
 
 	ret.y = atof( s.c_str() );
-	
+
 	return ret;
 }
 
@@ -153,12 +153,12 @@ static fhStrRef OBJ_ParseLine(fhStrRef line, objModel_t* model) {
 	else if (line.StartsWith( "usemtl " )) {
 		line = line.Substr(7).Trimmed();
 		objSurface_t surface;
-		
+
 		fhStrRef to = line;
 		while(!to.IsEmpty() && !idStr::CharIsNewLine(to[0]) && idStr::CharIsPrintable(to[0])) {
 			++to;
-		}	
-		
+		}
+
 		idStr name = fhStrRef(line.c_str(), int((std::ptrdiff_t) to.c_str() - (std::ptrdiff_t)line.c_str())).ToString();
 
 		for(int i=0; i<model->surface.Num(); ++i) {
@@ -175,7 +175,7 @@ static fhStrRef OBJ_ParseLine(fhStrRef line, objModel_t* model) {
 //		model->surface.Last().faces.SetNum(0, false);
 	}
 	else if (line.StartsWith( "f " )) {
-		objFace_t face = ParseFace(line.Substr(2));	
+		objFace_t face = ParseFace(line.Substr(2));
 
 		MakeIndicesAbsolute(face.vertex[0], model);
 		MakeIndicesAbsolute(face.vertex[1], model);
@@ -221,7 +221,7 @@ objModel_t *OBJ_Load( const char *fileName ) {
 	char *buf = nullptr;
 	ID_TIME_T timeStamp = 0;
 	objModel_t *obj = nullptr;
-	
+
 	fileSystem->ReadFile( fileName, (void **)&buf, &timeStamp );
 	if (!buf) {
 		return nullptr;

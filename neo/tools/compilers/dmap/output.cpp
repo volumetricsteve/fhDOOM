@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ static bool MatchVert( const idDrawVert *a, const idDrawVert *b ) {
 	}
 
 	// if the normal is 0 (smoothed normals), consider it a match
-	if ( a->normal[0] == 0 && a->normal[1] == 0 && a->normal[2] == 0 
+	if ( a->normal[0] == 0 && a->normal[1] == 0 && a->normal[2] == 0
 		&& b->normal[0] == 0 && b->normal[1] == 0 && b->normal[2] == 0 ) {
 		return true;
 	}
@@ -265,7 +265,7 @@ static void WriteUTriangles( idFile* f, const srfTriangles_t *uTris ) {
 	int			i;
 
 	// emit this chain
-	f->WriteFloatString( "/* numVerts = */ %i /* numIndexes = */ %i\n", 
+	f->WriteFloatString( "/* numVerts = */ %i /* numIndexes = */ %i\n",
 		uTris->numVerts, uTris->numIndexes );
 
 	// verts
@@ -381,7 +381,7 @@ static void WriteShadowTriangles( idFile* f, const srfTriangles_t *tri ) {
 	int			i;
 
 	// emit this chain
-	f->WriteFloatString( "/* numVerts = */ %i /* noCaps = */ %i /* noFrontCaps = */ %i /* numIndexes = */ %i /* planeBits = */ %i\n", 
+	f->WriteFloatString( "/* numVerts = */ %i /* noCaps = */ %i /* noFrontCaps = */ %i /* numIndexes = */ %i /* planeBits = */ %i\n",
 		tri->numVerts, tri->numShadowIndexesNoCaps, tri->numShadowIndexesNoFrontCaps, tri->numIndexes, tri->shadowCapPlaneBits );
 
 	// verts
@@ -438,7 +438,7 @@ WriteOutputSurfaces
 ====================
 */
 static void WriteOutputSurfaces( idFile* f, int entityNum, int areaNum ) {
-	
+
 	struct interactionTris_t {
 		interactionTris_t *next;
 		mapTri_t	*triList;
@@ -452,7 +452,7 @@ static void WriteOutputSurfaces( idFile* f, int entityNum, int areaNum ) {
 
 
 	if ( entityNum == 0 ) {
-		f->WriteFloatString( "model { /* name = */ \"_area%i\" /* numSurfaces = */ %i\n\n", 
+		f->WriteFloatString( "model { /* name = */ \"_area%i\" /* numSurfaces = */ %i\n\n",
 			areaNum, numSurfaces );
 	} else {
 		const char *name;
@@ -461,7 +461,7 @@ static void WriteOutputSurfaces( idFile* f, int entityNum, int areaNum ) {
 		if ( !name[0] ) {
 			common->Error( "Entity %i has surfaces, but no name key", entityNum );
 		}
-		f->WriteFloatString( "model { /* name = */ \"%s\" /* numSurfaces = */ %i\n\n", 
+		f->WriteFloatString( "model { /* name = */ \"%s\" /* numSurfaces = */ %i\n\n",
 			name, numSurfaces );
 	}
 
@@ -625,7 +625,7 @@ static void WriteOutputPortals( idFile* f, uEntity_t *e ) {
 	interAreaPortal_t	*iap;
 	idWinding			*w;
 
-	f->WriteFloatString( "interAreaPortals { /* numAreas = */ %i /* numIAP = */ %i\n\n", 
+	f->WriteFloatString( "interAreaPortals { /* numAreas = */ %i /* numIAP = */ %i\n\n",
 		e->numAreas, numInterAreaPortals );
 	f->WriteFloatString( "/* interAreaPortal format is: numPoints positiveSideArea negativeSideArea ( point) ... */\n" );
 	for ( i = 0 ; i < numInterAreaPortals ; i++ ) {
@@ -700,7 +700,7 @@ void WriteProcFile( void ) {
 	// write the entity models and information, writing entities first
 	for ( int i=dmapGlobals.num_entities - 1 ; i >= 0 ; i-- ) {
 		uEntity_t* entity = &dmapGlobals.uEntities[i];
-	
+
 		if ( !entity->primitives ) {
 			continue;
 		}
@@ -760,7 +760,7 @@ void WriteOclFile( void ) {
 	for (int i = 0; i < dmapGlobals.mapLights.Num(); i++) {
 		mapLight_t	*light = dmapGlobals.mapLights[i];
 
-		trilist.Clear();	
+		trilist.Clear();
 		matlist.Clear();
 
 		for(int j=0; j<128; ++j) {
@@ -783,10 +783,10 @@ void WriteOclFile( void ) {
 			vertices += tris->numVerts;
 			oclFile->WriteFloatString( "/* surface %d */ { \"%s\" ", j, matlist[j]->GetName());
 
-			WriteOccluderTriangles( oclFile, tris, matlist[j]->Coverage() != MC_PERFORATED );		
+			WriteOccluderTriangles( oclFile, tris, matlist[j]->Coverage() != MC_PERFORATED );
 
 			oclFile->WriteFloatString( "}\n\n" );
-		}		
+		}
 
 //FIXME(johl): Tris_ToOBJ is currently part of MFC editor code, thus not available on linux. Tris_ToOBJ could be moved into compilers?
 #ifdef WIN32
@@ -806,7 +806,7 @@ void WriteOclFile( void ) {
 				R_FreeStaticTriSurf( light->occluders[j].tris );
 				light->occluders[j].tris = nullptr;
 			}
-		}		
+		}
 	}
 
 	fileSystem->CloseFile( oclFile );

@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ void Pointfile_Next (void)
   g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
   g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
 
-  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;	
+  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;
 	dir.Normalize();
 
 	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
@@ -81,7 +81,7 @@ void Pointfile_Prev (void)
   g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
   g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
 
-  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;	
+  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;
 	dir.Normalize();
 
 	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
@@ -112,10 +112,10 @@ void Pointfile_Check (void)
     const int n = fscanf(f, "%f %f %f\n", &v[0], &v[1], &v[2]);
     if ( n != 3  || s_num_points >= MAX_POINTFILE)
       break;
-    
-    s_pointvecs[s_num_points] = v;      
+
+    s_pointvecs[s_num_points] = v;
     s_num_points++;
-    
+
   } while (1);
 
 

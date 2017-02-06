@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ only be called when the back end thread is idle.
 */
 static void R_PerformanceCounters( void ) {
 	if ( r_showPrimitives.GetInteger() != 0 ) {
-		
+
 		float megaBytes = globalImages->SumOfUsedImages() / ( 1024*1024.0 );
 
 		if ( r_showPrimitives.GetInteger() > 1 ) {
@@ -80,15 +80,15 @@ static void R_PerformanceCounters( void ) {
 			tr.pc.c_deformedIndexes/3,
 			tr.pc.c_tangentIndexes/3,
 			tr.pc.c_guiSurfs
-			); 
+			);
 	}
 
 	if ( r_showCull.GetBool() ) {
 		common->Printf( "%i sin %i sclip  %i sout %i bin %i bout\n",
-			tr.pc.c_sphere_cull_in, tr.pc.c_sphere_cull_clip, tr.pc.c_sphere_cull_out, 
+			tr.pc.c_sphere_cull_in, tr.pc.c_sphere_cull_clip, tr.pc.c_sphere_cull_out,
 			tr.pc.c_box_cull_in, tr.pc.c_box_cull_out );
 	}
-	
+
 	if ( r_showAlloc.GetBool() ) {
 		common->Printf( "alloc:%i free:%i\n", tr.pc.c_alloc, tr.pc.c_free );
 	}
@@ -102,7 +102,7 @@ static void R_PerformanceCounters( void ) {
 			tr.pc.c_shadowViewEntities, tr.pc.c_viewLights );
 	}
 	if ( r_showUpdates.GetBool() ) {
-		common->Printf( "entityUpdates:%i  entityRefs:%i  lightUpdates:%i  lightRefs:%i\n", 
+		common->Printf( "entityUpdates:%i  entityRefs:%i  lightUpdates:%i  lightRefs:%i\n",
 			tr.pc.c_entityUpdates, tr.pc.c_entityReferences,
 			tr.pc.c_lightUpdates, tr.pc.c_lightReferences );
 	}
@@ -154,7 +154,7 @@ static void R_IssueRenderCommands( void ) {
 ============
 R_GetCommandBuffer
 
-Returns memory for a command buffer (stretchPicCommand_t, 
+Returns memory for a command buffer (stretchPicCommand_t,
 drawSurfsCommand_t, etc) and links it to the end of the
 current command chain.
 ============
@@ -252,11 +252,11 @@ void R_LockSurfaceScene( viewDef_t *parms ) {
 	// set the matrix for world space to eye space
 	R_SetViewMatrix( parms );
 	tr.lockSurfacesCmd.viewDef->worldSpace = parms->worldSpace;
-	
+
 	// update the view origin and axis, and all
 	// the entity matricies
 	for( vModel = tr.lockSurfacesCmd.viewDef->viewEntitys ; vModel ; vModel = vModel->next ) {
-		myGlMultMatrix( vModel->modelMatrix, 
+		myGlMultMatrix( vModel->modelMatrix,
 			tr.lockSurfacesCmd.viewDef->worldSpace.modelViewMatrix,
 			vModel->modelViewMatrix );
 	}
@@ -331,7 +331,7 @@ void idRenderSystemLocal::SetColor4( float r, float g, float b, float a ) {
 DrawStretchPic
 =============
 */
-void idRenderSystemLocal::DrawStretchPic( const idDrawVert *verts, const glIndex_t *indexes, int vertCount, int indexCount, const idMaterial *material, 
+void idRenderSystemLocal::DrawStretchPic( const idDrawVert *verts, const glIndex_t *indexes, int vertCount, int indexCount, const idMaterial *material,
 									   bool clip, float min_x, float min_y, float max_x, float max_y ) {
 	guiModel->DrawStretchPic( verts, indexes, vertCount, indexCount, material,
 		clip, min_x, min_y, max_x, max_y );
@@ -408,8 +408,8 @@ void idRenderSystemLocal::DrawScaledChar( int x, int y, int ch, const idMaterial
   size = 0.0625f;
 
   DrawStretchPic( x, y, SMALLCHAR_WIDTH * scale, SMALLCHAR_HEIGHT * scale,
-    fcol, frow, 
-    fcol + size, frow + size, 
+    fcol, frow,
+    fcol + size, frow + size,
     material );
 }
 
@@ -473,8 +473,8 @@ void idRenderSystemLocal::DrawSmallChar( int x, int y, int ch, const idMaterial 
 	size = 0.0625f;
 
 	DrawStretchPic( x, y, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT,
-					   fcol, frow, 
-					   fcol + size, frow + size, 
+					   fcol, frow,
+					   fcol + size, frow + size,
 					   material );
 }
 
@@ -546,8 +546,8 @@ void idRenderSystemLocal::DrawBigChar( int x, int y, int ch, const idMaterial *m
 	size = 0.0625f;
 
 	DrawStretchPic( x, y, BIGCHAR_WIDTH, BIGCHAR_HEIGHT,
-					   fcol, frow, 
-					   fcol + size, frow + size, 
+					   fcol, frow,
+					   fcol + size, frow + size,
 					   material );
 }
 
@@ -642,7 +642,7 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int ren
 		int	w = SCREEN_WIDTH * r_screenFraction.GetInteger() / 100.0f;
 		int h = SCREEN_HEIGHT * r_screenFraction.GetInteger() / 100.0f;
 		CropRenderSize( w, h );
-	}  
+	}
 
 	backEnd.glslReplaceArb2 = r_glslReplaceArb2.GetBool();
 
@@ -949,8 +949,8 @@ void idRenderSystemLocal::CaptureRenderToFile( const char *fileName, bool fixAlp
 	// include extra space for OpenGL padding to word boundaries
 	int	c = ( rc->width + 3 ) * rc->height;
 	byte *data = (byte *)R_StaticAlloc( c * 3 );
-	
-	glReadPixels( rc->x, rc->y, rc->width, rc->height, GL_RGB, GL_UNSIGNED_BYTE, data ); 
+
+	glReadPixels( rc->x, rc->y, rc->width, rc->height, GL_RGB, GL_UNSIGNED_BYTE, data );
 
 	byte *data2 = (byte *)R_StaticAlloc( c * 4 );
 

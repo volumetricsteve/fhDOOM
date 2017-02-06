@@ -2,10 +2,10 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -181,8 +181,8 @@ public:
 	// data goes from the bottom to the top line of the image, as OpenGL expects it
 	// These perform an implicit Bind() on the current texture unit
 	// FIXME: should we implement cinematics this way, instead of with explicit calls?
-	void		GenerateImage( const byte *pic, int width, int height, 
-					   textureFilter_t filter, bool allowDownSize, 
+	void		GenerateImage( const byte *pic, int width, int height,
+					   textureFilter_t filter, bool allowDownSize,
 					   textureRepeat_t repeat, textureDepth_t depth );
 
 	void		GenerateImage( const fhImageData& imgeData );
@@ -408,7 +408,7 @@ public:
 
 	// built-in images
 	idImage *			defaultImage;
-	idImage *			flatNormalMap;				// 128 128 255 in all pixels	
+	idImage *			flatNormalMap;				// 128 128 255 in all pixels
 	idImage *			rampImage;					// 0-255 in RGBA in S
 	idImage *			alphaRampImage;				// 0-255 in alpha, 255 in RGB
 	idImage *			alphaNotchImage;			// 2x1 texture with just 1110 and 1111 with point sampling
@@ -432,7 +432,7 @@ public:
 	idImage *			shadowmapImage;
 
 	//--------------------------------------------------------
-	
+
 	idImage *			AllocImage( const char *name );
 	void				SetNormalPalette();
 	void				ChangeTextureFilter();
@@ -475,9 +475,9 @@ FIXME: make an "imageBlock" type to hold byte*,width,height?
 ====================================================================
 */
 
-byte *R_Dropsample( const byte *in, int inwidth, int inheight,  
+byte *R_Dropsample( const byte *in, int inwidth, int inheight,
 							int outwidth, int outheight );
-byte *R_ResampleTexture( const byte *in, int inwidth, int inheight,  
+byte *R_ResampleTexture( const byte *in, int inwidth, int inheight,
 							int outwidth, int outheight );
 byte *R_MipMapWithAlphaSpecularity( const byte *in, int width, int height );
 byte *R_MipMap( const byte *in, int width, int height, bool preserveBorder );

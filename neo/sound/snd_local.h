@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #define ID_ALCHAR
-#else         
+#else
 #include <AL/al.h>
 #include <AL/alc.h>
 #define ID_ALCHAR
@@ -242,7 +242,7 @@ public:
 	virtual bool			Lock( void **pDSLockedBuffer, ulong *dwDSLockedBufferSize ) = 0;
 	virtual bool			Unlock( void *pDSLockedBuffer, dword dwDSLockedBufferSize ) = 0;
 	virtual bool			GetCurrentPosition( ulong *pdwCurrentWriteCursor ) = 0;
-	
+
 	// try to write as many sound samples to the device as possible without blocking and prepare for a possible new mixing call
 	// returns wether there is *some* space for writing available
 	virtual bool			Flush( void ) = 0;
@@ -479,7 +479,7 @@ public:
 	removeStatus_t		removeStatus;
 
 	idVec3				origin;
-	int					listenerId;		
+	int					listenerId;
 	soundShaderParms_t	parms;						// default overrides for all channels
 
 
@@ -591,12 +591,12 @@ public:
 	// SaveGame Support
 	virtual void			WriteToSaveGame( idFile *savefile );
 	virtual void			ReadFromSaveGame( idFile *savefile );
-	
+
 	virtual void			ReadFromSaveGameSoundChannel( idFile *saveGame, idSoundChannel *ch );
 	virtual void			ReadFromSaveGameSoundShaderParams( idFile *saveGame, soundShaderParms_t *params );
 	virtual void			WriteToSaveGameSoundChannel( idFile *saveGame, idSoundChannel *ch );
 	virtual void			WriteToSaveGameSoundShaderParams( idFile *saveGame, soundShaderParms_t *params );
-	
+
 	virtual void			SetSlowmo( bool active );
 	virtual void			SetSlowmoSpeed( float speed );
 	virtual void			SetEnviroSuit( bool active );

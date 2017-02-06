@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -277,7 +277,7 @@ bool idListWindow::ParseInternalVar(const char *_name, idParser *src) {
 		ParseString(src, tabIconVOffsetStr);
 		return true;
 	}
-	
+
 	idStr strName = _name;
 	if(idStr::Icmp(strName.Left(4), "mtr_") == 0) {
 		idStr matName;
@@ -360,7 +360,7 @@ void idListWindow::PostParse() {
 			}
 			idVec2 size;
 			size.x = atoi(tok);
-			
+
 			src.ReadToken(&tok);	//","
 			src.ReadToken(&tok);
 
@@ -516,7 +516,7 @@ void idListWindow::Draw(int time, float x, float y) {
 				if ( tabInfo[tab].type == TAB_TYPE_TEXT ) {
 					dc->DrawText(work, scale, tabInfo[tab].align, color, rect, false, -1);
 				} else if (tabInfo[tab].type == TAB_TYPE_ICON) {
-					
+
 					const idMaterial	**hashMat;
 					const idMaterial	*iconMat;
 

@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -298,7 +298,7 @@ void idGameLocal::Init( void ) {
 
 	// load default scripts
 	program.Startup( SCRIPT_DEFAULT );
-	
+
 	smokeParticles = new idSmokeParticles;
 
 	// set up the aas
@@ -412,7 +412,7 @@ void idGameLocal::SaveGame( idFile *f ) {
 
 	idSaveGame savegame( f );
 
-	if (g_flushSave.GetBool( ) == true ) { 
+	if (g_flushSave.GetBool( ) == true ) {
 		// force flushing with each write... for tracking down
 		// save game bugs.
 		f->ForceFlush();
@@ -754,7 +754,7 @@ const idDict* idGameLocal::SetUserInfo( int clientNum, const idDict &userInfo, b
 				idGameLocal::userInfo[ clientNum ].Set( "ui_name", va( "%s_", idGameLocal::userInfo[ clientNum ].GetString( "ui_name" ) ) );
 				modifiedInfo = true;
 			}
-		
+
 			// don't allow dupe nicknames
 			for ( i = 0; i < numClients; i++ ) {
 				if ( i == clientNum ) {
@@ -863,7 +863,7 @@ void idGameLocal::LoadMap( const char *mapName, int randseed ) {
 	memset( usercmds, 0, sizeof( usercmds ) );
 	memset( spawnIds, -1, sizeof( spawnIds ) );
 	spawnCount = INITIAL_SPAWN_COUNT;
-	
+
 	spawnedEntities.Clear();
 	activeEntities.Clear();
 	numEntitiesToDeactivate = 0;
@@ -892,7 +892,7 @@ void idGameLocal::LoadMap( const char *mapName, int randseed ) {
 
 	lastAIAlertEntity = NULL;
 	lastAIAlertTime = 0;
-	
+
 	previousTime	= 0;
 	time			= 0;
 	framenum		= 0;
@@ -1459,7 +1459,7 @@ idGameLocal::MapShutdown
 */
 void idGameLocal::MapShutdown( void ) {
 	Printf( "--------- Game Map Shutdown ----------\n" );
-	
+
 	gamestate = GAMESTATE_SHUTDOWN;
 
 	if ( gameRenderWorld ) {
@@ -1684,7 +1684,7 @@ void idGameLocal::CacheDictionaryMedia( const idDict *dict ) {
 	while( kv ) {
 		if ( kv->GetValue().Length() ) {
 			if ( !idStr::Icmp( kv->GetKey(), "gui_noninteractive" )
-				|| !idStr::Icmpn( kv->GetKey(), "gui_parm", 8 )	
+				|| !idStr::Icmpn( kv->GetKey(), "gui_parm", 8 )
 				|| !idStr::Icmp( kv->GetKey(), "gui_inventory" ) ) {
 				// unfortunate flag names, they aren't actually a gui
 			} else {
@@ -2347,7 +2347,7 @@ gameReturn_t idGameLocal::RunFrame( const usercmd_t *clientCmds ) {
 	ret.syncNextGameFrame = skipCinematic;
 	if ( skipCinematic ) {
 		soundSystem->SetMute( false );
-		skipCinematic = false;		
+		skipCinematic = false;
 	}
 
 	// show any debug info for this frame
@@ -2378,7 +2378,7 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 	float	y;
 	float	ratio_x;
 	float	ratio_y;
-	
+
 	if ( !sys->FPU_StackIsEmpty() ) {
 		Printf( sys->FPU_GetState() );
 		Error( "idGameLocal::CalcFov: FPU stack not empty" );
@@ -2396,10 +2396,10 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 		Error( "idGameLocal::CalcFov: bad result" );
 	}
 
-  int aspectRatio = r_aspectRatio.GetInteger();   
+  int aspectRatio = r_aspectRatio.GetInteger();
   if(aspectRatio < 0)
     aspectRatio = renderSystem->GetScreenAspectRatio();
-  
+
 	switch( aspectRatio ) {
 	default :
 	case 0 :
@@ -2995,7 +2995,7 @@ idEntity *idGameLocal::SpawnEntityType( const idTypeInfo &classdef, const idDict
 		obj = classdef.CreateInstance();
 		obj->CallSpawn();
 	}
-	
+
 	catch( idAllocError & ) {
 		obj = NULL;
 	}
@@ -3115,7 +3115,7 @@ idGameLocal::InhibitEntitySpawn
 ================
 */
 bool idGameLocal::InhibitEntitySpawn( idDict &spawnArgs ) {
-	
+
 	bool result = false;
 
 	if ( isMultiplayer ) {
@@ -3130,7 +3130,7 @@ bool idGameLocal::InhibitEntitySpawn( idDict &spawnArgs ) {
 
 	const char *name;
 #ifndef ID_DEMO_BUILD
-	if ( g_skill.GetInteger() == 3 ) { 
+	if ( g_skill.GetInteger() == 3 ) {
 		name = spawnArgs.GetString( "classname" );
 		if ( idStr::Icmp( name, "item_medkit" ) == 0 || idStr::Icmp( name, "item_medkit_small" ) == 0 ) {
 			result = true;
@@ -3635,7 +3635,7 @@ void idGameLocal::RadiusDamage( const idVec3 &origin, idEntity *inflictor, idEnt
 			}
 
 			ent->Damage( inflictor, attacker, dir, damageDefName, damageScale, INVALID_JOINT );
-		} 
+		}
 	}
 
 	// push physics objects
@@ -3886,7 +3886,7 @@ void idGameLocal::SetCamera( idCamera *cam ) {
 
 		// set r_znear so that transitioning into/out of the player's head doesn't clip through the view
 		cvarSystem->SetCVarFloat( "r_znear", 1.0f );
-		
+
 		// hide all the player models
 		for( i = 0; i < numClients; i++ ) {
 			if ( entities[ i ] ) {
@@ -3902,7 +3902,7 @@ void idGameLocal::SetCamera( idCamera *cam ) {
 					// only kill entities that aren't needed for cinematics and aren't dormant
 					continue;
 				}
-				
+
 				if ( ent->IsType( idAI::Type ) ) {
 					ai = static_cast<idAI *>( ent );
 					if ( !ai->GetEnemy() || !ai->IsActive() ) {
@@ -4193,7 +4193,7 @@ idEntity *idGameLocal::SelectInitialSpawnPoint( idPlayer *player ) {
 					|| static_cast< idPlayer * >( entities[ j ] )->spectating ) {
 					continue;
 				}
-				
+
 				dist = ( pos - entities[ j ]->GetPhysics()->GetOrigin() ).LengthSqr();
 				if ( dist < spawnSpots[ i ].dist ) {
 					spawnSpots[ i ].dist = dist;

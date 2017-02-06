@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ If you have questions concerning this license or the applicable additional terms
 
 
 CZClip::CZClip()
-{	
-	LONG 
+{
+	LONG
 	lSize = sizeof(m_bEnabled);
 	if (!LoadRegistryInfo("radiant_ZClipEnabled",	&m_bEnabled, &lSize))
 		m_bEnabled = false;
@@ -108,7 +108,7 @@ void CZClip::SetTop(int iNewZ)
 {
 	m_iZClipTop = iNewZ;
 
-	Legalise();		
+	Legalise();
 }
 
 void CZClip::SetBottom(int iNewZ)
@@ -146,7 +146,7 @@ void CZClip::Paint(void)
 	x = 0;
 	y = m_iZClipTop;
 
-	if (m_bEnabled)	
+	if (m_bEnabled)
 		im.Begin(GL_QUADS);
 	else
 		im.Begin(GL_LINE_LOOP);
@@ -162,7 +162,7 @@ void CZClip::Paint(void)
 	if (m_bEnabled)
 		im.Begin(GL_TRIANGLES);
 	else
-		im.Begin(GL_LINE_LOOP);	
+		im.Begin(GL_LINE_LOOP);
 	im.Vertex3f (x,(y+ZCLIP_BAR_THICKNESS),0);
 	im.Vertex3f (x-xCam,(y+ZCLIP_BAR_THICKNESS)+(ZCLIP_ARROWHEIGHT/2),0);
 	im.Vertex3f (x+xCam,(y+ZCLIP_BAR_THICKNESS)+(ZCLIP_ARROWHEIGHT/2),0);
@@ -174,7 +174,7 @@ void CZClip::Paint(void)
 	x = 0;
 	y = m_iZClipBottom;
 
-	if (m_bEnabled)	
+	if (m_bEnabled)
 		im.Begin(GL_QUADS);
 	else
 		im.Begin(GL_LINE_LOOP);
@@ -189,7 +189,7 @@ void CZClip::Paint(void)
 	if (m_bEnabled)
 		im.Begin(GL_TRIANGLES);
 	else
-		im.Begin(GL_LINE_LOOP);	
+		im.Begin(GL_LINE_LOOP);
 	im.Vertex3f (x,(y-ZCLIP_BAR_THICKNESS),0);
 	im.Vertex3f (x-xCam,(y-ZCLIP_BAR_THICKNESS)-(ZCLIP_ARROWHEIGHT/2),0);
 	im.Vertex3f (x+xCam,(y-ZCLIP_BAR_THICKNESS)-(ZCLIP_ARROWHEIGHT/2),0);

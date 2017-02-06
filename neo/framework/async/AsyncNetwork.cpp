@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ idAsyncNetwork::GetMasterAddress
 bool idAsyncNetwork::GetMasterAddress( int index, netadr_t &adr ) {
 	if ( !masters[ index ].var ) {
 		return false;
-	}	
+	}
 	if ( masters[ index ].var->GetString()[0] == '\0' ) {
 		return false;
 	}
@@ -434,7 +434,7 @@ void idAsyncNetwork::Kick_f( const idCmdArgs &args ) {
 		return;
 	}
 	iclient = atoi( clientId );
-	
+
 	if ( server.GetLocalClientNum() == iclient ) {
 		common->Printf( "can't kick the host\n" );
 		return;
@@ -458,7 +458,7 @@ idAsyncNetwork::CheckNewVersion_f
 ==================
 */
 void idAsyncNetwork::CheckNewVersion_f( const idCmdArgs &args ) {
-	client.SendVersionCheck(); 
+	client.SendVersionCheck();
 }
 
 /*
@@ -508,6 +508,6 @@ void idAsyncNetwork::BuildInvalidKeyMsg( idStr &msg, bool valid[ 2 ] ) {
 		msg += common->GetLanguageDict()->GetString( "#str_07195" );
 	}
 	msg += "\n";
-	msg += common->GetLanguageDict()->GetString( "#str_04304" );	
+	msg += common->GetLanguageDict()->GetString( "#str_04304" );
 }
 

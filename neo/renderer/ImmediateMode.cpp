@@ -133,7 +133,7 @@ void fhImmediateMode::End()
 				GL_UseProgram(debugDepthProgram);
 			}
 			else {
-				GL_UseProgram(defaultProgram);			
+				GL_UseProgram(defaultProgram);
 			}
 		}
 		else {
@@ -198,12 +198,12 @@ void fhImmediateMode::Color3f(float r, float g, float b)
 
 void fhImmediateMode::Color3fv(const float* c)
 {
-  Color4f(c[0], c[1], c[2], 1.0f);  
+  Color4f(c[0], c[1], c[2], 1.0f);
 }
 
 void fhImmediateMode::Color4fv(const float* c)
 {
-  Color4f(c[0], c[1], c[2], c[3]);  
+  Color4f(c[0], c[1], c[2], c[3]);
 }
 
 void fhImmediateMode::Color4ubv(const byte* bytes)
@@ -274,9 +274,9 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
   assert(sectors > 1);
 
   float const R = 1. / (float)(rings - 1);
-  float const S = 1. / (float)(sectors - 1);  
+  float const S = 1. / (float)(sectors - 1);
 
-  int vertexNum = 0;   
+  int vertexNum = 0;
   for (int r = 0; r < rings; r++) {
     for (int s = 0; s < sectors; s++) {
       float const y = sin(-(idMath::PI/2.0f) + idMath::PI * r * R);
@@ -302,7 +302,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
     for (int s = 0; s < sectors - 1; s++) {
       if(r == 0) {
         //faces of first ring are single triangles
-        sphereIndices[indexNum + 2] = r * sectors + s;        
+        sphereIndices[indexNum + 2] = r * sectors + s;
         sphereIndices[indexNum + 1] = (r + 1) * sectors + s;
         sphereIndices[indexNum + 0] = (r + 1) * sectors + (s + 1);
 
@@ -327,7 +327,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
         indexNum += 6;
       }
     }
-  } 
+  }
 
   if(inverse) {
     for(int i = 0; i+2 < indexNum; i += 3) {
@@ -336,8 +336,8 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
       sphereIndices[i+2] = tmp;
     }
   }
-  
-  GL_UseProgram(vertexColorProgram);  
+
+  GL_UseProgram(vertexColorProgram);
 
   auto vert = vertexCache.AllocFrameTemp(drawVerts, vertexNum * sizeof(fhSimpleVert));
   int offset = vertexCache.Bind(vert);
@@ -354,7 +354,7 @@ void fhImmediateMode::Sphere(float radius, int rings, int sectors, bool inverse)
     GL_UNSIGNED_SHORT,
     sphereIndices);
 
-  GL_SetVertexLayout(fhVertexLayout::None);  
+  GL_SetVertexLayout(fhVertexLayout::None);
   GL_UseProgram(nullptr);
 }
 
@@ -370,7 +370,7 @@ void fhImmediateMode::AddTrianglesFromPolygon(fhImmediateMode& im, const idVec3*
       im.Vertex3fv(xyz[0].ToFloatPtr());
       im.Vertex3fv(xyz[i-1].ToFloatPtr());
     }
-    im.Vertex3fv(xyz[i].ToFloatPtr());    
+    im.Vertex3fv(xyz[i].ToFloatPtr());
   }
 }
 

@@ -367,7 +367,7 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 			}
 			else if (depthHackActive) {
 				RB_LeaveDepthHack();
-				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );				
+				fhRenderProgram::SetProjectionMatrix( GL_ProjectionMatrix.Top() );
 				depthHackActive = false;
 			}
 

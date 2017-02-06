@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ void idRenderWorldLocal::FreeWorld() {
 		areaNodes = NULL;
 	}
 
-	// free all the inline idRenderModels 
+	// free all the inline idRenderModels
 	for ( i = 0 ; i < localModels.Num() ; i++ ) {
 		renderModelManager->RemoveModel( localModels[i] );
 		delete localModels[i];
@@ -143,7 +143,7 @@ static idRenderModel* ParseModel( idLexer *src ) {
 
 		srfTriangles_t* tri = R_AllocStaticTriSurf();
 		surf.geometry = tri;
-		
+
 		tri->numVerts = src->ParseInt();
 		tri->numIndexes = src->ParseInt();
 
@@ -361,7 +361,7 @@ void idRenderWorldLocal::ParseInterAreaPortals( idLexer *src ) {
 		return;
 	}
 
-	doublePortals = (doublePortal_t *)R_ClearedStaticAlloc( numInterAreaPortals * 
+	doublePortals = (doublePortal_t *)R_ClearedStaticAlloc( numInterAreaPortals *
 		sizeof( doublePortals [0] ) );
 
 	for ( i = 0 ; i < numInterAreaPortals ; i++ ) {
@@ -546,7 +546,7 @@ A NULL or empty name will make a world without a map model, which
 is still useful for displaying a bare model
 =================
 */
-bool idRenderWorldLocal::InitFromMap( const char *name ) {			
+bool idRenderWorldLocal::InitFromMap( const char *name ) {
 	// if this is an empty world, initialize manually
 	if (!name || !name[0]) {
 		FreeWorld();
@@ -693,7 +693,7 @@ bool idRenderWorldLocal::LoadOcl( const char* name ) {
 		}
 		common->Printf( "idRenderWorldLocal::LoadOcl: timestamp has changed, reloading.\n" );
 	}
-*/	
+*/
 	idLexer src( filename, LEXFL_NOSTRINGCONCAT | LEXFL_NODOLLARPRECOMPILE );
 	if (!src.IsLoaded()) {
 		common->Warning( "idRenderWorldLocal::LoadOcl: %s not found\n", filename.c_str() );
@@ -829,7 +829,7 @@ void idRenderWorldLocal::AddWorldModelEntities() {
 	// we can't just call AddEntityDef, because that would place the references
 	// based on the bounding box, rather than explicitly into the correct area
 	for ( int i = 0 ; i < numPortalAreas ; i++ ) {
-		idRenderEntityLocal* def = new idRenderEntityLocal;		
+		idRenderEntityLocal* def = new idRenderEntityLocal;
 
 		// try and reuse a free spot
 		int index = entityDefs.FindNull();
@@ -864,42 +864,42 @@ void idRenderWorldLocal::AddWorldModelEntities() {
 			if ( surf->geometry->numVerts <= 0 ) {
 				continue;
 			}
-			
+
 			//if surface cast a shadow and is fully opaque, add a copy of it the staticOccluderModel helper model
 			if(surf->shader->SurfaceCastsShadow() && surf->shader->Coverage() == MC_OPAQUE) {
 				modelSurface_s newSurf;
 				newSurf.shader = declManager->FindMaterial("_default");
 				newSurf.id = 0;
-				
+
 				newSurf.geometry = R_AllocStaticTriSurf();
 				newSurf.geometry->numVerts = surf->geometry->numVerts;
 				newSurf.geometry->numIndexes = surf->geometry->numIndexes;
-				
+
 				R_AllocStaticTriSurfVerts( newSurf.geometry, newSurf.geometry->numVerts );
 				R_AllocStaticTriSurfIndexes( newSurf.geometry, newSurf.geometry->numIndexes );
 
 				memcpy(newSurf.geometry->indexes, surf->geometry->indexes, sizeof(surf->geometry->indexes[0]) * newSurf.geometry->numIndexes);
 				memcpy(newSurf.geometry->verts, surf->geometry->verts, sizeof(surf->geometry->verts[0]) * newSurf.geometry->numVerts);
-				
+
 				staticOccluderModel->AddSurface(newSurf);
-			}			
+			}
 		}
 
 		//combine all surfaces of helper model to one single surface and use that
-		staticOccluderModel = CombineModelSurfaces(staticOccluderModel, va("_area_%d_occluders", i));				
+		staticOccluderModel = CombineModelSurfaces(staticOccluderModel, va("_area_%d_occluders", i));
 
-		if(staticOccluderModel->NumSurfaces() > 0 && staticOccluderModel->Surface(0)->geometry->numVerts > 0) {		
+		if(staticOccluderModel->NumSurfaces() > 0 && staticOccluderModel->Surface(0)->geometry->numVerts > 0) {
 			// add it to the model manager list
 			renderModelManager->AddModel( staticOccluderModel );
 			// save it in the list to free when clearing this map
-			localModels.Append( staticOccluderModel );			
+			localModels.Append( staticOccluderModel );
 			//use as static occluder model
 			def->staticOccluderModel = staticOccluderModel;
 		} else {
 			//static occluder model is empty, no need to keep it.
 			renderModelManager->FreeModel(staticOccluderModel);
 			def->staticOccluderModel = nullptr;
-		}		
+		}
 
 
 		def->referenceBounds = def->parms.hModel->Bounds();

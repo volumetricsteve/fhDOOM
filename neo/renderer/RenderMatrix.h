@@ -28,10 +28,10 @@ If you have questions concerning this license or the applicable additional terms
 #pragma once
 
 /*
- * For programming purposes, OpenGL matrices are 16-value arrays with base 
- * vectors laid out contiguously in memory. The translation components occupy 
+ * For programming purposes, OpenGL matrices are 16-value arrays with base
+ * vectors laid out contiguously in memory. The translation components occupy
  * the 13th, 14th, and 15th elements of the 16-element matrix, where indices are
- * numbered from 1 to 16 as described in section 2.11.2 of the OpenGL 2.1 
+ * numbered from 1 to 16 as described in section 2.11.2 of the OpenGL 2.1
  * Specification.
  *
  **/
@@ -88,7 +88,7 @@ public:
 		return ret;
 	}
 
-	idVec3 operator*(const idVec3& v) const {		
+	idVec3 operator*(const idVec3& v) const {
 		idVec3 ret;
 		ret.x = m[0] * v.x + m[4] * v.y + m[8] * v.z + m[12];
 		ret.y = m[1] * v.x + m[5] * v.y + m[9] * v.z + m[13];

@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -188,13 +188,13 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CPrefsDlg message handlers
 
-BOOL CPrefsDlg::OnInitDialog() 
+BOOL CPrefsDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	m_wndSpin.SetRange(1,60);
 	m_wndCamSpeed.SetRange(10, 5000);
 	m_wndCamSpeed.SetPos(m_nMoveSpeed);
-	
+
 	m_wndFontSpin.SetRange(4,24);
 	m_wndUndoSpin.SetRange(1,64);
 
@@ -207,7 +207,7 @@ BOOL CPrefsDlg::OnInitDialog()
 					// EXCEPTION: OCX Property Pages should return FALSE
 }
 
-void CPrefsDlg::OnOK() 
+void CPrefsDlg::OnOK()
 {
 	m_nMoveSpeed = m_wndCamSpeed.GetPos();
 	m_nAngleSpeed = (float)m_nMoveSpeed * 0.50;

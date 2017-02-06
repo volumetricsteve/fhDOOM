@@ -200,7 +200,7 @@ void			Sys_WaitForEvent(int index) {}
 void			Sys_TriggerEvent(int index) {}
 
 
-int main(int argc, char** argv) { 
+int main(int argc, char** argv) {
 
   if(argc < 2) {
     printf("usage: maya2md5.exe def [gamedir]\n");
@@ -213,17 +213,17 @@ int main(int argc, char** argv) {
   idLib::sys = sys;
   idLib::cvarSystem = cvarSystem;
   idLib::fileSystem = fileSystem;
-  
+
   idLib::Init();
   cmdSystem->Init();
   cvarSystem->Init();
-  idCVar::RegisterStaticVars();  
+  idCVar::RegisterStaticVars();
 
   if(argc > 2) {
     const idStr gamepath = argv[2];
-    idStr basepath; 
+    idStr basepath;
     gamepath.ExtractFilePath(basepath);
-    idStr gamedir; 
+    idStr gamedir;
     gamepath.ExtractFileName(gamedir);
 
     if(!basepath.IsEmpty())

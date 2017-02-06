@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ public:
 	// this block won't have to zero a buffer pointer when it is purged,
 	// but it must still wait for the frames to pass, in case the GPU
 	// is still referencing it
-	void			Free( vertCache_t *buffer );	
+	void			Free( vertCache_t *buffer );
 
 	// updates the counter for determining which temp space to use
 	// and which blocks can be purged

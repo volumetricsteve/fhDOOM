@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -345,7 +345,7 @@ void R_FreeStaticTriSurfVertexCaches( srfTriangles_t *tri ) {
 		// this is a real model surface
 		vertexCache.Free( tri->ambientCache );
 		tri->ambientCache = NULL;
-	} 
+	}
 	if ( tri->indexCache ) {
 		vertexCache.Free( tri->indexCache );
 		tri->indexCache = NULL;
@@ -952,7 +952,7 @@ static void R_DefineEdge( int v1, int v2, int planeNum ) {
 		common->DWarning( "MAX_SIL_EDGES" );
 		return;
 	}
-	
+
 	silEdgeHash.Add( hashKey, numSilEdges );
 
 	silEdges[numSilEdges].p1 = planeNum;
@@ -1213,7 +1213,7 @@ static void	R_DeriveFaceTangents( const srfTriangles_t *tri, faceTangents_t *fac
         temp[2] = (d0[2] * d1[4] - d0[4] * d1[2]) * inva;
 		temp.Normalize();
 		ft->tangents[0] = temp;
-        
+
         temp[0] = (d0[3] * d1[0] - d0[0] * d1[3]) * inva;
         temp[1] = (d0[3] * d1[1] - d0[1] * d1[3]) * inva;
         temp[2] = (d0[3] * d1[2] - d0[2] * d1[3]) * inva;
@@ -1225,7 +1225,7 @@ static void	R_DeriveFaceTangents( const srfTriangles_t *tri, faceTangents_t *fac
         temp[2] = (d0[2] * d1[4] - d0[4] * d1[2]);
 		temp.Normalize();
 		ft->tangents[0] = temp;
-        
+
         temp[0] = (d0[3] * d1[0] - d0[0] * d1[3]);
         temp[1] = (d0[3] * d1[1] - d0[1] * d1[3]);
         temp[2] = (d0[3] * d1[2] - d0[2] * d1[3]);
@@ -1287,7 +1287,7 @@ static void	R_DuplicateMirroredVertexes( srfTriangles_t *tri ) {
 		vert = &tverts[i];
 		if ( vert->polarityUsed[0] && vert->polarityUsed[1] ) {
 			vert->negativeRemap = totalVerts;
-			totalVerts++;	
+			totalVerts++;
 		}
 	}
 
@@ -1324,7 +1324,7 @@ static void	R_DuplicateMirroredVertexes( srfTriangles_t *tri ) {
 	tri->numVerts = totalVerts;
 	// change the indexes
 	for ( i = 0 ; i < tri->numIndexes ; i++ ) {
-		if ( tverts[tri->indexes[i]].negativeRemap && 
+		if ( tverts[tri->indexes[i]].negativeRemap &&
 			R_FaceNegativePolarity( tri, 3*(i/3) ) ) {
 			tri->indexes[i] = tverts[tri->indexes[i]].negativeRemap;
 		}
@@ -1487,7 +1487,7 @@ void R_BuildDominantTris( srfTriangles_t *tri ) {
 			int	i1 = tri->indexes[ind[i+j].faceNum * 3 + 0];
 			int	i2 = tri->indexes[ind[i+j].faceNum * 3 + 1];
 			int	i3 = tri->indexes[ind[i+j].faceNum * 3 + 2];
-			
+
 			a = tri->verts + i1;
 			b = tri->verts + i2;
 			c = tri->verts + i3;
@@ -1544,7 +1544,7 @@ void R_BuildDominantTris( srfTriangles_t *tri ) {
 				len = 0.001f;
 			}
 			dt[vertNum].normalizationScale[0] = ( area > 0 ? 1 : -1 ) / len;	// tangents[0]
-	        
+
 			bitangent[0] = ( d0[3] * d1[0] - d0[0] * d1[3] );
 			bitangent[1] = ( d0[3] * d1[1] - d0[1] * d1[3] );
 			bitangent[2] = ( d0[3] * d1[2] - d0[2] * d1[3] );
@@ -1711,7 +1711,7 @@ void R_DeriveTangents( srfTriangles_t *tri, bool allocFacePlanes ) {
         temp[1] = (d0[1] * d1[4] - d0[4] * d1[1]) * inva;
         temp[2] = (d0[2] * d1[4] - d0[4] * d1[2]) * inva;
 		VectorNormalizeFast2( temp, tangents[0] );
-        
+
         temp[0] = (d0[3] * d1[0] - d0[0] * d1[3]) * inva;
         temp[1] = (d0[3] * d1[1] - d0[1] * d1[3]) * inva;
         temp[2] = (d0[3] * d1[2] - d0[2] * d1[3]) * inva;
@@ -1721,7 +1721,7 @@ void R_DeriveTangents( srfTriangles_t *tri, bool allocFacePlanes ) {
         temp[1] = (d0[1] * d1[4] - d0[4] * d1[1]);
         temp[2] = (d0[2] * d1[4] - d0[4] * d1[2]);
 		VectorNormalizeFast2( temp, tangents[0] );
-        
+
         temp[0] = (d0[3] * d1[0] - d0[0] * d1[3]);
         temp[1] = (d0[3] * d1[1] - d0[1] * d1[3]);
         temp[2] = (d0[3] * d1[2] - d0[2] * d1[3]);

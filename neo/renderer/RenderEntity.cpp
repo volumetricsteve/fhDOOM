@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ shadowMode_t idRenderLightLocal::ShadowMode() const {
 		return shadowMode_t::NoShadows;
 
 	if (parms.noShadows)
-		return shadowMode_t::NoShadows;	
+		return shadowMode_t::NoShadows;
 
 	if (parms.shadowMode != shadowMode_t::Default)
 		return parms.shadowMode;
@@ -175,7 +175,7 @@ float idRenderLightLocal::ShadowPolygonOffsetBias() const {
 #define max(a,b) ((a)>(b)?(a):(b))
 #endif
 
-float idRenderLightLocal::GetMaximumCenterToEdgeDistance() const {	
+float idRenderLightLocal::GetMaximumCenterToEdgeDistance() const {
 	const idVec3 halfSize = parms.lightRadius * 0.5;
 
 	const float l1 = (-halfSize - parms.lightCenter).Length();

@@ -19,7 +19,7 @@ idModelExport::idModelExport() {
 idModelExport::Shutdown
 ====================
 */
-void idModelExport::Shutdown(void) { 
+void idModelExport::Shutdown(void) {
   initialized = false;
 }
 

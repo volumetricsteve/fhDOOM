@@ -114,7 +114,7 @@ bool fhImageData::LoadFile( const char* filename, fhImageData* imageData, ID_TIM
 
 	if (TryLoadFile( filename, "tga", imageData, timestamp, &fhImageData::LoadTGA )){
 		return true;
-	}	
+	}
 
 	return false;
 }
@@ -202,7 +202,7 @@ bool fhImageData::LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 heig
 	Clear();
 
 	const int numBytes = width * height * 4;
-	
+
 	this->format = pixelFormat_t::RGBA;
 	this->numFaces = 1;
 	this->numLevels = 1;
@@ -240,7 +240,7 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 			ok = false;
 			//ok = LoadJPG( name.c_str(), pic, width, height, timestamp );
 		}
-	}	
+	}
 	else if (ext == "dds") {
 		if (toRgba) {
 			common->Warning("Cannot convert compressed data to RGBA");
@@ -289,7 +289,7 @@ bool fhImageData::LoadFile(const char* filename, bool toRgba /* = false */) {
 
 			byte* resampledBuffer = R_ResampleTexture(GetData(), w, h, scaled_width, scaled_height);
 			R_StaticFree(this->data);
-			this->data = resampledBuffer;			
+			this->data = resampledBuffer;
 			this->faces[0].levels[0].width = scaled_width;
 			this->faces[0].levels[0].height = scaled_height;
 			this->faces[0].levels[0].offset = 0;
@@ -322,7 +322,7 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer, bool toRgba) {
 
 	if (toRgba) {
 		//TODO(johl): currently we just assume, that data from dds files can not be
-		//            converted to RGBA. 
+		//            converted to RGBA.
 		return false;
 	}
 
@@ -427,14 +427,14 @@ bool fhImageData::LoadDDS(fhStaticBuffer<byte>& buffer, bool toRgba) {
 		if (missingFace) {
 			common->Warning( "not a valid cube map, face '%s' is missing", missingFace );
 			return false;
-		}	
+		}
 
 		this->numFaces = 6;
-	} 
+	}
 	else {
 		this->numFaces = 1;
 	}
-	
+
 	this->numLevels = header->dwMipMapCount;
 
 	byte *imagedata = this->data + sizeof(ddsFileHeader_t) + 4;
@@ -476,7 +476,7 @@ bool fhImageData::LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba) {
 		unsigned char	colormap_size;
 		unsigned short	x_origin, y_origin, width, height;
 		unsigned char	pixel_size, attributes;
-	};	
+	};
 
 	if (buffer.Num() < sizeof(TargaHeader)) {
 		return false;
@@ -695,7 +695,7 @@ bool fhImageData::LoadTGA(fhStaticBuffer<byte>& buffer, bool toRgba) {
 	this->numLevels = 1;
 	this->data = rgba.Release();
 	this->format = pixelFormat_t::RGBA;
-	
+
 	return true;
 }
 
@@ -779,7 +779,7 @@ bool fhImageData::LoadFileIntoBuffer(const char* filename, fhStaticBuffer<byte>&
 bool fhImageData::LoadCubeMap( const fhImageData sides[6], const char* name ) {
 	Clear();
 	strncpy( this->name, name, MAX_IMAGE_NAME );
-	
+
 	int	size = 0;
 	int bytesPerSide = 0;
 	ID_TIME_T timestamp = 0;

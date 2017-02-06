@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ If you have questions concerning this license or the applicable additional terms
 
 /*
 *****************************************************************************
-* BOEntity	
+* BOEntity
 ****************************************************************************
 */
 BOEntity::BOEntity(idGameBustOutWindow* _game) {
@@ -163,7 +163,7 @@ BOEntity::Update
 ======================
 */
 void BOEntity::Update( float timeslice, int guiTime ) {
-	
+
 	if ( !visible ) {
 		return;
 	}
@@ -1170,7 +1170,7 @@ void idGameBustOutWindow::UpdateBall( void ) {
 			if ( ball->velocity.y > 0 ) {
 				idVec2	paddleVec( paddleVelocity*2, 0 );
 				float	centerX;
-				
+
 				if ( bigPaddleTime > gui->GetTime() ) {
 					centerX = paddle->x + 80.f;
 				} else {

@@ -2,10 +2,10 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ PROBLEM: compressed textures may break the zero clamp rule!
 */
 
 static bool FormatIsDXT( int internalFormat ) {
-	if ( internalFormat < GL_COMPRESSED_RGB_S3TC_DXT1_EXT 
+	if ( internalFormat < GL_COMPRESSED_RGB_S3TC_DXT1_EXT
 	|| internalFormat > GL_COMPRESSED_RGBA_S3TC_DXT5_EXT ) {
 		return false;
 	}
@@ -118,7 +118,7 @@ SetImageFilterAndRepeat
 ==================
 */
 void idImage::SetImageFilterAndRepeat() {
-	
+
 	auto swizzle = textureSwizzle_t::None;
 	/*
 	if (pixelFormat == pixelFormat_t::DXT5_RxGB) {
@@ -216,8 +216,8 @@ There is no way to specify explicit mip map levels
 
 ================
 */
-void idImage::GenerateImage( const byte *pic, int width, int height, 
-					   textureFilter_t filterParm, bool allowDownSizeParm, 
+void idImage::GenerateImage( const byte *pic, int width, int height,
+					   textureFilter_t filterParm, bool allowDownSizeParm,
 					   textureRepeat_t repeatParm, textureDepth_t depthParm ) {
 
 	PurgeImage();
@@ -227,7 +227,7 @@ void idImage::GenerateImage( const byte *pic, int width, int height,
 	repeat = repeatParm;
 	depth = depthParm;
 
-	// this will copy the data into an fhImageData object. 
+	// this will copy the data into an fhImageData object.
 	// This copy is a bit unfortunate, but it should only happen for small build-in images
 	// that are generated once at game startup via generate function.
 	//TODO(johl): provide a way to generate images from RGBA data directly to eliminate
@@ -339,11 +339,11 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 
 	// select proper internal format before we resample
 	hasAlpha = false;
-	isMonochrome = false;	
+	isMonochrome = false;
 
 	uploadHeight = imageData.GetHeight();
 	uploadWidth = imageData.GetWidth();
-	
+
 
 
 	//FIXME(johl): do we really need this?
@@ -368,9 +368,9 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 	}
 
 	// generate the texture number
-	glGenTextures( 1, &texnum );	
+	glGenTextures( 1, &texnum );
 
-	const bool compressed = IsCompressed( imageData.GetPixelFormat() );	
+	const bool compressed = IsCompressed( imageData.GetPixelFormat() );
 	GLenum externalFormat = GL_INVALID_ENUM;
 	if (!compressed) {
 		externalFormat = SelectExternalFormat( imageData.GetPixelFormat() );
@@ -385,7 +385,7 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 				const uint32 width = imageData.GetWidth( level );
 				const uint32 height = imageData.GetHeight( level );
 				const uint32 size = imageData.GetSize( level );
-				const GLvoid* data = imageData.GetData( face, level );								
+				const GLvoid* data = imageData.GetData( face, level );
 
 				if (compressed) {
 					glCompressedTextureImage2DEXT( texnum, target, level, internalFormat, width, height, 0, size, data );
@@ -511,7 +511,7 @@ void idImage::WritePrecompressedImage() {
 		case GL_COLOR_INDEX8_EXT:
 		case GL_COLOR_INDEX:
 			// this will not work with dds viewers but we need it in this format to save disk
-			// load speed ( i.e. size ) 
+			// load speed ( i.e. size )
 			altInternalFormat = GL_COLOR_INDEX;
 			bitSize = 24;
 		break;
@@ -901,8 +901,8 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
     } else if ( ( header->ddspf.dwFlags & DDSF_RGB ) && header->ddspf.dwRGBBitCount == 32 ) {
         externalFormat = GL_BGRA_EXT;
 		internalFormat = GL_RGBA8;
-    } else if ( ( header->ddspf.dwFlags & DDSF_RGB ) && header->ddspf.dwRGBBitCount == 24 ) {		
-		if ( header->ddspf.dwFlags & DDSF_ID_INDEXCOLOR ) { 
+    } else if ( ( header->ddspf.dwFlags & DDSF_RGB ) && header->ddspf.dwRGBBitCount == 24 ) {
+		if ( header->ddspf.dwFlags & DDSF_ID_INDEXCOLOR ) {
 			assert( false && "not supported" );
 			externalFormat = GL_COLOR_INDEX;
 			internalFormat = GL_COLOR_INDEX8_EXT;
@@ -958,7 +958,7 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 			if ( FormatIsDXT( internalFormat ) ) {
 				if(glConfig.extDirectStateAccessAvailable) {
 					glCompressedTextureImage2DEXT( texnum, GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, size, imagedata );
-				} 
+				}
 				else {
 					glCompressedTexImage2DARB( GL_TEXTURE_2D, i - skipMip, internalFormat, uw, uh, 0, size, imagedata );
 				}
@@ -1032,15 +1032,15 @@ void	idImage::ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd ) 
 		MakeDefault();
 		return;
 	}
-			
+
 	this->timestamp = imgData.GetTimeStamp();
 
 	GenerateImage(imgData);
-			
+
 	this->precompressedFile = false;
 
 	// write out the precompressed version of this file if needed
-	WritePrecompressedImage();	
+	WritePrecompressedImage();
 }
 
 //=========================================================================================================
@@ -1110,12 +1110,12 @@ void idImage::Bind(int textureUnit) {
 
 	// bump our statistic counters
 	frameUsed = backEnd.frameCount;
-	bindCount++;	
+	bindCount++;
 
 	if(textureUnit == -1) {
 		textureUnit = backEnd.glState.currenttmu;
 	}
-	
+
 	tmu_t *tmu = &backEnd.glState.tmu[textureUnit];
 
 	if(tmu->currentTexture != texnum) {
@@ -1201,9 +1201,9 @@ CopyDepthbuffer
 This should just be part of copyFramebuffer once we have a proper image type field
 ====================
 */
-void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {		
+void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
 
-	glReadBuffer( GL_BACK );	
+	glReadBuffer( GL_BACK );
 
 	if (uploadWidth != imageWidth || uploadHeight != imageHeight || internalFormat != GL_DEPTH_COMPONENT) {
 
@@ -1235,8 +1235,8 @@ void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
 	backEnd.c_copyFrameBuffer++;
 }
 
-void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {	
-	
+void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
+
 	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight() || internalFormat != GL_DEPTH_COMPONENT) {
 
 		uploadWidth = framebuffer->GetWidth();
@@ -1262,7 +1262,7 @@ void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
 }
 
 void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
-	
+
 	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight() || internalFormat != GL_RGB) {
 
 		uploadWidth = framebuffer->GetWidth();
@@ -1396,7 +1396,7 @@ void idImage::UploadScratch( int textureUnit, const byte *data, int cols, int ro
 
 
 		filter = TF_LINEAR;
-		repeat = TR_REPEAT;		
+		repeat = TR_REPEAT;
 	}
 
 	SetImageFilterAndRepeat();
@@ -1564,7 +1564,7 @@ void idImage::Print() const {
 		common->Printf( "<BAD REPEAT:%i>", repeat );
 		break;
 	}
-	
+
 	common->Printf( "%4ik ", StorageSize() / 1024 );
 
 	common->Printf( " %s\n", imgName.c_str() );

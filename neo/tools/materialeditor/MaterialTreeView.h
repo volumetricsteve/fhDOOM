@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ public:
 
 	void			InitializeMaterialList(bool includeFile = true, const char* filename = NULL);
 	void			BuildMaterialList(bool includeFile = true, const char* filename = NULL);
-	
+
 	//Material Interface
 	virtual void	MV_OnMaterialChange(MaterialDoc* pMaterial);
 	virtual void	MV_OnMaterialApply(MaterialDoc* pMaterial);
@@ -59,7 +59,7 @@ public:
 	virtual void	MV_OnMaterialDelete(MaterialDoc* pMaterial);
 	virtual void	MV_OnMaterialNameChanged(MaterialDoc* pMaterial, const char* oldName);
 	virtual void	MV_OnFileReload(const char* filename);
-	
+
 	bool			CanCopy();
 	bool			CanPaste();
 	bool			CanCut();
@@ -75,7 +75,7 @@ public:
 	void			DeleteFolder(HTREEITEM item, bool addUndo = true);
 	HTREEITEM		AddFolder(const char* name, HTREEITEM parent);
 	void			RenameFolder(HTREEITEM item, const char* name);
-	
+
 
 protected:
 	MaterialTreeView();
@@ -128,7 +128,7 @@ protected:
 	afx_msg LRESULT OnRenameMaterialComplete(WPARAM wParam, LPARAM lParam);
 
 	DECLARE_MESSAGE_MAP()
-	
+
 
 	//Utility methods
 	void			RenameMaterial(HTREEITEM item, const char* originalName);
@@ -138,7 +138,7 @@ protected:
 	void			AddStrList(const char *root, idStrList *list, bool includeFile);
 	void			PopupMenu(CPoint* pt);
 	void			SetItemImage(HTREEITEM item, bool mod, bool apply, bool children);
-	
+
 
 	//Methods for working with the quicktree
 	void			CleanLookupTrees(HTREEITEM item);

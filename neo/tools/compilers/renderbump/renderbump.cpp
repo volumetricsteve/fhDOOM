@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ typedef struct {
 	float	traceDist;
 	srfTriangles_t	*mesh;			// high poly mesh
 	idRenderModel	*highModel;
-	triHash_t	*hash;	
+	triHash_t	*hash;
 } renderBump_t;
 
 static float traceFraction;
@@ -404,7 +404,7 @@ Returns the distance from the point to the intersection, or DIST_NO_INTERSECTION
 =================
 */
 #define	DIST_NO_INTERSECTION	-999999999.0f
-static float TraceToMeshFace( const srfTriangles_t *highMesh, int faceNum, 
+static float TraceToMeshFace( const srfTriangles_t *highMesh, int faceNum,
 							 float minDist, float maxDist,
 							const idVec3 &point, const idVec3 &normal, idVec3 &sampledNormal,
 							byte sampledColor[4] ) {
@@ -506,14 +506,14 @@ static float TraceToMeshFace( const srfTriangles_t *highMesh, int faceNum,
 ================
 SampleHighMesh
 
-Find the best surface normal in the high poly mesh 
+Find the best surface normal in the high poly mesh
 for a ray coming from the surface of the low poly mesh
 
 Returns false if the trace doesn't hit anything
 ================
 */
 static bool SampleHighMesh( const renderBump_t *rb,
-							const idVec3 &point, const idVec3 &direction, idVec3 &sampledNormal, 
+							const idVec3 &point, const idVec3 &direction, idVec3 &sampledNormal,
 							byte sampledColor[4] ) {
 	idVec3	p;
 	binLink_t	*bl;
@@ -573,7 +573,7 @@ static bool SampleHighMesh( const renderBump_t *rb,
 			link = &rb->hash->linkBlocks[ linkNum / MAX_LINKS_PER_BLOCK ][ linkNum % MAX_LINKS_PER_BLOCK ];
 
 			faceNum = link->faceNum;
-			dist = TraceToMeshFace( rb->mesh, faceNum, 
+			dist = TraceToMeshFace( rb->mesh, faceNum,
 								 bestDist, maxDist, point, normal, sampledNormal, sampledColor );
 			if ( dist == DIST_NO_INTERSECTION ) {
 				continue;
@@ -607,7 +607,7 @@ static float TriTextureArea( const float a[2], const float b[2], const float c[2
 	d2[0] = c[0] - a[0];
 	d2[1] = c[1] - a[1];
 	d2[2] = 0;
-	
+
 	cross = d1.Cross( d2 );
 	area = 0.5 * cross.Length();
 
@@ -683,7 +683,7 @@ static void RasterizeTriangle( const srfTriangles_t *lowMesh, const idVec3 *lowM
 	// calculate edge vectors
 	for ( i = 0 ; i < 3 ; i++ ) {
 		float	*v1, *v2;
-		
+
 		v1 = verts[i];
 		v2 = verts[(i+1)%3];
 
@@ -931,7 +931,7 @@ static void RenderBumpTriangles( srfTriangles_t *lowMesh, renderBump_t *rb ) {
 
   GL_ProjectionMatrix.LoadIdentity();
   GL_ProjectionMatrix.Ortho(0, 1, 1, 0, -1, 1);
-	
+
 	glDisable( GL_BLEND );
 
   GL_ModelViewMatrix.LoadIdentity();
@@ -1208,7 +1208,7 @@ void RenderBump_f( const idCmdArgs &args ) {
 		// parse the renderbump parameters for this surface
 		cmdLine = ms->shader->GetRenderBump();
 
-		common->Printf( "surface %i, shader %s\nrenderBump = %s ", i, 
+		common->Printf( "surface %i, shader %s\nrenderBump = %s ", i,
 			ms->shader->GetName(), cmdLine );
 
 		if ( !ms->geometry ) {
@@ -1283,8 +1283,8 @@ void RenderBump_f( const idCmdArgs &args ) {
 				continue;
 			}
 			// all the other parameters must match, or it is an error
-			if ( idStr::Icmp( rb->highName, opt.highName) || rb->width != opt.width || 
-				rb->height != opt.height || rb->antiAlias != opt.antiAlias || 
+			if ( idStr::Icmp( rb->highName, opt.highName) || rb->width != opt.width ||
+				rb->height != opt.height || rb->antiAlias != opt.antiAlias ||
 				rb->traceFrac != opt.traceFrac ) {
 				common->Error( "mismatched renderbump parameters on image %s", rb->outputName );
 				continue;
@@ -1421,10 +1421,10 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 
 	glEnable( GL_CULL_FACE );
 	glCullFace( GL_FRONT );
-	glDisable( GL_STENCIL_TEST );	
-	glDisable( GL_SCISSOR_TEST );	
-	glDisable( GL_ALPHA_TEST );	
-	glDisable( GL_BLEND );	
+	glDisable( GL_STENCIL_TEST );
+	glDisable( GL_SCISSOR_TEST );
+	glDisable( GL_ALPHA_TEST );
+	glDisable( GL_BLEND );
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_TEXTURE_2D );
 	glDepthMask( GL_TRUE );
@@ -1546,7 +1546,7 @@ void RenderBumpFlat_f( const idCmdArgs &args ) {
 			glEnd();
 			glFlush();
 			GLimp_SwapBuffers();
-			glReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer ); 
+			glReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
 
 			if ( colorPass ) {
 				// add to the sum buffer

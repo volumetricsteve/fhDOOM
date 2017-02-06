@@ -48,7 +48,7 @@ static void R_CreateWobbleskyTexMatrix( const drawSurf_t *surf, float time, floa
 	wobbleSpeed = wobbleSpeed * 2 * idMath::PI / 60;
 	rotateSpeed = rotateSpeed * 2 * idMath::PI / 60;
 
-	// very ad-hoc "wobble" transform  
+	// very ad-hoc "wobble" transform
 	float	a = time * wobbleSpeed;
 	float	s = sin( a ) * sin( wobbleDegrees );
 	float	c = cos( a ) * sin( wobbleDegrees );
@@ -93,7 +93,7 @@ static void R_CreateWobbleskyTexMatrix( const drawSurf_t *surf, float time, floa
 
 
 static bool RB_GLSL_CreateShaderStage( const drawSurf_t* surf, const shaderStage_t* pStage, drawStage_t& drawStage ) {
-	// set the color  
+	// set the color
 	float color[4];
 	color[0] = surf->shaderRegisters[pStage->color.registers[0]];
 	color[1] = surf->shaderRegisters[pStage->color.registers[1]];
@@ -149,7 +149,7 @@ static bool RB_GLSL_CreateShaderStage( const drawSurf_t* surf, const shaderStage
 
 		// see if there is also a bump map specified
 		if (const shaderStage_t *bumpStage = surf->material->GetBumpStage()) {
-			//RB_GetShaderTextureMatrix( surf->shaderRegisters, &bumpStage->texture, drawStage.bumpMatrix );			
+			//RB_GetShaderTextureMatrix( surf->shaderRegisters, &bumpStage->texture, drawStage.bumpMatrix );
 			//drawStage.hasBumpMatrix = true;
 			drawStage.textures[2] = bumpStage->texture.image;
 		}
@@ -164,7 +164,7 @@ static bool RB_GLSL_CreateShaderStage( const drawSurf_t* surf, const shaderStage
 	}
 	else {
 
-		//prefer depth blend settings from material. If material does not define a 
+		//prefer depth blend settings from material. If material does not define a
 		// depth blend mode, look at the geometry for depth blend settings (usually
 		// set by particle systems for soft particles)
 

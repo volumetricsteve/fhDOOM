@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ keyname_t keynames[] =
 	{"CAPSLOCK",		K_CAPSLOCK,			"#str_07034"},
 	{"SCROLL",			K_SCROLL,			"#str_07035"},
 	{"PRINTSCREEN",		K_PRINT_SCR,		"#str_07179"},
-	
+
 	{"F1", 				K_F1, 				"#str_07036"},
 	{"F2", 				K_F2, 				"#str_07037"},
 	{"F3", 				K_F3, 				"#str_07038"},
@@ -172,7 +172,7 @@ keyname_t keynames[] =
 	{"KP_EQUALS",		K_KP_EQUALS,		"#str_07127"},
 
 	{"PAUSE",			K_PAUSE,			"#str_07128"},
-	
+
 	{"SEMICOLON",		';',				"#str_07129"},	// because a raw semicolon separates commands
 	{"APOSTROPHE",		'\'',				"#str_07130"},	// because a raw apostrophe messes with parsing
 
@@ -290,7 +290,7 @@ to be configured even if they don't have defined names.
 */
 int idKeyInput::StringToKeyNum( const char *str ) {
 	keyname_t	*kn;
-	
+
 	if ( !str || !str[0] ) {
 		return -1;
 	}
@@ -301,7 +301,7 @@ int idKeyInput::StringToKeyNum( const char *str ) {
 	// check for hex code
 	if ( str[0] == '0' && str[1] == 'x' && strlen( str ) == 4 ) {
 		int		n1, n2;
-		
+
 		n1 = str[2];
 		if ( n1 >= '0' && n1 <= '9' ) {
 			n1 -= '0';
@@ -342,7 +342,7 @@ given keynum.
 ===================
 */
 const char *idKeyInput::KeyNumToString( int keynum, bool localized ) {
-	keyname_t	*kn;	
+	keyname_t	*kn;
 	static	char	tinystr[5];
 	int			i, j;
 
@@ -368,11 +368,11 @@ const char *idKeyInput::KeyNumToString( int keynum, bool localized ) {
 				return kn->name;
 			} else {
 #if MACOS_X
-				
+
 				switch ( kn->keynum ) {
-					case K_ENTER:		
-					case K_BACKSPACE:	
-					case K_ALT:			
+					case K_ENTER:
+					case K_BACKSPACE:
+					case K_ALT:
 					case K_INS:
 					case K_PRINT_SCR:
 						return OSX_GetLocalizedString( kn->name );
@@ -466,7 +466,7 @@ void Key_Unbind_f( const idCmdArgs &args ) {
 		common->Printf( "unbind <key> : remove commands from a key\n" );
 		return;
 	}
-	
+
 	b = idKeyInput::StringToKeyNum( args.Argv(1) );
 	if ( b == -1 ) {
 		// If it wasn't a key, it could be a command
@@ -485,7 +485,7 @@ Key_Unbindall_f
 */
 void Key_Unbindall_f( const idCmdArgs &args ) {
 	int		i;
-	
+
 	for ( i = 0; i < MAX_KEYS; i++ ) {
 		idKeyInput::SetBinding( i, "" );
 	}
@@ -499,7 +499,7 @@ Key_Bind_f
 void Key_Bind_f( const idCmdArgs &args ) {
 	int			i, c, b;
 	char		cmd[MAX_STRING_CHARS];
-	
+
 	c = args.Argc();
 
 	if ( c < 2 ) {
@@ -521,7 +521,7 @@ void Key_Bind_f( const idCmdArgs &args ) {
 		}
 		return;
 	}
-	
+
 	// copy the rest of the command line
 	cmd[0] = 0;		// start out with a null string
 	for ( i = 2; i < c; i++ ) {
@@ -614,7 +614,7 @@ const char *idKeyInput::KeysFromBinding( const char *bind ) {
 			if ( keys[i].binding.Icmp( bind ) == 0 ) {
 				if ( keyName[0] != '\0' ) {
 					idStr::Append( keyName, sizeof( keyName ), common->GetLanguageDict()->GetString( "#str_07183" ) );
-				} 
+				}
 				idStr::Append( keyName, sizeof( keyName ), KeyNumToString( i, true ) );
 			}
 		}

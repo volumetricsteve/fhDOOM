@@ -64,17 +64,17 @@ private:
 	int length;
 };
 
-inline fhStrRef::fhStrRef() 
+inline fhStrRef::fhStrRef()
 : s( nullptr )
 , length( 0 ) {
 }
 
-inline fhStrRef::fhStrRef( const char* s ) 
+inline fhStrRef::fhStrRef( const char* s )
 : s( s )
 , length( !s ? 0 : static_cast<int>(strlen( s )) ) {
 }
 
-inline fhStrRef::fhStrRef( const char* s, int size ) 
+inline fhStrRef::fhStrRef( const char* s, int size )
 : s( s )
 , length( size ) {
 //	assert( (!s && !length) || (!!s && length <= (int)strlen( s )) );

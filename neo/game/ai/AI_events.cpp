@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -249,7 +249,7 @@ CLASS_DECLARATION( idActor, idAI )
 	EVENT( AI_SetMoveType,						idAI::Event_SetMoveType )
 	EVENT( AI_SaveMove,							idAI::Event_SaveMove )
 	EVENT( AI_RestoreMove,						idAI::Event_RestoreMove )
-	EVENT( AI_AllowMovement,					idAI::Event_AllowMovement )	
+	EVENT( AI_AllowMovement,					idAI::Event_AllowMovement )
 	EVENT( AI_JumpFrame,						idAI::Event_JumpFrame )
 	EVENT( AI_EnableClip,						idAI::Event_EnableClip )
 	EVENT( AI_DisableClip,						idAI::Event_DisableClip )
@@ -452,7 +452,7 @@ void idAI::Event_ClosestReachableEnemyOfEntity( idEntity *team_mate ) {
 	int		areaNum;
 	int		enemyAreaNum;
 	aasPath_t path;
-	
+
 	if ( !team_mate->IsType( idActor::Type ) ) {
 		gameLocal.Error( "Entity '%s' is not an AI character or player", team_mate->GetName() );
 	}
@@ -659,7 +659,7 @@ idAI::Event_AttackMelee
 */
 void idAI::Event_AttackMelee( const char *meleeDefName ) {
 	bool hit;
-	
+
 	hit = AttackMelee( meleeDefName );
 	idThread::ReturnInt( hit );
 }
@@ -746,7 +746,7 @@ void idAI::Event_MeleeAttackToJoint( const char *jointname, const char *meleeDef
 	animator.GetJointTransform( joint, gameLocal.time, end, axis );
 	end = physicsObj.GetOrigin() + ( end + modelOffset ) * viewAxis * physicsObj.GetGravityAxis();
 	start = GetEyePosition();
-	
+
 	if ( ai_debugMove.GetBool() ) {
 		gameRenderWorld->DebugLine( colorYellow, start, end, gameLocal.msec );
 	}
@@ -1248,7 +1248,7 @@ void idAI::Event_EntityInAttackCone( idEntity *ent ) {
 	idVec3	delta;
 	float	yaw;
 	float	relYaw;
-	
+
 	if ( !ent ) {
 		idThread::ReturnInt( false );
 		return;
@@ -1449,7 +1449,7 @@ void idAI::Event_CanHitEnemy( void ) {
 	hit = gameLocal.GetTraceEntity( tr );
 	if ( tr.fraction >= 1.0f || ( hit == enemyEnt ) ) {
 		lastHitCheckResult = true;
-	} else if ( ( tr.fraction < 1.0f ) && ( hit->IsType( idAI::Type ) ) && 
+	} else if ( ( tr.fraction < 1.0f ) && ( hit->IsType( idAI::Type ) ) &&
 		( static_cast<idAI *>( hit )->team != team ) ) {
 		lastHitCheckResult = true;
 	} else {
@@ -1689,7 +1689,7 @@ void idAI::Event_TestAnimMoveTowardEnemy( const char *animname ) {
 	float			yaw;
 	idVec3			delta;
 	idActor			*enemyEnt;
-	
+
 	enemyEnt = enemy.GetEntity();
 	if ( !enemyEnt ) {
 		idThread::ReturnInt( false );
@@ -2428,7 +2428,7 @@ idAI::Event_LocateEnemy
 void idAI::Event_LocateEnemy( void ) {
 	idActor *enemyEnt;
 	int areaNum;
-	
+
 	enemyEnt = enemy.GetEntity();
 	if ( !enemyEnt ) {
 		return;
@@ -2447,7 +2447,7 @@ idAI::Event_KickObstacles
 void idAI::Event_KickObstacles( idEntity *kickEnt, float force ) {
 	idVec3 dir;
 	idEntity *obEnt;
-	
+
 	if ( kickEnt ) {
 		obEnt = kickEnt;
 	} else {

@@ -17,7 +17,7 @@ REGISTER_MAIN_STARTREGISTER_MAIN(curl)
 REGISTER_MAIN_END
 /* ========================================================================= */
 
-int main(){	
+int main(){
 	::MaxApplZone();
 	for (int i = 1; i <= 10; i++)
 		::MoreMasters();

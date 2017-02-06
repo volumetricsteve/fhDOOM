@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ typedef struct mtrParsingData_s {
 
 static void replaceBuildinVertexShader(const idStr& name, glslShaderStage_t& glslShaderStage){
   if(!name.Icmp("heathaze.vfp"))
-    strcpy(glslShaderStage.vertexShaderName, "heathaze.vp"); 
+    strcpy(glslShaderStage.vertexShaderName, "heathaze.vp");
   else if (!name.Icmp("heathazeWithMask.vfp"))
     strcpy(glslShaderStage.vertexShaderName, "heathazeWithMask.vp");
   else if (!name.Icmp("heathazeWithMaskAndVertex.vfp"))
@@ -1114,7 +1114,7 @@ void idMaterial::MultiplyTextureMatrix( textureStage_t *ts, int registers[2][3] 
 	ts->matrix[0][1] = EmitOp(
 							EmitOp( old[0][0], registers[0][1], OP_TYPE_MULTIPLY ),
 							EmitOp( old[0][1], registers[1][1], OP_TYPE_MULTIPLY ), OP_TYPE_ADD );
-	ts->matrix[0][2] = EmitOp( 
+	ts->matrix[0][2] = EmitOp(
 							EmitOp(
 								EmitOp( old[0][0], registers[0][2], OP_TYPE_MULTIPLY ),
 								EmitOp( old[0][1], registers[1][2], OP_TYPE_MULTIPLY ), OP_TYPE_ADD ),
@@ -1126,7 +1126,7 @@ void idMaterial::MultiplyTextureMatrix( textureStage_t *ts, int registers[2][3] 
 	ts->matrix[1][1] = EmitOp(
 							EmitOp( old[1][0], registers[0][1], OP_TYPE_MULTIPLY ),
 							EmitOp( old[1][1], registers[1][1], OP_TYPE_MULTIPLY ), OP_TYPE_ADD );
-	ts->matrix[1][2] = EmitOp( 
+	ts->matrix[1][2] = EmitOp(
 							EmitOp(
 								EmitOp( old[1][0], registers[0][2], OP_TYPE_MULTIPLY ),
 								EmitOp( old[1][1], registers[1][2], OP_TYPE_MULTIPLY ), OP_TYPE_ADD ),
@@ -1160,7 +1160,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	bool				allowPicmip;
 	char				imageName[MAX_IMAGE_NAME];
 	int					a, b;
-	int					matrix[2][3];	
+	int					matrix[2][3];
 	glslShaderStage_t	glslStage;
 
 	if ( numStages >= MAX_SHADER_STAGES ) {
@@ -1171,10 +1171,10 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	tf = TF_DEFAULT;
 	trp = trpDefault;
 	td = TD_DEFAULT;
-	allowPicmip = true;	
+	allowPicmip = true;
 
 	imageName[0] = 0;
-	
+
 	memset( &glslStage, 0, sizeof(glslStage) );
 
 	ss = &pd->parseStages[numStages];
@@ -1292,16 +1292,16 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 
 		if ( !token.Icmp( "cubeMap" ) ) {
 			//cubemaps are assembled by an image program,
-			//process 'cubeMap <filename>' as 'map cubeMap(<filename>)'			
+			//process 'cubeMap <filename>' as 'map cubeMap(<filename>)'
 			char str[MAX_IMAGE_NAME];
-			R_ParsePastImageProgram( src, str );			
-			idStr::snPrintf( imageName, MAX_IMAGE_NAME, "cubeMap(%s)", str ); 
+			R_ParsePastImageProgram( src, str );
+			idStr::snPrintf( imageName, MAX_IMAGE_NAME, "cubeMap(%s)", str );
 			continue;
 		}
 
 		if ( !token.Icmp( "cameraCubeMap" ) ) {
 			//cubemaps are assembled by an image program,
-			//process 'cameraCubeMap <filename>' as 'map cameraCubeMap(<filename>)'			
+			//process 'cameraCubeMap <filename>' as 'map cameraCubeMap(<filename>)'
 			char str[MAX_IMAGE_NAME];
 			R_ParsePastImageProgram( src, str );
 			idStr::snPrintf( imageName, MAX_IMAGE_NAME, "cameraCubeMap(%s)", str );
@@ -1476,13 +1476,13 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			// this subtracts 0.5, then rotates, then adds 0.5
 			matrix[0][0] = cosReg;
 			matrix[0][1] = EmitOp( GetExpressionConstant( 0 ), sinReg, OP_TYPE_SUBTRACT );
-			matrix[0][2] = EmitOp( EmitOp( EmitOp( GetExpressionConstant( -0.5 ), cosReg, OP_TYPE_MULTIPLY ), 
+			matrix[0][2] = EmitOp( EmitOp( EmitOp( GetExpressionConstant( -0.5 ), cosReg, OP_TYPE_MULTIPLY ),
 										EmitOp( GetExpressionConstant( 0.5 ), sinReg, OP_TYPE_MULTIPLY ), OP_TYPE_ADD ),
 										GetExpressionConstant( 0.5 ), OP_TYPE_ADD );
 
 			matrix[1][0] = sinReg;
 			matrix[1][1] = cosReg;
-			matrix[1][2] = EmitOp( EmitOp( EmitOp( GetExpressionConstant( -0.5 ), sinReg, OP_TYPE_MULTIPLY ), 
+			matrix[1][2] = EmitOp( EmitOp( EmitOp( GetExpressionConstant( -0.5 ), sinReg, OP_TYPE_MULTIPLY ),
 										EmitOp( GetExpressionConstant( -0.5 ), cosReg, OP_TYPE_MULTIPLY ), OP_TYPE_ADD ),
 										GetExpressionConstant( 0.5 ), OP_TYPE_ADD );
 
@@ -1494,33 +1494,33 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if ( !token.Icmp( "maskRed" ) ) {
 			ss->drawStateBits |= GLS_REDMASK;
 			continue;
-		}		
+		}
 		if ( !token.Icmp( "maskGreen" ) ) {
 			ss->drawStateBits |= GLS_GREENMASK;
 			continue;
-		}		
+		}
 		if ( !token.Icmp( "maskBlue" ) ) {
 			ss->drawStateBits |= GLS_BLUEMASK;
 			continue;
-		}		
+		}
 		if ( !token.Icmp( "maskAlpha" ) ) {
 			ss->drawStateBits |= GLS_ALPHAMASK;
 			continue;
-		}		
+		}
 		if ( !token.Icmp( "maskColor" ) ) {
 			ss->drawStateBits |= GLS_COLORMASK;
 			continue;
-		}		
+		}
 		if ( !token.Icmp( "maskDepth" ) ) {
 			ss->drawStateBits |= GLS_DEPTHMASK;
 			continue;
-		}		
+		}
 		if ( !token.Icmp( "alphaTest" ) ) {
 			ss->hasAlphaTest = true;
 			ss->alphaTestRegister = ParseExpression( src );
 			coverage = MC_PERFORATED;
 			continue;
-		}		
+		}
 
 		// shorthand for 2D modulated
 		if ( !token.Icmp( "colored" ) ) {
@@ -1559,12 +1559,12 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			continue;
 		}
 		if ( !token.Icmp( "rgb" ) ) {
-			ss->color.registers[0] = ss->color.registers[1] = 
+			ss->color.registers[0] = ss->color.registers[1] =
 				ss->color.registers[2] = ParseExpression( src );
 			continue;
 		}
 		if ( !token.Icmp( "rgba" ) ) {
-			ss->color.registers[0] = ss->color.registers[1] = 
+			ss->color.registers[0] = ss->color.registers[1] =
 				ss->color.registers[2] = ss->color.registers[3] = ParseExpression( src );
 			continue;
 		}
@@ -1574,7 +1574,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			continue;
 		}
 		if ( !token.Icmp( "program" ) ) {
-			if ( src.ReadTokenOnLine( &token ) ) {				
+			if ( src.ReadTokenOnLine( &token ) ) {
 				replaceBuildinVertexShader( token, glslStage );
 				replaceBuildinFragmentShader( token, glslStage );
 			}
@@ -2271,7 +2271,7 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 
 	// automatically determine coverage if not explicitly set
 	if ( coverage == MC_BAD ) {
-		// automatically set MC_TRANSLUCENT if we don't have any interaction stages and 
+		// automatically set MC_TRANSLUCENT if we don't have any interaction stages and
 		// the first stage is blended and not an alpha test mask or a subview
 		if ( !numStages ) {
 			// non-visible
@@ -2279,7 +2279,7 @@ bool idMaterial::Parse( const char *text, const int textLength ) {
 		} else if ( numStages != numAmbientStages ) {
 			// we have an interaction draw
 			coverage = MC_OPAQUE;
-		} else if ( 
+		} else if (
 			( pd->parseStages[0].drawStateBits & GLS_DSTBLEND_BITS ) != GLS_DSTBLEND_ZERO ||
 			( pd->parseStages[0].drawStateBits & GLS_SRCBLEND_BITS ) == GLS_SRCBLEND_DST_COLOR ||
 			( pd->parseStages[0].drawStateBits & GLS_SRCBLEND_BITS ) == GLS_SRCBLEND_ONE_MINUS_DST_COLOR ||
@@ -2508,7 +2508,7 @@ void idMaterial::EvaluateRegisters( float *registers, const float shaderParms[MA
 		registers[i] = expressionRegisters[i];
 	}
 
-	// copy the local and global parameters	
+	// copy the local and global parameters
 	registers[EXP_REG_PARM0] = shaderParms[0];
 	registers[EXP_REG_PARM1] = shaderParms[1];
 	registers[EXP_REG_PARM2] = shaderParms[2];
@@ -2610,7 +2610,7 @@ texgen_t idMaterial::Texgen() const {
 			}
 		}
 	}
-	
+
 	return TG_EXPLICIT;
 }
 
@@ -2713,7 +2713,7 @@ void idMaterial::CheckForConstantRegisters() {
 		return;
 	}
 
-	// evaluate the registers once, and save them 
+	// evaluate the registers once, and save them
 	constantRegisters = (float *)R_ClearedStaticAlloc( GetNumRegisters() * sizeof( float ) );
 
 	float shaderParms[MAX_ENTITY_SHADER_PARMS];
@@ -2774,7 +2774,7 @@ bool idMaterial::SetDefaultText( void ) {
 	// if there exists an image with the same name
 	if ( 1 ) { //fileSystem->ReadFile( GetName(), NULL ) != -1 ) {
 		char generated[2048];
-		idStr::snPrintf( generated, sizeof( generated ), 
+		idStr::snPrintf( generated, sizeof( generated ),
 						"material %s // IMPLICITLY GENERATED\n"
 						"{\n"
 						"{\n"
@@ -2838,7 +2838,7 @@ bool idMaterial::SurfaceCastsSoftShadow() const {
 
 	if( coverage == MC_PERFORATED ) {
 
-		//WARNING(johl): this is kind of hacky but is necessary to get the 
+		//WARNING(johl): this is kind of hacky but is necessary to get the
 		//               original Doom3 materials to work at a decent perf.
 		//               Decals don't cast a shadow, unfortunately there is no
 		//               flag indicating whether a material is decal or not.

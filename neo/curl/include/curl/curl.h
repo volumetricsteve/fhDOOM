@@ -1,10 +1,10 @@
 #ifndef __CURL_CURL_H
 #define __CURL_CURL_H
 /***************************************************************************
- *                                  _   _ ____  _     
- *  Project                     ___| | | |  _ \| |    
- *                             / __| | | | |_) | |    
- *                            | (__| |_| |  _ <| |___ 
+ *                                  _   _ ____  _
+ *  Project                     ___| | | |  _ \| |
+ *                             / __| | | | |_) | |
+ *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
  * Copyright (C) 1998 - 2004, Daniel Stenberg, <daniel@haxx.se>, et al.
@@ -12,7 +12,7 @@
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
  * are also available at http://curl.haxx.se/docs/copyright.html.
- * 
+ *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
  * furnished to do so, under the terms of the COPYING file.
@@ -61,7 +61,7 @@
 # include <types.h>
 # include <time.h>
 #else
-#if !__MACH__ && __MWERKS__ 
+#if !__MACH__ && __MWERKS__
 # include <types.h>
 #else
 # include <sys/types.h>
@@ -198,7 +198,7 @@ typedef int (*curl_debug_callback)
         char *data,        /* points to the data */
         size_t size,       /* size of the data pointed to */
         void *userptr);    /* whatever the user please */
-  
+
 /* All possible error codes from all sorts of curl functions. Future versions
    may return other values, stay prepared.
 
@@ -272,7 +272,7 @@ typedef enum {
   CURLE_BAD_CONTENT_ENCODING,    /* 61 - Unrecognized transfer encoding */
   CURLE_LDAP_INVALID_URL,        /* 62 - Invalid LDAP URL */
   CURLE_FILESIZE_EXCEEDED,       /* 63 - Maximum file size exceeded */
-  CURLE_FTP_SSL_FAILED,          /* 64 - Requested FTP SSL level failed */ 
+  CURLE_FTP_SSL_FAILED,          /* 64 - Requested FTP SSL level failed */
 
   CURL_LAST /* never use! */
 } CURLcode;
@@ -377,7 +377,7 @@ typedef enum {
 
   /* Name of proxy to use. */
   CINIT(PROXY, OBJECTPOINT, 4),
-  
+
   /* "name:password" to use when fetching. */
   CINIT(USERPWD, OBJECTPOINT, 5),
 
@@ -434,7 +434,7 @@ typedef enum {
   /* If the download receives less than "low speed limit" bytes/second
    * during "low speed time" seconds, the operations is aborted.
    * You could i.e if you have a pretty high speed connection, abort if
-   * it is less than 2000 bytes/sec during 20 seconds.   
+   * it is less than 2000 bytes/sec during 20 seconds.
    */
 
   /* Set the "low speed limit" */
@@ -467,7 +467,7 @@ typedef enum {
   CINIT(SSLCERTPASSWD, OBJECTPOINT, 26),
   /* password for the SSL private key */
   CINIT(SSLKEYPASSWD, OBJECTPOINT, 26),
-  
+
   /* send TYPE parameter? */
   CINIT(CRLF, LONG, 27),
 
@@ -566,14 +566,14 @@ typedef enum {
 
   /* Set if we should verify the peer in ssl handshake, set 1 to verify. */
   CINIT(SSL_VERIFYPEER, LONG, 64),
-  
+
   /* The CApath or CAfile used to validate the peer certificate
      this option is used only if SSL_VERIFYPEER is true */
   CINIT(CAINFO, OBJECTPOINT, 65),
 
   /* 66 = OBSOLETE */
   /* 67 = OBSOLETE */
-  
+
   /* Maximum number of http redirects to follow */
   CINIT(MAXREDIRS, LONG, 68),
 
@@ -642,7 +642,7 @@ typedef enum {
 
   /* Specificly switch on or off the FTP engine's use of the EPSV command. By
      default, that one will always be attempted before the more traditional
-     PASV command. */     
+     PASV command. */
   CINIT(FTP_USE_EPSV, LONG, 85),
 
   /* type of the file keeping your SSL-certificate ("DER", "PEM", "ENG") */
@@ -691,7 +691,7 @@ typedef enum {
      timeouts. This option is useful for multi-threaded applications.
      See libcurl-the-guide for more background information. */
   CINIT(NOSIGNAL, LONG, 99),
-  
+
   /* Provide a CURLShare for mutexing non-ts data */
   CINIT(SHARE, OBJECTPOINT, 100),
 
@@ -702,7 +702,7 @@ typedef enum {
   /* Set the Accept-Encoding string. Use this to tell a server you would like
      the response to be compressed. */
   CINIT(ENCODING, OBJECTPOINT, 102),
- 
+
   /* Set pointer to private data */
   CINIT(PRIVATE, OBJECTPOINT, 103),
 
@@ -716,7 +716,7 @@ typedef enum {
 
   /* Specificly switch on or off the FTP engine's use of the EPRT command ( it
      also disables the LPRT attempt). By default, those ones will always be
-     attempted before the good old traditional PORT command. */     
+     attempted before the good old traditional PORT command. */
   CINIT(FTP_USE_EPRT, LONG, 106),
 
   /* Set this to a bitmask value to enable the particular authentications
@@ -741,7 +741,7 @@ typedef enum {
      Note that setting multiple bits may cause extra network round-trips. */
   CINIT(PROXYAUTH, LONG, 111),
 
-  /* FTP option that changes the timeout, in seconds, associated with 
+  /* FTP option that changes the timeout, in seconds, associated with
      getting a response.  This is different from transfer timeout time and
      essentially places a demand on the FTP server to acknowledge commands
      in a timely manner. */
@@ -803,7 +803,7 @@ typedef enum {
 
   /* three convenient "aliases" that follow the name scheme better */
 #define CURLOPT_WRITEDATA CURLOPT_FILE
-#define CURLOPT_READDATA  CURLOPT_INFILE 
+#define CURLOPT_READDATA  CURLOPT_INFILE
 #define CURLOPT_HEADERDATA CURLOPT_WRITEHEADER
 
 #ifndef CURL_NO_OLDIES /* define this to test if your app builds with all
@@ -829,7 +829,7 @@ enum {
                              for us! */
   CURL_HTTP_VERSION_1_0,  /* please use HTTP 1.0 in the request */
   CURL_HTTP_VERSION_1_1,  /* please use HTTP 1.1 in the request */
-  
+
   CURL_HTTP_VERSION_LAST /* *ILLEGAL* http version */
 };
 
@@ -901,7 +901,7 @@ int curl_formparse(char *, struct curl_httppost **,
 
 typedef enum {
   CFINIT(NOTHING),        /********* the first one is unused ************/
-  
+
   /*  */
   CFINIT(COPYNAME),
   CFINIT(PTRNAME),
@@ -937,7 +937,7 @@ struct curl_forms {
 
 /* use this for multipart formpost building */
 /* Returns code for curl_formadd()
- * 
+ *
  * Returns:
  * CURL_FORMADD_OK             on success
  * CURL_FORMADD_MEMORY         if the FormInfo allocation fails
@@ -1144,7 +1144,7 @@ typedef enum {
   CURLCLOSEPOLICY_LEAST_TRAFFIC,
   CURLCLOSEPOLICY_SLOWEST,
   CURLCLOSEPOLICY_CALLBACK,
- 
+
   CURLCLOSEPOLICY_LAST /* last, never use this */
 } curl_closepolicy;
 
@@ -1166,7 +1166,7 @@ typedef enum {
    *  the locking is just made to change the internal state of the share
    *  itself.
    */
-  CURL_LOCK_DATA_SHARE, 
+  CURL_LOCK_DATA_SHARE,
   CURL_LOCK_DATA_COOKIE,
   CURL_LOCK_DATA_DNS,
   CURL_LOCK_DATA_SSL_SESSION,

@@ -38,7 +38,7 @@ private:
   };
 
   idList<entry_t*> entries;
-  fhTrisBuffer coloredTrisBuffer;  
+  fhTrisBuffer coloredTrisBuffer;
 };
 
 class fhPointBuffer

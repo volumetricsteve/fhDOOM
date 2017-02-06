@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -272,7 +272,7 @@ void CNewTexWnd::OnPaint() {
 		glViewport(0, 0, rectClient.Width(), rectClient.Height());
 		glScissor(0, 0, rectClient.Width(), rectClient.Height());
     GL_ProjectionMatrix.LoadIdentity();
-    GL_ProjectionMatrix.Ortho(0, rectClient.Width(), origin.y - rectClient.Height(), origin.y, -100, 100);    
+    GL_ProjectionMatrix.Ortho(0, rectClient.Width(), origin.y - rectClient.Height(), origin.y, -100, 100);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_BLEND);
@@ -299,7 +299,7 @@ void CNewTexWnd::OnPaint() {
 				// if in use, draw a background
 				glLineWidth(1);
         fhImmediateMode im;
-				im.Color3f(1, 1, 1);				
+				im.Color3f(1, 1, 1);
 				im.Begin(GL_LINE_LOOP);
 				im.Vertex2f(draw.x - 1, draw.y + 1 - labelHeight);
 				im.Vertex2f(draw.x - 1, draw.y - height - 1 - labelHeight);
@@ -338,7 +338,7 @@ void CNewTexWnd::OnPaint() {
 					glLineWidth(1);
 				}
 
-  
+
 				// draw the texture name
 				//globalImages->BindNull();
 				//glColor3f(1, 1, 1);
@@ -357,8 +357,8 @@ void CNewTexWnd::OnPaint() {
 				}
         drawText(name, 0.8f, idVec3(draw.x, draw.y - labelHeight + 2, 0), idVec3(1,1,1), XY);
 				//glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
-	
-			} 
+
+			}
 		}
 
 		g_qeglobals.d_texturewin.m_nTotalHeight = abs(draw.y) + 100;
@@ -435,7 +435,7 @@ BOOL CNewTexWnd::DestroyWindow() {
 /*
  =======================================================================================================================
  =======================================================================================================================
- */						    
+ */
 BOOL CNewTexWnd::Create
 (
 	LPCTSTR			lpszClassName,
@@ -478,7 +478,7 @@ const idMaterial *CNewTexWnd::getMaterialAtPoint(CPoint point) {
 		if (point.x > draw.x && point.x - draw.x < width && my < draw.y &&  draw.y - my < height + labelHeight) {
 			return mat;
 		}
-	
+
 	}
 
 }
@@ -607,7 +607,7 @@ void CNewTexWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				ClientToScreen(&screen);
 				SetCursorPos(screen.x, screen.y);
   			SetScrollPos(SB_VERT, abs(origin.y));
-	
+
 				InvalidateRect(NULL, false);
 				UpdateWindow();
 			}
@@ -619,7 +619,7 @@ void CNewTexWnd::OnMouseMove(UINT nFlags, CPoint point) {
 
 
 void Texture_SetTexture(texdef_t *texdef, brushprimit_texdef_t	*brushprimit_texdef, bool bFitScale, bool bSetSelection) {
-	
+
 	if (texdef->name[0] == '(') {
 		Sys_Status("Can't select an entity texture\n", 0);
 		return;
@@ -636,7 +636,7 @@ void Texture_SetTexture(texdef_t *texdef, brushprimit_texdef_t	*brushprimit_texd
 	}
 
 	g_dlgFind.updateTextures(texdef->name);
-	
+
 	if (!g_dlgFind.isOpen() && bSetSelection) {
 		Select_SetTexture(texdef, brushprimit_texdef, bFitScale);
 	}
@@ -875,7 +875,7 @@ int CNewTexWnd::OnToolHitTest(CPoint point, TOOLINFO * pTI)
 	return -1;
 }
 
-BOOL CNewTexWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt) 
+BOOL CNewTexWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	OnVScroll((zDelta >= 0) ? SB_LINEUP : SB_LINEDOWN, 0, NULL);
 	OnVScroll((zDelta >= 0) ? SB_LINEUP : SB_LINEDOWN, 0, NULL);

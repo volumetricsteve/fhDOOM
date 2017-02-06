@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -196,8 +196,8 @@ void CEntityDlg::OnSize(UINT nType, int cx, int cy)
 	btnSound.SetWindowPos(NULL, rect.right - 4 - crect.Width(), top + 12 + crect.Height(), crect.Width(), crect.Height(), SWP_SHOWWINDOW);
 	btnGui.SetWindowPos(NULL, rect.right - 4 - crect.Width(), top + 16 + crect.Height() * 2, crect.Width(), crect.Height(), SWP_SHOWWINDOW);
 	btnParticle.SetWindowPos(NULL, rect.right - 8 - (crect.Width() * 2), top + 16 + crect.Height() * 2, crect.Width(), crect.Height(), SWP_SHOWWINDOW);
-	btnSkin.SetWindowPos( NULL, rect.right - 8 - ( crect.Width() * 2 ), top + 12 + crect.Height(), crect.Width(), crect.Height(), SWP_SHOWWINDOW ); 
-	btnCurve.SetWindowPos( NULL, rect.right - 8 - ( crect.Width() * 2 ), top + 8, crect.Width(), crect.Height(), SWP_SHOWWINDOW ); 
+	btnSkin.SetWindowPos( NULL, rect.right - 8 - ( crect.Width() * 2 ), top + 12 + crect.Height(), crect.Width(), crect.Height(), SWP_SHOWWINDOW );
+	btnCurve.SetWindowPos( NULL, rect.right - 8 - ( crect.Width() * 2 ), top + 8, crect.Width(), crect.Height(), SWP_SHOWWINDOW );
 
 	//*************************************
 	//animation controls
@@ -474,7 +474,7 @@ void CEntityDlg::DelProp() {
 		for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 			assert(b->owner);
 			b->owner->DeleteKey(key);
-			b->owner->UpdateCurveData();			
+			b->owner->UpdateCurveData();
 		}
 	} else {
 		editEntity->DeleteKey(key);
@@ -527,7 +527,7 @@ BOOL CEntityDlg::PreTranslateMessage(MSG* pMsg)
 		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && editEntity) {
 			DelProp();
 			return TRUE;
-		} 
+		}
 	}
 
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE) {
@@ -564,7 +564,7 @@ BOOL CEntityDlg::PreTranslateMessage(MSG* pMsg)
 			}
 		}
 	}
-	
+
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RIGHT && pMsg->hwnd == slFrameSlider.GetSafeHwnd()) {
 		int pos = slFrameSlider.GetPos() + 1;
 		pos = (pos % slFrameSlider.GetRangeMax());
@@ -614,7 +614,7 @@ void CEntityDlg::AddProp() {
 			if (isName) {
 				b->owner->SetName(Value);
 			} else {
-				if ( ! ( ( isModel || isOrigin ) && ( b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN ) ) ) { 
+				if ( ! ( ( isModel || isOrigin ) && ( b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN ) ) ) {
 					b->owner->SetKeyValue(Key, Value);
 				}
 			}
@@ -624,7 +624,7 @@ void CEntityDlg::AddProp() {
 		if (isName) {
 			editEntity->SetName(Value);
 		} else {
-			if ( ! ( ( isModel || isOrigin ) && ( editEntity->eclass->nShowFlags & ECLASS_WORLDSPAWN ) ) ) { 
+			if ( ! ( ( isModel || isOrigin ) && ( editEntity->eclass->nShowFlags & ECLASS_WORLDSPAWN ) ) ) {
 				editEntity->SetKeyValue(Key, Value);
 			}
 		}
@@ -660,7 +660,7 @@ const char *CEntityDlg::AngleKey() {
 	if (editEntity == NULL) {
 		return "";
 	}
-	
+
 	if (editEntity->eclass->nShowFlags & ECLASS_MOVER) {
 		return "movedir";
 	}
@@ -968,7 +968,7 @@ void CEntityDlg::CreateEntity() {
 		MessageBox("You must have a selected class to create an entity", "info", 0);
 		return;
 	}
-	
+
 	CString str;
 	comboClass.GetLBText(index, str);
 
@@ -1080,7 +1080,7 @@ void CEntityDlg::OnNMReleasedcaptureSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		return;
 	}
-	
+
 	UpdateFromAnimationFrame ();
 
 	*pResult = 0;
@@ -1120,7 +1120,7 @@ void CEntityDlg::OnCbnAnimationChange ()
 
 			editEntity->epairs.Set("anim" , animName.GetBuffer(0));
 			SetKeyValPairs(false/*don't update anims combo box :)*/ );
-			
+
 			//update the slider
 			currentAnimation = gameEdit->ANIM_GetAnimFromEntityDef(editEntity->eclass->name , animName.GetBuffer(0));
 			currentAnimationFrame = 0;
@@ -1137,7 +1137,7 @@ void CEntityDlg::OnCbnAnimationChange ()
 }
 
 void CEntityDlg::OnBnClickedStartAnimation()
-{	
+{
 	if (!editEntity) {
 		return;
 	}
@@ -1155,12 +1155,12 @@ void CEntityDlg::OnTimer(UINT nIDEvent)
 		OnBnClickedStopAnimation ();
 		return;
 	}
-	
+
 	if ( currentAnimation ) {
 		currentAnimationFrame = ( (currentAnimationFrame++) % gameEdit->ANIM_GetNumFrames( currentAnimation ) );
 		editEntity->epairs.SetInt ( "frame" , currentAnimationFrame );
 		slFrameSlider.SetPos ( currentAnimationFrame );
-		UpdateFromAnimationFrame (false/*don't update key/value display*/);		
+		UpdateFromAnimationFrame (false/*don't update key/value display*/);
 
 		Sys_UpdateWindows ( W_CAMERA | W_XY );
 	}
@@ -1184,11 +1184,11 @@ void CEntityDlg::AddCurvePoints() {
 	} else  if ( c > 0 ) {
 		start = editEntity->curve->GetValue( 0 );
 		start.x += 64;
-		start.y += 64; 
+		start.y += 64;
 	} else {
 		start = editEntity->origin;
 	}
-	
+
 	editEntity->curve->AddValue( editEntity->curve->GetNumValues() * 100, start );
 
 	if ( g_qeglobals.d_select_mode == sel_editpoint ) {
@@ -1274,7 +1274,7 @@ void CEntityDlg::InsertCurvePoint() {
 							}
 						}
 						newCurve->AddValue( newCurve->GetNumValues() * 100, start );
-					} 
+					}
 					newCurve->AddValue( newCurve->GetNumValues() * 100, editEntity->curve->GetValue( j ) );
 				}
 				delete editEntity->curve;
@@ -1320,7 +1320,7 @@ void CEntityDlg::DeleteCurvePoint() {
 
 
 void CEntityDlg::UpdateEntityCurve() {
-	
+
 	if ( editEntity == NULL ) {
 		return;
 	}

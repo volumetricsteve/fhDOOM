@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -176,7 +176,7 @@ mapTri_t *TriListForSide( const side_t *s, const idWinding *w ) {
 		triList = NULL;
 		for ( i = 2 ; i < w->GetNumPoints() ; i++ ) {
 			tri = AllocTri();
-			tri->material = si;	
+			tri->material = si;
 			tri->next = triList;
 			triList = tri;
 
@@ -198,7 +198,7 @@ mapTri_t *TriListForSide( const side_t *s, const idWinding *w ) {
 #else
 				VectorCopy( *vec, dv->xyz );
 #endif
-				
+
 				// calculate texture s/t from brush primitive texture matrix
 				dv->st[0] = DotProduct( dv->xyz, s->texVec.v[0] ) + s->texVec.v[0][3];
 				dv->st[1] = DotProduct( dv->xyz, s->texVec.v[1] ) + s->texVec.v[1][3];
@@ -218,7 +218,7 @@ mapTri_t *TriListForSide( const side_t *s, const idWinding *w ) {
 			idVec3	midPoint;
 
 			tri = AllocTri();
-			tri->material = si;	
+			tri->material = si;
 			tri->next = triList;
 			triList = tri;
 
@@ -235,7 +235,7 @@ mapTri_t *TriListForSide( const side_t *s, const idWinding *w ) {
 				dv = tri->v + j;
 
 				VectorCopy( *vec, dv->xyz );
-				
+
 				// calculate texture s/t from brush primitive texture matrix
 				dv->st[0] = DotProduct( dv->xyz, s->texVec.v[0] ) + s->texVec.v[0][3];
 				dv->st[1] = DotProduct( dv->xyz, s->texVec.v[1] ) + s->texVec.v[1][3];
@@ -653,7 +653,7 @@ void PutPrimitivesInAreas( uEntity_t *e ) {
 				} else {
 					axis.Identity();
 				}
-			}		
+			}
 
 			idVec3	origin = entity->mapEntity->epairs.GetVector( "origin" );
 
@@ -787,7 +787,7 @@ If clipping was required, the outside fragments will be planar clips, which
 will benefit from re-optimization.
 =================
 */
-static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri, 
+static void ClipTriByLight( const mapLight_t *light, const mapTri_t *tri,
 						   mapTri_t **in, mapTri_t **out ) {
 	ClipTriByPlanes(light->def.frustum, 6, tri, in, out);
 }
@@ -908,7 +908,7 @@ static void BuildLightShadows( uEntity_t *e, mapLight_t *light ) {
 
 	if ( light->shadowTris && hasPerforatedSurface ) {
 		// can't ever remove front faces, because we can see through some of them
-		light->shadowTris->numShadowIndexesNoCaps = light->shadowTris->numShadowIndexesNoFrontCaps = 
+		light->shadowTris->numShadowIndexesNoCaps = light->shadowTris->numShadowIndexesNoFrontCaps =
 			light->shadowTris->numIndexes;
 	}
 
@@ -924,7 +924,7 @@ BuildLightOccluders
 */
 static void BuildLightOccluders( uEntity_t *e, mapLight_t *light ) {
 	assert(light && "light must not be NULL");
-	assert(e && "e must not be NULL");	
+	assert(e && "e must not be NULL");
 
 	memset(light->occluders, 0, sizeof(light->occluders));
 
@@ -933,12 +933,12 @@ static void BuildLightOccluders( uEntity_t *e, mapLight_t *light ) {
 		|| light->def.parms.noShadows
 		|| !light->def.lightShader->LightCastsShadows()) {
 		return;
-	}	
+	}
 
 	// shadowers will contain all the triangles that will cast a shadow
 	optimizeGroup_t* shadowerGroups[128] = { nullptr };
 	idVec3 lightOrigin = light->def.globalLightOrigin;
-	
+
 	for (int i = 0; i < e->numAreas; i++) {
 		for (optimizeGroup_t* group = e->areas[i].groups; group; group = group->nextGroup) {
 			// if the surface doesn't cast shadows, skip it
@@ -1074,7 +1074,7 @@ static void CarveGroupsByLight( uEntity_t *e, mapLight_t *light ) {
 			nextGroup = group->nextGroup;
 			// if the surface doesn't get lit, don't carve it up
 			if ( ( light->def.lightShader->IsFogLight() && !group->material->ReceivesFog() )
-				|| ( !light->def.lightShader->IsFogLight() && !group->material->ReceivesLighting() ) 
+				|| ( !light->def.lightShader->IsFogLight() && !group->material->ReceivesLighting() )
 				|| !group->bounds.IntersectsBounds( light->def.frustumTris->bounds ) ) {
 
 				group->nextGroup = carvedGroups;
@@ -1155,7 +1155,7 @@ void Prelight( uEntity_t *e ) {
 	if ( dmapGlobals.entityNum != 0 ) {
 		return;
 	}
-	
+
 	if ( dmapGlobals.shadowOptLevel > 0 ) {
 		common->Printf( "----- BuildLightShadows -----\n" );
 		start = Sys_Milliseconds();

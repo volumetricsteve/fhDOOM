@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -75,8 +75,8 @@ codec::~codec()
 	return;
 }
 
-/* Because Shellsort is a variation on Insertion Sort, it has the same 
- * inconsistency that I noted in the InsertionSort class.  Notice where I 
+/* Because Shellsort is a variation on Insertion Sort, it has the same
+ * inconsistency that I noted in the InsertionSort class.  Notice where I
  * subtract a move to compensate for calling a swap for visual purposes.
  */
 
@@ -90,7 +90,7 @@ void codec::Sort( float *list, int *intIndex, int numElements )
     stride = 1;
     while (stride <= numElements)
       stride = stride*STRIDE_FACTOR +1;
-    
+
     while (stride>(STRIDE_FACTOR-1)) { // loop to sort for each value of stride
     	stride = stride / STRIDE_FACTOR;
 
@@ -110,7 +110,7 @@ void codec::Sort( float *list, int *intIndex, int numElements )
 	}
     }
 }
-	
+
 void codec::Segment( int *alist, float *flist, int numElements, float rmse)
 {
 	int x, y, yy, xx, numc, onf, index, temp, best, a0, a1, a2, a3, bpp, i, len;
@@ -190,7 +190,7 @@ void codec::Segment( int *alist, float *flist, int numElements, float rmse)
 		common->Printf("segment: %d 4x4 cels to vq\n", numEntries );
 
 		VQ( numEntries, dimension4, cbook, snrBook, codebook4, true );
-		
+
 		dst = cbook;
 		numEntries = 0;
 
@@ -211,9 +211,9 @@ void codec::Segment( int *alist, float *flist, int numElements, float rmse)
 			}
 		}
 		common->Printf("segment: %d 2x2 cels to vq\n", numEntries);
-		
+
 		VQ( numEntries, dimension2, cbook, snrBook, codebook2, false );
-		
+
 		Mem_Free(cbook);
 		Mem_Free(snrBook);
 
@@ -306,7 +306,7 @@ void codec::Segment( int *alist, float *flist, int numElements, float rmse)
 				codebook4[onf][temp+2] = codebook2[best][numc++];	//b
 				codebook4[onf][temp+3] = codebook2[best][numc++];	//r a
 				codebook4[onf][temp+4] = codebook2[best][numc++];	//g r
-				codebook4[onf][temp+5] = codebook2[best][numc++];	//b g 
+				codebook4[onf][temp+5] = codebook2[best][numc++];	//b g
 			}
 		}
 		}
@@ -357,7 +357,7 @@ int	codec::BestCodeword( unsigned char *tempvector, int dimension, VQDATA **code
 		}
 	}
 	return bestIndex;
-}    
+}
 
 void codec::SetPreviousImage( const char*filename, NSBitmapImageRep *timage )
 {
@@ -368,11 +368,11 @@ void codec::SetPreviousImage( const char*filename, NSBitmapImageRep *timage )
 		delete previousImage[1];
 	}
 	common->Printf("setPreviousImage:%s\n", filename);
-	
+
 	previousImage[0] = new NSBitmapImageRep( );
 	previousImage[1] = new NSBitmapImageRep( );
 	whichFrame=1;
-	
+
 	*previousImage[0] = *timage;
 	*previousImage[1] = *timage;
 
@@ -400,7 +400,7 @@ bool diff;
 	rgbmap = previousImage[(whichFrame&1)]->bitmapData();
 
 	if ((whichFrame&1) == 1) {
-		fccdictionary = previousImage[0]->bitmapData(); 
+		fccdictionary = previousImage[0]->bitmapData();
 	} else {
 		fccdictionary = previousImage[1]->bitmapData();
 	}
@@ -425,11 +425,11 @@ bool diff;
 					if (rgbmap[pluck+1] != codebook4[ind][xx+1]) diff = true;
 					if (rgbmap[pluck+2] != codebook4[ind][xx+2]) diff = true;
 					if (dimension4 == 64 && rgbmap[pluck+3] != codebook4[ind][xx+3]) diff = true;
-					
+
 					rgbmap[pluck+0] = (byte)codebook4[ind][xx+0];
 					rgbmap[pluck+1] = (byte)codebook4[ind][xx+1];
 					rgbmap[pluck+2] = (byte)codebook4[ind][xx+2];
-					if (dimension4 == 64) 
+					if (dimension4 == 64)
 						rgbmap[pluck+3] = (byte)codebook4[ind][xx+3];
 					else
 						rgbmap[pluck+3] = 255;
@@ -449,11 +449,11 @@ bool diff;
 					if (rgbmap[pluck+1] != codebook4[ind][xx+1]) diff = true;
 					if (rgbmap[pluck+2] != codebook4[ind][xx+2]) diff = true;
 					if (dimension4 == 64 && rgbmap[pluck+3] != codebook4[ind][xx+3]) diff = true;
-					
+
 					rgbmap[pluck+0] = (byte)codebook4[ind][xx+0];
 					rgbmap[pluck+1] = (byte)codebook4[ind][xx+1];
 					rgbmap[pluck+2] = (byte)codebook4[ind][xx+2];
-					if (dimension4 == 64) 
+					if (dimension4 == 64)
 						rgbmap[pluck+3] = (byte)codebook4[ind][xx+3];
 					else
 						rgbmap[pluck+3] = 255;
@@ -476,7 +476,7 @@ bool diff;
 						if (rgbmap[pluck+1] != codebook2[ind][dy+1]) diff = true;
 						if (rgbmap[pluck+2] != codebook2[ind][dy+2]) diff = true;
 						if (dimension4 == 64 && rgbmap[pluck+3] != codebook2[ind][dy+3]) diff = true;
-					
+
 						rgbmap[pluck+0] = (byte)codebook2[ind][dy+0];
 						rgbmap[pluck+1] = (byte)codebook2[ind][dy+1];
 						rgbmap[pluck+2] = (byte)codebook2[ind][dy+2];
@@ -519,7 +519,7 @@ bool diff;
 					dy = pquad[i].yat - ((pquad[i].domain & 0xff) - 128)*2;
 				}
 //				if (pquad[i].yat == 0) common->Printf("dx = %d, dy = %d, xat = %d\n", dx, dy, pquad[i].xat);
-				
+
 				ind = (dy*pWide+dx)*4;
 				for( dy=0; dy<size; dy++ ) {
 				pluck = (((dy+pquad[i].yat)*pWide)+pquad[i].xat)*4;
@@ -527,7 +527,7 @@ bool diff;
 					if (rgbmap[pluck+0] != fccdictionary[ind+0]) diff = true;
 					if (rgbmap[pluck+1] != fccdictionary[ind+1]) diff = true;
 					if (rgbmap[pluck+2] != fccdictionary[ind+2]) diff = true;
-					
+
 					rgbmap[pluck+0] = fccdictionary[ind+0];
 					rgbmap[pluck+1] = fccdictionary[ind+1];
 					rgbmap[pluck+2] = fccdictionary[ind+2];
@@ -551,7 +551,7 @@ bool diff;
 	}
 
 	x = 0; y = 0;
-	for(i=0;i<256;i++) { 
+	for(i=0;i<256;i++) {
 		if (used4[i]) x++;
 		if (used2[i]) y++;
 	}
@@ -589,7 +589,7 @@ byte *lutimage;
 			ftemp = RMULT*lutimage[index0+0] + GMULT*lutimage[index0+1] + BMULT*lutimage[index0+2];
 			temp = (int)ftemp;
 			luti[index1] = temp;
-			
+
 			index0 += previousImage[0]->samplesPerPixel();
 			index1++;
 		}
@@ -606,7 +606,7 @@ int bigx, bigy, lowx, lowy;
 	lowx = lowy = 0;
 	bigx = pixelsWide & 0xfff0;
 	bigy = pixelsHigh & 0xfff0;
-	
+
 	if ( (startX >= lowx) && (startX+quadSize) <= (bigx) && (startY+quadSize) <= (bigy) && (startY >= lowy) && quadSize <= MAXSIZE) {
 		qStatus[onQuad].size 	= quadSize;
 		qStatus[onQuad].xat		= startX;
@@ -753,7 +753,7 @@ float codec::Snr( byte *old, byte *bnew, int size ) {
 	int ind;
 
 	ind = 0;
-	
+
 	for(i=0; i<size; i++) {
 		for(j=0; j<size; j++) {
 			if (old[3]||bnew[3]) ind += RGBADIST( old, bnew );
@@ -764,7 +764,7 @@ float codec::Snr( byte *old, byte *bnew, int size ) {
 	fsnr = (float)ind;
 	fsnr /= (size*size);
 	fsnr = (float)sqrt( fsnr );
-	
+
 	return (fsnr);
 }
 
@@ -810,11 +810,11 @@ void codec::FvqData( byte *bitmap, int size, int realx, int realy,  quadcel *pqu
 
 	ony = realy - (realy & 0xfff0);
 	onx = realx - (realx & 0xfff0);
-	
+
 	xLen = previousImage[0]->pixelsWide();
 	yLen = previousImage[0]->pixelsHigh();
 	ripl = xLen-size;
-	
+
 	breakHigh = 99999999;
 
 	fabort = 0;
@@ -824,13 +824,13 @@ void codec::FvqData( byte *bitmap, int size, int realx, int realy,  quadcel *pqu
 	searchX = 8;	//32;
 	//if (xLen == (yLen*4)) depthx = 2;
 	//if (theRoQ->Scaleable()) depthx = depthy = 2;
-	
+
 	if (clamp) { searchX = searchY = 8; }
 	searchX = searchX*depthx;
 	searchY = searchY*depthy;
 	xxMean = dxMean*depthx;
 	yyMean = dyMean*depthy;
-	
+
 	if (((realx-xxMean)+searchX)<0 ||(((realx-xxMean)-searchX)+depthx+size)>xLen || ((realy-yyMean)+searchY)<0 || (((realy-yyMean)-searchY)+depthy+size)>yLen) {
 		pquad->snr[FCC] = 9999;
 		return;
@@ -845,7 +845,7 @@ void codec::FvqData( byte *bitmap, int size, int realx, int realy,  quadcel *pqu
 		ripl = (xLen-size)*bpp;
 		mblur0 = 0;
 		bitma2 = bitmap;
-		scale1 = previousImage[((whichFrame+1)&1)]->bitmapData() + temp1*bpp; 
+		scale1 = previousImage[((whichFrame+1)&1)]->bitmapData() + temp1*bpp;
 //		mblur0 = 0;
 //		bitma2 = luty;
 //		scale1 = luti + temp1;
@@ -867,13 +867,13 @@ void codec::FvqData( byte *bitmap, int size, int realx, int realy,  quadcel *pqu
 	    }
 	}
 	}
-	
+
 	if (lowX != -1 && lowY != -1) {
 		bpp  = previousImage[0]->samplesPerPixel();
 		ripl = (xLen-size)*bpp;
 		mblur0 = 0;
 		bitma2 = bitmap;
-		scale1 = previousImage[((whichFrame+1)&1)]->bitmapData() + (xLen*lowY+lowX)*bpp; 
+		scale1 = previousImage[((whichFrame+1)&1)]->bitmapData() + (xLen*lowY+lowX)*bpp;
 		for( y=0; y<size; y++) {
 		for( x=0; x<size; x++) {
 			mblur0 += RGBADIST( bitma2, scale1 );
@@ -886,7 +886,7 @@ void codec::FvqData( byte *bitmap, int size, int realx, int realy,  quadcel *pqu
 		lowestSNR = (float)mblur0;
 		lowestSNR /= (size*size);
 		lowestSNR = (float)sqrt( lowestSNR );
-	
+
 		sX = (realx-lowX+128);
 		sY = (realy-lowY+128);
 
@@ -907,7 +907,7 @@ void codec::GetData( unsigned char *iData,  int qSize, int startX, int startY, N
 int x,y,yoff,bpp,yend,xend;
 byte *iPlane[5];
 int r,g,b,a;
-	
+
 	yend = qSize+startY;
 	xend = qSize+startX;
 
@@ -979,7 +979,7 @@ int	codec::GetCurrentQuadOutputSize( quadcel *pquad )
 {
 int	totalbits, i, totalbytes;
 int quickadd[DEAD+1];
-	
+
 	totalbits = 0;
 
 	quickadd[DEP] = 2;
@@ -1022,12 +1022,12 @@ float newsnr, cmul;
 byte *idataA, *idataB;
 
 	if (lownum != -1) {
-		
+
 		if (pquad[lownum].size == 8) {
 			nx = 1; nsize = 4; cmul = 1;
 		} else {
 			nx = 5; nsize = 8; cmul = 4;
-		}	
+		}
 		newsnr = 0;
 		idataA = (byte *)Mem_Alloc(8*8*4);
 		idataB = (byte *)Mem_Alloc(8*8*4);
@@ -1050,11 +1050,11 @@ byte *idataA, *idataB;
 		Mem_Free(idataA); Mem_Free(idataB);
 		newsnr /= 4;
 		LowestQuad( &pquad[lownum], &pquad[lownum].status, &pquad[lownum].rsnr, false );
-		
+
 		if (   pquad[lownum+nx*0+1].status == MOT && pquad[lownum+nx*1+1].status == MOT
-			&& pquad[lownum+nx*2+1].status == MOT && pquad[lownum+nx*3+1].status == MOT  
+			&& pquad[lownum+nx*2+1].status == MOT && pquad[lownum+nx*3+1].status == MOT
 			&& nsize == 4) { newsnr = 9999;	pquad[lownum].status = MOT; }
-				
+
 		if ( pquad[lownum].rsnr > newsnr ) {
 			pquad[lownum].status = DEP;
 			pquad[lownum].rsnr   = 0;
@@ -1063,14 +1063,14 @@ byte *idataA, *idataB;
 			}
 		} else {
 			theRoQ->MarkQuadx( pquad[lownum].xat, pquad[lownum].yat, nsize*2, pquad[lownum].rsnr, qStatus[lownum].status );
-			pquad[lownum+nx*0+1].status = 0;			
-			pquad[lownum+nx*1+1].status = 0;			
-			pquad[lownum+nx*2+1].status = 0;			
-			pquad[lownum+nx*3+1].status = 0;			
-			pquad[lownum+nx*0+1].size = 0;			
-			pquad[lownum+nx*1+1].size = 0;			
-			pquad[lownum+nx*2+1].size = 0;			
-			pquad[lownum+nx*3+1].size = 0;			
+			pquad[lownum+nx*0+1].status = 0;
+			pquad[lownum+nx*1+1].status = 0;
+			pquad[lownum+nx*2+1].status = 0;
+			pquad[lownum+nx*3+1].status = 0;
+			pquad[lownum+nx*0+1].size = 0;
+			pquad[lownum+nx*1+1].size = 0;
+			pquad[lownum+nx*2+1].size = 0;
+			pquad[lownum+nx*3+1].size = 0;
 		}
 	} else {
 		lownum = -1;
@@ -1168,7 +1168,7 @@ byte *idataA, *idataB;
 	if (theRoQ->IsQuiet() == false) {
 		common->Printf("sparseEncode: rmse of quad0 is %f, size is %d (meant to be %d)\n", sRMSE, GetCurrentQuadOutputSize(qStatus), fsize );
 	}
-		
+
 	onf = 0;
 	for(i=0;i<numQuadCels;i++) {
 		if ( qStatus[i].size && qStatus[i].status != DEP) {
@@ -1190,7 +1190,7 @@ byte *idataA, *idataB;
 			temp++;
 		}
 	}
-	if (temp) { dxMean /= temp; dyMean /= temp; }	
+	if (temp) { dxMean /= temp; dyMean /= temp; }
 	*/
 	common->Printf("sparseEncode: dx/dy mean is %d,%d\n", dxMean, dyMean);
 
@@ -1248,7 +1248,7 @@ byte *idataA, *idataB;
 		common->Printf("sparseEncode: rmse of quad0 is %f, size is %d (meant to be %d)\n", GetCurrentRMSE( qStatus ), GetCurrentQuadOutputSize( qStatus ), fsize );
 		common->Printf("sparseEncode: %d outside fcc limits\n", temp);
 	}
-		
+
 	onf = 0;
 	for(i=0;i<numQuadCels;i++) {
 		if ( qStatus[i].size && qStatus[i].status != DEP) {
@@ -1257,13 +1257,13 @@ byte *idataA, *idataB;
 			onf++;
 		}
 	}
-	
+
 	Sort(flist, ilist, onf );
 
 	ong = 0; detail = false;
-	
+
 	while ( GetCurrentQuadOutputSize(qStatus) < fsize && ong < onf && flist[ong] > 0 && qStatus[ilist[ong]].mark == false) {
-//		badsnr = [self getCurrentRMSE: qStatus]; 
+//		badsnr = [self getCurrentRMSE: qStatus];
 		osize = AddQuad( qStatus, ilist[ong++] );
 //		if ([self getCurrentRMSE: qStatus] >= badsnr) {
 //		    break;
@@ -1273,10 +1273,10 @@ byte *idataA, *idataB;
 	if ( GetCurrentQuadOutputSize( qStatus ) < fsize) {
 		ong = 0;
 		while ( GetCurrentQuadOutputSize(qStatus) < fsize && ong < onf) {
-//			badsnr = [self getCurrentRMSE: qStatus]; 
+//			badsnr = [self getCurrentRMSE: qStatus];
 			i = ilist[ong++];
 			if (qStatus[i].mark) {
-				detail = false; 
+				detail = false;
 				qStatus[i].mark = false;
 				GetData( idataA, qStatus[i].size, qStatus[i].xat, qStatus[i].yat, image );
 				if (qStatus[i].size == 8) VqData8( idataA, &qStatus[i] );
@@ -1297,7 +1297,7 @@ byte *idataA, *idataB;
 		}
 		ong = 0;
 		while ( GetCurrentQuadOutputSize( qStatus ) < fsize && ong < onf && flist[ong] > 0) {
-//			badsnr = [self getCurrentRMSE: qStatus]; 
+//			badsnr = [self getCurrentRMSE: qStatus];
 			i = ilist[ong++];
 //			if (qStatus[i].rsnr <= MIN_SNR) {
 //			    break;
@@ -1316,9 +1316,9 @@ byte *idataA, *idataB;
 	    fsize = theRoQ->NormalFrameSize();
 	else
 	    fsize = theRoQ->FirstFrameSize();
-	    
+
 	slop += (fsize - GetCurrentQuadOutputSize(qStatus));
-	
+
 	if (theRoQ->IsQuiet() == false) {
 		for(i=0;i<DEAD;i++) num[i] = 0;
 		j = 0;
@@ -1384,7 +1384,7 @@ byte *idataA, *idataB;
 		if (previousImage[0]) fsize = theRoQ->NormalFrameSize(); else fsize = theRoQ->FirstFrameSize();
 		if (theRoQ->HasSound() && fsize > 6000 && previousImage[0]) fsize = 6000;
 	}
-	
+
 	dxMean = dyMean = 0;
 	if (previousImage[0]) wtype = 1; else wtype = 0;
 
@@ -1419,7 +1419,7 @@ byte *idataA, *idataB;
 
 	common->Printf("sparseEncode: rmse of frame %d is %f, size is %d\n", whichFrame, sRMSE, GetCurrentQuadOutputSize( qStatus ) );
 
-	
+
 	if (theRoQ->IsQuiet() == false) {
 		for(i=0;i<DEAD;i++) num[i] = 0;
 		j = 0;
@@ -1462,7 +1462,7 @@ void codec::VQ( const int numEntries, const int dimension, const unsigned char *
 		//
 		for( int i=0; i<numEntries; i++ ) {
 			for( int j=0; j<dimension; j++ ) {
-				codebook[i][j] = vectors[j+i*dimension];	
+				codebook[i][j] = vectors[j+i*dimension];
 			}
 		}
 		return;
@@ -1487,7 +1487,7 @@ void codec::VQ( const int numEntries, const int dimension, const unsigned char *
 		indexes[i] = -1;
 		indexet[i] = -1;
 	}
-	
+
 	for( i=0; i<numEntries-1; i++ ) {
 		for( j=i+1; j<numEntries; j++ ) {
 			if (inuse[i] && inuse[j]) {
@@ -1678,7 +1678,7 @@ void codec::VQ( const int numEntries, const int dimension, const unsigned char *
 		if (inuse[i]) {
 			ibase = i*dimension;
 			for( x=0; x<dimension; x++ ) {
-				codebook[onEntry][x] = vectors[ibase + x];	
+				codebook[onEntry][x] = vectors[ibase + x];
 			}
 			if (onEntry == 0) {
 				common->Printf("First vq = %d\n ", i);

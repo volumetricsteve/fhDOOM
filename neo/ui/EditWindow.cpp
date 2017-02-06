@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ bool idEditWindow::ParseInternalVar( const char *_name, idParser *src ) {
 		ParseString( src, sourceFile );
 		return true;
 	}
-	if ( idStr::Icmp( _name, "password" ) == 0 ) { 
+	if ( idStr::Icmp( _name, "password" ) == 0 ) {
 		password = src->ParseBool();
 		return true;
 	}
@@ -146,7 +146,7 @@ void idEditWindow::Draw( int time, float x, float y ) {
 
 	idStr		pass;
 	const char* buffer;
-	if ( password ) {		
+	if ( password ) {
 		const char* temp = text;
 		for ( ; *temp; temp++ )	{
 			pass += "*";
@@ -221,7 +221,7 @@ const char *idEditWindow::HandleEvent(const sysEvent_t *event, bool *updateVisua
 		if ( maxChars && len > maxChars ) {
 			len = maxChars;
 		}
-	
+
 		if ( ( key == K_ENTER || key == K_KP_ENTER ) && event->evValue2 ) {
 			RunScript( ON_ACTION );
 			RunScript( ON_ENTER );
@@ -326,7 +326,7 @@ const char *idEditWindow::HandleEvent(const sysEvent_t *event, bool *updateVisua
 						cursorPos++;
 					}
 				}
-			} 
+			}
 
 			EnsureCursorVisible();
 
@@ -631,7 +631,7 @@ idEditWindow::RunNamedEvent
 */
 void idEditWindow::RunNamedEvent( const char* eventName ) {
 	idStr event, group;
-	
+
 	if ( !idStr::Cmpn( eventName, "cvar read ", 10 ) ) {
 		event = eventName;
 		group = event.Mid( 10, event.Length() - 10 );

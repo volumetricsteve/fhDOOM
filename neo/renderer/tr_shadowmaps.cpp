@@ -219,7 +219,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 			|| fabs( light->parms.lightCenter[1] ) > light->parms.lightRadius[1]
 			|| fabs( light->parms.lightCenter[2] ) > light->parms.lightRadius[2]) {
 			centerOutside = true;
-		}		
+		}
 
 		// make the corners to calculate backplane
 		idVec3 corners[8];
@@ -316,7 +316,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 			else {
 				projectionMatrix = fhRenderMatrix::CreateProjectionMatrix( r_smFov.GetFloat(), 1, r_smNearClip.GetFloat(), r_smFarClip.GetFloat() );
 			}
-			
+
 			for (int side = 0; side < 6; side++) {
 				shadowMapFrustum_t *frust = &light->shadowMapFrustums[side];
 				frust->projectionMatrix = projectionMatrix;
@@ -393,7 +393,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 
 		auto viewMatrix_tmp = fhRenderMatrix::CreateLookAtMatrix( flippedOrigin, flippedTarget, flippedUp );
 		frust->viewMatrix = viewMatrix_tmp * fhRenderMatrix::FlipMatrix();
-		
+
 		RB_CreateProjectedProjectionMatrix( light, frust->projectionMatrix.ToFloatPtr() );
 
 		frust->viewProjectionMatrix = frust->projectionMatrix * frust->viewMatrix;
@@ -407,7 +407,7 @@ void R_MakeShadowMapFrustums( idRenderLightLocal *light ) {
 bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 
 	const idMaterial* lightShader = vLight->lightShader;
-	
+
 	if (lightShader->IsFogLight() || lightShader->IsBlendLight()) {
 		return true;
 	}
@@ -564,7 +564,7 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 
 		idVec3 viewCorners[8];
 		backEnd.viewDef->viewFrustum.ToPoints( viewCorners );
-		
+
 		for (int i = 0; i < 6; ++i) {
 			if(r_smLightSideCulling.GetBool()) {
 				vLight->culled[i] = vLight->lightDef->shadowMapFrustums[i].Cull(viewCorners);

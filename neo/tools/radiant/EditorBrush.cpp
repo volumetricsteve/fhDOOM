@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ DrawRenderModel
 ================
 */
 void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &axis, bool cameraView, const idVec3& color ) {
-  const int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;  
+  const int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
   const idMat4 modelView = idMat4(axis, origin).Transpose();
 
   GL_ModelViewMatrix.Push();
@@ -64,7 +64,7 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 
 	for ( int i = 0; i < model->NumSurfaces(); i++ ) {
 		const modelSurface_t *surf = model->Surface( i );
-		const idMaterial *material = surf->shader;		
+		const idMaterial *material = surf->shader;
 
     if ( R_CreateAmbientCache(surf->geometry, true) ) {
       assert(surf->geometry->ambientCache);
@@ -72,13 +72,13 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
       int offset = vertexCache.Bind(surf->geometry->ambientCache);
 
       if (cameraView && (nDrawMode == cd_texture) && material) {
-        GL_UseProgram(defaultProgram);   
+        GL_UseProgram(defaultProgram);
         material->GetEditorImage()->Bind(1);
-        
+
 		fhRenderProgram::SetColorAdd(idVec4(color * 0.25, 1));
 		fhRenderProgram::SetColorModulate(idVec4(1,1,1,1));
       } else {
-        GL_UseProgram(vertexColorProgram);      
+        GL_UseProgram(vertexColorProgram);
 		fhRenderProgram::SetColorAdd( idVec4( color, 1 ) );
 		fhRenderProgram::SetColorModulate( idVec4( 0, 0, 0, 0 ) );
       }
@@ -88,18 +88,18 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
       fhRenderProgram::SetDiffuseColor(idVec4::one);
 	  fhRenderProgram::SetBumpMatrix(idVec4(1,0,0,0), idVec4(0,1,0,0));
 
-	  GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);      
+	  GL_SetupVertexAttributes(fhVertexLayout::DrawPosColorTexOnly, offset);
       glDrawElements(GL_TRIANGLES, surf->geometry->numIndexes,  GL_INDEX_TYPE, surf->geometry->indexes);
 
       GL_UseProgram(nullptr);
-      
+
     } else {
       fhImmediateMode im;
 
       if (cameraView && nDrawMode == cd_texture) {
         im.SetTexture(material->GetEditorImage());
       }
-      
+
       im.Begin(GL_TRIANGLES);
       im.Color3fv(color.ToFloatPtr());
 
@@ -110,9 +110,9 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
           im.TexCoord2f(tri->verts[index].st.x, tri->verts[index].st.y);
           im.Vertex3fv(tri->verts[index].xyz.ToFloatPtr());
         }
-      }     
-      
-      im.End();    
+      }
+
+      im.End();
     }
 	}
 
@@ -170,7 +170,7 @@ brush_t *Brush_Alloc( void ) {
   b->animSnapshotModel = NULL;
 	b->forceVisibile = false;
 	b->forceWireFrame = false;
-  
+
 	return b;
 }
 
@@ -622,7 +622,7 @@ void DrawBrushEntityName(brush_t *b, const idVec3& color) {
 	}
 
 	if (!(g_qeglobals.d_savedinfo.exclude & EXCLUDE_ANGLES)) {
-		// draw the angle pointer (e.g. little arrow o na speaker entity)    
+		// draw the angle pointer (e.g. little arrow o na speaker entity)
 		float angle = b->owner->FloatForKey("angle");
 		if (angle) {
 			float s = sin( DEG2RAD( angle ) );
@@ -755,7 +755,7 @@ idWinding *Brush_MakeFaceWinding(brush_t *b, face_t *face, bool keepOnPlaneWindi
 
 	if (!w) {
 		Sys_Status("Unable to create face winding on brush\n");
-	} 
+	}
 	return w;
 }
 
@@ -1464,7 +1464,7 @@ brush_t *Brush_Parse(idVec3 origin) {
 			if (newFormat) {
 				//Brush_BuildWindings(b, true, true, false, false);
 			}
-			
+
 			if (b == NULL) {
 				Warning("parsing brush primitive");
 				return NULL;
@@ -2361,7 +2361,7 @@ Brush_MemorySize
   returns the size in memory of the brush
 ================
 */
-int Brush_MemorySize( const brush_t *brush ) {	
+int Brush_MemorySize( const brush_t *brush ) {
 	int size = 0;
 	if ( brush->pPatch ) {
 		size += Patch_MemorySize( brush->pPatch );
@@ -2538,7 +2538,7 @@ bool Brush_ModelIntersect(brush_t *b, idVec3 origin, idVec3 dir,float &scale) {
 #if 0
 	idRenderModel *model = b->modelHandle;
 	idRenderModel *md5;
-   
+
     if ( !model )
         model = b->owner->eclass->entityModel;
 
@@ -3555,7 +3555,7 @@ Entity_GetRotationMatrixAngles
 */
 bool Entity_GetRotationMatrixAngles( entity_t *e, idMat3 &mat, idAngles &angles ) {
 	assert(e);
-	
+
 	int angle;
 
 	/* the angle keyword is a yaw value, except for two special markers */
@@ -3619,7 +3619,7 @@ void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle, const 
 	//TODO(johl): linewidth should be 2, but linewidth>1 is deprecated. WTF?
     glLineWidth(1);
     fhImmediateMode im;
-	im.Color4fv(color.ToFloatPtr());	
+	im.Color4fv(color.ToFloatPtr());
 	im.Begin(GL_LINES);
 	im.Vertex3fv(start.ToFloatPtr());
 	im.Vertex3fv(endpoint.ToFloatPtr());
@@ -3697,14 +3697,14 @@ void DrawProjectedLight(const brush_t *b, bool bSelected, bool texture) {
 
 	if (b->pointLight) {
 		// point light
-		if (b->lightCenter[0] || b->lightCenter[1] || b->lightCenter[2]) {        
+		if (b->lightCenter[0] || b->lightCenter[1] || b->lightCenter[2]) {
 			tv = b->lightCenter;
 			if (transform) {
 			tv -= *origin;
 			tv *= mat;
 			tv += *origin;
 			}
-			im.Vertex3fv(tv.ToFloatPtr());        
+			im.Vertex3fv(tv.ToFloatPtr());
 		}
 	} else {
 		// projected light
@@ -3746,11 +3746,11 @@ void DrawProjectedLight(const brush_t *b, bool bSelected, bool texture) {
 GLCircle
 ================
 */
-static void GLCircle(float x, float y, float z, float r, const idVec4& color) 
-{ 
-	float ix = 0; 
-	float iy = r; 
-	float ig = 3 - 2 * r; 
+static void GLCircle(float x, float y, float z, float r, const idVec4& color)
+{
+	float ix = 0;
+	float iy = r;
+	float ig = 3 - 2 * r;
 	float idgr = -6;
 	float idgd = 4 * r - 10;
 	glPointSize(0.5f);
@@ -3778,7 +3778,7 @@ static void GLCircle(float x, float y, float z, float r, const idVec4& color)
 		im.Vertex3f(x - iy, y - ix, z);
 	}
 	im.End();
-} 
+}
 
 /*
 ================
@@ -3790,9 +3790,9 @@ void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 	if (!(g_qeglobals.d_savedinfo.showSoundAlways || (g_qeglobals.d_savedinfo.showSoundWhenSelected && bSelected))) {
 		return;
 	}
-	
+
 	// convert to units ( inches )
-	float min = b->owner->FloatForKey("s_mindistance"); 
+	float min = b->owner->FloatForKey("s_mindistance");
 	float max = b->owner->FloatForKey("s_maxdistance");
 
 	const char *s = b->owner->epairs.GetString("s_shader");
@@ -3806,18 +3806,18 @@ void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 				max = shader->GetMaxDistance();
 			}
 		}
-	} 
+	}
 
 	if (min == 0 && max == 0) {
 		return;
 	}
-	
+
 
 	// convert from meters to doom units
 	min *= METERS_TO_DOOM;
 	max *= METERS_TO_DOOM;
 
-	idVec4 minColor;    
+	idVec4 minColor;
 	idVec4 maxColor;
 
 	if (bSelected) {
@@ -3829,7 +3829,7 @@ void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 
 	maxColor.Set(minColor.x, minColor.y, minColor.z, 1.0f);
 
-	if (twoD) {    
+	if (twoD) {
 		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, min, minColor);
 		GLCircle(b->owner->origin.x, b->owner->origin.y, b->owner->origin.z, max, maxColor);
 	} else {
@@ -3859,9 +3859,9 @@ void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 		im.Sphere( max, tesselation, tesselation, true );
 
 		glDisable( GL_BLEND );
-    
+
 		GL_ModelViewMatrix.Pop();
-	}	
+	}
 }
 
 /*
@@ -3934,20 +3934,20 @@ void DrawLight(const brush_t *b, bool bSelected) {
 
 editorModel_t Brush_GetEditorModel(const brush_t* b) {
 
-  editorModel_t ret;  
+  editorModel_t ret;
   ret.drawBounds = false;
-  ret.model = b->modelHandle;  
+  ret.model = b->modelHandle;
 
   if (ret.model == NULL && b->owner && b->owner->eclass) {
     ret.model = b->owner->eclass->entityModel;
-  } 
+  }
   if (ret.model == NULL) {
     ret.model = renderModelManager->DefaultModel();
   }
   assert(ret.model);
   ret.bounds = ret.model->Bounds();
 
-  if(ret.model->IsDynamicModel() != DM_STATIC) {    
+  if(ret.model->IsDynamicModel() != DM_STATIC) {
     ret.drawBounds = true;
 
     if (dynamic_cast<idRenderModelMD5 *>(ret.model)) {
@@ -3980,8 +3980,8 @@ editorModel_t Brush_GetEditorModel(const brush_t* b) {
           b->animSnapshotModel = stub;
         }
       }
-      
-      assert(ret.model);      
+
+      assert(ret.model);
       ret.model = b->animSnapshotModel;
       ret.drawBounds = false;
     }
@@ -4019,7 +4019,7 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	idVec3 center = editorModel.bounds.GetCenter();
 		glBox(idVec4(color.x, color.y, color.z, 1.0f), b->owner->origin + center, editorModel.bounds.GetRadius(center));
 	}
-  
+
 	idMat3 axis;
 	idAngles angles;
 	Entity_GetRotationMatrixAngles( b->owner, axis, angles );
@@ -4047,7 +4047,7 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	if ( g_bPatchShowBounds ) {
 		fhImmediateMode im;
 		im.Begin(GL_LINES);
-    
+
 		for ( face_t *face = b->brush_faces; face; face = face->next ) {
 			// only draw polygons facing in a direction we care about
 			idWinding *w = face->face_winding;
@@ -4182,7 +4182,7 @@ void Brush_DrawAxis(const brush_t *b) {
 			wr = yr;
 			type = 1;
 		}
-		
+
 		if (g_qeglobals.flatRotation) {
 			if (yr > wr) {
 				wr = yr;
@@ -4232,7 +4232,7 @@ Brush_DrawEmitter
 void Brush_DrawEmitter(const brush_t *b, bool bSelected, bool cam) {
 	if ( !( b->owner->eclass->nShowFlags & ECLASS_PARTICLE ) ) {
 		return;
-	}	
+	}
 
 	idVec4 color = idVec4(b->owner->eclass->color, 0.5f);
 	if(bSelected) {
@@ -4305,8 +4305,8 @@ void Brush_DrawCombatNode( const brush_t *b, bool cameraView, bool bSelected ) {
 		color = colorRed;
 	} else  {
 		color = colorBlue;
-	} 
-		
+	}
+
 	idVec3 leftDir( -cone_left.y, cone_left.x, 0.0f );
 	idVec3 rightDir( cone_right.y, -cone_right.x, 0.0f );
 	leftDir.NormalizeFast();
@@ -4451,7 +4451,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 
 		if ( (nDrawMode == cd_texture || nDrawMode == cd_light) && !b->forceWireFrame && face->d_texture ) {
       im.SetTexture(face->d_texture->GetEditorImage());
-		}    
+		}
 
 		if (model) {
 			glEnable(GL_BLEND);
@@ -4500,7 +4500,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
       currentVert.st.y = v[4];
 
       if(i == 0) {
-        firstVert = currentVert;        
+        firstVert = currentVert;
       }
 
       if(i > 1) {
@@ -4545,13 +4545,13 @@ void Face_DrawOutline( const face_t *f, const idVec3& color) {
   }
 
   int numPoints = f->face_winding->GetNumPoints();
-  const idVec5* points = &(*f->face_winding)[0];  
-    
+  const idVec5* points = &(*f->face_winding)[0];
+
   for (int i=0; (i+1) < numPoints; i++) {
     g_qeglobals.lineBuffer.Add(points[i].ToVec3(), points[i+1].ToVec3(), color);
   }
 
-  g_qeglobals.lineBuffer.Add(points[0].ToVec3(), points[numPoints-1].ToVec3(), color);  
+  g_qeglobals.lineBuffer.Add(points[0].ToVec3(), points[numPoints-1].ToVec3(), color);
 }
 
 
@@ -4592,16 +4592,16 @@ idSurface_SweptSpline *SplineToSweptSpline( idCurve<idVec3> *curve ) {
 Brush_DrawCurve
 ================
 */
-void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) { 
+void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) {
 	if ( b == NULL || b->owner->curve == NULL ) {
 		return;
 	}
 
 	int maxage = b->owner->curve->GetNumValues();
-	int i, time = 0;	
+	int i, time = 0;
 	for ( i = 0; i < maxage; i++) {
 
-		if ( bSelected && g_qeglobals.d_select_mode == sel_editpoint ) { 
+		if ( bSelected && g_qeglobals.d_select_mode == sel_editpoint ) {
 			idVec3 v = b->owner->curve->GetValue( i );
 			if ( cam ) {
 				glBox( colorBlue, v, 6.0f );
@@ -4610,7 +4610,7 @@ void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) {
 				}
 			} else {
         glPointSize( 4.0f );
-        fhImmediateMode im;		
+        fhImmediateMode im;
         im.Color4fv( colorBlue.ToFloatPtr() );
 				im.Begin( GL_POINTS );
 				im.Vertex3f( v.x, v.y, v.z );
@@ -4633,7 +4633,7 @@ void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) {
 			for ( int j = 0; j <= POINTS_PER_KNOT; j++ ) {
 				idVec3 v = b->owner->curve->GetCurrentValue( start );
 				im.Vertex3f( v.x, v.y, v.z );
-				start += inc;								
+				start += inc;
 			}
 
       im.End();
@@ -4648,15 +4648,15 @@ void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam ) {
 Brush_DrawXY
 ================
 */
-void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color) {	
+void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color) {
 	if ( b->hiddenBrush ) {
 		return;
-	}	
+	}
 
 	if (!(b->owner && (b->owner->eclass->nShowFlags & ECLASS_WORLDSPAWN))) {
     glPointSize(4);
     fhImmediateMode im;
-		im.Color4f( 1.0f, 0.0f, 0.0f, 0.8f );		
+		im.Color4f( 1.0f, 0.0f, 0.0f, 0.8f );
 		im.Begin(GL_POINTS);
 		im.Vertex3fv(b->owner->origin.ToFloatPtr());
 		im.End();
@@ -4769,14 +4769,14 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 		// if (b->alphaBrush && !(face->texdef.flags & SURF_ALPHA)) continue;
 		// draw the polygon
 		//
-		
-		for (int i = 0; i < w->GetNumPoints(); i++) {            
+
+		for (int i = 0; i < w->GetNumPoints(); i++) {
       if (i + 1 < w->GetNumPoints())
         g_qeglobals.lineBuffer.Add( (*w)[i].ToVec3(), (*w)[i + 1].ToVec3(), color);
       else
         g_qeglobals.lineBuffer.Add( (*w)[i].ToVec3(), (*w)[0].ToVec3(), color);
 		}
-		
+
 	}
 
 	DrawBrushEntityName(b, color);
@@ -4846,7 +4846,7 @@ void Brush_Move(brush_t *b, const idVec3 move, bool bSnap, bool updateOrigin) {
 				if (QE_SingleBrush(true, true)) {
 					adjustOrigin = false;
 				}
-			} 
+			}
 
 			if (adjustOrigin && updateOrigin) {
 				b->owner->origin += move;
@@ -5175,7 +5175,7 @@ void Brush_GetBounds( brush_t *b, idBounds &bo ) {
 		for ( int i = 0; i < c; i++ ) {
 			bo.AddPoint ( b->owner->curve->GetValue( i ) );
 		}
-	} 
+	}
 
 }
 

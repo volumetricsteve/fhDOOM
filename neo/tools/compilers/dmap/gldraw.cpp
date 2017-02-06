@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ void Draw_ClearWindow( void ) {
 	glClear( GL_COLOR_BUFFER_BIT );
 
   GL_ProjectionMatrix.LoadIdentity();
-	GL_ProjectionMatrix.Ortho( dmapGlobals.drawBounds[0][0], dmapGlobals.drawBounds[1][0], 
+	GL_ProjectionMatrix.Ortho( dmapGlobals.drawBounds[0][0], dmapGlobals.drawBounds[1][0],
 		dmapGlobals.drawBounds[0][1], dmapGlobals.drawBounds[1][1],
 		-1, 1 );
   GL_ModelViewMatrix.LoadIdentity();
@@ -80,7 +80,7 @@ int			draw_socket;
 void GLS_BeginScene (void)
 {
 	WSADATA	winsockdata;
-	WORD	wVersionRequested; 
+	WORD	wVersionRequested;
 	struct sockaddr_in	address;
 	int		r;
 
@@ -88,7 +88,7 @@ void GLS_BeginScene (void)
 	{
 		wins_init = true;
 
-		wVersionRequested = MAKEWORD(1, 1); 
+		wVersionRequested = MAKEWORD(1, 1);
 
 		r = WSAStartup (MAKEWORD(1, 1), &winsockdata);
 

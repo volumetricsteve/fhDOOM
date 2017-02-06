@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -132,9 +132,9 @@ void entity_t::SetKeyMat3( const char *key, idMat3 m) {
 	}
 
 	idStr str;
-	
+
 	sprintf(str, "%g %g %g %g %g %g %g %g %g",m[0][0],m[0][1],m[0][2],m[1][0],m[1][1],m[1][2],m[2][0],m[2][1],m[2][2]);
-	
+
 	epairs.Set(key, str);
 	GetVectorForKey("origin", origin);
 }
@@ -195,7 +195,7 @@ bool entity_t::GetVectorForKey(const char *key, idVec3 &vec) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool entity_t::GetVector4ForKey(const char *key, idVec4 &vec) {	
+bool entity_t::GetVector4ForKey(const char *key, idVec4 &vec) {
 	const char* k = ValueForKey(key);
 	if (k && strlen(k) > 0) {
 		sscanf(k, "%f %f %f %f", &vec[0], &vec[1], &vec[2], &vec[3]);
@@ -227,7 +227,7 @@ bool entity_t::GetFloatForKey(const char *key, float *f) {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool entity_t::GetMatrixForKey(const char *key, idMat3 &mat) {	
+bool entity_t::GetMatrixForKey(const char *key, idMat3 &mat) {
 	const char* k = ValueForKey(key);
 	if (k && strlen(k) > 0) {
 		sscanf
@@ -387,7 +387,7 @@ void ParseEpair(idDict *dict) {
 	idStr key = token;
 	GetToken(false);
 	idStr val = token;
-	
+
 	if (key.Length() > 0) {
 		dict->Set(key, val);
 	}
@@ -413,7 +413,7 @@ bool entity_t::HasModel() const {
  =======================================================================================================================
  =======================================================================================================================
  */
-entity_t::entity_t() {	
+entity_t::entity_t() {
 	prev = next = NULL;
 	brushes.prev = brushes.next = NULL;
 	brushes.oprev = brushes.onext = NULL;
@@ -434,13 +434,13 @@ entity_t::entity_t() {
 }
 
 void entity_t::UpdateCurveData() {
-	
+
 	if ( this->curve == NULL ) {
 		return;
 	}
 
 	const idKeyValue *kv = this->epairs.MatchPrefix( CURVE_TAG );
-	if ( kv == NULL ) { 
+	if ( kv == NULL ) {
 		if ( this->curve ) {
 			delete this->curve;
 			this->curve = NULL;
@@ -547,11 +547,11 @@ void entity_t::PostParse(brush_t *pList) {
 	}
 
 	idStr str;
-	
+
 	if (e->defArgs.GetString("model", "", str) && e->entityModel == NULL) {
 		e->entityModel = gameEdit->ANIM_GetModelFromEntityDef( &e->defArgs );
 	}
-	
+
 	eclass = e;
 
 	bool hasModel = HasModel();
@@ -633,7 +633,7 @@ void entity_t::PostParse(brush_t *pList) {
 			bool		convertAngles = GetFloatForKey("angle", &yaw);
 			extern void Brush_Rotate(brush_t *b, idMat3 matrix, idVec3 origin, bool bBuild);
 			extern void Brush_Rotate(brush_t *b, idVec3 rot, idVec3 origin, bool bBuild);
-			
+
 			if (convertAngles) {
 				idVec3	rot(0, 0, yaw);
 				Brush_Rotate(b, rot, origin, false);
@@ -829,7 +829,7 @@ bool IsBrushSelected(const brush_t *bSel) {
 // =======================================================================================================================
 //
 void entity_t::WriteSelected(FILE *file) {
-	const brush_t *b;		
+	const brush_t *b;
 
 	for (b = brushes.onext; b != &brushes; b = b->onext) {
 		if (IsBrushSelected(b)) {
@@ -846,14 +846,14 @@ void entity_t::WriteSelected(FILE *file) {
 		idVec3	origin;
 
 		if (!GetVectorForKey("origin", origin)) {
-			char text[128];	
+			char text[128];
 			VectorSubtract(brushes.onext->mins, eclass->mins, origin);
 			sprintf(text, "%i %i %i", (int)origin[0], (int)origin[1], (int)origin[2]);
 			SetKeyValue("origin", text);
 		}
 	}
 
-	fprintf(file, "{\n");	
+	fprintf(file, "{\n");
 
 	for (int j = 0; j < epairs.GetNumKeyVals(); j++) {
 		fprintf(file, "\"%s\" \"%s\"\n", epairs.GetKeyVal(j)->GetKey().c_str(), epairs.GetKeyVal(j)->GetValue().c_str());
@@ -1198,7 +1198,7 @@ void entity_t::UpdateSoundEmitter() {
 
 	// if an entity doesn't have any brushes at all, don't do anything
 	// if the brush isn't displayed (filtered or culled), don't do anything
-	if ( g_pParentWnd->GetCamera()->GetSoundMode() 
+	if ( g_pParentWnd->GetCamera()->GetSoundMode()
 		&& this->brushes.onext != &this->brushes && !FilterBrush(this->brushes.onext) ) {
 		// check for sounds
 		const char *v = ValueForKey( "s_shader" );

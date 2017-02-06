@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -70,9 +70,9 @@ typedef enum {
 } serverSort_t;
 
 class idServerScan : public idList<networkServer_t> {
-public:	
+public:
 						idServerScan( );
-	
+
 	int					InfoResponse( networkServer_t &server );
 
 	// add an internet server - ( store a numeric id along with it )
@@ -92,7 +92,7 @@ public:
 
 	// called each game frame. Updates the scanner state, takes care of ongoing scans
 	void				RunFrame( );
-	
+
 	typedef enum {
 		IDLE = 0,
 		WAIT_ON_INIT,
@@ -102,7 +102,7 @@ public:
 
 	scan_state_t		GetState() { return scan_state; }
 	void				SetState( scan_state_t );
-	
+
 	bool				GetBestPing( networkServer_t &serv );
 
 						// prepare for a LAN scan. idAsyncClient does the network job (UDP broadcast), we do the storage
@@ -128,17 +128,17 @@ private:
 	static const int	REFRESH_START		= 10000;	// how long to wait when sending the initial refresh request
 
 	scan_state_t		scan_state;
-	
+
 	bool				incoming_net;	// set to true while new servers are fed through AddServer
 	bool				incoming_useTimeout;
 	int					incoming_lastTime;
-	
+
 	int					lan_pingtime;	// holds the time of LAN scan
-	
+
 						// servers we're waiting for a reply from
 						// won't exceed MAX_PINGREQUESTS elements
 						// holds index of net_servers elements, indexed by 'from' string
-	idDict				net_info;		
+	idDict				net_info;
 
 	idList<inServer_t>	net_servers;
 						// where we are in net_servers list for getInfo emissions ( NET_SCAN only )
@@ -154,7 +154,7 @@ private:
 
 	idStr				screenshot;
 	int					challenge;			// challenge for current scan
-	
+
 	int					endWaitTime;		// when to stop waiting on a port init
 
 private:

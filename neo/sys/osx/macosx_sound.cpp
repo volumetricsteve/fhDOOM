@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,14 +46,14 @@ public:
 	bool	Unlock( void *pDSLockedBuffer, dword dwDSLockedBufferSize ) { return false; }
 	bool	GetCurrentPosition( ulong *pdwCurrentWriteCursor ) { return false; }
 	int		GetMixBufferSize( void )  { return 0; }
-	
+
 	int		GetNumberOfSpeakers( void );
 
 	// OSX driver doesn't support write API
 	bool	Flush( void ) { return false; }
 	void	Write( bool ) { }
 	short*	GetMixBuffer( void ) { return NULL; }
-	
+
 private:
 	AudioDeviceID		selectedDevice;
 	bool				activeIOProc;
@@ -75,7 +75,7 @@ private:
 									  const AudioTimeStamp*		inNow,
 									  const AudioBufferList*	inInputData,
 									  const AudioTimeStamp*		inInputTime,
-									  AudioBufferList*			outOutputData, 
+									  AudioBufferList*			outOutputData,
 									  const AudioTimeStamp*		inOutputTime,
 									  void*						inClientData );
 };
@@ -139,8 +139,8 @@ void idAudioHardwareOSX::Reset() {
 /*
 =================
 idAudioHardwareOSX::InitFailed
-=================	
-*/	
+=================
+*/
 void idAudioHardwareOSX::InitFailed() {
 	Reset();
 	cvarSystem->SetCVarBool( "s_noSound", true );
@@ -171,7 +171,7 @@ OSStatus idAudioHardwareOSX::DeviceIOProc( AudioDeviceID			inDevice,
 										   const AudioTimeStamp*	inNow,
 										   const AudioBufferList*	inInputData,
 										   const AudioTimeStamp*	inInputTime,
-										   AudioBufferList*			outOutputData, 
+										   AudioBufferList*			outOutputData,
 										   const AudioTimeStamp*	inOutputTime,
 										   void*					inClientData ) {
 
@@ -300,7 +300,7 @@ bool idAudioHardwareOSX::Initialize( ) {
 		GetAvailableNominalSampleRates();
 
 		sampleRate = PRIMARYFREQ;
-		common->Printf( "setting rate to: %g\n", sampleRate );		
+		common->Printf( "setting rate to: %g\n", sampleRate );
 		status = AudioDeviceSetProperty( selectedDevice, NULL, 0, false, kAudioDevicePropertyNominalSampleRate, size, &sampleRate );
 		if ( status != kAudioHardwareNoError ) {
 			common->Warning( "AudioDeviceSetProperty %d kAudioDevicePropertyNominalSampleRate %g failed. status: %s", selectedDevice, sampleRate, ExtractStatus( status ) );

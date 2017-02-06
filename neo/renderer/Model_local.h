@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ public:
 	virtual float				DepthHack() const;
 
 	void						MakeDefaultModel();
-	
+
 	bool						LoadASE( const char *fileName );
 	bool						LoadLWO( const char *fileName );
 	bool						LoadFLT( const char *fileName );
@@ -247,7 +247,7 @@ private:
 	modelSurface_t				GenerateSurface( float lerp );
 	void						WaterDrop( int x, int y, float *page );
 	void						Update( void );
-						
+
 	int							verts_x;
 	int							verts_y;
 	float						scale_x;
@@ -258,11 +258,11 @@ private:
 	int							seed;
 
 	idRandom					random;
-						
+
 	const idMaterial *			shader;
 	struct deformInfo_s	*		deformInfo;		// used to create srfTriangles_t from base frames
 											// and new vertexes
-						
+
 	float						density;
 	float						drop_height;
 	int							drop_radius;
@@ -372,7 +372,7 @@ public:
 /*
 ================================================================================
 
-	idRenderModelSprite 
+	idRenderModelSprite
 
 ================================================================================
 */

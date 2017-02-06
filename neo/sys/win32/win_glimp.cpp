@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -191,7 +191,7 @@ shown, and create the rendering context
 ====================
 */
 static bool GLW_InitDriver( glimpParms_t parms ) {
-    PIXELFORMATDESCRIPTOR src = 
+    PIXELFORMATDESCRIPTOR src =
 	{
 		sizeof(PIXELFORMATDESCRIPTOR),	// size of this pfd
 		1,								// version number
@@ -205,7 +205,7 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 		0,								// shift bit ignored
 		0,								// no accumulation buffer
 		0, 0, 0, 0, 					// accum bits ignored
-		24,								// 24-bit z-buffer	
+		24,								// 24-bit z-buffer
 		8,								// 8-bit stencil buffer
 		0,								// no auxiliary buffer
 		PFD_MAIN_PLANE,					// main layer
@@ -228,7 +228,7 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 		common->Printf( "succeeded\n" );
 	}
 
-	// the multisample path uses the wgl 
+	// the multisample path uses the wgl
 	if ( wglChoosePixelFormatARB && parms.multiSamples > 1 ) {
 		int		iAttributes[20];
 		FLOAT	fAttributes[] = {0, 0};
@@ -299,7 +299,7 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
 	//
 	// startup the OpenGL subsystem by creating a context and making it current
 	//
-	// 
+	//
   common->Printf( "...creating GL legacy context: " );
   win32.hGLRC = wglCreateContext( win32.hDC );
   if(win32.hGLRC == 0) {
@@ -359,7 +359,7 @@ static bool GLW_InitDriver( glimpParms_t parms ) {
       wglMakeCurrent(win32.hDC, 0);
       wglDeleteContext(win32.hGLRC);
       win32.hGLRC = NULL;
-      
+
       return false;
     }
     common->Printf("succeeded\n");
@@ -483,7 +483,7 @@ static bool GLW_CreateWindow( glimpParms_t parms ) {
 		x = win32.win_xpos.GetInteger();
 		y = win32.win_ypos.GetInteger();
 
-		// adjust window coordinates if necessary 
+		// adjust window coordinates if necessary
 		// so that the window is completely on screen
 		if ( x + w > win32.desktopWidth ) {
 			x = ( win32.desktopWidth - w );
@@ -500,7 +500,7 @@ static bool GLW_CreateWindow( glimpParms_t parms ) {
 	}
 
 	win32.hWnd = CreateWindowEx (
-		 exstyle, 
+		 exstyle,
 		 _T(WIN32_WINDOW_CLASS_NAME),
 		 _T(GAME_NAME),
 		 stylebits,
@@ -616,9 +616,9 @@ static bool GLW_SetFullScreen( glimpParms_t parms ) {
 		dm.dmDisplayFrequency = parms.displayHz;
 		dm.dmFields |= DM_DISPLAYFREQUENCY;
 	}
-	
+
 	common->Printf( "...calling CDS: " );
-	
+
 	// try setting the exact mode requested, because some drivers don't report
 	// the low res modes in EnumDisplaySettings, but still work
 	if ( ( cdsRet = ChangeDisplaySettings( &dm, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL ) {
@@ -631,11 +631,11 @@ static bool GLW_SetFullScreen( glimpParms_t parms ) {
 	// the exact mode failed, so scan EnumDisplaySettings for the next largest mode
 	//
 	common->Printf( "^3failed^0, " );
-	
+
 	PrintCDSError( cdsRet );
 
 	common->Printf( "...trying next higher resolution:" );
-	
+
 	// we could do a better matching job here...
 	for ( modeNum = 0 ; ; modeNum++ ) {
 		if ( !EnumDisplaySettings( NULL, modeNum, &devmode ) ) {
@@ -722,7 +722,7 @@ bool GLimp_Init( glimpParms_t parms ) {
 ===================
 GLimp_SetScreenParms
 
-Sets up the screen based on passed parms.. 
+Sets up the screen based on passed parms..
 ===================
 */
 bool GLimp_SetScreenParms( glimpParms_t parms ) {
@@ -766,7 +766,7 @@ bool GLimp_SetScreenParms( glimpParms_t parms ) {
 		x = win32.win_xpos.GetInteger();
 		y = win32.win_ypos.GetInteger();
 
-		// adjust window coordinates if necessary 
+		// adjust window coordinates if necessary
 		// so that the window is completely on screen
 		if ( x + w > win32.desktopWidth ) {
 			x = ( win32.desktopWidth - w );

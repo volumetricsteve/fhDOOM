@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ archives object for save game file
 */
 void idLight::Save( idSaveGame *savefile ) const {
 	savefile->WriteRenderLight( renderLight );
-	
+
 	savefile->WriteBool( renderLight.prelightModel != NULL );
 
 	savefile->WriteVec3( localLightOrigin );
@@ -365,7 +365,7 @@ void idLight::Spawn( void ) {
         Off();
     }
 #endif
-    
+
 	health = spawnArgs.GetInt( "health", "0" );
 	spawnArgs.GetString( "broken", "", brokenModel );
 	spawnArgs.GetBool( "break", "0", breakOnTrigger );
@@ -393,7 +393,7 @@ void idLight::Spawn( void ) {
 			int	pos;
 
 			needBroken = false;
-		
+
 			pos = model.Find( "." );
 			if ( pos < 0 ) {
 				pos = model.Length();
@@ -406,7 +406,7 @@ void idLight::Spawn( void ) {
 				brokenModel += &model[ pos ];
 			}
 		}
-	
+
 		// make sure the model gets cached
 		if ( !renderModelManager->CheckModel( brokenModel ) ) {
 			if ( needBroken ) {
@@ -417,7 +417,7 @@ void idLight::Spawn( void ) {
 		}
 
 		GetPhysics()->SetContents( spawnArgs.GetBool( "nonsolid" ) ? 0 : CONTENTS_SOLID );
-	
+
 		// make sure the collision model gets cached
 		idClipModel::CheckModel( brokenModel );
 	}
@@ -1098,7 +1098,7 @@ void idLight::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 		}
 	}
 	UnpackColor( msg.ReadLong(), baseColor );
-	// lightParentEntityNum = msg.ReadBits( GENTITYNUM_BITS );	
+	// lightParentEntityNum = msg.ReadBits( GENTITYNUM_BITS );
 
 /*	// only helps prediction
 	UnpackColor( msg.ReadLong(), fadeFrom );

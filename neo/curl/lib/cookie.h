@@ -1,10 +1,10 @@
 #ifndef __COOKIE_H
 #define __COOKIE_H
 /***************************************************************************
- *                                  _   _ ____  _     
- *  Project                     ___| | | |  _ \| |    
- *                             / __| | | | |_) | |    
- *                            | (__| |_| |  _ <| |___ 
+ *                                  _   _ ____  _
+ *  Project                     ___| | | |  _ \| |
+ *                             / __| | | | |_) | |
+ *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
  * Copyright (C) 1998 - 2004, Daniel Stenberg, <daniel@haxx.se>, et al.
@@ -12,7 +12,7 @@
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
  * are also available at http://curl.haxx.se/docs/copyright.html.
- * 
+ *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
  * furnished to do so, under the terms of the COPYING file.
@@ -41,11 +41,11 @@ struct Cookie {
   long expires;    /* expires = <this> */
   char *expirestr;   /* the plain text version */
   bool tailmatch;    /* weather we do tail-matchning of the domain name */
-  
+
   /* RFC 2109 keywords. Version=1 means 2109-compliant cookie sending */
   char *version;     /* Version = <value> */
   char *maxage;      /* Max-Age = <value> */
-  
+
   bool secure;       /* whether the 'secure' keyword was used */
   bool livecookie;   /* updated from a server, not a stored file */
 };

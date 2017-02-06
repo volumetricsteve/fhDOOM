@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 class MEMainFrame : public CFrameWnd, public MaterialView
 {
-	
+
 public:
 	MEMainFrame();
 	virtual ~MEMainFrame();
@@ -54,7 +54,7 @@ public:
 	//Public Operations
 	void						PrintConsoleMessage(const char *msg);
 
-protected: 
+protected:
 	DECLARE_DYNAMIC(MEMainFrame)
 
 	// Overrides
@@ -101,11 +101,11 @@ protected:
 	afx_msg void 				OnEditRedo();
 	afx_msg void 				OnEditUndoUpdate(CCmdUI *pCmdUI);
 	afx_msg void 				OnEditRedoUpdate(CCmdUI *pCmdUI);
-	
+
 	afx_msg void 				OnViewIncludeFile();
 	afx_msg void 				OnReloadArbPrograms();
 	afx_msg void 				OnReloadImages();
-	
+
 	DECLARE_MESSAGE_MAP()
 
 	//Methods for Find interactions
@@ -115,7 +115,7 @@ protected:
 
 	//MaterialView Interface
 	virtual void	MV_OnMaterialSelectionChange(MaterialDoc* pMaterial);
-	
+
 protected:
 	//Status and Toolbars
 	CStatusBar  				m_wndStatusBar;

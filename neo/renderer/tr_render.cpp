@@ -2,10 +2,10 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ void RB_DrawElementsWithCounters( const srfTriangles_t *tri ) {
 	}
 
 	if ( tri->indexCache && r_useIndexBuffers.GetBool() ) {
-		glDrawElements( GL_TRIANGLES, 
+		glDrawElements( GL_TRIANGLES,
 						r_singleTriangle.GetBool() ? 3 : tri->numIndexes,
 						GL_INDEX_TYPE,
 						(int *)vertexCache.Position( tri->indexCache ) );
@@ -105,7 +105,7 @@ void RB_DrawElementsWithCounters( const srfTriangles_t *tri ) {
 		if ( r_useIndexBuffers.GetBool() ) {
 			vertexCache.UnbindIndex();
 		}
-		glDrawElements( GL_TRIANGLES, 
+		glDrawElements( GL_TRIANGLES,
 						r_singleTriangle.GetBool() ? 3 : tri->numIndexes,
 						GL_INDEX_TYPE,
 						tri->indexes );
@@ -125,7 +125,7 @@ void RB_DrawShadowElementsWithCounters( const srfTriangles_t *tri, int numIndexe
 	backEnd.pc.c_shadowVertexes += tri->numVerts;
 
 	if ( tri->indexCache && r_useIndexBuffers.GetBool() ) {
-		glDrawElements( GL_TRIANGLES, 
+		glDrawElements( GL_TRIANGLES,
 						r_singleTriangle.GetBool() ? 3 : numIndexes,
 						GL_INDEX_TYPE,
 						(int *)vertexCache.Position( tri->indexCache ) );
@@ -134,7 +134,7 @@ void RB_DrawShadowElementsWithCounters( const srfTriangles_t *tri, int numIndexe
 		if ( r_useIndexBuffers.GetBool() ) {
 			vertexCache.UnbindIndex();
 		}
-		glDrawElements( GL_TRIANGLES, 
+		glDrawElements( GL_TRIANGLES,
 						r_singleTriangle.GetBool() ? 3 : numIndexes,
 						GL_INDEX_TYPE,
 						tri->indexes );
@@ -226,7 +226,7 @@ matrix will already have been loaded, and backEnd.currentSpace will
 be updated after the triangle function completes.
 ====================
 */
-void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs, 
+void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs,
 											  void (*triFunc_)( const drawSurf_t *) ) {
 	backEnd.currentSpace = NULL;
 
@@ -243,13 +243,13 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 				RB_EnterWeaponDepthHack();
 			} else if(!backEnd.currentSpace || backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack ) {
 				RB_LeaveDepthHack();
-			}			
+			}
 		}
 
 		// change the scissor if needed
 		if ( r_useScissor.GetBool() && !backEnd.currentScissor.Equals( drawSurf->scissorRect ) ) {
 			backEnd.currentScissor = drawSurf->scissorRect;
-			glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
+			glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
 				backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
 				backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
 				backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
@@ -267,7 +267,7 @@ void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs
 RB_RenderDrawSurfChainWithFunction
 ======================
 */
-void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs, 
+void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 										void (*triFunc_)( const drawSurf_t *) ) {
 	backEnd.currentSpace = NULL;
 
@@ -285,7 +285,7 @@ void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 			}
 			else if (!backEnd.currentSpace || backEnd.currentSpace->modelDepthHack || backEnd.currentSpace->weaponDepthHack) {
 				RB_LeaveDepthHack();
-			}			
+			}
 		}
 
 		// change the scissor if needed
@@ -357,7 +357,7 @@ RB_GetShaderTextureMatrix
 Read shader texture matrix into a 2x4 matrix (2 * vec4)
 ======================
 */
-void RB_GetShaderTextureMatrix( const float *shaderRegisters, 
+void RB_GetShaderTextureMatrix( const float *shaderRegisters,
   const textureStage_t *texture, idVec4 matrix[2] ) {
 
   float m[16];
@@ -453,17 +453,17 @@ void RB_BeginDrawingView (void) {
 	GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
 
 	// set the window clipping
-	glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1, 
-		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1, 
+	glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1,
+		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1,
 		backEnd.viewDef->viewport.x2 + 1 - backEnd.viewDef->viewport.x1,
-		backEnd.viewDef->viewport.y2 + 1 - backEnd.viewDef->viewport.y1 );  
+		backEnd.viewDef->viewport.y2 + 1 - backEnd.viewDef->viewport.y1 );
 
 	// the scissor may be smaller than the viewport for subviews
-	glScissor( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1, 
-		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1, 
+	glScissor( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1,
+		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1,
 		backEnd.viewDef->scissor.x2 + 1 - backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1 );
-	backEnd.currentScissor = backEnd.viewDef->scissor;  
+	backEnd.currentScissor = backEnd.viewDef->scissor;
 
 	// ensures that depth writes are enabled for the depth clear
 	GL_State( GLS_DEFAULT );
@@ -482,7 +482,7 @@ void RB_BeginDrawingView (void) {
 	}
 
 	backEnd.glState.faceCulling = -1;		// force face culling to set next time
-	GL_Cull( CT_FRONT_SIDED );  
+	GL_Cull( CT_FRONT_SIDED );
 }
 
 /*
@@ -550,7 +550,7 @@ void RB_DrawView( const void *data ) {
 	cmd = (const drawSurfsCommand_t *)data;
 
 	backEnd.viewDef = cmd->viewDef;
-	
+
 	// we will need to do a new copyTexSubImage of the screen
 	// when a SS_POST_PROCESS material is used
 	backEnd.currentRenderCopied = false;

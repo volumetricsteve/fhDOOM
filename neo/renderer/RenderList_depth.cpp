@@ -211,7 +211,7 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 			drawdepth.polygonOffset = 0;
 		}
 
-		// subviews will just down-modulate the color buffer by overbright		
+		// subviews will just down-modulate the color buffer by overbright
 		if (shader->GetSort() == SS_SUBVIEW) {
 			drawdepth.isSubView = true;
 			drawdepth.color[0] = drawdepth.color[1] = drawdepth.color[2] = (1.0 / backEnd.overBright);
@@ -268,7 +268,7 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 				drawdepth.texture = pStage->texture.image;
 				drawdepth.alphaTestThreshold = regs[pStage->alphaTestRegister];
 
-				// set texture matrix and texGens      
+				// set texture matrix and texGens
 
 				if (pStage->privatePolygonOffset && !surf->material->TestMaterialFlag( MF_POLYGONOFFSET )) {
 					drawdepth.polygonOffset = pStage->privatePolygonOffset;
@@ -282,8 +282,8 @@ static void RB_GLSL_CreateFillDepthRenderList( drawSurf_t **drawSurfs, int numDr
 					drawdepth.textureMatrix[1] = idVec4::identityT;
 				}
 
-				// Append drawdepth inside the loop, because some effects (eg burn-away of dead demons) 
-				// require multiple stages being rendered to the depth buffer, because those stages are 
+				// Append drawdepth inside the loop, because some effects (eg burn-away of dead demons)
+				// require multiple stages being rendered to the depth buffer, because those stages are
 				// being blended/masked individually.
 				renderlist.Append( drawdepth );
 			}

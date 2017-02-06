@@ -107,8 +107,8 @@ public:
 
 	bool        LoadFile(const char* filename, bool toRgba = false);
 	bool        LoadDDS( const char* filename, bool toRgba = false );
-	bool        LoadTGA(const char* filename, bool toRgba = false);	
-	bool        LoadProgram(const char* program);	
+	bool        LoadTGA(const char* filename, bool toRgba = false);
+	bool        LoadProgram(const char* program);
 	bool        LoadCubeMap( const fhImageData sides[6], const char* name );
 	bool        LoadRgbaFromMemory( const byte* pic, uint32 width, uint32 height );
 
@@ -146,8 +146,8 @@ private:
 	bool        ParseImageProgram_r(idLexer& src, bool noload, bool toRgba);
 
 	//TODO(johl): storing with, height and size inside the level is a bit redundant,
-	//            because this kind of stuff could be deduced from the depth of the 
-	//            current level and the given pixel format. 
+	//            because this kind of stuff could be deduced from the depth of the
+	//            current level and the given pixel format.
 	//            But storing it explicitly does not hurt that much and makes the code
 	//            a bit easier :)
 	struct level_t {

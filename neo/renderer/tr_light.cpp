@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting ) {
 	}
 
 	tri->ambientCache = vertexCache.Alloc( tri->verts, tri->numVerts * sizeof( tri->verts[0] ), false );
-	if ( !tri->ambientCache ) {	
+	if ( !tri->ambientCache ) {
 		return false;
 	}
 	return true;
@@ -427,14 +427,14 @@ static int R_SelectShadowMapLod( const viewLight_t* vlight, const viewDef_t* vie
 
 		if (area < r_smScreenSizeLod2.GetFloat()) {
 			lod++;
-		}		
+		}
 	}
 	else {
 		const idRenderLightLocal* light = vlight->lightDef;
 
 		const float thresholds[] = { 750, 400, 150, 75, 0 };
 		const int numThresholds = sizeof(thresholds) / sizeof(thresholds[0]);
-	
+
 		float size = light->GetMaximumCenterToEdgeDistance();
 
 		for (int i = 0; i<numThresholds; ++i) {
@@ -457,7 +457,7 @@ static int R_SelectShadowMapLod( const viewLight_t* vlight, const viewDef_t* vie
 		}
 	}
 
-	return  Min(2, Max(0, lod));	
+	return  Min(2, Max(0, lod));
 }
 
 /*
@@ -600,7 +600,7 @@ void idRenderWorldLocal::CreateLightDefInteractions( idRenderLightLocal *ldef ) 
 			}
 
 			// if any of the edef's interaction match this light, we don't
-			// need to consider it. 
+			// need to consider it.
 			if ( r_useInteractionTable.GetBool() && this->interactionTable ) {
 				// allocating these tables may take several megs on big maps, but it saves 3% to 5% of
 				// the CPU time.  The table is updated at interaction::AllocAndLink() and interaction::UnlinkAndFree()
@@ -675,7 +675,7 @@ void idRenderWorldLocal::CreateLightDefInteractions( idRenderLightLocal *ldef ) 
 R_LinkLightSurf
 =================
 */
-void R_LinkLightSurf( const drawSurf_t **link, const srfTriangles_t *tri, const viewEntity_t *space, 
+void R_LinkLightSurf( const drawSurf_t **link, const srfTriangles_t *tri, const viewEntity_t *space,
 				   const idRenderLightLocal *light, const idMaterial *shader, const idScreenRect &scissor, bool viewInsideShadow ) {
 	drawSurf_t		*drawSurf;
 
@@ -907,7 +907,7 @@ void R_AddLightSurfaces( void ) {
 				light->viewCount = -1;
 				continue;
 			}
-			if ( light->parms.allowLightInViewID 
+			if ( light->parms.allowLightInViewID
 			&& light->parms.allowLightInViewID != tr.viewDef->renderView.viewID ) {
 				*ptr = vLight->next;
 				light->viewCount = -1;
@@ -1050,7 +1050,7 @@ void R_AddLightSurfaces( void ) {
 			vertexCache.Touch( tri->shadowCache );
 
 			if ( !tri->indexCache && r_useIndexBuffers.GetBool() ) {
-				tri->indexCache = vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), true );				
+				tri->indexCache = vertexCache.Alloc( tri->indexes, tri->numIndexes * sizeof( tri->indexes[0] ), true );
 			}
 
 			if ( tri->indexCache ) {
@@ -1381,7 +1381,7 @@ static void R_AddAmbientDrawsurfs( viewEntity_t *vEntity ) {
 
 		R_GlobalShaderOverride( &shader );
 
-		if ( !shader ) {	
+		if ( !shader ) {
 			continue;
 		}
 		if ( !shader->IsDrawn() ) {
@@ -1469,7 +1469,7 @@ shadows are generated, since dynamic models will typically be lit by
 two or more lights.
 ===================
 */
-void R_AddModelSurfaces( void ) {	
+void R_AddModelSurfaces( void ) {
 	// clear the ambient surface list
 	tr.viewDef->numDrawSurfs = 0;
 	tr.viewDef->maxDrawSurfs = 0;	// will be set to INITIAL_DRAWSURFS on R_AddDrawSurf

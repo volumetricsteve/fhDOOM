@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -150,8 +150,8 @@ void RB_STD_LightScale( void ) {
 
 	// the scissor may be smaller than the viewport for subviews
 	if ( r_useScissor.GetBool() ) {
-		glScissor( backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1, 
-			backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1, 
+		glScissor( backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1,
+			backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1,
 			backEnd.viewDef->scissor.x2 - backEnd.viewDef->scissor.x1 + 1,
 			backEnd.viewDef->scissor.y2 - backEnd.viewDef->scissor.y1 + 1 );
 		backEnd.currentScissor = backEnd.viewDef->scissor;
@@ -176,22 +176,22 @@ void RB_STD_LightScale( void ) {
 		f /= 2;
 		if ( f > 1 ) {
 			f = 1;
-		}   
+		}
 
 		v = v * f * 2;
 
-		fhImmediateMode im;   
+		fhImmediateMode im;
 		im.Color3f( f, f, f );
 		im.Begin( GL_QUADS );
-		im.Vertex2f( 0,0 );	
+		im.Vertex2f( 0,0 );
 		im.Vertex2f( 0,1 );
-		im.Vertex2f( 1,1 );	
-		im.Vertex2f( 1,0 );	
+		im.Vertex2f( 1,1 );
+		im.Vertex2f( 1,0 );
 		im.End();
 	}
 
 	GL_ProjectionMatrix.Pop();
-	glEnable( GL_DEPTH_TEST );	
+	glEnable( GL_DEPTH_TEST );
 	GL_Cull( CT_FRONT_SIDED );
 }
 
@@ -217,13 +217,13 @@ void	RB_STD_DrawView( void ) {
 	numDrawSurfs = backEnd.viewDef->numDrawSurfs;
 
 	// clear the z buffer, set the projection matrix, etc
-	RB_BeginDrawingView();  
+	RB_BeginDrawingView();
 
 	// decide how much overbrighting we are going to do
 	RB_DetermineLightScale();
 
 	// fill the depth buffer and clear color buffer to black except on
-	// subviews	
+	// subviews
 	RB_GLSL_FillDepthBuffer(drawSurfs, numDrawSurfs);
 
 	if (backEnd.viewDef->viewEntitys) {
@@ -242,14 +242,14 @@ void	RB_STD_DrawView( void ) {
 	}
 
 	// main light renderer
-  
+
 	RB_GLSL_DrawInteractions();
 
 	// disable stencil shadow test
 	glStencilFunc( GL_ALWAYS, 128, 255 );
 
 	// uplight the entire screen to crutch up not having better blending range
-	RB_STD_LightScale();  
+	RB_STD_LightScale();
 
 	{
 		fhTimeElapsed timeElapsed(&backEnd.stats.groups[backEndGroup::NonInteraction].time);
@@ -269,7 +269,7 @@ void	RB_STD_DrawView( void ) {
 			stageRenderlist.Clear();
 			RB_GLSL_CreateStageRenderList( drawSurfs + processed, numDrawSurfs - processed, stageRenderlist, 1000 );
 			RB_GLSL_SubmitStageRenderList(stageRenderlist);
-		}	
+		}
 	}
-	RB_RenderDebugTools( drawSurfs, numDrawSurfs ); 
+	RB_RenderDebugTools( drawSurfs, numDrawSurfs );
 }

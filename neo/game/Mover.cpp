@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Game_local.h"
 
-// a mover will update any gui entities in it's target list with 
+// a mover will update any gui entities in it's target list with
 // a key/val pair of "mover" "state" from below.. guis can represent
 // realtime info like this
 // binary only
@@ -172,7 +172,7 @@ void idMover::Save( idSaveGame *savefile ) const {
 	savefile->WriteInt( move.movetime );
 	savefile->WriteInt( move.deceleration );
 	savefile->WriteVec3( move.dir );
-	
+
 	savefile->WriteInt( rot.stage );
 	savefile->WriteInt( rot.acceleration );
 	savefile->WriteInt( rot.movetime );
@@ -180,7 +180,7 @@ void idMover::Save( idSaveGame *savefile ) const {
 	savefile->WriteFloat( rot.rot.pitch );
 	savefile->WriteFloat( rot.rot.yaw );
 	savefile->WriteFloat( rot.rot.roll );
-	
+
 	savefile->WriteInt( move_thread );
 	savefile->WriteInt( rotate_thread );
 
@@ -241,7 +241,7 @@ void idMover::Restore( idRestoreGame *savefile ) {
 	savefile->ReadInt( move.movetime );
 	savefile->ReadInt( move.deceleration );
 	savefile->ReadVec3( move.dir );
-	
+
 	savefile->ReadInt( (int&)rot.stage );
 	savefile->ReadInt( rot.acceleration );
 	savefile->ReadInt( rot.movetime );
@@ -249,7 +249,7 @@ void idMover::Restore( idRestoreGame *savefile ) {
 	savefile->ReadFloat( rot.rot.pitch );
 	savefile->ReadFloat( rot.rot.yaw );
 	savefile->ReadFloat( rot.rot.roll );
-	
+
 	savefile->ReadInt( move_thread );
 	savefile->ReadInt( rotate_thread );
 
@@ -297,7 +297,7 @@ void idMover::Restore( idRestoreGame *savefile ) {
 		savefile->ReadInt( useAngles );
 
 		PostEventMS( &EV_PostRestore, 0, starttime, totaltime, accel, decel, useAngles );
-	} 
+	}
 }
 
 /*
@@ -587,7 +587,7 @@ void idMover::Event_InitGuiTargets( void ) {
 /***********************************************************************
 
 	Translation control functions
-	
+
 ***********************************************************************/
 
 /*
@@ -780,7 +780,7 @@ void idMover::BeginMove( idThread *thread ) {
 /***********************************************************************
 
 	Rotation control functions
-	
+
 ***********************************************************************/
 
 /*
@@ -975,8 +975,8 @@ void idMover::BeginRotation( idThread *thread, bool stopwhendone ) {
 
 /***********************************************************************
 
-	Script callable routines  
-	
+	Script callable routines
+
 ***********************************************************************/
 
 /*
@@ -1694,7 +1694,7 @@ idElevator::Event_Touch
 ===============
 */
 void idElevator::Event_Touch( idEntity *other, trace_t *trace ) {
-	
+
 	if ( gameLocal.time < lastTouchTime + 2000 ) {
 		return;
 	}
@@ -1756,7 +1756,7 @@ void idElevator::Think( void ) {
 				MoveToPos( fi->pos );
 			}
 		}
-	} 
+	}
 	RunPhysics();
 	Present();
 }
@@ -2498,7 +2498,7 @@ void idMover_Binary::Event_MatchActivateTeam( moverState_t newstate, int time ) 
 ================
 idMover_Binary::BindTeam
 
-All entities in a mover team will be bound 
+All entities in a mover team will be bound
 ================
 */
 void idMover_Binary::BindTeam( idEntity *bindTo ) {
@@ -2622,7 +2622,7 @@ void idMover_Binary::Event_Reached_BinaryMover( void ) {
 			// return to pos1 after a delay
 			PostEventSec( &EV_Mover_ReturnToPos1, wait );
 		}
-		
+
 		// fire targets
 		ActivateTargets( moveMaster->GetActivator() );
 
@@ -3275,7 +3275,7 @@ void idDoor::Spawn( void ) {
 	// if "start_open", reverse position 1 and 2
 	if ( start_open ) {
 		// post it after EV_SpawnBind
-		PostEventMS( &EV_Door_StartOpen, 1 );		
+		PostEventMS( &EV_Door_StartOpen, 1 );
 	}
 
 	if ( spawnArgs.GetFloat( "time", "1", time ) ) {
@@ -3494,7 +3494,7 @@ void idDoor::Use( idEntity *other, idEntity *activator ) {
 		}
 		ActivateTargets( activator );
 		Use_BinaryMover( activator );
-	} 
+	}
 }
 
 /*
@@ -3592,7 +3592,7 @@ void idDoor::CalcTriggerBounds( float size, idBounds &bounds ) {
 
 	// find the bounds of everything on the team
 	bounds = GetPhysics()->GetAbsBounds();
-	
+
 	fl.takedamage = true;
 	for( other = activateChain; other != NULL; other = other->GetActivateChain() ) {
 		if ( other->IsType( idDoor::Type ) ) {
@@ -4185,7 +4185,7 @@ void idPlat::SpawnPlatTrigger( idVec3 &pos ) {
 		tmin[1] = ( bounds[0][1] + bounds[1][1] ) * 0.5f;
 		tmax[1] = tmin[1] + 1;
 	}
-	
+
 	trigger = new idClipModel( idTraceModel( idBounds( tmin, tmax ) ) );
 	trigger->Link( gameLocal.clip, this, 255, GetPhysics()->GetOrigin(), mat3_identity );
 	trigger->SetContents( CONTENTS_TRIGGER );
@@ -4425,7 +4425,7 @@ void idRotater::Event_Activate( idEntity *activator ) {
 		spawnArgs.GetFloat( "speed", "100", speed );
 		spawnArgs.GetBool( "x_axis", "0", x_axis );
 		spawnArgs.GetBool( "y_axis", "0", y_axis );
-		
+
 		// set the axis of rotation
 		if ( x_axis ) {
 			delta[2] = speed;

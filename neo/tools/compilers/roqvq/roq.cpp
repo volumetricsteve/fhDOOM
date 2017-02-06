@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -117,33 +117,33 @@ void roq::EncodeStream( const char *paramInputFile )
 	int		morestuff;
 
 	onFrame = 1;
-	
+
 	encoder = new codec;
 	paramFile = new roqParam;
 	paramFile->numInputFiles = 0;
-	
+
 	paramFile->InitFromFile( paramInputFile );
 
 	if (!paramFile->NumberOfFrames()) {
 		return;
 	}
-	
+
 	InitRoQFile( paramFile->outputFilename);
 
 	numberOfFrames = paramFile->NumberOfFrames();
 
 	if (paramFile->NoAlpha()==true) common->Printf("encodeStream: eluding alpha\n");
-	
+
 	f0 = "";
 	f1 = paramFile->GetNextImageFilename();
 	if (( paramFile->MoreFrames() == true )) {
 		f2 = paramFile->GetNextImageFilename();
 	}
 	morestuff = numberOfFrames;
-	
+
 	while( morestuff ) {
 		LoadAndDisplayImage( f1 );
-		
+
 		if (onFrame==1) {
 			encoder->SparseEncode();
 //			WriteLossless();
@@ -179,7 +179,7 @@ void roq::EncodeStream( const char *paramInputFile )
 void roq::Write16Word( word *aWord, idFile *stream )
 {
 	byte	a, b;
-	
+
 	a = *aWord & 0xff;
 	b = *aWord >> 8;
 
@@ -190,7 +190,7 @@ void roq::Write16Word( word *aWord, idFile *stream )
 void roq::Write32Word( unsigned int *aWord, idFile *stream )
 {
 	byte	a, b, c, d;
-	
+
 	a = *aWord & 0xff;
 	b = (*aWord >> 8) & 0xff;
 	c = (*aWord >> 16) & 0xff;
@@ -603,7 +603,7 @@ word direct;
 		common->Printf("writeCodeBook: false VQ DATA!!!!\n");
 		return;
 	}
-	
+
 	direct = RoQ_QUAD_CODEBOOK;
 
 	Write16Word( &direct, RoQFile);
@@ -633,7 +633,7 @@ byte *cccList;
 bool *use2, *use4;
 int dx,dy,dxMean,dyMean,index2[256],index4[256], dimension;
 
-	cccList = (byte *)Mem_Alloc( numQuadCels * 8);					// maximum length 
+	cccList = (byte *)Mem_Alloc( numQuadCels * 8);					// maximum length
 	use2 = (bool *)Mem_Alloc(256*sizeof(bool));
 	use4 = (bool *)Mem_Alloc(256*sizeof(bool));
 
@@ -781,7 +781,7 @@ int dx,dy,dxMean,dyMean,index2[256],index4[256], dimension;
 	}
 
 	direct = RoQ_QUAD_VQ;
-	
+
 	Write16Word( &direct, RoQFile);
 
 	j = onCCC;
@@ -796,7 +796,7 @@ int dx,dy,dxMean,dyMean,index2[256],index4[256], dimension;
 	common->Printf("writeFrame: outputting %d bytes to RoQ_QUAD_VQ\n", j);
 
 	previousSize = j;
-	
+
 	RoQFile->Write( cccList, onCCC );
 
 	Mem_Free( cccList );
@@ -816,7 +816,7 @@ void roq::LoadAndDisplayImage( const char * filename )
 	currentFile = filename;
 
 	image = new NSBitmapImageRep( filename );
-	
+
 	numQuadCels  = ((image->pixelsWide() & 0xfff0)*(image->pixelsHigh() & 0xfff0))/(MINSIZE*MINSIZE);
 	numQuadCels += numQuadCels/4 + numQuadCels/16;
 
@@ -825,7 +825,7 @@ void roq::LoadAndDisplayImage( const char * filename )
 //		imageData = [image data];
 //		memset( imageData, 0, image->pixelsWide()*image->pixelsHigh()*[image samplesPerPixel]);
 //	}
-	
+
 	if (!quietMode) common->Printf("loadAndDisplayImage: %dx%d\n", image->pixelsWide(), image->pixelsHigh());
 }
 

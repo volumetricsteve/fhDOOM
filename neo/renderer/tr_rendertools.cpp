@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -92,12 +92,12 @@ void RB_DrawBounds( const idBounds &bounds, const idVec3 &color ) {
 void RB_DrawBounds( const idBounds &bounds, const idVec4 &color ) {
 	if ( bounds.IsCleared() ) {
 		return;
-	} 
+	}
 
   fhImmediateMode lines;
 
   lines.Color3fv(color.ToFloatPtr());
-  lines.Begin(GL_LINE_LOOP);  
+  lines.Begin(GL_LINE_LOOP);
   lines.Vertex3f(bounds[0][0], bounds[0][1], bounds[0][2]);
   lines.Vertex3f(bounds[0][0], bounds[1][1], bounds[0][2]);
   lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[0][2]);
@@ -122,7 +122,7 @@ void RB_DrawBounds( const idBounds &bounds, const idVec4 &color ) {
 
   lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[0][2]);
   lines.Vertex3f(bounds[1][0], bounds[1][1], bounds[1][2]);
-  lines.End();  
+  lines.End();
 }
 
 
@@ -141,7 +141,7 @@ void RB_SimpleSurfaceSetup( const drawSurf_t *drawSurf ) {
 	// change the scissor if needed
 	if ( r_useScissor.GetBool() && !backEnd.currentScissor.Equals( drawSurf->scissorRect ) ) {
 		backEnd.currentScissor = drawSurf->scissorRect;
-		glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
+		glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
 			backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
 			backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
 			backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
@@ -158,7 +158,7 @@ void RB_SimpleWorldSetup( void ) {
 	GL_ModelViewMatrix.Load( backEnd.viewDef->worldSpace.modelViewMatrix );
 
 	backEnd.currentScissor = backEnd.viewDef->scissor;
-	glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
+	glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
 		backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
 		backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
 		backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );
@@ -177,7 +177,7 @@ stenciling will matter.
 void RB_PolygonClear( const idVec3 &clearColor ) {
   GL_ModelViewMatrix.Push();
 	glPushAttrib( GL_ALL_ATTRIB_BITS  );
-  GL_ModelViewMatrix.LoadIdentity();	
+  GL_ModelViewMatrix.LoadIdentity();
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_CULL_FACE );
@@ -295,7 +295,7 @@ static void R_ColorByStencilBuffer( void ) {
 
 	// now draw color for each stencil value
 	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-	for ( i = 0 ; i < 6 ; i++ ) {		
+	for ( i = 0 ; i < 6 ; i++ ) {
 		glStencilFunc( GL_EQUAL, i, 255 );
 		RB_PolygonClear( idVec3(colors[i][0], colors[i][1], colors[i][2]) );
 	}
@@ -392,7 +392,7 @@ void RB_ShowIntensity( void ) {
 	if ( !r_showIntensity.GetBool() ) {
 		return;
 	}
-  
+
     globalImages->currentRenderImage->CopyFramebuffer(backEnd.viewDef->viewport.x1,
       backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
       backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true);
@@ -413,9 +413,9 @@ void RB_ShowIntensity( void ) {
 		idVec2(globalImages->currentRenderImage->uploadWidth, globalImages->currentRenderImage->uploadHeight),
 		idVec2(backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,	backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1));
 
-    globalImages->currentRenderImage->Bind(0);    
+    globalImages->currentRenderImage->Bind(0);
 
-    fhImmediateMode im(true);    
+    fhImmediateMode im(true);
     im.Color3f(1, 1, 1);
     im.Begin(GL_QUADS);
 
@@ -458,14 +458,14 @@ void RB_ShowDepthBuffer( void ) {
 
   GL_ProjectionMatrix.Push();
   GL_ProjectionMatrix.LoadIdentity();
-  GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );	
+  GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
 
 	glRasterPos2f( 0, 0 );
 	GL_ProjectionMatrix.Pop();
 
 	GL_ModelViewMatrix.Pop();
 
-	GL_State( GLS_DEPTHFUNC_ALWAYS );	
+	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	globalImages->BindNull();
 
 	depthReadback = R_StaticAlloc( glConfig.vidWidth * glConfig.vidHeight*4 );
@@ -475,8 +475,8 @@ void RB_ShowDepthBuffer( void ) {
 
 #if 0
   for ( i = 0 ; i < glConfig.vidWidth * glConfig.vidHeight ; i++ ) {
-    ((byte *)depthReadback)[i*4] = 
-      ((byte *)depthReadback)[i*4+1] = 
+    ((byte *)depthReadback)[i*4] =
+      ((byte *)depthReadback)[i*4+1] =
       ((byte *)depthReadback)[i*4+2] = 255 * ((float *)depthReadback)[i];
     ((byte *)depthReadback)[i*4+3] = 1;
   }
@@ -524,7 +524,7 @@ void RB_ShowLightCount(void) {
 	globalImages->defaultImage->Bind(0);
 
 
-	GL_UseProgram(vertexColorProgram);	
+	GL_UseProgram(vertexColorProgram);
 
 	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
 		for (i = 0; i < 2; i++) {
@@ -576,7 +576,7 @@ void RB_ShowSilhouette(void) {
 
 	//
 	// clear all triangle edges to black
-	//	
+	//
 	globalImages->BindNull();
 	glDisable(GL_STENCIL_TEST);
 
@@ -635,7 +635,7 @@ void RB_ShowSilhouette(void) {
 				fhRenderProgram::SetDiffuseColor(idVec4(0.5f, 0, 0, 1));
 
 				const int offset = vertexCache.Bind(tri->shadowCache);
-				GL_SetupVertexAttributes(fhVertexLayout::ShadowSilhouette, offset);				
+				GL_SetupVertexAttributes(fhVertexLayout::ShadowSilhouette, offset);
 
 				glDrawElements(GL_LINES,
 					indicesUsed,
@@ -691,7 +691,7 @@ static void RB_ShowShadowCount( void ) {
 
 	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
 		for ( i = 0 ; i < 2 ; i++ ) {
-			for ( surf = i ? vLight->localShadows : vLight->globalShadows 
+			for ( surf = i ? vLight->localShadows : vLight->globalShadows
 				; surf ; surf = (drawSurf_t *)surf->nextOnLight ) {
 				RB_SimpleSurfaceSetup( surf );
 				const srfTriangles_t	*tri = surf->geo;
@@ -748,7 +748,7 @@ static void RB_ShowTris( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	if (!r_showTris.GetInteger()) {
 		return;
 	}
-	
+
 	globalImages->BindNull();
 	glDisable(GL_STENCIL_TEST);
 
@@ -798,7 +798,7 @@ Debugging tool
 static void RB_ShowSurfaceInfo( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	modelTrace_t mt;
 	idVec3 start, end;
-	
+
 	if ( !r_showSurfaceInfo.GetBool() ) {
 		return;
 	}
@@ -809,8 +809,8 @@ static void RB_ShowSurfaceInfo( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	if ( !tr.primaryWorld->Trace( mt, start, end, 0.0f, false ) ) {
 		return;
 	}
-	
-	globalImages->BindNull();	
+
+	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
 
 	GL_State( GLS_POLYMODE_LINE );
@@ -826,7 +826,7 @@ static void RB_ShowSurfaceInfo( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	tr.primaryWorld->DrawText( mt.entity->hModel->Name(), mt.point + tr.primaryView->renderView.viewaxis[2] * 12,
 		0.35f, colorRed, tr.primaryView->renderView.viewaxis );
-	tr.primaryWorld->DrawText( mt.material->GetName(), mt.point, 
+	tr.primaryWorld->DrawText( mt.material->GetName(), mt.point,
 		0.35f, colorBlue, tr.primaryView->renderView.viewaxis );
 
 	glEnable( GL_DEPTH_TEST );
@@ -857,7 +857,7 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 		common->Printf( "\n" );
 		return;
 	}
-	
+
 	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
 
@@ -876,10 +876,10 @@ static void RB_ShowViewEntitys( viewEntity_t *vModels ) {
 			continue;
 		}
 
-		// draw the reference bounds in yellow		
+		// draw the reference bounds in yellow
 		RB_DrawBounds( vModels->entityDef->referenceBounds, idVec3(1,1,0) );
 
-		// draw the model bounds in white	
+		// draw the model bounds in white
 		idRenderModel *model = R_EntityDefDynamicModel( vModels->entityDef );
 		if ( !model ) {
 			continue;	// particles won't instantiate without a current view
@@ -912,14 +912,14 @@ static void RB_ShowTexturePolarity( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	if ( !r_showTexturePolarity.GetBool() ) {
 		return;
 	}
-	
+
 	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
 
 	GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
 	fhImmediateMode im;
-	
+
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
 		drawSurf = drawSurfs[i];
 		tri = drawSurf->geo;
@@ -1037,7 +1037,7 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	if ( !r_showTangentSpace.GetInteger() ) {
 		return;
 	}
-	
+
 	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
 
@@ -1061,13 +1061,13 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			v = &tri->verts[tri->indexes[j]];
 
 			if ( r_showTangentSpace.GetInteger() == 1 ) {
-				im.Color4f( 0.5 + 0.5 * v->tangents[0][0],  0.5 + 0.5 * v->tangents[0][1],  
+				im.Color4f( 0.5 + 0.5 * v->tangents[0][0],  0.5 + 0.5 * v->tangents[0][1],
 					0.5 + 0.5 * v->tangents[0][2], 0.5 );
 			} else if ( r_showTangentSpace.GetInteger() == 2 ) {
-				im.Color4f( 0.5 + 0.5 * v->tangents[1][0],  0.5 + 0.5 * v->tangents[1][1],  
+				im.Color4f( 0.5 + 0.5 * v->tangents[1][0],  0.5 + 0.5 * v->tangents[1][1],
 					0.5 + 0.5 * v->tangents[1][2], 0.5 );
 			} else {
-				im.Color4f( 0.5 + 0.5 * v->normal[0],  0.5 + 0.5 * v->normal[1],  
+				im.Color4f( 0.5 + 0.5 * v->normal[0],  0.5 + 0.5 * v->normal[1],
 					0.5 + 0.5 * v->normal[2], 0.5 );
 			}
 			im.Vertex3fv( v->xyz.ToFloatPtr() );
@@ -1173,7 +1173,7 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		if ( !tri->verts ) {
 			continue;
 		}
-          
+
     im.Begin(GL_LINES);
     for (j = 0; j < tri->numVerts; j++) {
       im.Color3f(0, 0, 1);
@@ -1191,7 +1191,7 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
       VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[1], end);
       im.Vertex3fv(end.ToFloatPtr());
     }
-    im.End();   
+    im.End();
 	}
 
 	if ( showNumbers ) {
@@ -1202,7 +1202,7 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			if ( !tri->verts ) {
 				continue;
 			}
-			
+
 			for ( j = 0 ; j < tri->numVerts ; j++ ) {
 				R_LocalPointToGlobal( drawSurf->space->modelMatrix, tri->verts[j].xyz + tri->verts[j].tangents[0] + tri->verts[j].normal * 0.2f, pos );
 				RB_DrawText( va( "%d", j ), pos, 0.01f, colorWhite, backEnd.viewDef->renderView.viewaxis, 1 );
@@ -1236,7 +1236,7 @@ static void RB_AltShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 		return;
 	}
 
-	GL_State( GLS_DEFAULT );	
+	GL_State( GLS_DEFAULT );
 
 	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
@@ -1368,7 +1368,7 @@ static void RB_ShowTextureVectors( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			temp[2] = (d0[2] * d1[4] - d0[4] * d1[2]) * inva;
 			temp.Normalize();
 			tangents[0] = temp;
-        
+
 			temp[0] = (d0[3] * d1[0] - d0[0] * d1[3]) * inva;
 			temp[1] = (d0[3] * d1[1] - d0[1] * d1[3]) * inva;
 			temp[2] = (d0[3] * d1[2] - d0[2] * d1[3]) * inva;
@@ -1554,7 +1554,7 @@ static void RB_ShowEdges( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	glEnable( GL_DEPTH_TEST );
 }
 
-void RB_ShowLights2( void ) {	
+void RB_ShowLights2( void ) {
 
 	if (!r_showLights2.GetInteger()) {
 		return;
@@ -1579,7 +1579,7 @@ void RB_ShowLights2( void ) {
 
 
 	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
-		const idRenderLightLocal* light = vLight->lightDef;				
+		const idRenderLightLocal* light = vLight->lightDef;
 
 		idVec3 color;
 		switch (vLight->shadowMapLod)
@@ -1655,7 +1655,7 @@ void RB_ShowLights( void ) {
 
 	// all volumes are expressed in world coordinates
 	RB_SimpleWorldSetup();
-	
+
 	globalImages->BindNull();
 	glDisable( GL_STENCIL_TEST );
 
@@ -1665,7 +1665,7 @@ void RB_ShowLights( void ) {
 	common->Printf( "volumes: " );	// FIXME: not in back end!
 
 	GL_UseProgram(defaultProgram);
-	fhRenderProgram::SetColorModulate(idVec4::zero);	
+	fhRenderProgram::SetColorModulate(idVec4::zero);
 	fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
 	fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
 	globalImages->whiteImage->Bind(1);
@@ -1822,18 +1822,18 @@ float RB_DrawTextLength( const char *text, float scale, int len ) {
 			spacing = simplex[charIndex][1];
 			index = 2;
 
-			while( index - 2 < num ) {   
-				if ( simplex[charIndex][index] < 0) {  
+			while( index - 2 < num ) {
+				if ( simplex[charIndex][index] < 0) {
 					index++;
-					continue; 
-				} 
+					continue;
+				}
 				index += 2;
-				if ( simplex[charIndex][index] < 0) {  
+				if ( simplex[charIndex][index] < 0) {
 					index++;
-					continue; 
-				} 
-			}   
-			textLen += spacing * scale;  
+					continue;
+				}
+			}
+			textLen += spacing * scale;
 		}
 	}
 	return textLen;
@@ -1896,9 +1896,9 @@ void RB_DrawText( const char *text, const idVec3 &origin, float scale, const idV
 			index = 2;
 
 			while( index - 2 < num ) {
-				if ( simplex[charIndex][index] < 0) {  
+				if ( simplex[charIndex][index] < 0) {
 					index++;
-					continue; 
+					continue;
 				}
 				p1 = org + scale * simplex[charIndex][index] * -viewAxis[1] + scale * simplex[charIndex][index+1] * viewAxis[2];
 				index += 2;
@@ -2277,11 +2277,11 @@ void RB_TestGamma( void ) {
 			}
 		}
 	}
-	
+
 	GL_ModelViewMatrix.LoadIdentity();
 	GL_ProjectionMatrix.Push();
 	GL_ProjectionMatrix.LoadIdentity();
-	GL_State( GLS_DEPTHFUNC_ALWAYS );		
+	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
@@ -2327,7 +2327,7 @@ static void RB_TestGammaBias( void ) {
 
 	GL_ProjectionMatrix.Push();
 	GL_ProjectionMatrix.LoadIdentity();
-	GL_State( GLS_DEPTHFUNC_ALWAYS );	
+	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
 	glRasterPos2f( 0.01f, 0.01f );
 	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
@@ -2372,18 +2372,18 @@ void RB_TestImage( void ) {
 		w *= (float)glConfig.vidHeight / glConfig.vidWidth;
 	}
 
-	GL_ModelViewMatrix.LoadIdentity();	
+	GL_ModelViewMatrix.LoadIdentity();
 	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 	GL_ProjectionMatrix.Push();
-	GL_ProjectionMatrix.LoadIdentity();  
-	
+	GL_ProjectionMatrix.LoadIdentity();
+
 	GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
-  
+
 	fhImmediateMode im;
 	im.SetTexture( tr.testImage );
 	im.Color3f( 1, 1, 1 );
 	im.Begin( GL_QUADS );
-	
+
 	im.TexCoord2f( 0, 1 );
 	im.Vertex2f( 0.5 - w, 0 );
 
@@ -2398,7 +2398,7 @@ void RB_TestImage( void ) {
 
 	im.End();
 
-	GL_ProjectionMatrix.Pop();	
+	GL_ProjectionMatrix.Pop();
 }
 
 /*
@@ -2416,7 +2416,7 @@ void RB_RenderDebugTools( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	GL_State( GLS_DEFAULT );
 	backEnd.currentScissor = backEnd.viewDef->scissor;
-	glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1, 
+	glScissor( backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
 		backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
 		backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
 		backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1 );

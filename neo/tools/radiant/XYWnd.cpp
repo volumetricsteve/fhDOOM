@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1261,7 +1261,7 @@ void CXYWnd::OnMouseMove(UINT nFlags, CPoint point) {
 		SetCursor(::LoadCursor(NULL, IDC_ARROW));
 	}
 
-	/// If precision crosshair is active, force redraw of the 2d view on mouse move 
+	/// If precision crosshair is active, force redraw of the 2d view on mouse move
 	if( m_precisionCrosshairMode != PRECISION_CROSSHAIR_NONE )
 	{
 		/// Force 2d view redraw (so that the precision cursor moves with the mouse)
@@ -1361,7 +1361,7 @@ void CXYWnd::OnPaint() {
 		common->Printf("ERROR: wglMakeCurrent failed.. Error:%i\n", glGetError());
 		common->Printf("Please restart Q3Radiant if the Map view is not working\n");
 		bPaint = false;
-	}  
+	}
 
 	if (bPaint) {
 		QE_CheckOpenGLForErrors();
@@ -1412,7 +1412,7 @@ void CXYWnd::OnPaint() {
 
 			if (g_Clip1.Set())
 				im.Vertex3fv(g_Clip1);
-			
+
 			if (g_Clip2.Set())
 				im.Vertex3fv(g_Clip2);
 
@@ -1425,15 +1425,15 @@ void CXYWnd::OnPaint() {
 			const idVec3 clipNumOffset(2,2,2);
 
 			if (g_Clip1.Set()) {
-				drawText("1", 1.0/m_fScale, g_Clip1.m_ptClip + clipNumOffset, clipColor); 
+				drawText("1", 1.0/m_fScale, g_Clip1.m_ptClip + clipNumOffset, clipColor);
 			}
 
 			if (g_Clip2.Set()) {
-				drawText("2", 1.0/m_fScale, g_Clip2.m_ptClip + clipNumOffset, clipColor); 
+				drawText("2", 1.0/m_fScale, g_Clip2.m_ptClip + clipNumOffset, clipColor);
 			}
 
 			if (g_Clip3.Set()) {
-				drawText("3", 1.0/m_fScale, g_Clip3.m_ptClip + clipNumOffset, clipColor); 
+				drawText("3", 1.0/m_fScale, g_Clip3.m_ptClip + clipNumOffset, clipColor);
 			}
 
 			if (g_Clip1.Set() && g_Clip2.Set() && selected_brushes.next != &selected_brushes) {
@@ -1469,7 +1469,7 @@ void CXYWnd::OnPaint() {
 		}
 #ifdef _DEBUG
 		common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
-#endif    
+#endif
 		wglSwapBuffers(dc.m_hDC);
 		vertexCache.EndFrame();
 		fhBaseRenderList::EndFrame();
@@ -1812,7 +1812,7 @@ bool MergeMenu(CMenu * pMenuDestination, const CMenu * pMenuAdd, bool bTopLevel 
 			// insert the new popup menu into the destination menu
 			HMENU hNewMenu = NewPopupMenu.GetSafeHmenu();
 			if (pMenuDestination->InsertMenu(iInsertPosDefault,
-				MF_BYPOSITION | MF_POPUP | MF_ENABLED, 
+				MF_BYPOSITION | MF_POPUP | MF_ENABLED,
 				(UINT)hNewMenu, sMenuAddString ))
 			{
 				// don't forget to correct the item count
@@ -1824,7 +1824,7 @@ bool MergeMenu(CMenu * pMenuDestination, const CMenu * pMenuAdd, bool bTopLevel 
 				return false;
 			}
 
-			// don't destroy the new menu		
+			// don't destroy the new menu
 			NewPopupMenu.Detach();
 		} // if (pSubMenu)
 	} // for (iLoop)
@@ -1841,7 +1841,7 @@ bool MergeMenu(CMenu * pMenuDestination, const CMenu * pMenuAdd, bool bTopLevel 
 void CXYWnd::HandleDrop() {
 	if (!m_mnuDrop.GetSafeHmenu()) {		// first time, load it up
 		m_mnuDrop.CreatePopupMenu();
-		
+
 		CMenu *drop = new CMenu;
 		drop->LoadMenu( IDR_MENU_DROP );
 
@@ -2498,7 +2498,7 @@ void CXYWnd::XY_DrawGrid() {
 
 	int stepSize = 64 * 0.1 / m_fScale;
 	if (stepSize < 64) {
-		stepSize = max ( 64 , g_qeglobals.d_gridsize ); 
+		stepSize = max ( 64 , g_qeglobals.d_gridsize );
 	}
 	else {
 		int i;
@@ -2578,7 +2578,7 @@ void CXYWnd::XY_DrawGrid() {
 				im.End ();
 				glLineWidth(1);
 			}
-		}		
+		}
 	}
 
 	// draw coordinate text if needed
@@ -2671,7 +2671,7 @@ void CXYWnd::XY_DrawBlockGrid() {
 	for (x = xb; x < xe; x += 1024) {
 		for (y = yb; y < ye; y += 1024) {
       sprintf(text, "%i,%i", (int)floor(x / 1024), (int)floor(y / 1024));
-      drawText(text, 1.0/m_fScale, idVec3(x + 512, y + 512, 0), color); 
+      drawText(text, 1.0/m_fScale, idVec3(x + 512, y + 512, 0), color);
 		}
 	}
 }
@@ -2764,7 +2764,7 @@ void CXYWnd::DrawCameraIcon() {
 		a = g_pParentWnd->GetCamera()->Camera().angles[PITCH] * idMath::M_DEG2RAD;
 	}
 
-	float scale = 1.0/m_fScale;	//jhefty - keep the camera icon proportionally the same size 
+	float scale = 1.0/m_fScale;	//jhefty - keep the camera icon proportionally the same size
 
   fhImmediateMode im;
 	im.Color3f(0.0, 0.0, 1.0);
@@ -2832,7 +2832,7 @@ void CXYWnd::DrawZIcon(void) {
  =======================================================================================================================
  */
 bool FilterBrush(const brush_t *pb) {
-	
+
 	if (!pb->owner) {
 		return false;	// during construction
 	}
@@ -2853,7 +2853,7 @@ bool FilterBrush(const brush_t *pb) {
 			//
 			if (pb->mins[2] > g_pParentWnd->GetZWnd()->m_pZClip->GetTop()	// brush bottom edge is above clip top
 				||
-				pb->maxs[2] < g_pParentWnd->GetZWnd()->m_pZClip->GetBottom()// brush top edge is below clip bottom 
+				pb->maxs[2] < g_pParentWnd->GetZWnd()->m_pZClip->GetBottom()// brush top edge is below clip bottom
 				)
 			{
 				return TRUE;
@@ -2928,7 +2928,7 @@ bool FilterBrush(const brush_t *pb) {
 		if (pb->modelHandle > 0) {
 			idRenderModel *model = pb->modelHandle;
 			if ( dynamic_cast<idRenderModelLiquid*>(model) ) {
-				return true;			
+				return true;
 			}
 		}
 	}
@@ -2978,7 +2978,7 @@ bool FilterBrush(const brush_t *pb) {
     the lines can be visible when neither end is. Called for both camera view and xy view.
  =======================================================================================================================
  */
-void DrawPathLines(void) {	
+void DrawPathLines(void) {
 	const char		*ent_target[MAX_MAP_ENTITIES];
 	const entity_t	*ent_entity[MAX_MAP_ENTITIES];
 
@@ -3019,7 +3019,7 @@ void DrawPathLines(void) {
 			if (strcmp(ent_target[k], psz)) {
 				continue;
 			}
-			
+
 			const brush_t* tb = ent_entity[k]->brushes.onext;
 			if (tb == &ent_entity[k]->brushes) {
 				continue;
@@ -3033,8 +3033,8 @@ void DrawPathLines(void) {
 
       idVec3 s1, s2;
 
-			s1.x = -dir.y * 8 + dir.x * 8;			
-			s1.y = dir.x * 8 + dir.y * 8;      
+			s1.x = -dir.y * 8 + dir.x * 8;
+			s1.y = dir.x * 8 + dir.y * 8;
       s1.z = dir.z * 8;
 
       s2.x = dir.y * 8 + dir.x * 8;
@@ -3080,7 +3080,7 @@ void CXYWnd::DrawDimension(const idVec3& position, float value, const char* labe
 
 //FIXME(johl): complexity is way higher than needed, this needs to be completely rewritten.
 void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxBounds) {
-	const idVec3 vSize = vMaxBounds - vMinBounds;	
+	const idVec3 vSize = vMaxBounds - vMinBounds;
   const idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES] * 0.65f;
 
   fhImmediateMode im;
@@ -3108,13 +3108,13 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 		im.Vertex3f(vMaxBounds[nDim1] + 6.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
 		im.Vertex3f(vMaxBounds[nDim1] + 10.0f / m_fScale, vMaxBounds[nDim2], 0.0f);
 
-		im.End();    
+		im.End();
 
     DrawOrigin(
       idVec3(vMinBounds[nDim1] + 4, vMaxBounds[nDim2] + 8 / m_fScale, 0),
-      vMinBounds[nDim1], 
+      vMinBounds[nDim1],
       vMaxBounds[nDim2],
-      "x", 
+      "x",
       "y",
       color);
 
@@ -3128,7 +3128,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
       idVec3(vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2]), 0.0f),
       vSize[nDim2],
       "y",
-      color);    
+      color);
 	}
 	else if (m_nViewType == XZ) {
 		im.Begin(GL_LINES);
@@ -3155,9 +3155,9 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 
     DrawOrigin(
       idVec3(vMinBounds[nDim1] + 4, 0, vMaxBounds[nDim2] + 8 / m_fScale),
-      vMinBounds[nDim1], 
+      vMinBounds[nDim1],
       vMaxBounds[nDim2],
-      "x", 
+      "x",
       "z",
       color);
 
@@ -3200,7 +3200,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
       idVec3(0, vMinBounds[nDim1] + 4.0, vMaxBounds[nDim2] + 8 / m_fScale),
       vMinBounds[nDim1],
       vMaxBounds[nDim2],
-      "y", 
+      "y",
       "z",
       color);
 
@@ -3222,7 +3222,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
  =======================================================================================================================
  =======================================================================================================================
  */
-void CXYWnd::XY_Draw() {	
+void CXYWnd::XY_Draw() {
 	if (!active_brushes.next) {
 		return; // not valid yet
 	}
@@ -3252,9 +3252,9 @@ void CXYWnd::XY_Draw() {
 
 	const int nDim1 = (m_nViewType == YZ) ? 1 : 0;
 	const int nDim2 = (m_nViewType == XY) ? 1 : 2;
-  
+
   idVec2		mins, maxs; //2D view port mins/max
-  idBounds viewBounds; //3D world space bounds	
+  idBounds viewBounds; //3D world space bounds
   if(m_nViewType == XY) {
     viewBounds[0].x = m_vOrigin.x - w;
     viewBounds[1].x = m_vOrigin.x + w;
@@ -3267,7 +3267,7 @@ void CXYWnd::XY_Draw() {
     mins.y = m_vOrigin.y - h;
     maxs.x = m_vOrigin.x + w;
     maxs.y = m_vOrigin.y + h;
-  } 
+  }
   else if(m_nViewType == XZ) {
     viewBounds[0].x = m_vOrigin.x - w;
     viewBounds[1].x = m_vOrigin.x + w;
@@ -3300,7 +3300,7 @@ void CXYWnd::XY_Draw() {
 
 	// draw stuff
 	globalImages->BindNull();
-	// now draw the grid	
+	// now draw the grid
 	XY_DrawGrid();
 	glLineWidth(0.5);
 
@@ -3318,7 +3318,7 @@ void CXYWnd::XY_Draw() {
 	}
 
 	entity_t* e = world_entity;
-  
+
 	for ( brush_t* brush = active_brushes.next; brush != &active_brushes; brush = brush->next ) {
 
     if( CullBrush(brush, viewBounds) ) {
@@ -3333,13 +3333,13 @@ void CXYWnd::XY_Draw() {
 		drawn++;
 
     const idVec3 brushColor =
-      (brush->owner != e && brush->owner) ? 
-      brush->owner->eclass->color : 
+      (brush->owner != e && brush->owner) ?
+      brush->owner->eclass->color :
       g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES];
 
 		Brush_DrawXY( brush, m_nViewType, false, brushColor );
 	}
-  
+
 
 
 	DrawPathLines();
@@ -3415,8 +3415,8 @@ void CXYWnd::XY_Draw() {
 				}
 			}
 		}
-	}  
-  
+	}
+
   g_qeglobals.lineBuffer.Commit();
   glEnable(GL_DEPTH_TEST);
 
@@ -3512,7 +3512,7 @@ void CXYWnd::XY_Draw() {
     im.Vertex3fv(bl.ToFloatPtr());
     im.Vertex3fv(tl.ToFloatPtr());
     im.End();
-    
+
     im.Color3f(1,1,1);
     im.Begin(GL_LINES);
     im.Vertex3fv(tl.ToFloatPtr());
@@ -3534,7 +3534,7 @@ void CXYWnd::XY_Draw() {
 		DrawRotateIcon();
 	}
 
-	/// Draw a "precision crosshair" if enabled 
+	/// Draw a "precision crosshair" if enabled
 	if( m_precisionCrosshairMode != PRECISION_CROSSHAIR_NONE )
 		DrawPrecisionCrosshair();
 
@@ -4082,7 +4082,7 @@ void CXYWnd::OnTimer(UINT nIDEvent) {
 		// m_vOrigin[nDim1] -= m_ptDrag.x / m_fScale; m_vOrigin[nDim1] -= m_ptDrag.x /
 		// m_fScale;
 		//
-	} 
+	}
 }
 
 /*
@@ -4149,7 +4149,7 @@ BOOL CXYWnd::OnEraseBkgnd(CDC *pDC) {
 }
 
 extern void AssignModel();
-void CXYWnd::OnDropNewmodel() 
+void CXYWnd::OnDropNewmodel()
 {
 	CPoint point;
 	GetCursorPos(&point);
@@ -4158,7 +4158,7 @@ void CXYWnd::OnDropNewmodel()
 	g_Inspectors->AssignModel();
 }
 
-BOOL CXYWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt) 
+BOOL CXYWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	if (zDelta > 0) {
 		g_pParentWnd->OnViewZoomin();
@@ -4173,7 +4173,7 @@ BOOL CXYWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
  //---------------------------------------------------------------------------
  // CyclePrecisionCrosshairMode
- // 
+ //
  // Called when the user presses the "cycle precision cursor mode" key.
  // Cycles the precision cursor among the following three modes:
  //		PRECISION_CURSOR_NONE
@@ -4192,11 +4192,11 @@ BOOL CXYWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
  }
 
  //---------------------------------------------------------------------------
-// DrawPrecisionCrosshair 
-// 
+// DrawPrecisionCrosshair
+//
 // Draws a precision crosshair beneath the cursor in the 2d (XY) view,
 //  depending on one of the following values for m_precisionCrosshairMode:
-// 
+//
 // PRECISION_CROSSHAIR_NONE		No crosshair is drawn.  Do not force refresh of XY view.
 // PRECISION_CROSSHAIR_SNAP		Crosshair snaps to grid size.  Force refresh of XY view.
 // PRECISION_CROSSHAIR_FREE		Crosshair does not snap to grid.  Force refresh of XY view.
@@ -4210,7 +4210,7 @@ void CXYWnd::DrawPrecisionCrosshair( void )
 	float x, y;
 	idVec4 crossEndColor (1.0f, 0.0f, 1.0f, 1.0f); // the RGBA color of the precision crosshair at its ends
 	idVec4 crossMidColor; // the RGBA color of the precision crosshair at the crossing point
-	
+
 	/// Transform the mouse coordinates into axis-correct map-coordinates
 	if( m_precisionCrosshairMode == PRECISION_CROSSHAIR_SNAP )
 		SnapToPoint( m_mouseX, m_mouseY, mouse3dPos );
@@ -4218,7 +4218,7 @@ void CXYWnd::DrawPrecisionCrosshair( void )
 		XY_ToPoint( m_mouseX, m_mouseY, mouse3dPos );
 	x = mouse3dPos[ m_axisHoriz ];
 	y = mouse3dPos[ m_axisVert ];
-	
+
 	/// Use the color specified by the user
 
 	crossEndColor[0] = g_qeglobals.d_savedinfo.colors[ COLOR_PRECISION_CROSSHAIR ][0];
@@ -4230,12 +4230,12 @@ void CXYWnd::DrawPrecisionCrosshair( void )
 
 	if( m_precisionCrosshairMode == PRECISION_CROSSHAIR_FREE )
 		crossMidColor[ 3 ] = 0.0f; // intersection-color is 100% transparent (alpha = 0.0f)
-	
+
 	/// Set up OpenGL states (for drawing smooth-shaded plain-colored lines)
 	glEnable( GL_BLEND );
 	glDisable( GL_TEXTURE_2D );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	
+
 	/// Draw a fullscreen-sized crosshair over the cursor
   fhImmediateMode im;
 	im.Begin( GL_LINES );
@@ -4249,7 +4249,7 @@ void CXYWnd::DrawPrecisionCrosshair( void )
 	im.Vertex2f( x, y );
 	im.Color4fv( crossEndColor.ToFloatPtr() );
 	im.Vertex2f( m_mcRight, y );
-		
+
 	/// Draw the vertical precision line (in two pieces)
 	im.Color4fv( crossEndColor.ToFloatPtr() );
 	im.Vertex2f( x, m_mcTop );
@@ -4259,9 +4259,9 @@ void CXYWnd::DrawPrecisionCrosshair( void )
 	im.Vertex2f( x, y );
 	im.Color4fv( crossEndColor.ToFloatPtr() );
 	im.Vertex2f( x, m_mcBottom );
-	
+
 	im.End(); // GL_LINES
-	
+
 	// Radiant was in opaque, flat-shaded mode by default; restore this to prevent possible slowdown
 	glDisable( GL_BLEND );
 }

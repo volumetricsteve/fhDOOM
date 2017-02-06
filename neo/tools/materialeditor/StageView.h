@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ class StageView : public ToggleListView, public MaterialView
 public:
 	virtual ~StageView();
 
-	/** 
+	/**
 	* Defines the type of stages
 	*/
 	enum {
@@ -96,12 +96,12 @@ protected:
 
 	afx_msg void 			OnCopy();
 	afx_msg void 			OnPaste();
-	
+
 	afx_msg void 			OnLvnBeginlabeledit(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void 			OnLvnEndlabeledit(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void 			OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
 	DECLARE_MESSAGE_MAP()
-	
+
 	//Overrides
 	virtual BOOL			PreTranslateMessage(MSG* pMsg);
 	virtual BOOL			PreCreateWindow(CREATESTRUCT& cs);
@@ -117,7 +117,7 @@ protected:
 
 	MaterialPropTreeView*	m_propView;
 	MaterialDoc*			currentMaterial;
-	
+
 	//Manual handing of the row dragging
 	CImageList*				dragImage;
 	bool					bDragging;

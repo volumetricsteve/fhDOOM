@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -70,8 +70,8 @@ void idVertexCache::ActuallyFree( vertCache_t *block ) {
 		staticCountTotal--;
 
     assert(block->vbo);
-		
-#if 0		
+
+#if 0
       // this isn't really necessary, it will be reused soon enough
 			// filling with zero length data is the equivalent of freeing
 			glBindBufferARB(GL_ARRAY_BUFFER_ARB, block->vbo);
@@ -118,9 +118,9 @@ const void *idVertexCache::Position( const vertCache_t *buffer ) {
 
 	if ( r_showVertexCache.GetInteger() == 2 ) {
 		if ( buffer->tag == TAG_TEMP ) {
-			common->Printf( "GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size ); 
+			common->Printf( "GL_ARRAY_BUFFER_ARB = %i + %i (%i bytes)\n", buffer->vbo, buffer->offset, buffer->size );
 		} else {
-			common->Printf( "GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size ); 
+			common->Printf( "GL_ARRAY_BUFFER_ARB = %i (%i bytes)\n", buffer->vbo, buffer->size );
 		}
 	}
 	if ( buffer->indexBuffer ) {
@@ -250,7 +250,7 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 	if ( size <= 0 ) {
 		common->Error( "idVertexCache::Alloc: size = %i\n", size );
 	}
-	
+
 	// if we don't have any remaining unused headers, allocate some more
 	if ( freeStaticHeaders.next == &freeStaticHeaders ) {
 
@@ -297,7 +297,7 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 
 	// copy the data
 	assert(block->vbo);
-	
+
 	if ( indexBuffer ) {
 		glBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, block->vbo );
 		glBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
@@ -308,7 +308,7 @@ vertCache_t* idVertexCache::Alloc( void *data, int size, bool indexBuffer ) {
 		} else {
 			glBufferDataARB( GL_ARRAY_BUFFER_ARB, (GLsizeiptrARB)size, data, GL_STATIC_DRAW_ARB );
 		}
-	}	
+	}
 
 	return buffer;
 }
@@ -432,9 +432,9 @@ vertCache_t	*idVertexCache::AllocFrameTemp( void *data, int size ) {
 	// copy the data
 	block->vbo = tempBuffers[listNum]->vbo;
 
-  assert(block->vbo);	
+  assert(block->vbo);
 	glBindBufferARB( GL_ARRAY_BUFFER_ARB, block->vbo );
-	glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, block->offset, (GLsizeiptrARB)size, data );	
+	glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, block->offset, (GLsizeiptrARB)size, data );
 
 	return block;
 }
@@ -473,7 +473,7 @@ void idVertexCache::EndFrame() {
 
 	}
 #endif
-	
+
 	// unbind vertex buffers so normal virtual memory will be used in case
 	// r_useVertexBuffers / r_useIndexBuffers
 	glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
@@ -539,8 +539,8 @@ void idVertexCache::List( void ) {
 	common->Printf( "%i dynamic temp buffers of %ik\n", NUM_VERTEX_FRAMES, frameBytes / 1024 );
 	common->Printf( "%5i active static headers\n", numActive );
 	common->Printf( "%5i free static headers\n", numFreeStaticHeaders );
-	common->Printf( "%5i free dynamic headers\n", numFreeDynamicHeaders );	
-	common->Printf( "Vertex cache is in ARB_vertex_buffer_object memory (FAST).\n");	
+	common->Printf( "%5i free dynamic headers\n", numFreeDynamicHeaders );
+	common->Printf( "Vertex cache is in ARB_vertex_buffer_object memory (FAST).\n");
 
 	if ( r_useIndexBuffers.GetBool() ) {
 		common->Printf( "Index buffers are accelerated.\n" );

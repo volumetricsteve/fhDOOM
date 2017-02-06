@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -216,13 +216,13 @@ static float SCR_DrawFPS( int mode ) {
 		if(mode == 1) {
 			s = va( "%3dfps", fps );
 			x = 600;
-		} 
+		}
 		else if(mode == 2) {
 			s = va( "%4.2fms", static_cast<float>(total) / FPS_FRAMES );
 			x = 600;
 		}
 		else {
-			s = va( "%3dfps (%4.2fms)", fps, static_cast<float>(total) / FPS_FRAMES );			
+			s = va( "%3dfps (%4.2fms)", fps, static_cast<float>(total) / FPS_FRAMES );
 			x = 565;
 		}
 
@@ -260,7 +260,7 @@ float SCR_DrawBackEndStats( float y ) {
 	static backEndStats_t previous[TIME_FRAMES];
 	static unsigned frame = 0;
 
-	const auto stats = renderSystem->GetBackEndStats(); 
+	const auto stats = renderSystem->GetBackEndStats();
 	previous[frame] = stats;
 	frame = (frame + 1) % TIME_FRAMES;
 
@@ -269,7 +269,7 @@ float SCR_DrawBackEndStats( float y ) {
 		avg += previous[j];
 	}
 
-	avg /= TIME_FRAMES;	
+	avg /= TIME_FRAMES;
 
 	backEndGroupStats_t sm_total;
 	for(int i=0; i<3; ++i) {
@@ -285,8 +285,8 @@ float SCR_DrawBackEndStats( float y ) {
 	renderSystem->DrawScaledStringExt( xpos, ypos, buffer, colorWhite, true, localConsole.charSetShader, fontScale );
 	ypos += lineHeight;
 
-	PrintStats("depth prepass", avg.groups[backEndGroup::DepthPrepass], colorWhite);	
-	//PrintStats("stencil shadows", avg.groups[backEndGroup::StencilShadows], colorWhite);	
+	PrintStats("depth prepass", avg.groups[backEndGroup::DepthPrepass], colorWhite);
+	//PrintStats("stencil shadows", avg.groups[backEndGroup::StencilShadows], colorWhite);
 	PrintStats("shadow maps", sm_total, colorWhite);
 	PrintStats("    0", avg.groups[backEndGroup::ShadowMap0], colorMdGrey);
 	PrintStats("    1", avg.groups[backEndGroup::ShadowMap1], colorMdGrey);
@@ -311,7 +311,7 @@ SCR_DrawMemoryUsage
 */
 float SCR_DrawMemoryUsage( float y ) {
 	memoryStats_t allocs, frees;
-	
+
 	Mem_GetStats( allocs );
 	SCR_DrawTextRightAlign( y, "total allocated memory: %4d, %4dkB", allocs.num, allocs.totalSize>>10 );
 
@@ -651,7 +651,7 @@ Handles history and console scrollback
 ====================
 */
 void idConsoleLocal::KeyDownEvent( int key ) {
-	
+
 	// Execute F key bindings
 	if ( key >= K_F1 && key <= K_F12 ) {
 		idKeyInput::ExecKeyBinding( key );
@@ -1099,7 +1099,7 @@ void idConsoleLocal::DrawNotify() {
 			continue;
 		}
 		text_p = text + (i % TOTAL_LINES)*LINE_WIDTH;
-		
+
 		for ( x = 0; x < LINE_WIDTH; x++ ) {
 			if ( ( text_p[x] & 0xff ) == ' ' ) {
 				continue;
@@ -1168,7 +1168,7 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
     fontScale = 2.0f;
 
 	for ( x = 0; x < i; x++ ) {
-		renderSystem->DrawScaledChar( SCREEN_WIDTH - ( i - x ) * SMALLCHAR_WIDTH * fontScale, 
+		renderSystem->DrawScaledChar( SCREEN_WIDTH - ( i - x ) * SMALLCHAR_WIDTH * fontScale,
 			(lines-(SMALLCHAR_HEIGHT+SMALLCHAR_HEIGHT/2)*fontScale), version[x], localConsole.charSetShader, fontScale );
 	}
 
@@ -1188,7 +1188,7 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 		y -= SMALLCHAR_HEIGHT * fontScale;
 		rows--;
 	}
-	
+
 	row = display;
 
 	if ( x == 0 ) {
@@ -1204,7 +1204,7 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 		}
 		if ( current - row >= TOTAL_LINES ) {
 			// past scrollback wrap point
-			continue;	
+			continue;
 		}
 
 		text_p = text + (row % TOTAL_LINES) * LINE_WIDTH;
@@ -1244,7 +1244,7 @@ void	idConsoleLocal::Draw( bool forceFullScreen ) {
 	}
 
 	if ( forceFullScreen ) {
-		// if we are forced full screen because of a disconnect, 
+		// if we are forced full screen because of a disconnect,
 		// we want the console closed when we go back to a session state
 		Close();
 		// we are however catching keyboard input
@@ -1268,7 +1268,7 @@ void	idConsoleLocal::Draw( bool forceFullScreen ) {
 	}
 
 	if ( int mode = com_showFPS.GetInteger() ) {
-		y = SCR_DrawFPS( mode );		
+		y = SCR_DrawFPS( mode );
 	}
 
 	if ( com_showBackendStats.GetBool() ) {

@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -341,7 +341,7 @@ void idGrabber::StopDrag( bool dropOnly ) {
 
 				aiEnt->Damage( thePlayer, thePlayer, vec3_origin, "damage_suicide", 1.0f, INVALID_JOINT );
 			}
-			
+
 			af->SetThrown( !dropOnly );
 
 			// Reset timers so that it isn't forcibly put to rest in mid-air
@@ -451,7 +451,7 @@ int idGrabber::Update( idPlayer *player, bool hide ) {
 		if ( !gameLocal.isMultiplayer && !abort && (( player->usercmd.flags & UCF_IMPULSE_SEQUENCE ) != ( oldUcmdFlags & UCF_IMPULSE_SEQUENCE )) && (player->usercmd.impulse == IMPULSE_13) ) {
 			abort = true;
 		}
-        
+
 		if ( abort ) {
 			StopDrag( true );
 			return 3;

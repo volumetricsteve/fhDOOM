@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -147,7 +147,7 @@ localTrace_t R_LocalTrace( const idVec3 &start, const idVec3 &end, const float r
 		if ( f < 0.0f ) {
 			continue;		// shouldn't happen
 		}
-		
+
 		if ( f >= hit.fraction ) {
 			continue;		// have already hit something closer
 		}
@@ -272,7 +272,7 @@ localTrace_t R_LocalTrace( const idVec3 &start, const idVec3 &end, const float r
 
 #ifdef TEST_TRACE
 	trace_timer.Stop();
-	common->Printf( "testVerts:%i c_testPlanes:%i c_testEdges:%i c_intersect:%i msec:%1.4f\n", 
+	common->Printf( "testVerts:%i c_testPlanes:%i c_testEdges:%i c_intersect:%i msec:%1.4f\n",
 					tri->numVerts, c_testPlanes, c_testEdges, c_intersect, trace_timer.Milliseconds() );
 #endif
 
@@ -377,7 +377,7 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 	end = start + 4000 * backEnd.viewDef->renderView.viewaxis[0];
 
 	// check and draw the surfaces
-	
+
 	globalImages->whiteImage->Bind(0);
 
 	// find how many are ambient
@@ -407,11 +407,11 @@ void RB_ShowTrace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 		// draw the bounding box
 		GL_State( GLS_DEPTHFUNC_ALWAYS );
-		
+
 		RB_DrawBounds( tri->bounds, idVec3(1,1,1) );
 
 		if ( radius != 0.0f ) {
-			// draw the expanded triangles			
+			// draw the expanded triangles
 			RB_DrawExpandedTriangles( tri, radius, localStart, idVec3(0.5f, 0.5f, 0.5f) );
 		}
 

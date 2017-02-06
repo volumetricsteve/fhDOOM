@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -374,7 +374,7 @@ void idSplineList::addToRenderer() {
 	if (controlPoints.Num() == 0) {
 		return;
 	}
-        
+
 	for(i = 0; i < controlPoints.Num(); i++) {
 		VectorCopy(*controlPoints[i], mins);
 		VectorCopy(mins, maxs);
@@ -388,12 +388,12 @@ void idSplineList::addToRenderer() {
 		debugLine( colorYellow, maxs[0], mins[1], mins[2], maxs[0], maxs[1], mins[2]);
 		debugLine( colorYellow, maxs[0], maxs[1], mins[2], mins[0], maxs[1], mins[2]);
 		debugLine( colorYellow, mins[0], maxs[1], mins[2], mins[0], mins[1], mins[2]);
-		
+
 		debugLine( colorYellow, mins[0], mins[1], maxs[2], maxs[0], mins[1], maxs[2]);
 		debugLine( colorYellow, maxs[0], mins[1], maxs[2], maxs[0], maxs[1], maxs[2]);
 		debugLine( colorYellow, maxs[0], maxs[1], maxs[2], mins[0], maxs[1], maxs[2]);
 		debugLine( colorYellow, mins[0], maxs[1], maxs[2], mins[0], mins[1], maxs[2]);
-	    
+
 	}
 
 	int step = 0;
@@ -454,7 +454,7 @@ idSplineList::draw
 */
 void idSplineList::draw(bool editMode) {
         int i;
-        
+
 	if (controlPoints.Num() == 0) {
 		return;
 	}
@@ -466,13 +466,13 @@ void idSplineList::draw(bool editMode) {
 
 	glColor3fv( controlColor.ToFloatPtr() );
 	glPointSize( 5 );
-	
+
 	glBegin(GL_POINTS);
 	for (i = 0; i < controlPoints.Num(); i++) {
 		glVertex3fv( (*controlPoints[i]).ToFloatPtr() );
 	}
 	glEnd();
-	
+
 	if (editMode) {
 		for(i = 0; i < controlPoints.Num(); i++) {
 			glBox(activeColor, *controlPoints[i], 4);
@@ -515,7 +515,7 @@ idSplineList::totalDistance
 float idSplineList::totalDistance() {
 
 	// FIXME: save dist and return
-	// 
+	//
 	if (controlPoints.Num() == 0) {
 		return 0.0f;
 	}
@@ -638,7 +638,7 @@ const idVec3 *idSplineList::getPosition(long t) {
 	float timePassed = t - lastTime;
 	lastTime = t;
 
-	// convert to seconds	
+	// convert to seconds
 	timePassed /= 1000;
 
 	float distToTravel = timePassed * velocity;
@@ -663,7 +663,7 @@ const idVec3 *idSplineList::getPosition(long t) {
 	} else {
 		double timeHi = splineTime[i + 1];
 		double timeLo = splineTime[i - 1];
-		double percent = (timeHi - t) / (timeHi - timeLo); 
+		double percent = (timeHi - t) / (timeHi - timeLo);
 		idVec3 v1 = *splinePoints[i - 1];
 		idVec3 v2 = *splinePoints[i + 1];
 		v2 *= (1.0f - percent);
@@ -680,7 +680,7 @@ const idVec3 *idSplineList::getPosition(long t) {
 				double timeHi = splineTime[activeSegment + 1];
 				double timeLo = splineTime[activeSegment - 1];
 				//float percent = (float)(baseTime + time - t) / time;
-				double percent = (timeHi - t) / (timeHi - timeLo); 
+				double percent = (timeHi - t) / (timeHi - timeLo);
 				// pick two bounding points
 				idVec3 v1 = *splinePoints[activeSegment-1];
 				idVec3 v2 = *splinePoints[activeSegment+1];
@@ -983,7 +983,7 @@ void idCameraDef::getActiveSegmentInfo(int segment, idVec3 &origin, idVec3 &dire
 		buildCamera();
 	}
 	origin = *cameraSpline.getSegmentPoint(segment);
-	
+
 
 	idVec3 temp;
 
@@ -1039,7 +1039,7 @@ bool idCameraDef::getCameraInfo(long time, idVec3 &origin, idVec3 &direction, fl
 					strcpy(buff, events[i]->getParam());
 					const char *param1 = strtok(buff, " \t,\0");
 					const char *param2 = strtok(NULL, " \t,\0");
-					fov.reset(fov.GetFOV(time), atof(param1), time, atoi(param2)); 
+					fov.reset(fov.GetFOV(time), atof(param1), time, atoi(param2));
 					//*fv = fov = atof(events[i]->getParam());
 				} else if (events[i]->getType() == idCameraEvent::EVENT_CAMERA) {
 				} else if (events[i]->getType() == idCameraEvent::EVENT_STOP) {
@@ -1051,7 +1051,7 @@ bool idCameraDef::getCameraInfo(long time, idVec3 &origin, idVec3 &direction, fl
 	}
 
 	origin = *cameraPosition->getPosition(time);
-	
+
 	*fv = fov.GetFOV(time);
 
 	idVec3 temp = origin;
@@ -1073,7 +1073,7 @@ bool idCameraDef::getCameraInfo(long time, idVec3 &origin, idVec3 &direction, fl
 	} else {
 		temp = *getActiveTarget()->getPosition(time);
 	}
-	
+
 	temp -= origin;
 	temp.Normalize();
 	direction = temp;
@@ -1153,7 +1153,7 @@ void idCameraDef::buildCamera() {
 				waits.Append(atof(events[i]->getParam()));
 
 				//FIXME: this is quite hacky for Wolf E3, accel and decel needs
-				// do be parameter based etc.. 
+				// do be parameter based etc..
 				long startTime = events[i]->getTime() - 1000;
 				if (startTime < 0) {
 					startTime = 0;
@@ -1198,7 +1198,7 @@ void idCameraDef::buildCamera() {
 
 				// multiply that by the adjustment
 				double newTotal = total * adjust;
-				// what is the difference.. 
+				// what is the difference..
 				newTotal -= total;
 				totalTime += newTotal / 1000;
 
@@ -1222,7 +1222,7 @@ void idCameraDef::buildCamera() {
 		totalTime += waits[i];
 	}
 
-	// on a new target switch, we need to take time to this point ( since last target switch ) 
+	// on a new target switch, we need to take time to this point ( since last target switch )
 	// and allocate it across the active target, then reset time to this point
 	long timeSoFar = 0;
 	long total = totalTime * 1000;
@@ -1391,7 +1391,7 @@ int idCameraDef::sortEvents(const void *p1, const void *p2) {
 	if (ev1->getTime() < ev2->getTime()) {
 		return 1;
 	}
-	return 0; 
+	return 0;
 }
 
 /*
@@ -1700,7 +1700,7 @@ void idInterpolatedPosition::start( long t ) {
 idInterpolatedPosition::getPosition
 ================
 */
-const idVec3 *idInterpolatedPosition::getPosition( long t ) { 
+const idVec3 *idInterpolatedPosition::getPosition( long t ) {
 	static idVec3 interpolatedPos;
 
 	if (t - startTime > 6000) {
@@ -1711,7 +1711,7 @@ const idVec3 *idInterpolatedPosition::getPosition( long t ) {
 	float timePassed = t - lastTime;
 	lastTime = t;
 
-	// convert to seconds	
+	// convert to seconds
 	timePassed /= 1000;
 
 	if (velocity != getBaseVelocity()) {
@@ -1965,7 +1965,7 @@ void idSplinePosition::parse( idParser *src ) {
 			target.parse( src );
 		}
 		else {
-			idCameraPosition::parseToken( token, src );	
+			idCameraPosition::parseToken( token, src );
 		}
 	}
 }
@@ -1994,7 +1994,7 @@ const idVec3 *idSplinePosition::getPosition(long t) {
 	float timePassed = t - lastTime;
 	lastTime = t;
 
-	// convert to seconds	
+	// convert to seconds
 	timePassed /= 1000;
 
 	float distToTravel = timePassed * velocity;
@@ -2034,7 +2034,7 @@ const idVec3 *idSplinePosition::getPosition(long t) {
 #if 0
 		double timeHi = target.getSegmentTime(i + 1);
 		double timeLo = target.getSegmentTime(i - 1);
-		double percent = (timeHi - t) / (timeHi - timeLo); 
+		double percent = (timeHi - t) / (timeHi - timeLo);
 		idVec3 v1 = *target.getSegmentPoint(i - 1);
 		idVec3 v2 = *target.getSegmentPoint(i + 1);
 		v2 *= (1.0f - percent);
@@ -2050,7 +2050,7 @@ const idVec3 *idSplinePosition::getPosition(long t) {
 
 		idVec3 v1 = *target.getSegmentPoint(i - 1);
 		idVec3 v2 = *target.getSegmentPoint(i);
-		double percent = (lastDistance2 - targetDistance) / (lastDistance2 - lastDistance1); 
+		double percent = (lastDistance2 - targetDistance) / (lastDistance2 - lastDistance1);
 		v2 *= (1.0f - percent);
 		v1 *= percent;
 		v2 += v1;

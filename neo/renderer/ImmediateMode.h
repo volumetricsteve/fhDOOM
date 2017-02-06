@@ -57,8 +57,8 @@ public:
   void Begin(GLenum mode);
   void TexCoord2f(float s, float t);
   void TexCoord2fv(const float* v);
-  void Color3fv(const float* c);  
-  void Color3f(float r, float g, float b);  
+  void Color3fv(const float* c);
+  void Color3f(float r, float g, float b);
   void Color4f(float r, float g, float b, float a);
   void Color4fv(const float* c);
   void Color4ubv(const byte* bytes);
@@ -77,7 +77,7 @@ public:
   static void ResetStats();
   static int DrawCallCount();
   static int DrawCallVertexSize();
-private:  
+private:
   bool geometryOnly;
   float currentTexCoord[2];
   GLenum currentMode;
@@ -101,7 +101,7 @@ public:
   void Clear();
   void Commit();
 
-private:  
+private:
   int verticesAllocated;
   int verticesUsed;
   fhSimpleVert* vertices;

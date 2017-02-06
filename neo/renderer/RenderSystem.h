@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ typedef struct glconfig_s {
 	bool				anisotropicAvailable;
 	bool				textureEnvAddAvailable;
 	bool				cubeMapAvailable;
-	bool				envDot3Available;		
+	bool				envDot3Available;
 	bool				textureNonPowerOfTwoAvailable;
 	bool				depthBoundsTestAvailable;
 	bool                extDirectStateAccessAvailable;
@@ -82,7 +82,7 @@ typedef struct glconfig_s {
 } glconfig_t;
 
 
-// font support 
+// font support
 const int GLYPH_START			= 0;
 const int GLYPH_END				= 255;
 const int GLYPH_CHARSTART		= 32;
@@ -154,7 +154,7 @@ struct backEndGroupStats_t {
 	uint32 drawcalls;
 	uint32 passes;
 	uint32 tris;
-	uint64 time; //micro seconds	
+	uint64 time; //micro seconds
 
 	const backEndGroupStats_t& operator+=(const backEndGroupStats_t& rhs) {
 		drawcalls += rhs.drawcalls;
@@ -264,7 +264,7 @@ public:
 	virtual void			PrintMemInfo( MemInfo_t *mi ) = 0;
 
 	virtual void			DrawScaledChar( int x, int y, int ch, const idMaterial *material, float scale ) = 0;
-	virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) = 0;  
+	virtual void			DrawScaledStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material, float scale ) = 0;
 	virtual void			DrawSmallChar( int x, int y, int ch, const idMaterial *material ) = 0;
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) = 0;
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material ) = 0;

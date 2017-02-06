@@ -25,7 +25,7 @@ fhTrisBuffer::fhTrisBuffer() {
 
 void fhTrisBuffer::Add(const fhSimpleVert* vertices, int verticesCount) {
   assert(verticesCount % 3 == 0);
-  for(int i=0; i<verticesCount; ++i)  
+  for(int i=0; i<verticesCount; ++i)
     this->vertices.Append(vertices[i]);
 }
 
@@ -36,8 +36,8 @@ void fhTrisBuffer::Add(idVec3 a, idVec3 b, idVec3 c, idVec4 color) {
   vert.color[0] = static_cast<byte>(color[0] * 255.0f);
   vert.color[1] = static_cast<byte>(color[1] * 255.0f);
   vert.color[2] = static_cast<byte>(color[2] * 255.0f);
-  vert.color[3] = static_cast<byte>(color[3] * 255.0f);  
-  
+  vert.color[3] = static_cast<byte>(color[3] * 255.0f);
+
   vert.xyz = a;
   vertices.Append(vert);
 
@@ -162,7 +162,7 @@ void fhSurfaceBuffer::Commit(const idVec4& colorModulate, const idVec4& colorAdd
   for(int i=0; i<entries.Num(); ++i) {
     entry_t* entry = entries[i];
 
-    if(!entry->material) 
+    if(!entry->material)
       break;
 
     entries[i]->trisBuffer.Commit(entry->material->GetEditorImage(), colorModulate, colorAdd);
@@ -229,14 +229,14 @@ void fhPointBuffer::Clear() {
 void fhPointBuffer::Commit() {
   for (int i = 0; i < entries.Num(); ++i) {
     entry_t* e = entries[i];
-    
+
     if(e->size <= 0.0f)
       return;
 
     e->Commit();
     e->size = -1;
     e->vertices.SetNum(0, false);
-  }  
+  }
 }
 
 void fhPointBuffer::entry_t::Commit() {

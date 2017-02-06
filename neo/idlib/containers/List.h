@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -127,7 +127,7 @@ public:
 	int				FindNull( void ) const;								// find the index for the first NULL pointer in the list
 	int				IndexOf( const type *obj ) const;					// returns the index for the pointer to an element in the list
 	bool			RemoveIndex( int index );							// remove the element at the given index
-	bool			Remove( const type & obj );							// remove the element	
+	bool			Remove( const type & obj );							// remove the element
 	void			Sort( cmp_t *compare = ( cmp_t * )&idListSortCompare<type> );
 	void			SortSubSection( int startIndex, int endIndex, cmp_t *compare = ( cmp_t * )&idListSortCompare<type> );
 	void			Swap( idList<type> &other );						// swap the contents of the lists
@@ -720,7 +720,7 @@ ID_INLINE int idList<type>::Append( type const & obj ) {
 ================
 idList<type>::Insert
 
-Increases the size of the list by at leat one element if necessary 
+Increases the size of the list by at leat one element if necessary
 and inserts the supplied data into it.
 
 Returns the index of the new element.
@@ -870,7 +870,7 @@ ID_INLINE int idList<type>::FindNull( void ) const {
 idList<type>::IndexOf
 
 Takes a pointer to an element in the list and returns the index of the element.
-This is NOT a guarantee that the object is really in the list. 
+This is NOT a guarantee that the object is really in the list.
 Function will assert in debug builds if pointer is outside the bounds of the list,
 but remains silent in release builds.
 ================
@@ -933,7 +933,7 @@ ID_INLINE bool idList<type>::Remove( type const & obj ) {
 	if ( index >= 0 ) {
 		return RemoveIndex( index );
 	}
-	
+
 	return false;
 }
 

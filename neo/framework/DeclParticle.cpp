@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ const ParticleParmDesc ParticleOrientationDesc[] = {
 	{ "aimed", 2, "" },
 	{ "x", 0, "" },
 	{ "y", 0, "" },
-	{ "z", 0, "" } 
+	{ "z", 0, "" }
 };
 
 const ParticleParmDesc ParticleCustomDesc[] = {
@@ -121,7 +121,7 @@ void idDeclParticle::GetStageBounds( idParticleStage *stage ) {
 			// don't increment the verts
 
 			idVec3	origin;
-			stage->ParticleOrigin( &g, origin );			
+			stage->ParticleOrigin( &g, origin );
 			stage->bounds.AddPoint( origin );
 		}
 	}
@@ -344,7 +344,7 @@ idParticleStage *idDeclParticle::ParseParticleStage( idLexer &src ) {
 			stage->initialAngle = src.ParseFloat();
 			continue;
 		}
-		if ( !token.Icmp( "entityColor" ) ) { 
+		if ( !token.Icmp( "entityColor" ) ) {
 			stage->entityColor = src.ParseBool();
 			continue;
 		}
@@ -532,7 +532,7 @@ idDeclParticle::WriteStage
 ================
 */
 void idDeclParticle::WriteStage( idFile *f, idParticleStage *stage ) {
-	
+
 	int i;
 
 	f->WriteFloatString( "\t{\n" );
@@ -554,7 +554,7 @@ void idDeclParticle::WriteStage( idFile *f, idParticleStage *stage ) {
 		f->WriteFloatString( "\t\tdeadTime\t\t\t%.3f\n", stage->deadTime );
 	}
 	f->WriteFloatString( "\t\tbunching\t\t\t%.3f\n", stage->spawnBunching );
-	
+
 	f->WriteFloatString( "\t\tdistribution\t\t%s ", ParticleDistributionDesc[stage->distributionType].name );
 	for ( i = 0; i < ParticleDistributionDesc[stage->distributionType].count; i++ ) {
 		f->WriteFloatString( "%.3f ", stage->distributionParms[i] );
@@ -930,7 +930,7 @@ void idParticleStage::ParticleOrigin( particleGen_t *g, idVec3 &origin ) const {
 				// angle is the full angle, so 360 degrees is any spherical direction
 				angle1 = g->random.CRandomFloat() * directionParms[0] * idMath::M_DEG2RAD;
 				angle2 = g->random.CRandomFloat() * idMath::PI;
-		
+
 				float s1, c1, s2, c2;
 				idMath::SinCos16( angle1, s1, c1 );
 				idMath::SinCos16( angle2, s2, c2 );
@@ -950,7 +950,7 @@ void idParticleStage::ParticleOrigin( particleGen_t *g, idVec3 &origin ) const {
 
 		// add speed
 		float iSpeed = speed.Integrate( g->frac, g->random );
-		origin += dir * iSpeed * particleLife;	
+		origin += dir * iSpeed * particleLife;
 
 	} else {
 		//
@@ -1124,7 +1124,7 @@ int	idParticleStage::ParticleVerts( particleGen_t *g, idVec3 origin, idDrawVert 
 	}
 
 	//
-	// constant rotation 
+	// constant rotation
 	//
 	float	angle;
 
@@ -1242,7 +1242,7 @@ void idParticleStage::ParticleColors( particleGen_t *g, idDrawVert *verts ) cons
 	// most particles fade in at the beginning and fade out at the end
 	if ( g->frac < fadeInFraction ) {
 		fadeFraction *= ( g->frac / fadeInFraction );
-	} 
+	}
 	if ( 1.0f - g->frac < fadeOutFraction ) {
 		fadeFraction *= ( ( 1.0f - g->frac ) / fadeOutFraction );
 	}
@@ -1264,9 +1264,9 @@ void idParticleStage::ParticleColors( particleGen_t *g, idDrawVert *verts ) cons
 		} else if ( icolor > 255 ) {
 			icolor = 255;
 		}
-		verts[0].color[i] = 
-		verts[1].color[i] = 
-		verts[2].color[i] = 
+		verts[0].color[i] =
+		verts[1].color[i] =
+		verts[2].color[i] =
 		verts[3].color[i] = icolor;
 	}
 }

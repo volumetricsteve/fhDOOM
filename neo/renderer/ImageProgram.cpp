@@ -305,14 +305,14 @@ static const char* axisSides[] = {
 	"_ny.tga",
 	"_py.tga",
 	"_pz.tga",
-	"_nz.tga",	
+	"_nz.tga",
 	"_nx.tga",
 	"_px.tga",
 };
 
 static const char* cameraSides[] = {
 	"_right.tga",
-	"_left.tga",	
+	"_left.tga",
 	"_up.tga",
 	"_down.tga",
 	"_back.tga",
@@ -336,9 +336,9 @@ static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageD
 
 	for (int i = 0; i < 6; i++) {
 		char	fullName[MAX_IMAGE_NAME];
-		idStr::snPrintf( fullName, sizeof( fullName ), "%s%s", filename, sides[i] );	
+		idStr::snPrintf( fullName, sizeof( fullName ), "%s%s", filename, sides[i] );
 
-		ID_TIME_T time = 0;		
+		ID_TIME_T time = 0;
 
 		if (!fhImageData::LoadFile( fullName, (!data ? nullptr : &images[i]), &time )) {
 			common->Warning( "failed to load cube map file: %s", fullName );
@@ -403,7 +403,7 @@ static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageD
 					break;
 				}
 			}
-		}		
+		}
 
 		if (timestamp && *timestamp < time) {
 			*timestamp = time;
@@ -481,7 +481,7 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 		// process it
 		if (imageData) {
 			R_HeightmapToNormalMap( imageData->GetData(), imageData->GetWidth(), imageData->GetHeight(), scale );
-			//depth = TD_BUMP;			
+			//depth = TD_BUMP;
 		}
 
 		MatchAndAppendToken( src, ")" );
@@ -505,7 +505,7 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 		// process it
 		if (imageData) {
 			R_AddNormalMaps( imageData->GetData(), imageData->GetWidth(), imageData->GetHeight(), pic2.GetData(), pic2.GetWidth(), pic2.GetHeight() );
-			//depth = TD_BUMP;			
+			//depth = TD_BUMP;
 		}
 
 		MatchAndAppendToken( src, ")" );
@@ -521,7 +521,7 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 
 		if (imageData) {
 			R_SmoothNormalMap( imageData->GetData(), imageData->GetWidth(), imageData->GetHeight() );
-			//depth = TD_BUMP;			
+			//depth = TD_BUMP;
 		}
 
 		MatchAndAppendToken( src, ")" );
@@ -674,10 +674,10 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 	}
 
 	if (!token.Icmp( "cubeMap" )) {
-		MatchAndAppendToken( src, "(" );		
-		
+		MatchAndAppendToken( src, "(" );
+
 		fhImageProgram p;
-		const char* filename = p.ParsePastImageProgram( src );		
+		const char* filename = p.ParsePastImageProgram( src );
 		idStr::Append( parseBuffer, MAX_IMAGE_NAME, filename );
 
 		if (!R_LoadCubeMap( filename, CF_NATIVE, imageData, timestamp )){
