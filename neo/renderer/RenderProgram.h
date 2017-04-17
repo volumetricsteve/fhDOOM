@@ -107,7 +107,8 @@ public:
 	void Load(const char* vertexShader, const char* fragmentShader);
 	void Reload();
 	void Purge();
-	bool Bind(bool force = false) const;	
+	bool IsLoaded() const { return ident != 0; }
+	bool Bind(bool force = false) const;
 
 	const char* vertexShader() const;
 	const char* fragmentShader() const;
@@ -281,7 +282,7 @@ ID_INLINE void fhRenderProgram::SetColorModulate( const idVec4& c ) {
 
 ID_INLINE void fhRenderProgram::SetColorAdd( const idVec4& c ) {
 	if (dirty[fhUniform::ColorAdd] || !currentColorAdd.Compare( c, 0.001 )) {
-		glUniform4fv( currentUniformLocations[fhUniform::ColorAdd], 1, c.ToFloatPtr() );		
+		glUniform4fv( currentUniformLocations[fhUniform::ColorAdd], 1, c.ToFloatPtr() );
 		currentColorAdd = c;
 		dirty[fhUniform::ColorAdd] = false;
 	}
@@ -305,7 +306,7 @@ ID_INLINE void fhRenderProgram::SetSpecularColor( const idVec4& c ) {
 
 ID_INLINE void fhRenderProgram::SetShaderParm( int index, const idVec4& v ) {
 	assert(index >= 0 && index < 4);
-	glUniform4fv( currentUniformLocations[fhUniform::ShaderParm0 + index], 1, v.ToFloatPtr() );	
+	glUniform4fv( currentUniformLocations[fhUniform::ShaderParm0 + index], 1, v.ToFloatPtr() );
 }
 
 ID_INLINE void fhRenderProgram::SetAlphaTestEnabled( bool enabled ) {

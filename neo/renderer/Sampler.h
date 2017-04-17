@@ -40,6 +40,7 @@ public:
 	void Purge();
 
 	static fhSampler* GetSampler( textureFilter_t filter, textureRepeat_t repeat, textureSwizzle_t swizzle = textureSwizzle_t::None, bool useAf = true, bool useLodBias = true );
+	static void PurgeAll();
 
 private:
 	void Init();

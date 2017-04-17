@@ -2,10 +2,10 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -141,7 +141,7 @@ typedef struct {
 	// positive sides facing inward
 	// plane 5 is always the plane the projection is going to, the
 	// other planes are just clip planes
-	// all planes are in global coordinates	
+	// all planes are in global coordinates
 
 	float nearPlaneDistance;
 	float farPlaneDistance;
@@ -149,10 +149,10 @@ typedef struct {
 	float height;
 
 	idBounds viewSpaceBounds; //minimum/maximum of light corners in view space, required for parallel lights
-	
-	fhRenderMatrix viewMatrix;	
+
+	fhRenderMatrix viewMatrix;
 	fhRenderMatrix projectionMatrix;
-	fhRenderMatrix viewProjectionMatrix;	
+	fhRenderMatrix viewProjectionMatrix;
 
 	bool Cull(const idVec3 points[8]) const;
 } shadowMapFrustum_t;
@@ -259,9 +259,9 @@ public:
 
 	areaReference_t *		references;				// each area the light is present in will have a lightRef
 	idInteraction *			firstInteraction;		// doubly linked list
-	idInteraction *			lastInteraction;	
+	idInteraction *			lastInteraction;
 
-	struct doublePortal_s *	foggedPortals;	
+	struct doublePortal_s *	foggedPortals;
 };
 
 
@@ -344,7 +344,7 @@ typedef struct viewLight_s {
 
 	// true if globalLightOrigin is inside the view frustum, even if it may
 	// be obscured by geometry.  This allows us to skip shadows from non-visible objects
-	bool					viewSeesGlobalLightOrigin;	
+	bool					viewSeesGlobalLightOrigin;
 
 	// if !viewInsideLight, the corresponding bit for each of the shadowFrustum
 	// projection planes that the view is on the negative side of will be set,
@@ -447,7 +447,7 @@ typedef struct viewDef_s {
 	// these are real physical pixel values, possibly scaled and offset from the
 	// renderView x/y/width/height
 
-	struct viewDef_s *	superView;				// never go into an infinite subview loop 
+	struct viewDef_s *	superView;				// never go into an infinite subview loop
 	struct drawSurf_s *	subviewSurface;
 
 	// drawSurfs are the visible surfaces of the viewEntities, sorted
@@ -604,7 +604,7 @@ typedef struct {
 
 	int					memoryHighwater;	// max used on any frame
 
-	// the currently building command list 
+	// the currently building command list
 	// commands can be inserted at the front if needed, as for required
 	// dynamically generated textures
 	emptyCommand_t	*cmdHead, *cmdTail;		// may be of other command type based on commandId
@@ -694,7 +694,7 @@ typedef struct {
 	int		c_shadowVertexes;
 
 	int		c_vboIndexes;
-	float	c_overDraw;	
+	float	c_overDraw;
 
 	float	maxLightValue;	// for light scale
 	int		msec;			// total msec for backend run
@@ -848,7 +848,7 @@ public:
 	int						tiledViewport[2];
 
 	// determines which back end to use, and if vertex programs are in use
-	
+
 	const float			backEndRendererMaxLight;	// 1.0 for standard, unlimited for floats
 														// determines how much overbrighting needs
 														// to be done post-process
@@ -1114,9 +1114,9 @@ public:
   void Pop();
 
   void Ortho(float left, float right, float bottom, float top, float nearClip, float farClip);
-  
+
   void Rotate(float angle, float x, float y, float z);
-  
+
   void Translate(float x, float y, float z);
 
   void Get(float* dst) const;
@@ -1224,7 +1224,7 @@ void		GLimp_SwapBuffers( void );
 // other system specific cvar checks that happen every frame.
 // This will not be called if 'r_drawBuffer GL_FRONT'
 
-void		GLimp_SetGamma( unsigned short red[256], 
+void		GLimp_SetGamma( unsigned short red[256],
 						    unsigned short green[256],
 							unsigned short blue[256] );
 // Sets the hardware gamma ramps for gamma and brightness adjustment.
@@ -1303,7 +1303,7 @@ viewLight_t *R_SetLightDefViewLight( idRenderLightLocal *def );
 void R_AddDrawSurf( const srfTriangles_t *tri, const viewEntity_t *space, const renderEntity_t *renderEntity,
 					const idMaterial *shader, const idScreenRect &scissor );
 
-void R_LinkLightSurf( const drawSurf_t **link, const srfTriangles_t *tri, const viewEntity_t *space, 
+void R_LinkLightSurf( const drawSurf_t **link, const srfTriangles_t *tri, const viewEntity_t *space,
 				   const idRenderLightLocal *light, const idMaterial *shader, const idScreenRect &scissor, bool viewInsideShadow );
 
 bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting );
@@ -1376,9 +1376,9 @@ void RB_LeaveDepthHack();
 void RB_DrawElementsImmediate( const srfTriangles_t *tri, const idVec4 &color = idVec4(1,1,1,1) );
 void RB_RenderTriangleSurface( const srfTriangles_t *tri );
 void RB_T_RenderTriangleSurface( const drawSurf_t *surf );
-void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs, 
+void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs,
 					  void (*triFunc_)( const drawSurf_t *) );
-void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs, 
+void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
 										void (*triFunc_)( const drawSurf_t *) );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, float matrix[16] );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, idVec4 matrix[2] );
@@ -1485,7 +1485,7 @@ typedef struct {
 	int		totalIndexes;
 } optimizedShadow_t;
 
-optimizedShadow_t SuperOptimizeOccluders( idVec4 *verts, glIndex_t *indexes, int numIndexes, 
+optimizedShadow_t SuperOptimizeOccluders( idVec4 *verts, glIndex_t *indexes, int numIndexes,
 										 idPlane projectionPlane, idVec3 projectionOrigin );
 
 void CleanupOptimizedShadowTris( srfTriangles_t *tri );

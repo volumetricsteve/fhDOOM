@@ -12,6 +12,12 @@ void fhBaseRenderList::Init() {
 	renderlistMemory = R_StaticAlloc(renderlistMaxSize);
 }
 
+void fhBaseRenderList::Shutdown() {
+	assert( renderlistMemory );
+	R_StaticFree( renderlistMemory );
+	renderlistMemory = nullptr;
+}
+
 void fhBaseRenderList::EndFrame() {
 	allocated = 0;
 }

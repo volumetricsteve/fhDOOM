@@ -202,3 +202,13 @@ void fhFramebuffer::Init() {
 	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, globalImages->currentDepthImage );
 	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->currentRenderImage, nullptr );
 }
+
+void fhFramebuffer::PurgeAll() {
+	defaultFramebuffer->Bind();
+
+	shadowmapFramebuffer->Purge();
+	defaultFramebuffer->Purge();
+	renderFramebuffer->Purge();
+	currentDepthFramebuffer->Purge();
+	currentRenderFramebuffer->Purge();
+}

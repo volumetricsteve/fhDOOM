@@ -33,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 class fhBaseRenderList {
 public:
 	static void Init();
+	static void Shutdown();
 	static void EndFrame();
 protected:
 	template<typename T>
@@ -64,7 +65,7 @@ public:
 				memcpy(t, array, sizeof(T) * size);
 			}
 
-			array = t;			
+			array = t;
 		}
 
 		assert(size < capacity);
@@ -97,13 +98,13 @@ private:
 
 struct drawDepth_t {
 	const drawSurf_t*  surf;
-	idImage*           texture;	
+	idImage*           texture;
 	idVec4             textureMatrix[2];
 	idVec4             color;
 	float              polygonOffset;
-	bool               isSubView;	
+	bool               isSubView;
 	float              alphaTestThreshold;
-}; 
+};
 
 struct drawShadow_t {
 	const srfTriangles_t* tris;

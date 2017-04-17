@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "Framebuffer.h"
 #include "ImageData.h"
 #include "ImageProgram.h"
+#include "Sampler.h"
 
 // Vista OpenGL wrapper check
 #ifdef _WIN32
@@ -144,7 +145,7 @@ idCVar r_testGammaBias( "r_testGammaBias", "0", CVAR_RENDERER | CVAR_FLOAT, "if 
 idCVar r_testStepGamma( "r_testStepGamma", "0", CVAR_RENDERER | CVAR_FLOAT, "if > 0 draw a grid pattern to test gamma levels" );
 idCVar r_lightScale( "r_lightScale", "2", CVAR_RENDERER | CVAR_FLOAT, "all light intensities are multiplied by this" );
 idCVar r_lightSourceRadius( "r_lightSourceRadius", "0", CVAR_RENDERER | CVAR_FLOAT, "for soft-shadow sampling" );
-idCVar r_flareSize( "r_flareSize", "1", CVAR_RENDERER | CVAR_FLOAT, "scale the flare deforms from the material def" ); 
+idCVar r_flareSize( "r_flareSize", "1", CVAR_RENDERER | CVAR_FLOAT, "scale the flare deforms from the material def" );
 
 idCVar r_useExternalShadows( "r_useExternalShadows", "1", CVAR_RENDERER | CVAR_INTEGER, "1 = skip drawing caps when outside the light volume, 2 = force to no caps for testing", 0, 2, idCmdSystem::ArgCompletion_Integer<0,2> );
 idCVar r_useOptimizedShadows( "r_useOptimizedShadows", "1", CVAR_RENDERER | CVAR_BOOL, "use the dmap generated static shadow volumes" );
@@ -240,7 +241,7 @@ static bool R_DoubleCheckExtension( const char* name ) {
 	if (ext_cnt != 0) {
 		for (int i = 0; i < ext_cnt; ++i) {
 			const char* current = (const char*)glGetStringi( GL_EXTENSIONS, i );
-			if (stricmp( current, name ) == 0) {				
+			if (stricmp( current, name ) == 0) {
 				ret = true;
 				break;
 			}
@@ -249,21 +250,21 @@ static bool R_DoubleCheckExtension( const char* name ) {
 	else {
 		ret = glewIsSupported( name ) == GL_TRUE;
 	}
-	
+
 	if(ret) {
 		common->Printf("Check extension '%s': OK\n", name);
 	} else {
 		common->Warning("Check extension '%s': failed", name);
-	}	
+	}
 
 	return ret;
 
 #if 0
 	bool glewCheck = glewIsSupported(name) == GL_TRUE;
 
-	static const char* status[] = { 
+	static const char* status[] = {
 		"[ FAILED ]",
-		"[   OK   ]" 
+		"[   OK   ]"
 	};
 
 	common->Printf("%s %s\n", status[glewCheck ? 1 : 0], name);
@@ -370,7 +371,7 @@ vidmode_t r_vidModes[] = {
 };
 static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
 
-static bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode ) {	
+static bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode ) {
 
   if ( mode < -1 || mode >= s_numVidModes ) {
       return false;
@@ -386,7 +387,7 @@ static bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode )
     height = vm.height;
     aspectRatio = vm.aspectRatio;
   }
-  
+
   return true;
 }
 
@@ -486,7 +487,7 @@ GLvoid* userParam
 	}
 
 	common->Printf("(GL %u) %s, %s, %s: %s\n", id, debSource, debType, debSev, message);
-#pragma warning( pop ) 
+#pragma warning( pop )
 }
 
 
@@ -693,7 +694,7 @@ Reload the material displayed by r_showSurfaceInfo
 static void R_ReloadSurface_f( const idCmdArgs &args ) {
 	modelTrace_t mt;
 	idVec3 start, end;
-	
+
 	// start far enough away that we don't hit the player model
 	start = tr.primaryView->renderView.vieworg + tr.primaryView->renderView.viewaxis[0] * 16;
 	end = start + tr.primaryView->renderView.viewaxis[0] * 1000.0f;
@@ -966,13 +967,13 @@ void R_ReportImageDuplication_f( const idCmdArgs &args ) {
 
 			//TODO(johl): we compare only the first level. Should we compare all levels?
 			bool equal = true;;
-			for (uint32 f = 0; f < imageData.GetNumFaces(); ++f) {				
+			for (uint32 f = 0; f < imageData.GetNumFaces(); ++f) {
 				if (memcmp( imageData2.GetData( f ), imageData.GetData( f ), imageData.GetSize() ) != 0) {
 					equal = false;
 					break;
 				}
 			}
-			
+
 			if (equal) {
 				common->Printf( "%s == %s\n", image1->imgName.c_str(), image2->imgName.c_str() );
 				session->UpdateScreen( true );
@@ -984,13 +985,13 @@ void R_ReportImageDuplication_f( const idCmdArgs &args ) {
 	common->Printf( "%i / %i collisions\n", count, globalImages->images.Num() );
 }
 
-/* 
-============================================================================== 
- 
+/*
+==============================================================================
+
 						THROUGHPUT BENCHMARKING
- 
-============================================================================== 
-*/ 
+
+==============================================================================
+*/
 
 /*
 ================
@@ -1063,13 +1064,13 @@ void R_Benchmark_f( const idCmdArgs &args ) {
 }
 
 
-/* 
-============================================================================== 
- 
-						SCREEN SHOTS 
- 
-============================================================================== 
-*/ 
+/*
+==============================================================================
+
+						SCREEN SHOTS
+
+==============================================================================
+*/
 
 /*
 ====================
@@ -1117,7 +1118,7 @@ void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t *ref =
 			}
 
 			glReadBuffer( GL_FRONT );
-			glReadPixels( 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, temp ); 
+			glReadPixels( 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, temp );
 
 			int	row = ( w * 3 + 3 ) & ~3;		// OpenGL pads to dword boundaries
 
@@ -1143,7 +1144,7 @@ void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t *ref =
 
 
 /*
-================== 
+==================
 TakeScreenshot
 
 Move to tr_imagefiles.c...
@@ -1151,8 +1152,8 @@ Move to tr_imagefiles.c...
 Will automatically tile render large screen shots if necessary
 Downsample is the number of steps to mipmap the image before saving it
 If ref == NULL, session->updateScreen will be used
-================== 
-*/  
+==================
+*/
 void idRenderSystemLocal::TakeScreenshot( int width, int height, const char *fileName, int blends, renderView_t *ref ) {
 	byte		*buffer;
 	int			i, j, c, temp;
@@ -1220,16 +1221,16 @@ void idRenderSystemLocal::TakeScreenshot( int width, int height, const char *fil
 }
 
 
-/* 
-================== 
+/*
+==================
 R_ScreenshotFilename
 
 Returns a filename with digits appended
 if we have saved a previous screenshot, don't scan
 from the beginning, because recording demo avis can involve
 thousands of shots
-================== 
-*/  
+==================
+*/
 void R_ScreenshotFilename( int &lastNumber, const char *base, idStr &fileName ) {
 	int	a,b,c,d, e;
 
@@ -1267,15 +1268,15 @@ void R_ScreenshotFilename( int &lastNumber, const char *base, idStr &fileName ) 
 }
 
 /*
-================== 
+==================
 R_BlendedScreenShot
 
 screenshot
 screenshot [filename]
 screenshot [width] [height]
 screenshot [width] [height] [samples]
-================== 
-*/ 
+==================
+*/
 #define	MAX_BLENDS	256	// to keep the accumulation in shorts
 void R_ScreenShot_f( const idCmdArgs &args ) {
 	static int lastNumber = 0;
@@ -1352,7 +1353,7 @@ void R_StencilShot( void ) {
 
 	byte *byteBuffer = (byte *)Mem_Alloc(pix);
 
-	glReadPixels( 0, 0, width, height, GL_STENCIL_INDEX , GL_UNSIGNED_BYTE, byteBuffer ); 
+	glReadPixels( 0, 0, width, height, GL_STENCIL_INDEX , GL_UNSIGNED_BYTE, byteBuffer );
 
 	for ( i = 0 ; i < pix ; i++ ) {
 		buffer[18+i*3] =
@@ -1372,18 +1373,18 @@ void R_StencilShot( void ) {
 	fileSystem->WriteFile( "screenshots/stencilShot.tga", buffer, c, "fs_savepath" );
 
 	Mem_Free( buffer );
-	Mem_Free( byteBuffer );	
+	Mem_Free( byteBuffer );
 }
 
-/* 
-================== 
+/*
+==================
 R_EnvShot_f
 
 envshot <basename>
 
 Saves out env/<basename>_ft.tga, etc
-================== 
-*/  
+==================
+*/
 void R_EnvShot_f( const idCmdArgs &args ) {
 	idStr		fullname;
 	const char	*baseName;
@@ -1392,7 +1393,7 @@ void R_EnvShot_f( const idCmdArgs &args ) {
 	renderView_t	ref;
 	viewDef_t	primary;
 	int			blends;
-	const char	*extensions[6] =  { "_px.tga", "_nx.tga", "_py.tga", "_ny.tga", 
+	const char	*extensions[6] =  { "_px.tga", "_nx.tga", "_py.tga", "_ny.tga",
 		"_pz.tga", "_nz.tga" };
 	int			size;
 
@@ -1458,7 +1459,7 @@ void R_EnvShot_f( const idCmdArgs &args ) {
 	}
 
 	common->Printf( "Wrote %s, etc\n", fullname.c_str() );
-} 
+}
 
 //============================================================================
 
@@ -1516,15 +1517,15 @@ void R_SampleCubeMap( const idVec3 &dir, int size, byte *buffers[6], byte result
 	result[3] = buffers[axis][(y*size+x)*4+3];
 }
 
-/* 
-================== 
+/*
+==================
 R_MakeAmbientMap_f
 
 R_MakeAmbientMap_f <basename> [size]
 
 Saves out env/<basename>_amb_ft.tga, etc
-================== 
-*/  
+==================
+*/
 void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 	idStr fullname;
 	const char	*baseName;
@@ -1532,7 +1533,7 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 	renderView_t	ref;
 	viewDef_t	primary;
 	int			downSample;
-	const char	*extensions[6] =  { "_px.tga", "_nx.tga", "_py.tga", "_ny.tga", 
+	const char	*extensions[6] =  { "_px.tga", "_nx.tga", "_py.tga", "_ny.tga",
 		"_pz.tga", "_nz.tga" };
 	int			outSize;
 	byte		*buffers[6];
@@ -1655,7 +1656,7 @@ void R_MakeAmbientMap_f( const idCmdArgs &args ) {
 			Mem_Free( buffers[i] );
 		}
 	}
-} 
+}
 
 //============================================================================
 
@@ -1737,7 +1738,7 @@ void GfxInfo_f( const idCmdArgs &args ) {
 		common->Printf( "glFinish not forced\n" );
 	}
 
-#ifdef _WIN32	
+#ifdef _WIN32
 // WGL_EXT_swap_interval
 typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
 extern	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
@@ -1747,7 +1748,7 @@ extern	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 	} else {
 		common->Printf( "swapInterval not forced\n" );
 	}
-#endif	
+#endif
 }
 
 /*
@@ -1798,8 +1799,11 @@ void R_VidRestart_f( const idCmdArgs &args ) {
 		// free all of our texture numbers
 		soundSystem->ShutdownHW();
 		Sys_ShutdownInput();
+		fhFramebuffer::PurgeAll();
 		globalImages->PurgeAllImages();
+		fhSampler::PurgeAll();
 		fhRenderProgram::PurgeAll();
+		fhBaseRenderList::Shutdown();
 		// free the context and close the window
 		GLimp_Shutdown();
 		glConfig.isInitialized = false;
@@ -2000,7 +2004,7 @@ void idRenderSystemLocal::Clear( void ) {
 idRenderSystemLocal::Init
 ===============
 */
-void idRenderSystemLocal::Init( void ) {	
+void idRenderSystemLocal::Init( void ) {
 
 	common->Printf( "------- Initializing renderSystem --------\n" );
 
@@ -2054,12 +2058,16 @@ void idRenderSystemLocal::Init( void ) {
 idRenderSystemLocal::Shutdown
 ===============
 */
-void idRenderSystemLocal::Shutdown( void ) {	
+void idRenderSystemLocal::Shutdown( void ) {
 	common->Printf( "idRenderSystem::Shutdown()\n" );
 
 	R_DoneFreeType( );
 
 	if ( glConfig.isInitialized ) {
+		fhRenderProgram::PurgeAll();
+		fhFramebuffer::PurgeAll();
+		fhSampler::PurgeAll();
+		fhBaseRenderList::Shutdown();
 		globalImages->PurgeAllImages();
 	}
 

@@ -125,7 +125,7 @@ void RB_GLSL_BlendLight(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs
     backEnd.lightColor[1] = regs[stage->color.registers[1]];
     backEnd.lightColor[2] = regs[stage->color.registers[2]];
     backEnd.lightColor[3] = regs[stage->color.registers[3]];
-	fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));    
+	fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));
 
     RB_RenderDrawSurfChainWithFunction(drawSurfs, RB_GLSL_BlendLight);
     RB_RenderDrawSurfChainWithFunction(drawSurfs2, RB_GLSL_BlendLight);
@@ -139,7 +139,7 @@ R_WobbleskyTexGen
 ==================
 */
 static void R_CreateWobbleskyTexMatrix(const drawSurf_t *surf, float time, float matrix[16]) {
-  
+
   const int *parms = surf->material->GetTexGenRegisters();
 
   float	wobbleDegrees = surf->shaderRegisters[parms[0]];
@@ -150,7 +150,7 @@ static void R_CreateWobbleskyTexMatrix(const drawSurf_t *surf, float time, float
   wobbleSpeed = wobbleSpeed * 2 * idMath::PI / 60;
   rotateSpeed = rotateSpeed * 2 * idMath::PI / 60;
 
-  // very ad-hoc "wobble" transform  
+  // very ad-hoc "wobble" transform
   float	a = time * wobbleSpeed;
   float	s = sin(a) * sin(wobbleDegrees);
   float	c = cos(a) * sin(wobbleDegrees);
@@ -176,7 +176,7 @@ static void R_CreateWobbleskyTexMatrix(const drawSurf_t *surf, float time, float
   // add the rotate
   s = sin(rotateSpeed * time);
   c = cos(rotateSpeed * time);
-  
+
   matrix[0] = axis[0][0] * c + axis[1][0] * s;
   matrix[4] = axis[0][1] * c + axis[1][1] * s;
   matrix[8] = axis[0][2] * c + axis[1][2] * s;
@@ -208,7 +208,7 @@ static void RB_GLSL_RenderTriangleSurface(const srfTriangles_t *tri) {
 
   auto offset = vertexCache.Bind(tri->ambientCache);
 
-  GL_SetupVertexAttributes(fhVertexLayout::DrawPosOnly, offset);  
+  GL_SetupVertexAttributes(fhVertexLayout::DrawPosOnly, offset);
   RB_DrawElementsWithCounters(tri);
 }
 
@@ -228,7 +228,7 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 
 		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[0], local);
 		local[3] += 0.5;
-		const idVec4 bumpMatrixS = local.ToVec4();    
+		const idVec4 bumpMatrixS = local.ToVec4();
 
 		local[0] = local[1] = local[2] = 0; local[3] = 0.5;
 
@@ -238,8 +238,8 @@ static void RB_GLSL_BasicFog(const drawSurf_t *surf) {
 		// GL_S is constant per viewer
 		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[2], local);
 		local[3] += FOG_ENTER;
-		const idVec4 diffuseMatrixT = local.ToVec4();   
-	
+		const idVec4 diffuseMatrixT = local.ToVec4();
+
 		R_GlobalPlaneToLocal(surf->space->modelMatrix, fogPlanes[3], local);
 		const idVec4 diffuseMatrixS = local.ToVec4();
 
@@ -271,7 +271,7 @@ RB_GLSL_FogPass
 void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) {
   assert(fogLightProgram);
 
-  RB_LogComment("---------- RB_GLSL_FogPass ----------\n");  
+  RB_LogComment("---------- RB_GLSL_FogPass ----------\n");
 
   GL_UseProgram(fogLightProgram);
 
@@ -281,8 +281,8 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   // if we ran out of vertex cache memory, skip it
   if (!frustumTris->ambientCache) {
     return;
-  }    
-  
+  }
+
   drawSurf_t ds;
   memset(&ds, 0, sizeof(ds));
   ds.space = &backEnd.viewDef->worldSpace;
@@ -299,7 +299,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   backEnd.lightColor[1] = regs[stage->color.registers[1]];
   backEnd.lightColor[2] = regs[stage->color.registers[2]];
   backEnd.lightColor[3] = regs[stage->color.registers[3]];
-  
+
   fhRenderProgram::SetDiffuseColor(idVec4(backEnd.lightColor));
 
   // calculate the falloff planes
@@ -312,7 +312,7 @@ void RB_GLSL_FogPass(const drawSurf_t *drawSurfs, const drawSurf_t *drawSurfs2) 
   else {
     // otherwise, distance = alpha color
     a = -0.5f / backEnd.lightColor[3];
-  }  
+  }
 
   // texture 0 is the falloff image
   globalImages->fogImage->Bind(0);
@@ -403,7 +403,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
   const auto offset = vertexCache.Bind(tri->shadowCache);
 
   GL_SetupVertexAttributes(fhVertexLayout::Shadow, offset);
-  //GL_SetVertexLayout(fhVertexLayout::Shadow);  
+  //GL_SetVertexLayout(fhVertexLayout::Shadow);
   //glVertexAttribPointer(fhRenderProgram::vertex_attrib_position_shadow, 4, GL_FLOAT, false, sizeof(shadowCache_t), attributeOffset(offset, 0));
 
   // we always draw the sil planes, but we may not need to draw the front or rear caps
@@ -485,7 +485,7 @@ static void RB_GLSL_Shadow(const drawSurf_t *surf) {
     GL_Cull(CT_TWO_SIDED);
     RB_DrawShadowElementsWithCounters(tri, numIndexes);
     GL_Cull(CT_FRONT_SIDED);
-    glEnable(GL_STENCIL_TEST);    
+    glEnable(GL_STENCIL_TEST);
     return;
   }
 */
@@ -670,9 +670,9 @@ void RB_GLSL_DrawInteractions( void ) {
 				while (lights.Num() > 0) {
 					backEnd.vLight = lights.Last();
 
-					if (RB_RenderShadowMaps(backEnd.vLight)) {	
+					if (RB_RenderShadowMaps(backEnd.vLight)) {
 						//shadow map was rendered successfully, so add the light to the next batch
-						batch.Append( backEnd.vLight );			
+						batch.Append( backEnd.vLight );
 						lights.RemoveLast();
 					}
 					else {
@@ -691,7 +691,7 @@ void RB_GLSL_DrawInteractions( void ) {
 		glEnable( GL_CULL_FACE );
 		glFrontFace( GL_CCW );
 
-		//reset viewport 
+		//reset viewport
 		glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1,
 			tr.viewportOffset[1] + backEnd.viewDef->viewport.y1,
 			backEnd.viewDef->viewport.x2 + 1 - backEnd.viewDef->viewport.x1,
@@ -707,10 +707,10 @@ void RB_GLSL_DrawInteractions( void ) {
 		for(int i=0; i<batch.Num(); ++i) {
 			viewLight_t* vLight = batch[i];
 			backEnd.vLight = vLight;
-		
+
 			backEnd.stats.groups[backEndGroup::Interaction].passes += 1;
 			fhTimeElapsed timeElapsed( &backEnd.stats.groups[backEndGroup::Interaction].time );
-			
+
 			const idMaterial* lightShader = vLight->lightShader;
 
 			// clear the stencil buffer if needed

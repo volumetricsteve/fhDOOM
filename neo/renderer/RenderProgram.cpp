@@ -72,7 +72,7 @@ public:
 	int line;
 	int column;
 
-	fhParseException(const idStr& filename, int line, int column, const char* message) 
+	fhParseException(const idStr& filename, int line, int column, const char* message)
 		: filename(filename)
 		, message(message)
 		, line(line)
@@ -98,7 +98,7 @@ static idStr R_ReadFile(const char* filename) {
 	}
 
 	idStr ret = fileBuffer;
-	fileSystem->FreeFile( fileBuffer );	
+	fileSystem->FreeFile( fileBuffer );
 	return ret;
 }
 
@@ -107,7 +107,7 @@ static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previouls
 	previoulsyLoadedFiles.Append( filename );
 
 	const int fileIndex = previoulsyLoadedFiles.Num() - 1;
-	
+
 	idStr content = R_ReadFile(filename.c_str());
 	idStr ret;
 
@@ -162,20 +162,20 @@ static idStr R_LoadPreprocessed( const idStr& filename, idList<idStr>& previouls
 			//try to load included shader relative to current file. If that fails try to load included shader from root directory.
 			try	{
 				idStr includeFilePath;
-				filename.ExtractFilePath(includeFilePath);				
+				filename.ExtractFilePath(includeFilePath);
 				includeFilePath.AppendPath( includeFilename.c_str(), includeFilename.Length() );
 
 				includeContent = R_LoadPreprocessed( includeFilePath, previoulsyLoadedFiles, includeStack );
 				ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
 				ret.Append( includeContent );
 				//ret.Append( "\n#line " + toString( currentLine + 1 ) + " \"" + filename + "\"" );
-			} catch (const fhFileNotFoundException& e) {				
+			} catch (const fhFileNotFoundException&) {
 				try	{
 					includeContent = R_LoadPreprocessed( includeFilename.ToString(), previoulsyLoadedFiles, includeStack );
 					ret.Append( remaining.c_str(), ptr.c_str() - remaining.c_str() );
 					ret.Append( includeContent );
 					//ret.append( "\n#line " + ToString( currentLine + 1 ) + " \"" + filename + "\"" );
-				} catch (const fhFileNotFoundException& e) {
+				} catch (const fhFileNotFoundException&) {
 					throw fhParseException( filename, currentLine, currentColumn, idStr( "include file not found: " ) + includeFilename.ToString() );
 				}
 			}
@@ -250,9 +250,9 @@ static GLuint R_LoadGlslShader( GLenum shaderType, const char* filename ) {
 		}
 
 		return shaderObject;
-	} catch (const fhFileNotFoundException& e) {
+	} catch (const fhFileNotFoundException&) {
 		return 0;
-	} catch (const fhParseException& e) {
+	} catch (const fhParseException&) {
 		return 0;
 	}
 
@@ -402,7 +402,7 @@ void fhRenderProgram::Load() {
 
 	if (ident) {
 		glDeleteProgram( ident );
-	}	
+	}
 
 	if(program > 0) {
 		uniformLocations[fhUniform::ModelMatrix] = glGetUniformLocation(program, "rpModelMatrix");
@@ -468,7 +468,7 @@ void fhRenderProgram::Purge() {
 	if (ident) {
 		glDeleteProgram( ident );
 	}
-	
+
 	ident = 0;
 }
 
@@ -478,7 +478,7 @@ bool fhRenderProgram::Bind(bool force) const {
 		currentProgram = ident;
 		currentUniformLocations = &this->uniformLocations[0];
 
-		for (int i = 0; i < fhUniform::NUM; ++i) {		
+		for (int i = 0; i < fhUniform::NUM; ++i) {
 			dirty[i] = true;
 		}
 
@@ -493,7 +493,7 @@ void fhRenderProgram::Unbind() {
 		glUseProgram( 0 );
 		currentProgram = 0;
 		currentUniformLocations = &defaultUniformLocations[0];
-	}	
+	}
 }
 
 const char* fhRenderProgram::vertexShader() const {

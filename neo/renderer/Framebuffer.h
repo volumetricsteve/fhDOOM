@@ -39,9 +39,9 @@ public:
 	int  GetHeight() const;
 
 	void Purge();
-	void Bind();	
+	void Bind();
 	void Resize( int width, int height );
-	
+
 	void BlitToCurrentFramebuffer();
 	void BlitDepthToCurrentFramebuffer();
 
@@ -56,6 +56,7 @@ public:
 	static fhFramebuffer* currentRenderFramebuffer;
 
 	static void Init();
+	static void PurgeAll();
 
 private:
 	static fhFramebuffer* currentDrawBuffer;
