@@ -406,7 +406,7 @@ GLuint id,
 GLenum severity,
 GLsizei length,
 const GLchar* message,
-GLvoid* userParam
+const GLvoid* userParam
 )
 {
 	const char* debSource = "?source?";
@@ -487,6 +487,7 @@ GLvoid* userParam
 	}
 
 	common->Printf("(GL %u) %s, %s, %s: %s\n", id, debSource, debType, debSev, message);
+
 #pragma warning( pop )
 }
 
