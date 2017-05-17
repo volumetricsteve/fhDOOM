@@ -364,6 +364,8 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 		return;
 	}
 
+
+
 	// echo to console buffer
 	console->Print( msg );
 
@@ -447,6 +449,10 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 			::PostMessageA( com_hwndMsg, com_msgID, 0, static_cast<LPARAM>(atom) );
 		}
 	}
+
+#ifndef _NDEBUG
+	OutputDebugStringA( msg );
+#endif
 
 #endif
 }
