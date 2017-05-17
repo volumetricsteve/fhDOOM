@@ -87,7 +87,7 @@ vec3 normal(vec2 texcoord)
 
   if(rpNormalMapEncoding == NORMAL_RxGB)
   {
-    N = normalize(2.0 * texture(normalMap, texcoord).agb - 1.0);
+    N = normalize(2.0 * texture(normalMap, texcoord).rgb - 1.0);
   }
   else if(rpNormalMapEncoding == NORMAL_AG)
   {

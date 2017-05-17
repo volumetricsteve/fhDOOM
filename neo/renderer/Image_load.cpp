@@ -118,15 +118,7 @@ SetImageFilterAndRepeat
 ==================
 */
 void idImage::SetImageFilterAndRepeat() {
-
-	auto swizzle = textureSwizzle_t::None;
-	/*
-	if (pixelFormat == pixelFormat_t::DXT5_RxGB) {
-		swizzle = textureSwizzle_t::AGBR;
-	}
-	*/
-
-	sampler = fhSampler::GetSampler( filter, repeat, swizzle, true, true );
+	sampler = fhSampler::GetSampler( filter, repeat, true, true );
 }
 
 /*
@@ -407,6 +399,11 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 	}
 	else {
 		common->Error( "Non-DSA path not implemented yet" );
+	}
+
+	if (imageData.GetPixelFormat() == pixelFormat_t::DXT5_RxGB) {
+		static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
+		glTextureParameteriv( texnum, GL_TEXTURE_SWIZZLE_RGBA, agbr );
 	}
 
 	SetImageFilterAndRepeat();

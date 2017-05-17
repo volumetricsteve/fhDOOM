@@ -73,7 +73,7 @@ void main(void)
 
   // load the filtered normal map and convert to -1 to 1 range
   vec4 localNormal = texture2D( texture1, frag.texcoord1.xy );
-  localNormal.x = localNormal.a;
+  //localNormal.x = localNormal.a;
   localNormal = localNormal * 2 - 1;
   localNormal = localNormal * mask;
 
