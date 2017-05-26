@@ -7164,7 +7164,7 @@ void idPlayer::UpdateHud( void ) {
 				count = 3;
 			}
 #endif
-			for ( i = 0; i < count, i < c; i++ ) { //_D3XP
+			for ( i = 0; i < count && i < c; i++ ) { //_D3XP
 				hud->SetStateString( va( "itemtext%i", inventory.nextItemNum ), inventory.pickupItemNames[0].name );
 				hud->SetStateString( va( "itemicon%i", inventory.nextItemNum ), inventory.pickupItemNames[0].icon );
 				hud->HandleNamedEvent( va( "itemPickup%i", inventory.nextItemNum++ ) );

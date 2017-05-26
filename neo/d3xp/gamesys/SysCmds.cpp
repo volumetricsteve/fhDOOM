@@ -335,7 +335,7 @@ void Cmd_Give_f( const idCmdArgs &args ) {
 	}
 
 	if ( give_all || idStr::Icmp( name, "weapons" ) == 0 ) {
-		player->inventory.weapons = BIT( MAX_WEAPONS ) - 1;
+		player->inventory.weapons = ~0; //BIT( MAX_WEAPONS ) - 1;
 		player->CacheWeapons();
 
 		if ( !give_all ) {
