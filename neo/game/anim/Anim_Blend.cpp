@@ -163,8 +163,8 @@ index 0 will never be NULL.  Any anim >= NumAnims will return NULL.
 =====================
 */
 const idMD5Anim *idAnim::MD5Anim( int num ) const {
-	if ( anims == NULL || anims[0] == NULL ) { 
-		return NULL;
+	if ( !anims[0] ) {
+		return nullptr;
 	}
 	return anims[ num ];
 }

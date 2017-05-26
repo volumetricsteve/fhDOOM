@@ -765,6 +765,9 @@ bool idAF::LoadConstraint( const idDeclAF_Constraint *fc ) {
 			c->SetLimit( fc->minLength, fc->maxLength );
 			break;
 		}
+		case DECLAF_CONSTRAINT_INVALID:
+			//FIXME(johl): return false?
+			break;
 	}
 	return true;
 }
