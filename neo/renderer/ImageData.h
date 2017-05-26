@@ -27,6 +27,7 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 #pragma once
+#include "tr_local.h"
 #include "Image.h"
 
 template<typename T>

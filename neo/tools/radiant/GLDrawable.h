@@ -28,6 +28,10 @@ If you have questions concerning this license or the applicable additional terms
 */
 #pragma once
 
+#ifdef None
+#undef None
+#endif
+
 enum class MouseButton {
 	None,
 	Left,

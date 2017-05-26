@@ -146,7 +146,7 @@ void fhSampler::Init() {
 		common->FatalError( "fhSampler: bad texture repeat" );
 	}
 		
-	static const GLint const swizzle_AGBR[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
+	static const GLint swizzle_AGBR[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
 
 	switch (swizzle) {
 	case textureSwizzle_t::AGBR:		

@@ -536,7 +536,7 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 			vLight->viewMatrices[c][13] = -(maximum.y + minimum.y) * 0.5f;
 			vLight->viewMatrices[c][14] = -(frustum.viewSpaceBounds[1].z + 1);
 
-			const float f = abs( frustum.viewSpaceBounds[1].z - frustum.viewSpaceBounds[0].z );
+			const float f = fabs( frustum.viewSpaceBounds[1].z - frustum.viewSpaceBounds[0].z );
 			const float n = 1;
 
 			vLight->projectionMatrices[c] = fhRenderMatrix::identity;
@@ -549,8 +549,8 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 			vLight->projectionMatrices[c][15] = 1.0f;
 
 			vLight->viewProjectionMatrices[c] = vLight->projectionMatrices[c] * vLight->viewMatrices[c];
-			vLight->width[c] = abs( r * 2 );
-			vLight->height[c] = abs( t * 2 );
+			vLight->width[c] = fabs( r * 2 );
+			vLight->height[c] = fabs( t * 2 );
 
 			vLight->culled[c] = false;
 		}

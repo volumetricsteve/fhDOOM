@@ -35,6 +35,20 @@ extern float fDiff( float f1, float f2 );
 
 static int viewAngle = -98;
 
+#ifdef __linux__
+//FIXME(johl): currently only implemented on Windows,, change interface of GLDrawable to get rid of these?
+#define VK_MENU 0
+#define VK_SHIFT 0
+
+bool Sys_KeyDown( int ) {
+	return false;
+}
+
+float fDiff( float a, float b ) {
+	return fabs(a-b);
+}
+#endif
+
 idGLDrawable::idGLDrawable() {
 	scale = 1.0;
 	xOffset = 0.0;

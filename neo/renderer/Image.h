@@ -114,6 +114,9 @@ typedef struct
     unsigned long dwReserved2[3];
 } ddsFileHeader_t;
 
+#ifdef None
+#undef None
+#endif
 
 enum class pixelFormat_t {
 	None,
