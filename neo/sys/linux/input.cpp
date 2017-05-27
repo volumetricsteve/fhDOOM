@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../idlib/precompiled.h"
 #include "../posix/posix_public.h"
 #include "local.h"
-
+#include <X11/keysymdef.h>
 #include <pthread.h>
 
 idCVar in_mouse( "in_mouse", "1", CVAR_SYSTEM | CVAR_ARCHIVE, "" );
@@ -54,6 +54,64 @@ static int mouse_accel_numerator;
 static int mouse_accel_denominator;
 static int mouse_threshold;
 
+static const struct {unsigned keysym; keyNum_t keynum;} s_keySymbolMap[] = {
+	{(unsigned)' ', K_SPACE},
+	{XK_Tab, K_TAB},
+	{XK_grave, (keyNum_t)'`'}, //console key
+	{XK_Escape, K_ESCAPE},
+	{XK_Left, K_LEFTARROW},
+	{XK_Right, K_RIGHTARROW},
+	{XK_Up, K_UPARROW},
+	{XK_Down, K_DOWNARROW},
+	{XK_BackSpace, K_BACKSPACE},
+	{XK_Return, K_ENTER},
+	{XK_Shift_L, K_SHIFT},
+	{XK_Shift_R, K_SHIFT},
+	{XK_Control_L, K_CTRL},
+	{XK_Control_R, K_CTRL},
+	{XK_Alt_L, K_ALT},
+	{XK_Alt_R, K_RIGHT_ALT},
+	{XK_Caps_Lock, K_CAPSLOCK},
+	// F1-F12
+	{XK_F1, K_F1},
+	{XK_F2, K_F2},
+	{XK_F3, K_F3},
+	{XK_F4, K_F4},
+	{XK_F5, K_F5},
+	{XK_F6, K_F6},
+	{XK_F7, K_F7},
+	{XK_F8, K_F8},
+	{XK_F9, K_F9},
+	{XK_F10, K_F10},
+	{XK_F11, K_F11},
+	{XK_F12, K_F12},
+	// keypad
+	{XK_KP_Add, K_KP_PLUS},
+	{XK_KP_Subtract, K_KP_MINUS},
+	{XK_KP_Multiply, K_KP_STAR},
+	{XK_KP_Enter, K_KP_ENTER},
+	{XK_KP_Divide, K_KP_SLASH},
+	{XK_Num_Lock, K_KP_NUMLOCK},
+	{XK_KP_1, K_KP_END},
+	{XK_KP_2, K_KP_DOWNARROW},
+	{XK_KP_3, K_KP_PGDN},
+	{XK_KP_4, K_KP_LEFTARROW},
+	{XK_KP_5, K_KP_5},
+	{XK_KP_6, K_KP_RIGHTARROW},
+	{XK_KP_7, K_KP_HOME},
+	{XK_KP_8, K_KP_UPARROW},
+	{XK_KP_9, K_KP_PGUP},
+	{XK_KP_Insert, K_KP_INS},
+	{XK_KP_Delete, K_KP_DEL},
+	//home, end, pg up/down
+	{XK_Insert, K_INS},
+	{XK_Delete, K_DEL},
+	{XK_Page_Down, K_PGDN},
+	{XK_Page_Up, K_PGUP},
+	{XK_Home, K_HOME},
+	{XK_End, K_END}
+};
+
 static byte s_scantokey[128] = {
 /*  0 */ 0, 0, 0, 0, 0, 0, 0, 0,
 /*  8 */ 0, 27, '1', '2', '3', '4', '5', '6', // 27 - ESC
@@ -71,6 +129,14 @@ static byte s_scantokey[128] = {
 /* 68 */ K_DOWNARROW, K_PGDN, K_INS, K_DEL, K_ENTER, K_CTRL, K_PAUSE, 0,
 /* 70 */ '/', K_ALT, 0, 0, 0, 0, 0, 0,
 /* 78 */ 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+
+static void UpdateScanToKey(unsigned keysym, keyNum_t keynum) {
+	auto keycode = XKeysymToKeycode( dpy, keysym );
+	if (keycode < sizeof(s_scantokey)) {
+		s_scantokey[keycode] = static_cast<byte>(keynum);
+	}
 };
 
 /*
@@ -110,6 +176,21 @@ void Sys_InitInput(void) {
 	} else {
 		have_xkb = false;
 	}
+
+	memset(s_scantokey, 0, sizeof(s_scantokey));
+
+	for (int i=0; i<sizeof(s_keySymbolMap)/sizeof(s_keySymbolMap[0]); ++i) {
+		UpdateScanToKey(s_keySymbolMap[i].keysym, s_keySymbolMap[i].keynum);
+	}
+
+	for (int i=0; i<10; ++i) {
+		UpdateScanToKey((unsigned)('1' + i), (keyNum_t)('1' + i));
+	}
+
+	for (int i=0; i<26; ++i) {
+		UpdateScanToKey((unsigned)('a' + i), (keyNum_t)('a' + i));
+	}
+
 	common->Printf( "------------------------------------\n" );
 }
 
@@ -117,7 +198,7 @@ void Sys_InitInput(void) {
 //#define XEVT_DBG2
 
 static Cursor Sys_XCreateNullCursor( Display *display, Window root ) {
-	Pixmap cursormask; 
+	Pixmap cursormask;
 	XGCValues xgc;
 	GC gc;
 	XColor dummycolour;
@@ -147,7 +228,7 @@ static void Sys_XInstallGrabs( void ) {
 	XSync( dpy, False );
 
 	XDefineCursor( dpy, win, Sys_XCreateNullCursor( dpy, win ) );
-	
+
 	XGrabPointer( dpy, win,
 				 False,
 				 MOUSE_MASK,
@@ -158,18 +239,18 @@ static void Sys_XInstallGrabs( void ) {
 
 	XGetPointerControl( dpy, &mouse_accel_numerator, &mouse_accel_denominator,
 					   &mouse_threshold );
-	
+
 	XChangePointerControl( dpy, True, True, 1, 1, 0 );
-	
+
 	XSync( dpy, False );
-	
+
 	mouse_reset_time = Sys_Milliseconds ();
-	
+
 	if ( in_dgamouse.GetBool() && !dga_found ) {
 		common->Printf("XF86DGA not available, forcing DGA mouse off\n");
 		in_dgamouse.SetBool( false );
 	}
-	
+
 	if ( in_dgamouse.GetBool() ) {
 #if defined( ID_ENABLE_DGA )
 		XF86DGADirectVideo( dpy, DefaultScreen( dpy ), XF86DGADirectMouse );
@@ -180,12 +261,12 @@ static void Sys_XInstallGrabs( void ) {
 		mwy = glConfig.vidHeight / 2;
 		mx = my = 0;
 	}
-	
+
 	XGrabKeyboard( dpy, win,
 				  False,
 				  GrabModeAsync, GrabModeAsync,
 				  CurrentTime );
-	
+
 	XSync( dpy, False );
 
 	mouse_active = true;
@@ -200,17 +281,17 @@ void Sys_XUninstallGrabs(void) {
 		XF86DGADirectVideo( dpy, DefaultScreen( dpy ), 0 );
 	}
 #endif
-	
-	XChangePointerControl( dpy, true, true, mouse_accel_numerator, 
+
+	XChangePointerControl( dpy, true, true, mouse_accel_numerator,
 						  mouse_accel_denominator, mouse_threshold );
-	
+
 	XUngrabPointer( dpy, CurrentTime );
 	XUngrabKeyboard( dpy, CurrentTime );
-	
+
 	XWarpPointer( dpy, None, win,
 				 0, 0, 0, 0,
 				 glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-	
+
 	XUndefineCursor( dpy, win );
 
 	mouse_active = false;
@@ -228,7 +309,7 @@ void Sys_GrabMouseCursor( bool grabIt ) {
 		#endif
 		return;
 	}
-	
+
 	if ( glConfig.isFullscreen ) {
 		if ( !grabIt ) {
 			return; // never ungrab while fullscreen
@@ -238,7 +319,7 @@ void Sys_GrabMouseCursor( bool grabIt ) {
 			in_nograb.SetBool( false );
 		}
 	}
-	
+
 	if ( in_nograb.GetBool() ) {
 		if ( in_dgamouse.GetBool() ) {
 			common->DPrintf("in_nograb 1, forcing forcing DGA mouse off\n");
@@ -260,7 +341,7 @@ void Sys_GrabMouseCursor( bool grabIt ) {
 }
 
 /**
- * XPending() actually performs a blocking read 
+ * XPending() actually performs a blocking read
  *  if no events available. From Fakk2, by way of
  *  Heretic2, by way of SDL, original idea GGI project.
  * The benefit of this approach over the quite
@@ -268,8 +349,8 @@ void Sys_GrabMouseCursor( bool grabIt ) {
  *  focus handling for free, which is a major win
  *  with debug and windowed mode. It rests on the
  *  assumption that the X server will use the
- *  same timestamp on press/release event pairs 
- *  for key repeats. 
+ *  same timestamp on press/release event pairs
+ *  for key repeats.
  */
 static bool Sys_XPendingInput( void ) {
 	// Flush the display connection
@@ -340,12 +421,12 @@ void Posix_PollInput() {
 	static XKeyEvent *key_event = (XKeyEvent*)&event;
   	int lookupRet;
 	int b, dx, dy;
-	KeySym keysym;	
-	
+	KeySym keysym;
+
 	if ( !dpy ) {
 		return;
 	}
-	
+
 	// NOTE: Sys_GetEvent only calls when there are no events left
 	// but here we pump all X events that have accumulated
 	// pump one by one? or use threaded input?
@@ -359,7 +440,7 @@ void Posix_PollInput() {
 				#endif
 				key_event->keycode &= 0x7F;
 				#ifdef XEVT_DBG2
-					printf("SE_KEY press %d\n", key_event->keycode);
+					printf("SE_KEY press code=%d (0x%X)\n", key_event->keycode, key_event->keycode);
 				#endif
 				Posix_QueEvent( SE_KEY, s_scantokey[key_event->keycode], true, 0, NULL);
 				lookupRet = XLookupString(key_event, buf, sizeof(buf), &keysym, NULL);
@@ -376,8 +457,8 @@ void Posix_PollInput() {
 				}
 				if (!Posix_AddKeyboardPollEvent( s_scantokey[key_event->keycode], true ))
 					return;
-			break;			
-				
+			break;
+
 			case KeyRelease:
 				if (Sys_XRepeatPress(&event)) {
 					#ifdef XEVT_DBG2
@@ -391,13 +472,13 @@ void Posix_PollInput() {
 				#endif
 				key_event->keycode &= 0x7F;
 				#ifdef XEVT_DBG2
-					printf("SE_KEY release %d\n", key_event->keycode);
+					printf("SE_KEY release %d (0x%X) \n", key_event->keycode, key_event->keycode);
 				#endif
 				Posix_QueEvent( SE_KEY, s_scantokey[key_event->keycode], false, 0, NULL);
 				if (!Posix_AddKeyboardPollEvent( s_scantokey[key_event->keycode], false ))
 					return;
 			break;
-				
+
 			case ButtonPress:
 				if (event.xbutton.button == 4) {
 					Posix_QueEvent( SE_KEY, K_MWHEELUP, true, 0, NULL);
@@ -457,7 +538,7 @@ void Posix_PollInput() {
 					}
 				}
 			break;
-			
+
 			case MotionNotify:
 				if (!mouse_active)
 					break;
@@ -527,7 +608,7 @@ unsigned char Sys_MapCharForKey( int _key ) {
 	}
 
 	// query the current keyboard group, must be passed as bit 13-14 in the constructed XEvent
-	// see X Keyboard Extension library specifications 
+	// see X Keyboard Extension library specifications
 	XkbGetState( dpy, XkbUseCoreKbd, &kbd_state );
 
 	// lookup scancode from doom key code. unique hits
