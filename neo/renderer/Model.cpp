@@ -1884,12 +1884,6 @@ bool idRenderModelStatic::ConvertMAToModelSurfaces (const struct maModel_s *ma )
 	return true;
 }
 
-static bool LessThan(const objVertex_t& a, const objVertex_t& b) {
-	if(a.xyz < b.xyz)
-		return true;
-}
-
-
 namespace std {
 
 	template <>

@@ -892,6 +892,9 @@ static filterName_t textureFilters[] = {
 		case TT_CUBIC:
 			texEnum = GL_TEXTURE_CUBE_MAP;
 			break;
+		case TT_DISABLED:
+			texEnum = GL_INVALID_ENUM;
+			break;
 		}
 
 		// make sure we don't start a background load

@@ -36,7 +36,6 @@ idCVar r_smSkipNonStaticOcclusion( "r_smSkipNonStaticOcclusion", "0", CVAR_RENDE
 idCVar r_smSkipMovingLights( "r_smSkipMovingLights", "0", CVAR_RENDERER | CVAR_BOOL, "" );
 
 ShadowRenderList::ShadowRenderList() {
-	memset( &dummy, 0, sizeof(dummy) );
 	dummy.parms.shaderParms[0] = 1;
 	dummy.parms.shaderParms[1] = 1;
 	dummy.parms.shaderParms[2] = 1;

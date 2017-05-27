@@ -1248,7 +1248,7 @@ int sgetI1( unsigned char **bp )
    i = **bp;
    if ( i > 127 ) i -= 256;
    flen += 1;
-   *bp++;
+   *bp += 1;
    return i;
 }
 
@@ -1286,7 +1286,7 @@ unsigned char sgetU1( unsigned char **bp )
    if ( flen == FLEN_ERROR ) return 0;
    c = **bp;
    flen += 1;
-   *bp++;
+   *bp += 1;
    return c;
 }
 
@@ -1693,7 +1693,6 @@ TIMG surface subchunk.
 static int add_clip( char *s, lwClip **clist, int *nclips )
 {
    lwClip *clip;
-   char *p;
 
    clip = (lwClip*)Mem_ClearedAlloc( sizeof( lwClip ) );
    if ( !clip ) return 0;
@@ -1703,7 +1702,7 @@ static int add_clip( char *s, lwClip **clist, int *nclips )
    clip->saturation.val = 1.0f;
    clip->gamma.val = 1.0f;
 
-   if ( p = strstr( s, "(sequence)" )) {
+   if (char* p = strstr( s, "(sequence)" )) {
       p[ -1 ] = 0;
       clip->type = ID_ISEQ;
       clip->source.seq.prefix = s;
@@ -1714,7 +1713,7 @@ static int add_clip( char *s, lwClip **clist, int *nclips )
       clip->source.still.name = s;
    }
 
-   *nclips++;
+   *nclips += 1;
    clip->index = *nclips;
 
    lwListAdd( (void**)clist, clip );
