@@ -2,9 +2,9 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
 Doom 3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@ void GLimp_SaveGamma() {
 	}
 
 	assert( dpy );
-	
+
 	XF86VidModeGetGammaRampSize( dpy, scrnum, &save_rampsize);
 	save_red = (unsigned short *)malloc(save_rampsize*sizeof(unsigned short));
 	save_green = (unsigned short *)malloc(save_rampsize*sizeof(unsigned short));
@@ -131,9 +131,9 @@ save and restore the original gamma of the system
 void GLimp_RestoreGamma() {
 	if (!save_rampsize)
 		return;
-	
+
 	XF86VidModeSetGammaRamp( dpy, scrnum, save_rampsize, save_red, save_green, save_blue);
-	
+
 	free(save_red); free(save_green); free(save_blue);
 	save_rampsize = 0;
 }
@@ -147,9 +147,9 @@ the size of the gamma ramp can not be changed on X (I need to confirm this)
 =================
 */
 void GLimp_SetGamma(unsigned short red[256], unsigned short green[256], unsigned short blue[256]) {
-	if ( dpy ) {		
+	if ( dpy ) {
 		int size;
-		
+
 		GLimp_SaveGamma();
 		XF86VidModeGetGammaRampSize( dpy, scrnum, &size);
 		common->DPrintf("XF86VidModeGetGammaRampSize: %d\n", size);
@@ -168,7 +168,7 @@ void GLimp_SetGamma(unsigned short red[256], unsigned short green[256], unsigned
 				r_f -= (float)r_i;
 				l_red[i] = (int)round((1.0f-r_f)*(float)red[r_i]+r_f*(float)red[r_i+1]);
 				l_green[i] = (int)round((1.0f-r_f)*(float)green[r_i]+r_f*(float)green[r_i+1]);
-				l_blue[i] = (int)round((1.0f-r_f)*(float)blue[r_i]+r_f*(float)blue[r_i+1]);				
+				l_blue[i] = (int)round((1.0f-r_f)*(float)blue[r_i]+r_f*(float)blue[r_i+1]);
 			}
 			l_red[size-1] = red[255]; l_green[size-1] = green[255]; l_blue[size-1] = blue[255];
 			XF86VidModeSetGammaRamp( dpy, scrnum, size, l_red, l_green, l_blue );
@@ -181,13 +181,13 @@ void GLimp_SetGamma(unsigned short red[256], unsigned short green[256], unsigned
 
 void GLimp_Shutdown() {
 	if ( dpy ) {
-		
+
 		Sys_XUninstallGrabs();
-	
+
 		GLimp_RestoreGamma();
 
-		glXDestroyContext( dpy, ctx );		
-		
+		glXDestroyContext( dpy, ctx );
+
 		XDestroyWindow( dpy, win );
 		if ( vidmode_active ) {
 			XF86VidModeSwitchToMode( dpy, scrnum, vidmodes[0] );
@@ -270,7 +270,7 @@ bool GLimp_OpenDisplay( void ) {
 		common->Printf("XInitThreads failed\n");
 		return false;
 	}
-	
+
 	// set up our custom error handler for X failures
 	XSetErrorHandler( &idXErrorHandler );
 
@@ -278,7 +278,9 @@ bool GLimp_OpenDisplay( void ) {
 		common->Printf( "Couldn't open the X display\n" );
 		return false;
 	}
+
 	scrnum = DefaultScreen( dpy );
+
 	return true;
 }
 
@@ -451,7 +453,7 @@ int GLX_Init(glimpParms_t a) {
 			attrib[ATTR_GREEN_IDX] = 4;
 			attrib[ATTR_BLUE_IDX] = 4;
 		}
-		
+
 		attrib[ATTR_DEPTH_IDX] = tdepthbits;	// default to 24 depth
 		attrib[ATTR_STENCIL_IDX] = tstencilbits;
 
@@ -514,55 +516,97 @@ int GLX_Init(glimpParms_t a) {
 
 	XFlush(dpy);
 	XSync(dpy, False);
-/*
-    if(a.glCoreProfile) {
-        // NOTE: It is not necessary to create or make current to a context before
-        // calling glXGetProcAddressARB
-        typedef GLXContext (*glXCreateContextAttribsARBProc)(::Display*, GLXFBConfig, GLXContext, Bool, const int*);
-        glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-        glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
-                 glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
 
-
-        int flags = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
-        int glattribs[] = {
-          GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-          GLX_CONTEXT_MINOR_VERSION_ARB, 3,
-          GLX_CONTEXT_FLAGS_ARB, flags,
-          0 };
-
-        ctx = glXCreateContextAttribsARB( dpy, visinfo, 0, True, glattribs );
-
-    } else */{
-        ctx = glXCreateContext(dpy, visinfo, NULL, True);
+    ctx = glXCreateContext(dpy, visinfo, NULL, True);
+    if ( !ctx ) {
+		common->Printf( "failed to create legycy render context\n");
+		return false;
     }
+
+    if(a.glCoreProfile) {
+		glXMakeCurrent(dpy, win, ctx);
+	    glewExperimental = GL_TRUE;
+	    GLenum err = glewInit();
+	    if(GLEW_OK != err) {
+			common->Printf( "failed to initialize glew\n");
+	        return false;
+	    }
+
+		static int visual_attribs[] = {
+			GLX_X_RENDERABLE    , True,
+			GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+			GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+			GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+			GLX_RED_SIZE        , 8,
+			GLX_GREEN_SIZE      , 8,
+			GLX_BLUE_SIZE       , 8,
+			GLX_ALPHA_SIZE      , 8,
+			GLX_DEPTH_SIZE      , 24,
+			GLX_STENCIL_SIZE    , 8,
+			GLX_DOUBLEBUFFER    , True,
+			//GLX_SAMPLE_BUFFERS  , 1,
+			//GLX_SAMPLES         , 4,
+			0
+		};
+
+		common->Printf( "choosing framebuffer config...\n");
+		int fbcount = 0;
+		GLXFBConfig* fbc = glXChooseFBConfig( dpy, DefaultScreen( dpy ), visual_attribs, &fbcount );
+		if (!fbc || fbcount < 1) {
+			common->Printf( "failed to choose framebuffer config\n");
+			return false;
+		}
+
+		typedef GLXContext (*glXCreateContextAttribsARBProc)(::Display*, GLXFBConfig, GLXContext, Bool, const int*);
+		glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+		glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
+
+		int flags = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+		int glattribs[] = {
+			GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+			GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+			GLX_CONTEXT_FLAGS_ARB, flags,
+			0
+		};
+
+		auto ctxCore = glXCreateContextAttribsARB( dpy, *fbc, 0, True, glattribs );
+		if ( !ctxCore ) {
+			common->Printf( "failed to create core render context\n");
+			return false;
+		}
+		glXMakeCurrent( dpy, win, 0 );
+		glXDestroyContext( dpy, ctx );
+		ctx = ctxCore;
+
+		common->Printf( "core render context created!\n");
+    }
+
+    glXMakeCurrent( dpy, win, ctx );
+	GLenum err = glewInit();
+	if(GLEW_OK != err) {
+		common->Printf( "failed to initialize glew\n");
+		return false;
+	}
 
 	XSync(dpy, False);
 
 	// Free the visinfo after we're done with it
 	XFree(visinfo);
 
-	glXMakeCurrent(dpy, win, ctx);
-    glewExperimental = GL_TRUE;
-    GLenum err = glewInit();
-    if(GLEW_OK != err) {
-        return false;
-    }
-
 	glstring = (const char *) glGetString(GL_RENDERER);
 	common->Printf("GL_RENDERER: %s\n", glstring);
-	
+
 	glstring = (const char *) glGetString(GL_EXTENSIONS);
 	common->Printf("GL_EXTENSIONS: %s\n", glstring);
 
 	// FIXME: here, software GL test
 
 	glConfig.isFullscreen = a.fullScreen;
-	
+
 	if ( glConfig.isFullscreen ) {
 		Sys_GrabMouseCursor( true );
 	}
-	
+
 	return true;
 }
 
@@ -585,12 +629,12 @@ bool GLimp_Init( glimpParms_t a ) {
 
 	if ( !GLimp_OpenDisplay() ) {
 		return false;
-	}	
-	
+	}
+
 	if (!GLX_Init(a)) {
 		return false;
 	}
-	
+
 	return true;
 }
 
