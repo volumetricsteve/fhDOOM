@@ -33,6 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "simplex.h"	// line font definition
 #include "ImmediateMode.h"
 #include "RenderProgram.h"
+#include "Framebuffer.h"
 
 #define MAX_DEBUG_LINES			16384
 
@@ -393,9 +394,10 @@ void RB_ShowIntensity( void ) {
 		return;
 	}
 
-    globalImages->currentRenderImage->CopyFramebuffer(backEnd.viewDef->viewport.x1,
-      backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
-      backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true);
+	auto source = fhFramebuffer::GetCurrentDrawBuffer();
+	auto dest = fhFramebuffer::currentRenderFramebuffer;
+	dest->Resize( source->GetWidth(), source->GetHeight() );
+	fhFramebuffer::BlitColor( source, dest );
 
     GL_ModelViewMatrix.LoadIdentity();
     GL_State(GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);

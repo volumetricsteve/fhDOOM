@@ -42,9 +42,6 @@ public:
 	void Bind();
 	void Resize( int width, int height );
 
-	void BlitToCurrentFramebuffer();
-	void BlitDepthToCurrentFramebuffer();
-
 	static fhFramebuffer* GetCurrentDrawBuffer() {
 		return currentDrawBuffer;
 	}
@@ -57,11 +54,14 @@ public:
 
 	static void Init();
 	static void PurgeAll();
+	static void BlitColor( fhFramebuffer* source, fhFramebuffer* dest );
+	static void BlitDepth( fhFramebuffer* source, fhFramebuffer* dest );
 
 private:
 	static fhFramebuffer* currentDrawBuffer;
 
 	void SetDrawBuffer();
+	void Allocate();
 
 	int      width;
 	int      height;

@@ -129,7 +129,9 @@ enum class pixelFormat_t {
 	DXT3_RGBA,
 	DXT5_RGBA,
 	DXT5_RxGB,
-	RGTC
+	RGTC,
+	DEPTH_24_STENCIL_8,
+	DEPTH_24
 };
 
 // increasing numeric values imply more information is stored
@@ -152,11 +154,6 @@ typedef enum {
 	CF_NATIVE,		// _px, _nx, _py, etc, directly sent to GL
 	CF_CAMERA		// _forward, _back, etc, rotated and flipped as needed before sending to GL
 } cubeFiles_t;
-
-enum class textureSwizzle_t {
-	None,
-	AGBR
-};
 
 #define	MAX_IMAGE_NAME	256
 
@@ -187,12 +184,9 @@ public:
 
 	void		GenerateImage( const fhImageData& imgeData );
 
-
-	void		CopyFramebuffer( int x, int y, int width, int height, bool useOversizedBuffer );
-	void		CopyDepthbuffer( int x, int y, int width, int height );
-
-	void		AttachColorToFramebuffer(fhFramebuffer* framebuffer);
-	void		AttachDepthToFramebuffer(fhFramebuffer* framebuffer);
+	bool		IsStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps ) const;
+	void		AllocateStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps );
+	void        UploadImage( pixelFormat_t format, uint32 width, uint32 height, uint32 face, uint32 mipmapLevel, uint32 size, const void* data );
 
 	void		UploadScratch( int textureUnit, const byte *pic, int width, int height );
 
@@ -221,7 +215,6 @@ public:
 	void		UploadPrecompressedImage( byte *data, int len );
 	void		ActuallyLoadImage( bool checkForPrecompressed, bool fromBackEnd );
 	void		StartBackgroundImageLoad();
-	int			BitsForInternalFormat( int internalFormat ) const;
 	void		ImageProgramStringToCompressedFileName( const char *imageProg, char *fileName ) const;
 	int			NumLevelsForImageSize( int width, int height ) const;
 
@@ -263,15 +256,19 @@ public:
 	int					classification;			// just for resource profiling
 
 	// data for listImages
-	int					uploadWidth, uploadHeight, uploadDepth;	// after power of two, downsample, and MAX_TEXTURE_SIZE
+	int					uploadWidth, uploadHeight;	// after power of two, downsample, and MAX_TEXTURE_SIZE
 	int					internalFormat;
 	pixelFormat_t       pixelFormat;
+	uint32              mipmaps;
 
 	idImage 			*cacheUsagePrev, *cacheUsageNext;	// for dynamic cache purging of old images
 
 	idImage *			hashNext;				// for hash chains to speed lookup
 
 	int					refCount;				// overall ref count
+
+private:
+
 };
 
 ID_INLINE idImage::idImage() {
@@ -299,8 +296,9 @@ ID_INLINE idImage::idImage() {
 	defaulted = false;
 	timestamp = 0;
 	bindCount = 0;
-	uploadWidth = uploadHeight = uploadDepth = 0;
+	uploadWidth = uploadHeight = 0;
 	internalFormat = 0;
+	mipmaps = 0;
 	cacheUsagePrev = cacheUsageNext = NULL;
 	hashNext = NULL;
 	isMonochrome = false;
@@ -463,8 +461,6 @@ public:
 };
 
 extern idImageManager	*globalImages;		// pointer to global list for the rest of the system
-
-int MakePowerOfTwo( int num );
 
 /*
 ====================================================================

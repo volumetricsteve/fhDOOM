@@ -391,8 +391,6 @@ static const void* attributeOffset( T offset, int attributeOffset )
 	return reinterpret_cast<const void*>((std::ptrdiff_t)offset + (std::ptrdiff_t)attributeOffset);
 }
 
-
-
 void GL_SetupVertexAttributes( fhVertexLayout layout, int offset ) {
 	GL_SetVertexLayout( layout );
 
@@ -744,7 +742,8 @@ const void	RB_SwapBuffers( const void *data ) {
 
 	if (r_useFramebuffer.GetBool()) {
 		fhFramebuffer::defaultFramebuffer->Bind();
-		fhFramebuffer::renderFramebuffer->BlitToCurrentFramebuffer();
+		//FIXME(johl): reimplement blit
+		//fhFramebuffer::renderFramebuffer->BlitToCurrentFramebuffer();
 	}
 
     GLimp_SwapBuffers();
@@ -768,8 +767,12 @@ const void	RB_CopyRender( const void *data ) {
 
     RB_LogComment( "***************** RB_CopyRender *****************\n" );
 
-	if (cmd->image) {
-		cmd->image->CopyFramebuffer( cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight, false );
+	if (auto image = cmd->image) {
+		//TODO(johl): Can we get rid of RB_CopyRender completely?
+		//            If we know i advance we will copy render to a texture, we could render directly into that texture!
+		fhFramebuffer framebuffer( cmd->imageWidth, cmd->imageHeight, image, nullptr );
+		fhFramebuffer::BlitColor( fhFramebuffer::GetCurrentDrawBuffer(), &framebuffer );
+		framebuffer.Purge();
 	}
 }
 
@@ -781,7 +784,6 @@ This function will be called syncronously if running without
 smp extensions, or asyncronously by another thread.
 ====================
 */
-int		backEndStartTime, backEndFinishTime;
 void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 	// r_debugRenderToTexture
 	int	c_draw3d = 0, c_draw2d = 0, c_setBuffers = 0, c_swapBuffers = 0, c_copyRenders = 0;
@@ -790,7 +792,7 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 		return;
 	}
 
-	backEndStartTime = Sys_Milliseconds();
+	const auto backEndStartTime = Sys_Milliseconds();
 
 	// needed for editor rendering
 	RB_SetDefaultGLState();
@@ -834,7 +836,7 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 	backEnd.glState.tmu[0].currentTexture = 0;
 
 	// stop rendering on this thread
-	backEndFinishTime = Sys_Milliseconds();
+	const auto backEndFinishTime = Sys_Milliseconds();
 	backEnd.pc.msec = backEndFinishTime - backEndStartTime;
 
 	if ( r_debugRenderToTexture.GetInteger() == 1 ) {

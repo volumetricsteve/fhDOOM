@@ -188,7 +188,7 @@ Version 2
 "classname" "light"
 "name" "light_8"
 "origin" "544 88 -72"
-"falloff" "0.000000"
+"falloff" "0"
 "shadowType" "2"
 "shadowPolygonOffsetBias" "10.000000"
 "shadowPolygonOffsetFactor" "3.000000"

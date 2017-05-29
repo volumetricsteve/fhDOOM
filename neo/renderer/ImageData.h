@@ -117,6 +117,7 @@ public:
 	uint32      GetHeight(uint32 level = 0) const;
 	uint32      GetNumFaces() const;
 	uint32      GetNumLevels() const;
+	uint32      GetMaxNumLevels() const;
 	pixelFormat_t GetPixelFormat() const;
 
 	const byte* GetData(uint32 face = 0, uint32 level = 0) const;

@@ -29,8 +29,6 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "Material.h"
 
-enum class textureSwizzle_t;
-
 class fhSampler {
 public:
 	fhSampler();

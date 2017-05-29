@@ -321,8 +321,6 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 	const viewEntity_t* currentSpace = nullptr;
 	stageVertexColor_t currentVertexColor = (stageVertexColor_t)-1;
 	bool currentBumpMatrix = true;
-	idScreenRect currentScissor;
-
 
 	const int num = renderlist.Num();
 	bool currentRenderCopied = false;
@@ -339,18 +337,11 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 
 			// only dump if in a 3d view
 			if (backEnd.viewDef->viewEntitys) {
-				fhFramebuffer* currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
-				if (currentDrawBuffer->IsDefault()) {
-					globalImages->currentRenderImage->CopyFramebuffer( backEnd.viewDef->viewport.x1,
-						backEnd.viewDef->viewport.y1, backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1,
-						backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1, true );
-				}
-				else {
-					fhFramebuffer::currentRenderFramebuffer->Resize( currentDrawBuffer->GetWidth(), currentDrawBuffer->GetHeight() );
-					fhFramebuffer::currentRenderFramebuffer->Bind();
-					currentDrawBuffer->BlitToCurrentFramebuffer();
-					currentDrawBuffer->Bind();
-				}
+				auto source = fhFramebuffer::GetCurrentDrawBuffer();
+				auto dest = fhFramebuffer::currentRenderFramebuffer;
+
+				dest->Resize( source->GetWidth(), source->GetHeight() );
+				fhFramebuffer::BlitColor( source, dest );
 			}
 			currentRenderCopied = true;
 		}
@@ -378,11 +369,11 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 			fhRenderProgram::SetModelMatrix( drawstage.surf->space->modelMatrix );
 
 			if (r_useScissor.GetBool() && !backEnd.currentScissor.Equals( drawstage.surf->scissorRect )) {
-				currentScissor = drawstage.surf->scissorRect;
-				glScissor( backEnd.viewDef->viewport.x1 + currentScissor.x1,
-					backEnd.viewDef->viewport.y1 + currentScissor.y1,
-					currentScissor.x2 + 1 - currentScissor.x1,
-					currentScissor.y2 + 1 - currentScissor.y1 );
+				const auto& scissor = drawstage.surf->scissorRect;
+				glScissor( backEnd.viewDef->viewport.x1 + scissor.x1,
+					backEnd.viewDef->viewport.y1 + scissor.y1,
+					scissor.x2 + 1 - scissor.x1,
+					scissor.y2 + 1 - scissor.y1 );
 			}
 
 			currentSpace = drawstage.surf->space;
@@ -461,7 +452,10 @@ void RB_GLSL_SubmitStageRenderList( const StageRenderList& renderlist ) {
 				cinData_t cin = drawstage.cinematic->ImageForTime( (int)(1000 * (backEnd.viewDef->floatTime + backEnd.viewDef->renderView.shaderParms[11])) );
 
 				if (cin.image) {
-					globalImages->cinematicImage->UploadScratch( 1, cin.image, cin.imageWidth, cin.imageHeight );
+					auto image = globalImages->cinematicImage;
+					image->AllocateStorage( pixelFormat_t::RGBA, cin.imageWidth, cin.imageHeight, 1, 1 );
+					image->UploadImage( pixelFormat_t::RGBA, cin.imageWidth, cin.imageHeight, 0, 0, cin.imageWidth * cin.imageHeight * 4, cin.image );
+					image->Bind( 1 );
 				}
 				else {
 					globalImages->blackImage->Bind( 1 );

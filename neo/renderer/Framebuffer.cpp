@@ -51,28 +51,13 @@ void fhFramebuffer::Bind() {
 	}
 
 	if (name == -1) {
-		glGenFramebuffers( 1, &name );
-		glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
-		currentDrawBuffer = this;
-
-		if (colorAttachment)
-			colorAttachment->AttachColorToFramebuffer( this );
-
-		if (depthAttachment)
-			depthAttachment->AttachDepthToFramebuffer( this );
-
-		SetDrawBuffer();
-
-		if (glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
-			common->Warning( "failed to generate framebuffer, framebuffer incomplete" );
-			name = 0;
-		}
+		Allocate();
 	}
-	else {
-		glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
-		currentDrawBuffer = this;
-		SetDrawBuffer();
-	}
+
+	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
+	currentDrawBuffer = this;
+
+	SetDrawBuffer();
 }
 
 bool fhFramebuffer::IsDefault() const {
@@ -88,19 +73,10 @@ void fhFramebuffer::Resize( int width, int height ) {
 		return;
 	}
 
-	const bool isCurrent = (GetCurrentDrawBuffer() == this);
-	if (isCurrent) {
-		glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
-	}
-
 	Purge();
 
 	this->width = width;
 	this->height = height;
-
-	if (isCurrent) {
-		Bind();
-	}
 }
 
 int fhFramebuffer::GetWidth() const {
@@ -125,64 +101,6 @@ void fhFramebuffer::Purge() {
 	}
 }
 
-void fhFramebuffer::BlitToCurrentFramebuffer() {
-	if (currentDrawBuffer && currentDrawBuffer != this) {
-		glBindFramebuffer( GL_READ_FRAMEBUFFER, name );
-		glReadBuffer( GL_COLOR_ATTACHMENT0 );
-
-		const int src_x2 = width;
-		const int src_y2 = height;
-
-		const int dst_x2 = currentDrawBuffer->GetWidth();
-		const int dst_y2 = currentDrawBuffer->GetHeight();
-
-		if (src_x2 != dst_x2 ||
-			src_y2 != dst_y2) {
-			common->Warning( "size mismatch!?" );
-		}
-
-		glBlitFramebuffer(
-			0, 0, src_x2, src_y2,
-			0, 0, dst_x2, dst_y2,
-			GL_COLOR_BUFFER_BIT, GL_LINEAR );
-
-		glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
-	}
-	else {
-		common->Warning( "no current framebuffer!?" );
-	}
-}
-
-void fhFramebuffer::BlitDepthToCurrentFramebuffer() {
-	if (currentDrawBuffer && currentDrawBuffer != this) {
-		glBindFramebuffer( GL_READ_FRAMEBUFFER, name );
-		glReadBuffer( GL_NONE );
-
-		const int src_x2 = width;
-		const int src_y2 = height;
-
-		const int dst_x2 = currentDrawBuffer->GetWidth();
-		const int dst_y2 = currentDrawBuffer->GetHeight();
-
-		if (src_x2 != dst_x2 ||
-			src_y2 != dst_y2) {
-			common->Warning( "size mismatch!?" );
-		}
-
-		glBlitFramebuffer(
-			0, 0, src_x2, src_y2,
-			0, 0, dst_x2, dst_y2,
-			GL_DEPTH_BUFFER_BIT, GL_NEAREST );
-
-		glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
-	}
-	else {
-		common->Warning( "no current framebuffer!?" );
-	}
-}
-
-
-
 void fhFramebuffer::SetDrawBuffer() {
 	if (!colorAttachment && !depthAttachment) {
 		glDrawBuffer( GL_BACK );
@@ -192,6 +110,33 @@ void fhFramebuffer::SetDrawBuffer() {
 	}
 	else {
 		glDrawBuffer( GL_COLOR_ATTACHMENT0 );
+	}
+}
+
+void fhFramebuffer::Allocate() {
+	glGenFramebuffers( 1, &name );
+	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, name );
+	currentDrawBuffer = this;
+
+	if (colorAttachment) {
+		colorAttachment->AllocateStorage( pixelFormat_t::RGBA, width, height, 1, 1 );
+		colorAttachment->filter = TF_LINEAR;
+		colorAttachment->repeat = TR_CLAMP;
+		colorAttachment->SetImageFilterAndRepeat();
+		glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, colorAttachment->texnum, 0 );
+	}
+
+	if (depthAttachment) {
+		depthAttachment->AllocateStorage( pixelFormat_t::DEPTH_24, width, height, 1, 1 );
+		depthAttachment->filter = TF_LINEAR;
+		depthAttachment->repeat = TR_CLAMP;
+		depthAttachment->SetImageFilterAndRepeat();
+		glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthAttachment->texnum, 0 );
+	}
+
+	if (glCheckFramebufferStatus( GL_DRAW_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE) {
+		common->Warning( "failed to generate framebuffer, framebuffer incomplete" );
+		name = 0;
 	}
 }
 
@@ -211,4 +156,46 @@ void fhFramebuffer::PurgeAll() {
 	renderFramebuffer->Purge();
 	currentDepthFramebuffer->Purge();
 	currentRenderFramebuffer->Purge();
+}
+
+void fhFramebuffer::BlitColor( fhFramebuffer* source, fhFramebuffer* dest ) {
+	if (source == dest) {
+		return;
+	}
+
+	auto currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+
+	if (dest->name == -1) {
+		dest->Allocate();
+	}
+
+	glBlitNamedFramebuffer( source->name,
+		dest->name,
+		0, 0, source->GetWidth(), source->GetHeight(),
+		0, 0, dest->GetWidth(), dest->GetHeight(),
+		GL_COLOR_BUFFER_BIT,
+		GL_LINEAR );
+
+	currentDrawBuffer->Bind();
+}
+
+void fhFramebuffer::BlitDepth( fhFramebuffer* source, fhFramebuffer* dest ) {
+	if (source == dest) {
+		return;
+	}
+
+	fhFramebuffer* currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+
+	if (dest->name == -1) {
+		dest->Allocate();
+	}
+
+	glBlitNamedFramebuffer( source->name,
+		dest->name,
+		0, 0, source->GetWidth(), source->GetHeight(),
+		0, 0, dest->GetWidth(), dest->GetHeight(),
+		GL_DEPTH_BUFFER_BIT,
+		GL_NEAREST );
+
+	currentDrawBuffer->Bind();
 }

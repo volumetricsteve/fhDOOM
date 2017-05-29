@@ -47,68 +47,46 @@ static bool FormatIsDXT( int internalFormat ) {
 	return true;
 }
 
-int MakePowerOfTwo( int num ) {
-	int		pot;
-	for (pot = 1 ; pot < num ; pot<<=1) {
-	}
-	return pot;
-}
-
 /*
 ================
-BitsForInternalFormat
+BitsForPixelFormat
 
 Used for determining memory utilization
 ================
 */
-int idImage::BitsForInternalFormat( int internalFormat ) const {
-	switch ( internalFormat ) {
-	case GL_INTENSITY8:
-	case 1:
-		return 8;
-	case 2:
-	case GL_LUMINANCE8_ALPHA8:
-		return 16;
-	case 3:
-		return 32;		// on some future hardware, this may actually be 24, but be conservative
-	case 4:
+static int BitsForPixelFormat( pixelFormat_t format ) {
+	switch (format) {
+	case pixelFormat_t::None:
+		return 0;
+	case pixelFormat_t::RGBA:
 		return 32;
-	case GL_LUMINANCE8:
-		return 8;
-	case GL_ALPHA8:
-		return 8;
-	case GL_RGBA8:
+	case pixelFormat_t::BGRA:
 		return 32;
-	case GL_RGB8:
-		return 32;		// on some future hardware, this may actually be 24, but be conservative
-	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+	case pixelFormat_t::RGB:
+		return 24;
+	case pixelFormat_t::BGR:
+		return 24;
+	case pixelFormat_t::DXT1_RGB:
 		return 4;
-	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+	case pixelFormat_t::DXT1_RGBA:
 		return 4;
-	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+	case pixelFormat_t::DXT3_RGBA:
 		return 8;
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+	case pixelFormat_t::DXT5_RGBA:
 		return 8;
-	case GL_RGBA4:
-		return 16;
-	case GL_RGB5:
-		return 16;
-	case GL_COLOR_INDEX8_EXT:
+	case pixelFormat_t::DXT5_RxGB:
 		return 8;
-	case GL_COLOR_INDEX:
+	case pixelFormat_t::RGTC:
 		return 8;
-	case GL_COMPRESSED_RGB_ARB:
-		return 4;			// not sure
-	case GL_COMPRESSED_RGBA_ARB:
-		return 8;			// not sure
-	case GL_DEPTH_COMPONENT:
-		return 32; //not sure... we don't request explicitly a 24bit or 32bit depth buffer?
+	case pixelFormat_t::DEPTH_24_STENCIL_8:
+		return 32;
+	case pixelFormat_t::DEPTH_24:
+		return 24;
 	default:
-		common->Error( "R_BitsForInternalFormat: BAD FORMAT:%i", internalFormat );
+		common->Error( "BitsForPixelFormat: BAD FORMAT:%i", static_cast<int>(format) );
+		return 0;
 	}
-	return 0;
 }
-
 
 //=======================================================================
 
@@ -234,64 +212,50 @@ static GLenum SelectInteralFormat( pixelFormat_t pf ) {
 	switch (pf) {
 	case pixelFormat_t::DXT1_RGB:
 		return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-		break;
 	case pixelFormat_t::DXT1_RGBA:
 		return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-		break;
 	case pixelFormat_t::DXT3_RGBA:
 		return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-		break;
 	case pixelFormat_t::DXT5_RGBA:
 		return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		break;
 	case pixelFormat_t::DXT5_RxGB:
 		return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		break;
 	case pixelFormat_t::RGBA:
 		return GL_RGBA8;
-		break;
 	case pixelFormat_t::RGB:
 		return GL_RGB8;
-		break;
 	case pixelFormat_t::RGTC:
 		return GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
-		break;
 	case pixelFormat_t::BGRA:
 		return GL_RGBA8;
-		break;
 	case pixelFormat_t::BGR:
 		return GL_RGB8;
-		break;
+	case pixelFormat_t::DEPTH_24:
+		return GL_DEPTH_COMPONENT24;
+	case pixelFormat_t::DEPTH_24_STENCIL_8:
+		return GL_DEPTH24_STENCIL8;
 	default:
 		assert( false && "format not implemented or unknown?" );
 		common->FatalError( "unknown PixelFormat" );
-		break;
+		return GL_INVALID_ENUM;
 	}
-
-	return GL_INVALID_ENUM;
 }
 
 static GLenum SelectExternalFormat( pixelFormat_t pf ) {
 	switch (pf) {
 	case pixelFormat_t::RGBA:
 		return GL_RGBA;
-		break;
 	case pixelFormat_t::RGB:
 		return GL_RGB;
-		break;
 	case pixelFormat_t::BGRA:
 		return GL_BGRA;
-		break;
 	case pixelFormat_t::BGR:
 		return GL_BGR;
-		break;
 	default:
 		assert(false && "no external format specified");
 		common->FatalError( "no external format specified" );
-		break;
+		return GL_INVALID_ENUM;
 	}
-
-	return GL_INVALID_ENUM;
 }
 
 static bool IsCompressed( pixelFormat_t pf ) {
@@ -304,53 +268,28 @@ GenerateImage
 ====================
 */
 void idImage::GenerateImage( const fhImageData& imageData ) {
-	PurgeImage();
-	pixelFormat = imageData.GetPixelFormat();
-
-	internalFormat = SelectInteralFormat( pixelFormat );
-
-	if (imageData.GetNumFaces() == 1) {
-		type = TT_2D;
-	}
-	else if (imageData.GetNumFaces() == 6) {
-		type = TT_CUBIC;
-	}
-	else {
-		common->Error( "image %s has invalid number of faces (%d)\n", imageData.GetName(), imageData.GetNumFaces() );
-	}
-
-
-
 	// if we don't have a rendering context, just return after we
 	// have filled in the parms.  We must have the values set, or
 	// an image match from a shader before OpenGL starts would miss
 	// the generated texture
+	//FIXME(johl): do we really need this?
 	if (!glConfig.isInitialized) {
 		return;
 	}
-
-	// select proper internal format before we resample
-	hasAlpha = false;
-	isMonochrome = false;
-
-	uploadHeight = imageData.GetHeight();
-	uploadWidth = imageData.GetWidth();
-
-
 
 	//FIXME(johl): do we really need this?
 	if (imageData.GetPixelFormat() == pixelFormat_t::RGBA && imageData.GetNumFaces() == 1 && imageData.GetNumLevels() == 1) {
 
 		// zero the border if desired, allowing clamped projection textures
 		// even after picmip resampling or careless artists.
-		if ( repeat == TR_CLAMP_TO_ZERO ) {
+		if (repeat == TR_CLAMP_TO_ZERO) {
 			byte	rgba[4];
 
 			rgba[0] = rgba[1] = rgba[2] = 0;
 			rgba[3] = 255;
-			R_SetBorderTexels((byte *)imageData.GetData(), uploadWidth, uploadHeight, rgba);
+			R_SetBorderTexels( (byte *)imageData.GetData(), uploadWidth, uploadHeight, rgba );
 		}
-		if ( repeat == TR_CLAMP_TO_ZERO_ALPHA ) {
+		if (repeat == TR_CLAMP_TO_ZERO_ALPHA) {
 			byte	rgba[4];
 
 			rgba[0] = rgba[1] = rgba[2] = 255;
@@ -359,57 +298,102 @@ void idImage::GenerateImage( const fhImageData& imageData ) {
 		}
 	}
 
-	// generate the texture number
-	glGenTextures( 1, &texnum );
+	AllocateStorage( imageData.GetPixelFormat(), imageData.GetWidth(), imageData.GetHeight(), imageData.GetNumFaces(), imageData.GetMaxNumLevels() );
 
-	const bool compressed = IsCompressed( imageData.GetPixelFormat() );
-	GLenum externalFormat = GL_INVALID_ENUM;
-	if (!compressed) {
-		externalFormat = SelectExternalFormat( imageData.GetPixelFormat() );
+	for (uint32 face = 0; face < imageData.GetNumFaces(); ++face) {
+		for (uint32 level = 0; level < imageData.GetNumLevels(); ++level) {
+			UploadImage( imageData.GetPixelFormat(), imageData.GetWidth(level), imageData.GetHeight(level), face, level, imageData.GetSize( level ), imageData.GetData( face, level ) );
+		}
 	}
 
-	// upload the main image level
-	if (glConfig.extDirectStateAccessAvailable) {
-		for (uint32 face = 0; face < imageData.GetNumFaces(); ++face) {
-			const GLenum target = (type == TT_CUBIC) ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : GL_TEXTURE_2D;
+	glGenerateTextureMipmapEXT( texnum, type == TT_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP );
 
-			for (uint32 level = 0; level < imageData.GetNumLevels(); ++level) {
-				const uint32 width = imageData.GetWidth( level );
-				const uint32 height = imageData.GetHeight( level );
-				const uint32 size = imageData.GetSize( level );
-				const GLvoid* data = imageData.GetData( face, level );
+	SetImageFilterAndRepeat();
+}
 
-				if (compressed) {
-					glCompressedTextureImage2DEXT( texnum, target, level, internalFormat, width, height, 0, size, data );
-				}
-				else {
-					glTextureImage2DEXT( texnum, target, level, internalFormat, width, height, 0, externalFormat, GL_UNSIGNED_BYTE, data );
-				}
-			}
-		}
+/*
+================
+IsStorage
+================
+*/
+bool idImage::IsStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps ) const {
+	return texnum != TEXTURE_NOT_LOADED &&
+		pixelFormat == format &&
+		uploadHeight == height &&
+		uploadWidth == width &&
+		this->mipmaps == mipmaps &&
+		(faces == 1 && type == TT_2D || faces == 6 && type == TT_CUBIC);
+}
 
-		if (imageData.GetNumLevels() == 1) {
-			if (type == TT_CUBIC) {
-				glGenerateTextureMipmapEXT( texnum, GL_TEXTURE_CUBE_MAP );
-			}
-			else {
-				glGenerateTextureMipmapEXT( texnum, GL_TEXTURE_2D );
-			}
-		}
+/*
+================
+AllocateStorage
+================
+*/
+void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height, uint32 faces, uint32 mipmaps ) {
+	if ( IsStorage(format, width, height, faces, mipmaps) ) {
+		return;
+	}
+
+	PurgeImage();
+
+	this->pixelFormat = format;
+	uploadWidth = width;
+	uploadHeight = height;
+	this->mipmaps = mipmaps;
+
+	int target;
+	if (faces == 1) {
+		type = TT_2D;
+		target = GL_TEXTURE_2D;
+	}
+	else if (faces == 6) {
+		type = TT_CUBIC;
+		target = GL_TEXTURE_CUBE_MAP;
 	}
 	else {
-		common->Error( "Non-DSA path not implemented yet" );
+		assert( false && "face count must be 1 or 6" );
 	}
 
-	if (imageData.GetPixelFormat() == pixelFormat_t::DXT5_RxGB) {
+	auto internalformat2 = SelectInteralFormat( format );
+	this->internalFormat = internalformat2;
+
+	// select proper internal format before we resample
+	hasAlpha = false;
+	isMonochrome = false;
+
+	glGenTextures( 1, &texnum );
+
+	glTextureStorage2DEXT( texnum, target, mipmaps, internalformat2, uploadWidth, uploadHeight );
+
+	if (format == pixelFormat_t::DXT5_RxGB) {
 		static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
 		glTextureParameteriv( texnum, GL_TEXTURE_SWIZZLE_RGBA, agbr );
 	}
+}
 
-	SetImageFilterAndRepeat();
+/*
+================
+UploadImage
+================
+*/
+void idImage::UploadImage( pixelFormat_t format, uint32 width, uint32 height, uint32 face, uint32 mipmapLevel, uint32 size, const void* data ) {
+	if ( pixelFormat != format ) {
+		common->Error( "image format mismatch" );
+		return;
+	}
 
-	// see if we messed anything up
-	GL_CheckErrors();
+	const bool compressed = IsCompressed( format );
+	const GLenum internalFormat = SelectInteralFormat( format );
+	const GLenum facetarget = (type == TT_CUBIC) ? GL_TEXTURE_CUBE_MAP_POSITIVE_X + face : GL_TEXTURE_2D;
+
+	if (compressed) {
+		glCompressedTextureSubImage2DEXT( texnum, facetarget, mipmapLevel, 0, 0, width, height, internalFormat, size, data );
+	}
+	else {
+		const GLenum externalFormat = SelectExternalFormat( format );
+		glTextureSubImage2DEXT( texnum, facetarget, mipmapLevel, 0, 0, width, height, externalFormat, GL_UNSIGNED_BYTE, data );
+	}
 }
 
 /*
@@ -477,7 +461,6 @@ versions of everything to speed future load times.
 ================
 */
 void idImage::WritePrecompressedImage() {
-
 	// Always write the precompressed image if we're making a build
 	if ( !com_makingBuild.GetBool() ) {
 		if ( !globalImages->image_writePrecompressedTextures.GetBool() || !globalImages->image_usePrecompressedTextures.GetBool() ) {
@@ -489,10 +472,12 @@ void idImage::WritePrecompressedImage() {
 		return;
 	}
 
+	common->Warning( "idImage::WritePrecompressedImage() is currently not implemented!" );
+
+	//FIXME(johl): remove this? or re-implement with modern compression tech?
+#if 0
 	char filename[MAX_IMAGE_NAME];
 	ImageProgramStringToCompressedFileName( imgName, filename );
-
-
 
 	int numLevels = NumLevelsForImageSize( uploadWidth, uploadHeight );
 	if ( numLevels > MAX_TEXTURE_LEVELS ) {
@@ -566,7 +551,6 @@ void idImage::WritePrecompressedImage() {
 		globalImages->AddDDSCommand( va( "z:/d3xp/compressonator/thecompressonator -convert \"%s\" \"%s\" %s -mipmaps\n", inFile.c_str(), outFile.c_str(), format.c_str() ) );
 		return;
 	}
-
 
 	ddsFileHeader_t header;
 	memset( &header, 0, sizeof(header) );
@@ -702,6 +686,8 @@ void idImage::WritePrecompressedImage() {
 	}
 
 	fileSystem->CloseFile( f );
+
+#endif
 }
 
 /*
@@ -1149,140 +1135,6 @@ void idImage::Bind(int textureUnit) {
 	}
 }
 
-
-/*
-====================
-CopyFramebuffer
-====================
-*/
-void idImage::CopyFramebuffer( int x, int y, int imageWidth, int imageHeight, bool useOversizedBuffer ) {
-	if (r_useFramebuffer.GetBool())
-		return;
-
-	glReadBuffer( GL_BACK );
-
-	if (uploadWidth != imageWidth || uploadHeight != imageHeight || internalFormat != GL_RGB8) {
-
-		uploadWidth = imageWidth;
-		uploadHeight = imageHeight;
-		internalFormat = GL_RGB8;
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		type = TT_2D;
-		SetImageFilterAndRepeat();
-
-		if (glConfig.extDirectStateAccessAvailable) {
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-		}
-		else {
-			Bind( 0 );
-			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-		}
-	}
-
-	if (glConfig.extDirectStateAccessAvailable) {
-		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
-	}
-	else {
-		Bind( 0 );
-		glCopyTexImage2D( GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
-	}
-
-	backEnd.c_copyFrameBuffer++;
-}
-
-/*
-====================
-CopyDepthbuffer
-
-This should just be part of copyFramebuffer once we have a proper image type field
-====================
-*/
-void idImage::CopyDepthbuffer( int x, int y, int imageWidth, int imageHeight ) {
-
-	glReadBuffer( GL_BACK );
-
-	if (uploadWidth != imageWidth || uploadHeight != imageHeight || internalFormat != GL_DEPTH_COMPONENT) {
-
-		uploadWidth = imageWidth;
-		uploadHeight = imageHeight;
-		internalFormat = GL_DEPTH_COMPONENT;
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		type = TT_2D;
-		SetImageFilterAndRepeat();
-
-		if(glConfig.extDirectStateAccessAvailable) {
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-		}
-		else {
-			Bind( 0 );
-			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, imageWidth, imageHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-		}
-	}
-
-	if (glConfig.extDirectStateAccessAvailable) {
-		glCopyTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
-	}
-	else {
-		Bind( 0 );
-		glCopyTexImage2D( GL_TEXTURE_2D, 0, internalFormat, x, y, imageWidth, imageHeight, 0 );
-	}
-
-	backEnd.c_copyFrameBuffer++;
-}
-
-void idImage::AttachDepthToFramebuffer( fhFramebuffer* framebuffer ) {
-
-	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight() || internalFormat != GL_DEPTH_COMPONENT) {
-
-		uploadWidth = framebuffer->GetWidth();
-		uploadHeight = framebuffer->GetHeight();
-		internalFormat = GL_DEPTH_COMPONENT;
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		type = TT_2D;
-
-		if(glConfig.extDirectStateAccessAvailable) {
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-		}
-		else {
-			Bind( 0 );
-			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL );
-		}
-
-
-		SetImageFilterAndRepeat();
-	}
-
-	glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texnum, 0 );
-}
-
-void idImage::AttachColorToFramebuffer( fhFramebuffer* framebuffer ) {
-
-	if (uploadWidth != framebuffer->GetWidth() || uploadHeight != framebuffer->GetHeight() || internalFormat != GL_RGB) {
-
-		uploadWidth = framebuffer->GetWidth();
-		uploadHeight = framebuffer->GetHeight();
-		internalFormat = GL_RGBA8;
-		filter = TF_LINEAR;
-		repeat = TR_CLAMP;
-		type = TT_2D;
-
-		if(glConfig.extDirectStateAccessAvailable) {
-			glTextureImage2DEXT( texnum, GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
-		}
-		else {
-			Bind( 0 );
-			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, uploadWidth, uploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
-		}
-
-		SetImageFilterAndRepeat();
-	}
-
-	glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texnum, 0 );
-}
-
 /*
 =============
 RB_UploadScratchImage
@@ -1426,12 +1278,14 @@ int idImage::StorageSize() const {
 		break;
 	}
 
-	baseSize *= BitsForInternalFormat( internalFormat );
+	baseSize *= BitsForPixelFormat( pixelFormat );
 
 	baseSize /= 8;
 
 	// account for mip mapping
-	baseSize = baseSize * 4 / 3;
+	if (mipmaps > 1) {
+		baseSize = baseSize * 4 / 3;
+	}
 
 	return baseSize;
 }
@@ -1479,68 +1333,48 @@ void idImage::Print() const {
 		break;
 	}
 
-	switch ( internalFormat ) {
-	case GL_INTENSITY8:
-	case 1:
-		common->Printf( "I     " );
+	switch (pixelFormat) {
+	case pixelFormat_t::None:
+		common->Printf( "            " );
 		break;
-	case 2:
-	case GL_LUMINANCE8_ALPHA8:
-		common->Printf( "LA    " );
+	case pixelFormat_t::RGBA:
+		common->Printf( "RGBA        " );
 		break;
-	case 3:
-		common->Printf( "RGB   " );
+	case pixelFormat_t::BGRA:
+		common->Printf( "BGRA        " );
 		break;
-	case 4:
-		common->Printf( "RGBA  " );
+	case pixelFormat_t::RGB:
+		common->Printf( "RGB         " );
 		break;
-	case GL_LUMINANCE8:
-		common->Printf( "L     " );
+	case pixelFormat_t::BGR:
+		common->Printf( "BGR         " );
 		break;
-	case GL_ALPHA8:
-		common->Printf( "A     " );
+	case pixelFormat_t::DXT1_RGB:
+		common->Printf( "DXT1 (RGB)  " );
 		break;
-	case GL_RGBA8:
-		common->Printf( "RGBA8 " );
+	case pixelFormat_t::DXT1_RGBA:
+		common->Printf( "DXT1 (RGBA) " );
 		break;
-	case GL_RGB8:
-		common->Printf( "RGB8  " );
+	case pixelFormat_t::DXT3_RGBA:
+		common->Printf( "DXT3 (RGBA) " );
 		break;
-	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-		common->Printf( "DXT1  " );
+	case pixelFormat_t::DXT5_RGBA:
+		common->Printf( "DXT5 (RGBA) " );
 		break;
-	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-		common->Printf( "DXT1A " );
+	case pixelFormat_t::DXT5_RxGB:
+		common->Printf( "DXT5 (RxGB) " );
 		break;
-	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-		common->Printf( "DXT3  " );
+	case pixelFormat_t::RGTC:
+		common->Printf( "RGTC        " );
 		break;
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-		common->Printf( "DXT5  " );
+	case pixelFormat_t::DEPTH_24_STENCIL_8:
+		common->Printf( "Depth24_8   " );
 		break;
-	case GL_RGBA4:
-		common->Printf( "RGBA4 " );
-		break;
-	case GL_RGB5:
-		common->Printf( "RGB5  " );
-		break;
-	case GL_COLOR_INDEX8_EXT:
-		common->Printf( "CI8   " );
-		break;
-	case GL_COLOR_INDEX:
-		common->Printf( "CI    " );
-		break;
-	case GL_COMPRESSED_RGB_ARB:
-		common->Printf( "RGBC  " );
-		break;
-	case GL_COMPRESSED_RGBA_ARB:
-		common->Printf( "RGBAC " );
-		break;
-	case 0:
-		common->Printf( "      " );
+	case pixelFormat_t::DEPTH_24:
+		common->Printf( "Depth24     " );
 		break;
 	default:
-		common->Printf( "<BAD FORMAT:%i>", internalFormat );
+		common->Printf( "<BAD FORMAT:%i>", static_cast<int>(pixelFormat) );
 		break;
 	}
 

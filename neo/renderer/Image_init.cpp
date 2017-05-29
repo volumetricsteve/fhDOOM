@@ -1025,7 +1025,6 @@ void R_ListImages_f( const idCmdArgs &args ) {
 	int		totalSize;
 	int		count = 0;
 	int		matchTag = 0;
-	bool	uncompressedOnly = false;
 	bool	unloaded = false;
 	bool	partial = false;
 	bool	cached = false;
@@ -1040,9 +1039,7 @@ void R_ListImages_f( const idCmdArgs &args ) {
 	if ( args.Argc() == 1 ) {
 
 	} else if ( args.Argc() == 2 ) {
-		if ( idStr::Icmp( args.Argv( 1 ), "uncompressed" ) == 0 ) {
-			uncompressedOnly = true;
-		} else if ( idStr::Icmp( args.Argv( 1 ), "sorted" ) == 0 ) {
+		if ( idStr::Icmp( args.Argv( 1 ), "sorted" ) == 0 ) {
 			sorted = true;
 		} else if ( idStr::Icmp( args.Argv( 1 ), "partial" ) == 0 ) {
 			partial = true;
@@ -1077,7 +1074,7 @@ void R_ListImages_f( const idCmdArgs &args ) {
 		return;
 	}
 
-	const char *header = "       -w-- -h-- filt -fmt-- wrap  size --name-------\n";
+	const char *header = "       -w-- -h-- filt -fmt--      wrap  size --name-------\n";
 	common->Printf( "\n%s", header );
 
 	totalSize = 0;
@@ -1086,13 +1083,6 @@ void R_ListImages_f( const idCmdArgs &args ) {
 
 	for ( i = 0 ; i < globalImages->images.Num() ; i++ ) {
 		image = globalImages->images[ i ];
-
-		if ( uncompressedOnly ) {
-			if ( ( image->internalFormat >= GL_COMPRESSED_RGB_S3TC_DXT1_EXT && image->internalFormat <= GL_COMPRESSED_RGBA_S3TC_DXT5_EXT )
-				|| image->internalFormat == GL_COLOR_INDEX8_EXT ) {
-				continue;
-			}
-		}
 
 		if ( matchTag && image->classification != matchTag ) {
 			continue;

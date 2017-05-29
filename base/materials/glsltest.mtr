@@ -220,3 +220,20 @@ textures/glsltest/glasswarp
         blend       blend
     }
 }
+
+textures/glsltest/cameraScreen
+{    
+   qer_editorimage   textures/editor/camera.tga 
+   noshadows 
+   noimpact    
+   forceOpaque 
+
+   diffusemap   _black 
+
+   { 
+      blend add 
+      remoteRenderMap   512 512   // width / height of render image 
+      scale 1 , -1      // the render view ars upside down otherwise 
+      translate 0, -1 
+   } 
+}

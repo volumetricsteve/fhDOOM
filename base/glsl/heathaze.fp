@@ -75,7 +75,7 @@ vec4 test4()
 
   vec4 distortion = (texture2D(texture1, uvDist * 2.5) - 0.5) * 2.0;
   
-  uv += distortion.wy * magnitude * distanceScaleMagnitude;  
+  uv += distortion.xy * magnitude * distanceScaleMagnitude;  
 
   return texture2D(texture0, fixScreenTexCoord(uv));
 }

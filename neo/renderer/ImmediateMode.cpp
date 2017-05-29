@@ -129,7 +129,7 @@ void fhImmediateMode::End()
 			if (currentTexture->type == TT_CUBIC) {
 				GL_UseProgram(skyboxProgram);
 			}
-			else if (currentTexture->internalFormat == GL_DEPTH_COMPONENT) {
+			else if (currentTexture->pixelFormat == pixelFormat_t::DEPTH_24 || currentTexture->pixelFormat == pixelFormat_t::DEPTH_24_STENCIL_8) {
 				GL_UseProgram(debugDepthProgram);
 			}
 			else {

@@ -724,6 +724,20 @@ uint32 fhImageData::GetNumLevels() const {
 	return numLevels;
 }
 
+uint32 fhImageData::GetMaxNumLevels() const {
+	uint32 levels = 0;
+	uint32 w = GetWidth();
+	uint32 h = GetHeight();
+
+	while (w > 0 || h > 0) {
+		levels += 1;
+		w /= 2;
+		h /= 2;
+	}
+
+	return levels;
+}
+
 pixelFormat_t fhImageData::GetPixelFormat() const {
 	return format;
 }
