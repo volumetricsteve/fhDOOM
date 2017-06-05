@@ -1821,7 +1821,10 @@ void idImageManager::Init() {
 	scratchImage2 = ImageFromFunction("_scratch2", R_RGBA8Image );
 	accumImage = ImageFromFunction("_accum", R_RGBA8Image );
 	currentRenderImage = ImageFromFunction("_currentRender", R_RGB8Image );
-	currentDepthImage = ImageFromFunction("_currentDepth", R_Depth );
+
+	//TODO(johl): using Depth only (instead of DepthStencil) would be fine for this. Unfortunately due to an AMD driver bug,
+	//            we can't blit from DepthStencil to Depth, so this needs to be DepthStencil as well ;(
+	currentDepthImage = ImageFromFunction( "_currentDepth", R_DepthStencil );
 
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
