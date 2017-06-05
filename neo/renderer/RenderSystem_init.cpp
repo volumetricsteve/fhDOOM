@@ -495,8 +495,8 @@ void R_InitOpenGL( void ) {
 		parms.displayHz = r_displayRefresh.GetInteger();
 		parms.multiSamples = 1;// r_multiSamples.GetInteger();
 		parms.coreProfile = r_glCoreProfile.GetBool();
-		parms.majorVersion = 4;
-		parms.minorVersion = 5;
+		parms.majorVersion = 3;
+		parms.minorVersion = 3;
 		parms.debug = false;
 
 		if (GLimp_Init( parms )) {

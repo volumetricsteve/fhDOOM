@@ -363,6 +363,10 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 	hasAlpha = false;
 	isMonochrome = false;
 
+	if (!glConfig.isInitialized) {
+		return;
+	}
+
 	glGenTextures( 1, &texnum );
 
 	glTextureStorage2DEXT( texnum, target, mipmaps, internalformat2, uploadWidth, uploadHeight );
