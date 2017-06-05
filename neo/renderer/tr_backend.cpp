@@ -730,7 +730,6 @@ RB_SwapBuffers
 
 =============
 */
-
 static void	RB_SwapBuffers( const void *data ) {
 	// texture swapping test
 	if ( r_showImages.GetInteger() != 0 ) {
@@ -755,22 +754,22 @@ Copy part of the current framebuffer to an image
 =============
 */
 static void	RB_CopyRender( const void *data ) {
-	const copyRenderCommand_t	*cmd;
-
-	cmd = (const copyRenderCommand_t *)data;
-
 	if ( r_skipCopyTexture.GetBool() ) {
 		return;
 	}
+
+	auto cmd = static_cast<const copyRenderCommand_t*>(data);
 
     RB_LogComment( "***************** RB_CopyRender *****************\n" );
 
 	if (auto image = cmd->image) {
 		//TODO(johl): Can we get rid of RB_CopyRender completely?
-		//            If we know i advance we will copy render to a texture, we could render directly into that texture!
+		//            If we know in advance we will copy render to a texture, we could render directly into that texture!
 		//            CopyRender and CropRender commands are stored in demo files, is that an issue?
+		image->AllocateStorage( pixelFormat_t::RGB, cmd->imageWidth, cmd->imageHeight, 1, 1 );
+
 		fhFramebuffer framebuffer( cmd->imageWidth, cmd->imageHeight, image, nullptr );
-		fhFramebuffer::BlitColor( fhFramebuffer::GetCurrentDrawBuffer(),
+		fhFramebuffer::BlitColor( fhFramebuffer::defaultFramebuffer,
 			cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight,
 			&framebuffer );
 		framebuffer.Purge();
