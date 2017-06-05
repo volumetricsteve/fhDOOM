@@ -522,7 +522,7 @@ int GLX_Init(glimpParms_t a) {
 		return false;
     }
 
-    if(a.glCoreProfile) {
+    if(a.coreProfile) {
 		glXMakeCurrent(dpy, win, ctx);
 	    glewExperimental = GL_TRUE;
 	    GLenum err = glewInit();
@@ -562,8 +562,8 @@ int GLX_Init(glimpParms_t a) {
 
 		int flags = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
 		int glattribs[] = {
-			GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-			GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+			GLX_CONTEXT_MAJOR_VERSION_ARB, a.majorVersion,
+			GLX_CONTEXT_MINOR_VERSION_ARB, a.minorVersion,
 			GLX_CONTEXT_FLAGS_ARB, flags,
 			0
 		};
