@@ -224,135 +224,141 @@ idCVar r_defaultParticleSoftness( "r_defaultParticleSoftness", "0.35", CVAR_REND
 idCVar r_useFramebuffer( "r_useFramebuffer", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
 idCVar r_framebufferScale( "r_framebufferScale", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "" );
 
-/*
-==================
-R_CheckPortableExtensions
+namespace {
 
-==================
-*/
-static bool R_DoubleCheckExtension( const char* name ) {
-	//ext check via glew does not always work!? Do it manually...
-	int ext_cnt = 0;
-	glGetIntegerv( GL_NUM_EXTENSIONS, &ext_cnt );
+	/*
+	==================
+	R_CheckPortableExtensions
 
-	bool ret = false;
+	==================
+	*/
+	bool R_DoubleCheckExtension( const char* name ) {
+		//ext check via glew does not always work!? Do it manually...
+		int ext_cnt = 0;
+		glGetIntegerv( GL_NUM_EXTENSIONS, &ext_cnt );
 
-	if (ext_cnt != 0) {
-		for (int i = 0; i < ext_cnt; ++i) {
-			const char* current = (const char*)glGetStringi( GL_EXTENSIONS, i );
-			if (stricmp( current, name ) == 0) {
-				ret = true;
-				break;
+		bool ret = false;
+
+		if (ext_cnt != 0) {
+			for (int i = 0; i < ext_cnt; ++i) {
+				const char* current = (const char*)glGetStringi( GL_EXTENSIONS, i );
+				if (stricmp( current, name ) == 0) {
+					ret = true;
+					break;
+				}
 			}
 		}
-	}
-	else {
-		ret = glewIsSupported( name ) == GL_TRUE;
+		else {
+			ret = glewIsSupported( name ) == GL_TRUE;
+		}
+
+		if (ret) {
+			common->Printf( "Check extension '%s': OK\n", name );
+		}
+		else {
+			common->Warning( "Check extension '%s': failed", name );
+		}
+
+		return ret;
 	}
 
-	if(ret) {
-		common->Printf("Check extension '%s': OK\n", name);
-	} else {
-		common->Warning("Check extension '%s': failed", name);
+	void R_CheckPortableExtensions( void ) {
+		glConfig.glVersion = atof( glConfig.version_string );
+
+		glGetIntegerv( GL_MAX_TEXTURE_UNITS, (GLint *)&glConfig.maxTextureUnits );
+		if (glConfig.maxTextureUnits > MAX_MULTITEXTURE_UNITS) {
+			glConfig.maxTextureUnits = MAX_MULTITEXTURE_UNITS;
+		}
+		glGetIntegerv( GL_MAX_TEXTURE_COORDS, (GLint *)&glConfig.maxTextureCoords );
+		glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS, (GLint *)&glConfig.maxTextureImageUnits );
+
+		// GL_ARB_texture_compression + GL_S3_s3tc
+		// DRI drivers may have GL_ARB_texture_compression but no GL_EXT_texture_compression_s3tc
+		bool arb_texture_compression = R_DoubleCheckExtension( "GL_ARB_texture_compression" );
+		bool ext_texture_compression_s3tc = R_DoubleCheckExtension( "GL_EXT_texture_compression_s3tc" ); //should be available!
+		glConfig.textureCompressionAvailable = arb_texture_compression && ext_texture_compression_s3tc;
+
+		// GL_EXT_texture_filter_anisotropic
+		glConfig.anisotropicAvailable = R_DoubleCheckExtension( "GL_EXT_texture_filter_anisotropic" );  //should be available!
+		if (glConfig.anisotropicAvailable) {
+			glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureAnisotropy );
+			common->Printf( "   maxTextureAnisotropy: %f\n", glConfig.maxTextureAnisotropy );
+		}
+		else {
+			glConfig.maxTextureAnisotropy = 1;
+		}
+
+		// GL_EXT_depth_bounds_test
+		glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );
+
+		glConfig.extDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_EXT_direct_state_access" );
+		glConfig.arbDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_ARB_direct_state_access" );
 	}
 
-	return ret;
+
+	/*
+	====================
+	R_GetModeInfo
+
+	r_mode is normally a small non-negative integer that
+	looks resolutions up in a table, but if it is set to -1,
+	the values from r_customWidth, amd r_customHeight
+	will be used instead.
+	====================
+	*/
+
+	struct vidmode_t {
+		const char *description;
+		int         width, height, aspectRatio;
+	};
+
+	const int AR_4_3 = 0;
+	const int AR_16_9 = 1;
+	const int AR_16_10 = 2;
+
+	const vidmode_t r_vidModes[] = {
+		{ "Mode  0: 320x240", 320, 240, AR_4_3 },
+		{ "Mode  1: 400x300", 400, 300, AR_4_3 },
+		{ "Mode  2: 512x384", 512, 384, AR_4_3 },
+		{ "Mode  3: 640x480", 640, 480, AR_4_3 },
+		{ "Mode  4: 800x600", 800, 600, AR_4_3 },
+		{ "Mode  5: 1024x768", 1024, 768, AR_4_3 },
+		{ "Mode  6: 1152x864", 1152, 864, AR_4_3 },
+		{ "Mode  7: 1280x1024", 1280, 1024, AR_4_3 },
+		{ "Mode  8: 1600x1200", 1600, 1200, AR_4_3 },
+		//widescreen/HD:
+		{ "Mode  9: 1280x720", 1280, 720, AR_16_9 },
+		{ "Mode 10: 1366x768", 1366, 768, AR_16_9 },
+		{ "Mode 11: 1440x900", 1440, 900, AR_16_10 },
+		{ "Mode 12: 1600x900", 1600, 900, AR_16_9 },
+		{ "Mode 13: 1680x1050", 1680, 1050, AR_16_10 },
+		{ "Mode 14: 1920x1080", 1920, 1080, AR_16_9 },
+		{ "Mode 15: 1920x1200", 1920, 1200, AR_16_10 },
+	};
+	const int s_numVidModes = (sizeof( r_vidModes ) / sizeof( r_vidModes[0] ));
+
+	bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode ) {
+
+		if (mode < -1 || mode >= s_numVidModes) {
+			return false;
+		}
+
+		if (mode == -1) {
+			width = r_customWidth.GetInteger();
+			height = r_customHeight.GetInteger();
+			aspectRatio = -1;
+		}
+		else {
+			const vidmode_t&	vm = r_vidModes[mode];
+			width = vm.width;
+			height = vm.height;
+			aspectRatio = vm.aspectRatio;
+		}
+
+		return true;
+	}
+
 }
-
-static void R_CheckPortableExtensions( void ) {
-	glConfig.glVersion = atof( glConfig.version_string );
-
-	glGetIntegerv( GL_MAX_TEXTURE_UNITS, (GLint *)&glConfig.maxTextureUnits );
-	if (glConfig.maxTextureUnits > MAX_MULTITEXTURE_UNITS) {
-		glConfig.maxTextureUnits = MAX_MULTITEXTURE_UNITS;
-	}
-	glGetIntegerv( GL_MAX_TEXTURE_COORDS, (GLint *)&glConfig.maxTextureCoords );
-	glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS, (GLint *)&glConfig.maxTextureImageUnits );
-
-	// GL_ARB_texture_compression + GL_S3_s3tc
-	// DRI drivers may have GL_ARB_texture_compression but no GL_EXT_texture_compression_s3tc
-	bool arb_texture_compression = R_DoubleCheckExtension( "GL_ARB_texture_compression" );
-	bool ext_texture_compression_s3tc = R_DoubleCheckExtension( "GL_EXT_texture_compression_s3tc" ); //should be available!
-	glConfig.textureCompressionAvailable = arb_texture_compression && ext_texture_compression_s3tc;
-
-	// GL_EXT_texture_filter_anisotropic
-	glConfig.anisotropicAvailable = R_DoubleCheckExtension( "GL_EXT_texture_filter_anisotropic" );  //should be available!
-	if (glConfig.anisotropicAvailable) {
-		glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureAnisotropy );
-		common->Printf( "   maxTextureAnisotropy: %f\n", glConfig.maxTextureAnisotropy );
-	}
-	else {
-		glConfig.maxTextureAnisotropy = 1;
-	}
-
-	// GL_EXT_depth_bounds_test
-	glConfig.depthBoundsTestAvailable = R_DoubleCheckExtension( "GL_EXT_depth_bounds_test" );
-
-	glConfig.extDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_EXT_direct_state_access" );
-	glConfig.arbDirectStateAccessAvailable = R_DoubleCheckExtension( "GL_ARB_direct_state_access" );
-}
-
-
-/*
-====================
-R_GetModeInfo
-
-r_mode is normally a small non-negative integer that
-looks resolutions up in a table, but if it is set to -1,
-the values from r_customWidth, amd r_customHeight
-will be used instead.
-====================
-*/
-typedef struct vidmode_s {
-    const char *description;
-    int         width, height, aspectRatio;
-} vidmode_t;
-
-static const int AR_4_3 = 0;
-static const int AR_16_9 = 1;
-static const int AR_16_10 = 2;
-
-vidmode_t r_vidModes[] = {
-    { "Mode  0: 320x240",		320,	240, AR_4_3 },
-    { "Mode  1: 400x300",		400,	300, AR_4_3 },
-    { "Mode  2: 512x384",		512,	384, AR_4_3 },
-    { "Mode  3: 640x480",		640,	480, AR_4_3 },
-    { "Mode  4: 800x600",		800,	600, AR_4_3 },
-    { "Mode  5: 1024x768",		1024,	768, AR_4_3 },
-    { "Mode  6: 1152x864",		1152,	864, AR_4_3 },
-    { "Mode  7: 1280x1024",		1280,	1024, AR_4_3 },
-    { "Mode  8: 1600x1200",		1600,	1200, AR_4_3 },
-    //widescreen/HD:
-    { "Mode  9: 1280x720",		1280,	720, AR_16_9 },
-    { "Mode 10: 1366x768",		1366,	768, AR_16_9 },
-    { "Mode 11: 1440x900",		1440,	900, AR_16_10 },
-    { "Mode 12: 1600x900",		1600,	900, AR_16_9 },
-    { "Mode 13: 1680x1050",		1680,	1050, AR_16_10 },
-    { "Mode 14: 1920x1080",		1920,	1080, AR_16_9 },
-    { "Mode 15: 1920x1200",		1920,	1200, AR_16_10 },
-};
-static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
-
-static bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode ) {
-
-  if ( mode < -1 || mode >= s_numVidModes ) {
-      return false;
-	}
-
-	if ( mode == -1 ) {
-		width = r_customWidth.GetInteger();
-		height = r_customHeight.GetInteger();
-    aspectRatio = -1;
-	} else {
-    const vidmode_t&	vm = r_vidModes[mode];
-    width = vm.width;
-    height = vm.height;
-    aspectRatio = vm.aspectRatio;
-  }
-
-  return true;
-}
-
 /*
 ====================
 R_GLDebugOutput

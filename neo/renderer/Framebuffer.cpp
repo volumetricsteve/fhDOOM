@@ -139,10 +139,6 @@ void fhFramebuffer::Purge() {
 			defaultFramebuffer->Bind();
 		}
 
-		glNamedFramebufferTexture( name, GL_COLOR_ATTACHMENT0, 0, 0 );
-		glNamedFramebufferTexture( name, GL_DEPTH_ATTACHMENT, 0, 0 );
-		glNamedFramebufferTexture( name, GL_DEPTH_STENCIL_ATTACHMENT, 0, 0 );
-
 		glDeleteFramebuffers( 1, &name );
 		name = -1;
 	}
@@ -253,15 +249,6 @@ void fhFramebuffer::Blit(
 		dest->Allocate();
 	}
 
-
-#if 0
-	glBlitNamedFramebuffer( source->name,
-		dest->name,
-		sourceX, sourceY, sourceWidth, sourceHeight,
-		destX, destY, destWidth, destHeight,
-		bufferMask,
-		filter == TF_LINEAR ? GL_LINEAR : GL_NEAREST );
-#else
 	dest->Bind();
 	glBindFramebuffer( GL_READ_FRAMEBUFFER, source->name );
 
@@ -271,7 +258,6 @@ void fhFramebuffer::Blit(
 		filter == TF_LINEAR ? GL_LINEAR : GL_NEAREST );
 
 	glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
-#endif
 
 	currentDrawBuffer->Bind();
 }

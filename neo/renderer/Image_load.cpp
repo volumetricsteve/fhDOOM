@@ -373,7 +373,7 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 
 	if (format == pixelFormat_t::DXT5_RxGB) {
 		static const GLint agbr[] = { GL_ALPHA, GL_GREEN, GL_BLUE, GL_RED };
-		glTextureParameteriv( texnum, GL_TEXTURE_SWIZZLE_RGBA, agbr );
+		glTextureParameterIivEXT( texnum, GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, agbr );
 	}
 }
 
