@@ -903,7 +903,10 @@ void idRenderSystemLocal::CaptureRenderToImage( const char *imageName ) {
 
 	// look up the image before we create the render command, because it
 	// may need to sync to create the image
-	idImage	*image = globalImages->ImageFromFile(imageName, TF_DEFAULT, true, TR_REPEAT, TD_DEFAULT);
+	idImage* image = globalImages->GetImage( imageName );
+	if (!image) {
+		image = globalImages->ImageFromFile( imageName, TF_DEFAULT, false, TR_REPEAT, TD_HIGH_QUALITY );
+	}
 
 	renderCrop_t *rc = &renderCrops[currentRenderCrop];
 
