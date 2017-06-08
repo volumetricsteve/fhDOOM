@@ -616,10 +616,12 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int /*r
 	guiModel->Clear();
 
 	// for the larger-than-window tiled rendering screenshots
+	/*
 	if ( tiledViewport[0] ) {
 		windowWidth = tiledViewport[0];
 		windowHeight = tiledViewport[1];
 	}
+	*/
 
 	glConfig.vidWidth = windowWidth;
 	glConfig.vidHeight = windowHeight;
