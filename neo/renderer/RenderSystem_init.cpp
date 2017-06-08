@@ -1095,7 +1095,6 @@ static void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t
 			}
 
 			if (r_useFramebuffer.GetBool()) {
-				assert( glConfig.arbDirectStateAccessAvailable );
 				glGetTextureImageEXT( globalImages->renderColorImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp );
 			}
 			else {
@@ -1103,10 +1102,10 @@ static void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t
 				glReadPixels( 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, temp );
 			}
 
-			int	row = ( w * 3 + 3 ) & ~3;		// OpenGL pads to dword boundaries
+			int	row = (width * 3 + 3) & ~3;		// OpenGL pads to dword boundaries
 
-			for ( int y = 0 ; y < h ; y++ ) {
-				memcpy( buffer + ( ( yo + y )* width + xo ) * 3, temp + y * row, w * 3 );
+			for (int y = 0; y < h; y++) {
+				memcpy( buffer + ((yo + y)* width + xo) * 3, temp + y * row, w * 3 );
 			}
 		}
 	}
