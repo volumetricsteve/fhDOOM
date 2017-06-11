@@ -132,7 +132,7 @@ void RB_DrawBounds( const idBounds &bounds, const idVec4 &color ) {
 RB_SimpleSurfaceSetup
 ================
 */
-void RB_SimpleSurfaceSetup( const drawSurf_t *drawSurf ) {
+static void RB_SimpleSurfaceSetup( const drawSurf_t *drawSurf ) {
 	// change the matrix if needed
 	if ( drawSurf->space != backEnd.currentSpace ) {
 		GL_ModelViewMatrix.Load( drawSurf->space->modelViewMatrix );
@@ -154,7 +154,7 @@ void RB_SimpleSurfaceSetup( const drawSurf_t *drawSurf ) {
 RB_SimpleWorldSetup
 ================
 */
-void RB_SimpleWorldSetup( void ) {
+static void RB_SimpleWorldSetup( void ) {
 	backEnd.currentSpace = &backEnd.viewDef->worldSpace;
 	GL_ModelViewMatrix.Load( backEnd.viewDef->worldSpace.modelViewMatrix );
 
@@ -175,70 +175,28 @@ glColorMask, and the enabled state of depth buffering and
 stenciling will matter.
 =================
 */
-void RB_PolygonClear( const idVec3 &clearColor ) {
-  GL_ModelViewMatrix.Push();
-	glPushAttrib( GL_ALL_ATTRIB_BITS  );
-  GL_ModelViewMatrix.LoadIdentity();
-	glDisable( GL_TEXTURE_2D );
+static void RB_PolygonClear( const idVec3 &clearColor ) {
+	GL_ModelViewMatrix.Push();
+	GL_ModelViewMatrix.LoadIdentity();
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_CULL_FACE );
 	glDisable( GL_SCISSOR_TEST );
 
-  fhImmediateMode im;
+	fhImmediateMode im;
 	im.Begin( GL_QUADS );
-  im.Color3fv(clearColor.ToFloatPtr());
+	im.Color3fv(clearColor.ToFloatPtr());
 	im.Vertex3f( -20, -20, -10 );
 	im.Vertex3f( 20, -20, -10 );
 	im.Vertex3f( 20, 20, -10 );
 	im.Vertex3f( -20, 20, -10 );
 	im.End();
-	glPopAttrib();
+
+	glEnable( GL_DEPTH_TEST );
+	glEnable( GL_CULL_FACE );
+	glEnable( GL_SCISSOR_TEST );
 
 	GL_ModelViewMatrix.Pop();
 }
-
-/*
-====================
-RB_ShowDestinationAlpha
-====================
-*/
-void RB_ShowDestinationAlpha( void ) {
-	GL_State( GLS_SRCBLEND_DST_ALPHA | GLS_DSTBLEND_ZERO | GLS_DEPTHMASK | GLS_DEPTHFUNC_ALWAYS );
-	RB_PolygonClear( idVec3(1,1,1) );
-}
-
-/*
-===================
-RB_ScanStencilBuffer
-
-Debugging tool to see what values are in the stencil buffer
-===================
-*/
-void RB_ScanStencilBuffer( void ) {
-	int		counts[256];
-	int		i;
-	byte	*stencilReadback;
-
-	memset( counts, 0, sizeof( counts ) );
-
-	stencilReadback = (byte *)R_StaticAlloc( glConfig.vidWidth * glConfig.vidHeight );
-	glReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
-
-	for ( i = 0; i < glConfig.vidWidth * glConfig.vidHeight; i++ ) {
-		counts[ stencilReadback[i] ]++;
-	}
-
-	R_StaticFree( stencilReadback );
-
-	// print some stats (not supposed to do from back end in SMP...)
-	common->Printf( "stencil values:\n" );
-	for ( i = 0 ; i < 255 ; i++ ) {
-		if ( counts[i] ) {
-			common->Printf( "%i: %i\n", i, counts[i] );
-		}
-	}
-}
-
 
 /*
 ===================
@@ -247,11 +205,10 @@ RB_CountStencilBuffer
 Print an overdraw count based on stencil index values
 ===================
 */
-void RB_CountStencilBuffer( void ) {
+static void RB_CountStencilBuffer( void ) {
 	int		count;
 	int		i;
 	byte	*stencilReadback;
-
 
 	stencilReadback = (byte *)R_StaticAlloc( glConfig.vidWidth * glConfig.vidHeight );
 	glReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
@@ -277,8 +234,7 @@ stencil buffer.  Stencil of 0 = black, 1 = red, 2 = green,
 ===================
 */
 static void R_ColorByStencilBuffer( void ) {
-	int		i;
-	static float	colors[8][3] = {
+	static float colors[8][3] = {
 		{0,0,0},
 		{1,0,0},
 		{0,1,0},
@@ -296,7 +252,7 @@ static void R_ColorByStencilBuffer( void ) {
 
 	// now draw color for each stencil value
 	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
-	for ( i = 0 ; i < 6 ; i++ ) {
+	for ( int i = 0 ; i < 6 ; i++ ) {
 		glStencilFunc( GL_EQUAL, i, 255 );
 		RB_PolygonClear( idVec3(colors[i][0], colors[i][1], colors[i][2]) );
 	}
@@ -455,12 +411,12 @@ void RB_ShowDepthBuffer( void ) {
 		return;
 	}
 
-  GL_ModelViewMatrix.Push();
-  GL_ModelViewMatrix.LoadIdentity();
+	GL_ModelViewMatrix.Push();
+	GL_ModelViewMatrix.LoadIdentity();
 
-  GL_ProjectionMatrix.Push();
-  GL_ProjectionMatrix.LoadIdentity();
-  GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
+	GL_ProjectionMatrix.Push();
+	GL_ProjectionMatrix.LoadIdentity();
+	GL_ProjectionMatrix.Ortho( 0, 1, 0, 1, -1, 1 );
 
 	glRasterPos2f( 0, 0 );
 	GL_ProjectionMatrix.Pop();
@@ -497,10 +453,6 @@ based on how many lights are effecting it
 =================
 */
 void RB_ShowLightCount(void) {
-	int		i;
-	const drawSurf_t	*surf;
-	const viewLight_t	*vLight;
-
 	if (!r_showLightCount.GetBool()) {
 		return;
 	}
@@ -525,12 +477,11 @@ void RB_ShowLightCount(void) {
 
 	globalImages->defaultImage->Bind(0);
 
-
 	GL_UseProgram(vertexColorProgram);
 
-	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
-		for (i = 0; i < 2; i++) {
-			for (surf = i ? vLight->localInteractions : vLight->globalInteractions; surf; surf = (drawSurf_t *)surf->nextOnLight) {
+	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+		for (int i = 0; i < 2; i++) {
+			for (const drawSurf_t* surf = i ? vLight->localInteractions : vLight->globalInteractions; surf; surf = (drawSurf_t *)surf->nextOnLight) {
 				RB_SimpleSurfaceSetup(surf);
 				if (!surf->geo->ambientCache) {
 					continue;
@@ -568,10 +519,6 @@ plane extends from, allowing you to see doubled edges
 =================
 */
 void RB_ShowSilhouette(void) {
-	int		i;
-	const drawSurf_t	*surf;
-	const viewLight_t	*vLight;
-
 	if (!r_showSilhouette.GetBool()) {
 		return;
 	}
@@ -595,7 +542,6 @@ void RB_ShowSilhouette(void) {
 	RB_RenderDrawSurfListWithFunction(backEnd.viewDef->drawSurfs, backEnd.viewDef->numDrawSurfs,
 		RB_T_RenderTriangleSurface);
 
-
 	//
 	// now blend in edges that cast silhouettes
 	//
@@ -603,9 +549,9 @@ void RB_ShowSilhouette(void) {
 
 	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE);
 
-	for (vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
-		for (i = 0; i < 2; i++) {
-			for (surf = i ? vLight->localShadows : vLight->globalShadows
+	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
+		for (int i = 0; i < 2; i++) {
+			for (const drawSurf_t* surf = i ? vLight->localShadows : vLight->globalShadows
 				; surf; surf = (drawSurf_t *)surf->nextOnLight) {
 				RB_SimpleSurfaceSetup(surf);
 
@@ -616,9 +562,9 @@ void RB_ShowSilhouette(void) {
 				unsigned indicesUsed = 0;
 
 				for (int j = 0; j < tri->numIndexes && (indicesUsed + 2) < maxIndices; j += 3) {
-					int		i1 = tri->indexes[j + 0];
-					int		i2 = tri->indexes[j + 1];
-					int		i3 = tri->indexes[j + 2];
+					int i1 = tri->indexes[j + 0];
+					int i2 = tri->indexes[j + 1];
+					int i3 = tri->indexes[j + 2];
 
 					if ((i1 & 1) + (i2 & 1) + (i3 & 1) == 1) {
 						if ((i1 & 1) + (i2 & 1) == 0) {
@@ -667,10 +613,6 @@ and count up the total fill usage
 =================
 */
 static void RB_ShowShadowCount( void ) {
-	int		i;
-	const drawSurf_t	*surf;
-	const viewLight_t	*vLight;
-
 	if ( !r_showShadowCount.GetBool() ) {
 		return;
 	}
@@ -691,9 +633,9 @@ static void RB_ShowShadowCount( void ) {
 	// draw both sides
 	GL_Cull( CT_TWO_SIDED );
 
-	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
-		for ( i = 0 ; i < 2 ; i++ ) {
-			for ( surf = i ? vLight->localShadows : vLight->globalShadows
+	for ( const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next ) {
+		for ( int i = 0 ; i < 2 ; i++ ) {
+			for ( const drawSurf_t* surf = i ? vLight->localShadows : vLight->globalShadows
 				; surf ; surf = (drawSurf_t *)surf->nextOnLight ) {
 				RB_SimpleSurfaceSetup( surf );
 				const srfTriangles_t	*tri = surf->geo;
@@ -1032,10 +974,6 @@ Shade a triangle by the RGB colors of its tangent space
 =====================
 */
 static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
-	int		i, j;
-	drawSurf_t	*drawSurf;
-	const srfTriangles_t	*tri;
-
 	if ( !r_showTangentSpace.GetInteger() ) {
 		return;
 	}
@@ -1047,17 +985,17 @@ static void RB_ShowTangentSpace( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 
 	fhImmediateMode im;
 
-	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
-		drawSurf = drawSurfs[i];
+	for ( int i = 0 ; i < numDrawSurfs ; i++ ) {
+		const drawSurf_t* drawSurf = drawSurfs[i];
 
 		RB_SimpleSurfaceSetup( drawSurf );
 
-		tri = drawSurf->geo;
+		const srfTriangles_t* tri = drawSurf->geo;
 		if ( !tri->verts ) {
 			continue;
 		}
 		im.Begin( GL_TRIANGLES );
-		for ( j = 0 ; j < tri->numIndexes ; j++ ) {
+		for ( int j = 0 ; j < tri->numIndexes ; j++ ) {
 			const idDrawVert *v;
 
 			v = &tri->verts[tri->indexes[j]];
@@ -1176,24 +1114,24 @@ static void RB_ShowNormals( drawSurf_t **drawSurfs, int numDrawSurfs ) {
 			continue;
 		}
 
-    im.Begin(GL_LINES);
-    for (j = 0; j < tri->numVerts; j++) {
-      im.Color3f(0, 0, 1);
-      im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
-      VectorMA(tri->verts[j].xyz, size, tri->verts[j].normal, end);
-      im.Vertex3fv(end.ToFloatPtr());
+		im.Begin(GL_LINES);
+		for (j = 0; j < tri->numVerts; j++) {
+			im.Color3f(0, 0, 1);
+			im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
+			VectorMA(tri->verts[j].xyz, size, tri->verts[j].normal, end);
+			im.Vertex3fv(end.ToFloatPtr());
 
-      im.Color3f(1, 0, 0);
-      im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
-      VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[0], end);
-      im.Vertex3fv(end.ToFloatPtr());
+			im.Color3f(1, 0, 0);
+			im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
+			VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[0], end);
+			im.Vertex3fv(end.ToFloatPtr());
 
-      im.Color3f(0, 1, 0);
-      im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
-      VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[1], end);
-      im.Vertex3fv(end.ToFloatPtr());
-    }
-    im.End();
+			im.Color3f(0, 1, 0);
+			im.Vertex3fv(tri->verts[j].xyz.ToFloatPtr());
+			VectorMA(tri->verts[j].xyz, size, tri->verts[j].tangents[1], end);
+			im.Vertex3fv(end.ToFloatPtr());
+		}
+		im.End();
 	}
 
 	if ( showNumbers ) {
@@ -2208,11 +2146,11 @@ void RB_ShowDebugPolygons( void ) {
 RB_TestGamma
 ================
 */
-#define	G_WIDTH		512
-#define	G_HEIGHT	512
-#define	BAR_HEIGHT	64
-
 void RB_TestGamma( void ) {
+	static const int G_WIDTH = 512;
+	static const int G_HEIGHT = 512;
+	static const int BAR_HEIGHT = 64;
+
 	byte	image[G_HEIGHT][G_WIDTH][4];
 	int		i, j;
 	int		c, comp;
@@ -2220,6 +2158,12 @@ void RB_TestGamma( void ) {
 	int		mask, y;
 
 	if ( r_testGamma.GetInteger() <= 0 ) {
+		return;
+	}
+
+	if (r_glCoreProfile.GetBool()) {
+		//TODO(johl): fix gamma correction and tests (via shader?)
+		common->Warning( "RB_TestGamma not implemented for core profile" );
 		return;
 	}
 
@@ -2298,41 +2242,35 @@ RB_TestGammaBias
 ==================
 */
 static void RB_TestGammaBias( void ) {
-	byte	image[G_HEIGHT][G_WIDTH][4];
-
-	if ( r_testGammaBias.GetInteger() <= 0 ) {
-		return;
-	}
-
-	int y = 0;
-	for ( int bias = -40 ; bias < 40 ; bias+=10, y += BAR_HEIGHT ) {
-		float	scale = 1;
-		for ( int c = 0 ; c < 4 ; c++ ) {
-			int v = (int)(64 * scale + bias);
-			scale = scale * 1.5;
-			if ( v < 0 ) {
-				v = 0;
-			} else if ( v > 255 ) {
-				v = 255;
-			}
-			for ( int i = 0 ; i < BAR_HEIGHT ; i++ ) {
-				for ( int j = 0 ; j < G_WIDTH/4 ; j++ ) {
-					image[y+i][c*G_WIDTH/4+j][0] = v;
-					image[y+i][c*G_WIDTH/4+j][1] = v;
-					image[y+i][c*G_WIDTH/4+j][2] = v;
-				}
-			}
-		}
-	}
-
 	GL_ModelViewMatrix.LoadIdentity();
 
 	GL_ProjectionMatrix.Push();
 	GL_ProjectionMatrix.LoadIdentity();
 	GL_State( GLS_DEPTHFUNC_ALWAYS );
 	GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
-	glRasterPos2f( 0.01f, 0.01f );
-	glDrawPixels( G_WIDTH, G_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, image );
+
+	fhImmediateMode im;
+	im.SetTexture( globalImages->testGammaBiasImage );
+	im.Color3f( 1, 1, 1 );
+	im.Begin( GL_QUADS );
+
+	float w = 0.2;
+	float h = 0.2;
+
+	im.TexCoord2f( 0, 1 );
+	im.Vertex2f( 0.5 - w, 0 );
+
+	im.TexCoord2f( 0, 0 );
+	im.Vertex2f( 0.5 - w, h * 2 );
+
+	im.TexCoord2f( 1, 0 );
+	im.Vertex2f( 0.5 + w, h * 2 );
+
+	im.TexCoord2f( 1, 1 );
+	im.Vertex2f( 0.5 + w, 0 );
+
+	im.End();
+
 	GL_ProjectionMatrix.Pop();
 }
 
@@ -2344,15 +2282,13 @@ Display a single image over most of the screen
 ================
 */
 void RB_TestImage( void ) {
-	idImage	*image;
-	int		max;
-	float	w, h;
 
-	image = tr.testImage;
+	idImage	*image = tr.testImage;
 	if ( !image ) {
 		return;
 	}
 
+	float w, h;
 	if ( tr.testVideo ) {
 		cinData_t	cin;
 
@@ -2366,7 +2302,7 @@ void RB_TestImage( void ) {
 		w = 0.25;
 		h = 0.25;
 	} else {
-		max = image->uploadWidth > image->uploadHeight ? image->uploadWidth : image->uploadHeight;
+		int max = image->uploadWidth > image->uploadHeight ? image->uploadWidth : image->uploadHeight;
 
 		w = 0.25 * image->uploadWidth / max;
 		h = 0.25 * image->uploadHeight / max;

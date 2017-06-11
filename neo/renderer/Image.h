@@ -425,6 +425,7 @@ public:
 	idImage *			currentDepthImage;
 	idImage *			borderClampImage;			// white inside, black outside
 	idImage *           jitterImage;
+	idImage *           testGammaBiasImage;
 	idImage *			renderColorImage;
 	idImage *			renderDepthImage;
 	idImage *			shadowmapImage;

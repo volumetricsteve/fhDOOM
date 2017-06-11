@@ -636,6 +636,19 @@ static void	RB_SetBuffer( const void *data ) {
 
 	backEnd.frameCount = cmd->frameCount;
 
+	if (r_useFramebuffer.GetBool()) {
+		float scale = r_framebufferScale.GetFloat();
+		int samples = Min( r_multiSamples.GetInteger(), glConfig.maxSamples );
+		fhFramebuffer::renderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, samples );
+		fhFramebuffer::currentRenderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, 1 );
+		fhFramebuffer::renderFramebuffer->Bind();
+
+		const auto width = fhFramebuffer::GetCurrentDrawBuffer()->GetWidth();
+		const auto height = fhFramebuffer::GetCurrentDrawBuffer()->GetHeight();
+		glViewport( 0, 0, width, height );
+		glScissor( 0, 0, width, height );
+	}
+
 	// clear screen for debugging
 	// automatically enable this with several other debug tools
 	// that might leave unrendered portions of the screen
@@ -736,6 +749,28 @@ static void	RB_SwapBuffers( const void *data ) {
 		RB_ShowImages();
 	}
 
+	if (r_useFramebuffer.GetBool()) {
+		auto src = fhFramebuffer::renderFramebuffer;
+		auto def = fhFramebuffer::defaultFramebuffer;
+
+		if (src->GetSamples() > 1) {
+			auto resolve = fhFramebuffer::currentRenderFramebuffer;
+			resolve->Resize( src->GetWidth(), src->GetHeight() );
+
+			glViewport( 0, 0, src->GetWidth(), src->GetHeight() );
+			glScissor( 0, 0, src->GetWidth(), src->GetHeight() );
+			fhFramebuffer::BlitColor( src, resolve );
+
+			src = resolve;
+		}
+
+		glViewport( 0, 0, def->GetWidth(), def->GetHeight() );
+		glScissor( 0, 0, def->GetWidth(), def->GetHeight() );
+		fhFramebuffer::BlitColor( src, def );
+
+		def->Bind();
+	}
+
 	// force a gl sync if requested
 	if ( r_finish.GetBool() ) {
 		glFinish();
@@ -768,10 +803,21 @@ static void	RB_CopyRender( const void *data ) {
 		//            CopyRender and CropRender commands are stored in demo files, is that an issue?
 		image->AllocateStorage( pixelFormat_t::RGB, cmd->imageWidth, cmd->imageHeight, 1, 1 );
 
+		auto src = r_useFramebuffer.GetBool() ? fhFramebuffer::renderFramebuffer : fhFramebuffer::defaultFramebuffer;
+		if (src->GetSamples() > 1) {
+			//TODO(johl): resolving the full buffer seems like overkill for small subviews (things like security cameras are usually only 512x512)
+			auto resolve = fhFramebuffer::currentRenderFramebuffer;
+			resolve->Resize( src->GetWidth(), src->GetHeight() );
+
+			glViewport( 0, 0, src->GetWidth(), src->GetHeight() );
+			glScissor( 0, 0, src->GetWidth(), src->GetHeight() );
+			fhFramebuffer::BlitColor( src, resolve );
+
+			src = resolve;
+		}
+
 		fhFramebuffer framebuffer( cmd->imageWidth, cmd->imageHeight, image, nullptr );
-		fhFramebuffer::BlitColor( fhFramebuffer::defaultFramebuffer,
-			cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight,
-			&framebuffer );
+		fhFramebuffer::BlitColor( src, cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight, &framebuffer );
 		framebuffer.Purge();
 	}
 }
