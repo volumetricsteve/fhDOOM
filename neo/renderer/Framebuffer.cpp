@@ -204,6 +204,7 @@ void fhFramebuffer::Init() {
 	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr );
 	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, globalImages->currentDepthImage );
 	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->currentRenderImage, nullptr );
+	renderFramebuffer = new fhFramebuffer(1024, 1024, globalImages->renderColorImage, globalImages->renderDepthImage);
 	currentDrawBuffer = defaultFramebuffer;
 }
 

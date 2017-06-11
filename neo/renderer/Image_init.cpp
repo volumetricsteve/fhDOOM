@@ -96,6 +96,39 @@ namespace {
 	idImageManager imageManager;
 
 	static const int FALLOFF_TEXTURE_SIZE = 64;
+
+	static void R_TestGammaBiasImage(idImage *image2) {
+		static const int G_HEIGHT = 512;
+		static const int G_WIDTH = 512;
+		static const int BAR_HEIGHT = 64;
+
+		byte data[G_HEIGHT][G_WIDTH][4];
+
+		int y = 0;
+		for (int bias = -40; bias < 40; bias += 10, y += BAR_HEIGHT) {
+			float	scale = 1;
+			for (int c = 0; c < 4; c++) {
+				int v = (int)(64 * scale + bias);
+				scale = scale * 1.5;
+				if (v < 0) {
+					v = 0;
+				}
+				else if (v > 255) {
+					v = 255;
+				}
+				for (int i = 0; i < BAR_HEIGHT; i++) {
+					for (int j = 0; j < G_WIDTH / 4; j++) {
+						data[y + i][c*G_WIDTH / 4 + j][0] = v;
+						data[y + i][c*G_WIDTH / 4 + j][1] = v;
+						data[y + i][c*G_WIDTH / 4 + j][2] = v;
+					}
+				}
+			}
+		}
+
+		image2->GenerateImage((byte *)data, G_WIDTH, G_HEIGHT,
+			TF_NEAREST, false, TR_REPEAT, TD_HIGH_QUALITY);
+	}
 }
 
 idCVar idImageManager::image_filter( "image_filter", imageFilter[1], CVAR_RENDERER | CVAR_ARCHIVE, "changes texture filtering on mipmapped images", imageFilter, idCmdSystem::ArgCompletion_String<imageFilter> );
@@ -1830,7 +1863,8 @@ void idImageManager::Init() {
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
 	cmdSystem->AddCommand( "combineCubeImages", R_CombineCubeImages_f, CMD_FL_RENDERER, "combines six images for roq compression" );
 
-	jitterImage = ImageFromFunction("_jitter", R_JitterImage );
+	jitterImage = ImageFromFunction( "_jitter", R_JitterImage );
+	testGammaBiasImage = ImageFromFunction( "_testGammaBias", R_TestGammaBiasImage );
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
 	renderColorImage = ImageFromFunction( "_renderColorImage", R_RGBA8Image );
 	renderDepthImage = ImageFromFunction( "_renderDepthImage", R_DepthStencil );

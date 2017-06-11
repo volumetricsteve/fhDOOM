@@ -577,14 +577,6 @@ void RB_DrawView( const void *data ) {
 
 	backEnd.pc.c_surfaces += backEnd.viewDef->numDrawSurfs;
 
-	if (r_useFramebuffer.GetBool()) {
-		float scale = r_framebufferScale.GetFloat();
-		int samples = Min( r_multiSamples.GetInteger(), glConfig.maxSamples );
-		fhFramebuffer::renderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, samples );
-		fhFramebuffer::currentRenderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, 1 );
-		fhFramebuffer::renderFramebuffer->Bind();
-	}
-
 	RB_ShowOverdraw();
 
 	// render the scene, jumping to the hardware specific interaction renderers
@@ -594,19 +586,5 @@ void RB_DrawView( const void *data ) {
 	if ( r_skipRenderContext.GetBool() && backEnd.viewDef->viewEntitys ) {
 		GLimp_ActivateContext();
 		RB_SetDefaultGLState();
-	}
-
-	if (r_useFramebuffer.GetBool()) {
-		fhFramebuffer::defaultFramebuffer->Bind();
-		glViewport( 0, 0, fhFramebuffer::GetCurrentDrawBuffer()->GetWidth(), fhFramebuffer::GetCurrentDrawBuffer()->GetHeight() );
-		glScissor( 0, 0, fhFramebuffer::GetCurrentDrawBuffer()->GetWidth(), fhFramebuffer::GetCurrentDrawBuffer()->GetHeight() );
-
-		if (fhFramebuffer::renderFramebuffer->GetSamples() > 1) {
-			fhFramebuffer::BlitColor( fhFramebuffer::renderFramebuffer, fhFramebuffer::currentRenderFramebuffer );
-			fhFramebuffer::BlitColor( fhFramebuffer::currentRenderFramebuffer, fhFramebuffer::defaultFramebuffer );
-		}
-		else {
-			fhFramebuffer::BlitColor( fhFramebuffer::renderFramebuffer, fhFramebuffer::defaultFramebuffer );
-		}
 	}
 }
