@@ -1109,7 +1109,7 @@ IF(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_directory  $<TARGET_FILE_DIR:fhDOOM> "${DIST_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/base"
     COMMAND ${CMAKE_COMMAND} -E make_directory   "${DIST_DIR}/d3xp"
-    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${DIST_DIR}/base/pak100fhdoom.pk4" --format=zip "glsl" "guis"
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${DIST_DIR}/base/pak100fhdoom.pk4" --format=zip "glsl" "guis" "maps/game"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak005.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak006.pk4" "${DIST_DIR}/base/"
     COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_SOURCE_DIR}/base/pak007.pk4" "${DIST_DIR}/base/"
