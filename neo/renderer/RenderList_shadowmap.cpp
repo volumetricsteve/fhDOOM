@@ -149,6 +149,8 @@ void ShadowRenderList::Submit( const float* shadowViewMatrix, const float* shado
 	const int sideBit = (1 << side);
 	const int num = Num();
 
+	glDepthRange(0, 1);
+
 	for (int i = 0; i < num; ++i) {
 		const auto& drawShadow = (*this)[i];
 

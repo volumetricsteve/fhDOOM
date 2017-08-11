@@ -335,6 +335,7 @@ static void RB_GLSL_SubmitDrawInteractions( const InteractionList& interactionLi
 	fhRenderProgram::SetSpecularMatrix( idVec4::identityS, idVec4::identityT );
 	fhRenderProgram::SetDiffuseMatrix( idVec4::identityS, idVec4::identityT );
 
+	glDepthRange(0, 1);
 
 	if (r_useScissor.GetBool()) {
 		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
