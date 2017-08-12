@@ -33,15 +33,68 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 #include "ImageProgram.h"
 
-const char *imageFilter[] = {
-	"GL_LINEAR_MIPMAP_NEAREST",
-	"GL_LINEAR_MIPMAP_LINEAR",
-	"GL_NEAREST",
-	"GL_LINEAR",
-	"GL_NEAREST_MIPMAP_NEAREST",
-	"GL_NEAREST_MIPMAP_LINEAR",
-	NULL
-};
+namespace {
+	const char *imageFilter[] = {
+		"GL_LINEAR_MIPMAP_NEAREST",
+		"GL_LINEAR_MIPMAP_LINEAR",
+		"GL_NEAREST",
+		"GL_LINEAR",
+		"GL_NEAREST_MIPMAP_NEAREST",
+		"GL_NEAREST_MIPMAP_LINEAR",
+		NULL
+	};
+
+	enum IMAGE_CLASSIFICATION {
+		IC_NPC,
+		IC_WEAPON,
+		IC_MONSTER,
+		IC_MODELGEOMETRY,
+		IC_ITEMS,
+		IC_MODELSOTHER,
+		IC_GUIS,
+		IC_WORLDGEOMETRY,
+		IC_OTHER,
+		IC_COUNT
+	};
+
+	struct imageClassificate_t {
+		const char *rootPath;
+		const char *desc;
+		int type;
+		int maxWidth;
+		int maxHeight;
+	};
+
+	const imageClassificate_t IC_Info[] = {
+		{ "models/characters", "Characters", IC_NPC, 512, 512 },
+		{ "models/weapons", "Weapons", IC_WEAPON, 512, 512 },
+		{ "models/monsters", "Monsters", IC_MONSTER, 512, 512 },
+		{ "models/mapobjects", "Model Geometry", IC_MODELGEOMETRY, 512, 512 },
+		{ "models/items", "Items", IC_ITEMS, 512, 512 },
+		{ "models", "Other model textures", IC_MODELSOTHER, 512, 512 },
+		{ "guis/assets", "Guis", IC_GUIS, 256, 256 },
+		{ "textures", "World Geometry", IC_WORLDGEOMETRY, 256, 256 },
+		{ "", "Other", IC_OTHER, 256, 256 }
+	};
+
+	int ClassifyImage(const char *name) {
+		idStr str;
+		str = name;
+		for (int i = 0; i < IC_COUNT; i++) {
+			if (str.Find(IC_Info[i].rootPath, false) == 0) {
+				return IC_Info[i].type;
+			}
+		}
+		return IC_OTHER;
+	}
+
+	typedef struct {
+		idImage	*image;
+		int		size;
+	} sortedImage_t;
+
+	idImageManager imageManager;
+}
 
 idCVar idImageManager::image_filter( "image_filter", imageFilter[1], CVAR_RENDERER | CVAR_ARCHIVE, "changes texture filtering on mipmapped images", imageFilter, idCmdSystem::ArgCompletion_String<imageFilter> );
 idCVar idImageManager::image_anisotropy( "image_anisotropy", "1", CVAR_RENDERER | CVAR_ARCHIVE, "set the maximum texture anisotropy if available" );
@@ -72,56 +125,7 @@ idCVar idImageManager::image_ignoreHighQuality( "image_ignoreHighQuality", "0", 
 idCVar idImageManager::image_downSizeLimit( "image_downSizeLimit", "256", CVAR_RENDERER | CVAR_ARCHIVE, "controls diffuse map downsample limit" );
 // do this with a pointer, in case we want to make the actual manager
 // a private virtual subclass
-idImageManager	imageManager;
 idImageManager	*globalImages = &imageManager;
-
-enum IMAGE_CLASSIFICATION {
-	IC_NPC,
-	IC_WEAPON,
-	IC_MONSTER,
-	IC_MODELGEOMETRY,
-	IC_ITEMS,
-	IC_MODELSOTHER,
-	IC_GUIS,
-	IC_WORLDGEOMETRY,
-	IC_OTHER,
-	IC_COUNT
-};
-
-struct imageClassificate_t {
-	const char *rootPath;
-	const char *desc;
-	int type;
-	int maxWidth;
-	int maxHeight;
-};
-
-typedef idList< int > intList;
-
-const imageClassificate_t IC_Info[] = {
-	{ "models/characters", "Characters", IC_NPC, 512, 512 },
-	{ "models/weapons", "Weapons", IC_WEAPON, 512, 512 },
-	{ "models/monsters", "Monsters", IC_MONSTER, 512, 512 },
-	{ "models/mapobjects", "Model Geometry", IC_MODELGEOMETRY, 512, 512 },
-	{ "models/items", "Items", IC_ITEMS, 512, 512 },
-	{ "models", "Other model textures", IC_MODELSOTHER, 512, 512 },
-	{ "guis/assets", "Guis", IC_GUIS, 256, 256 },
-	{ "textures", "World Geometry", IC_WORLDGEOMETRY, 256, 256 },
-	{ "", "Other", IC_OTHER, 256, 256 }
-};
-
-
-
-static int ClassifyImage( const char *name ) {
-	idStr str;
-	str = name;
-	for ( int i = 0; i < IC_COUNT; i++ ) {
-		if ( str.Find( IC_Info[i].rootPath, false ) == 0 ) {
-			return IC_Info[i].type;
-		}
-	}
-	return IC_OTHER;
-}
 
 /*
 ================
@@ -381,16 +385,13 @@ static void R_AlphaNotchImage( idImage *image ) {
 
 static void R_FlatNormalImage( idImage *image ) {
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
-	int		i;
 
-	int red = ( globalImages->image_useNormalCompression.GetInteger() == 1 ) ? 0 : 3;
-	int alpha = ( red == 0 ) ? 3 : 0;
 	// flat normal map for default bunp mapping
-	for ( i = 0 ; i < 4 ; i++ ) {
-		data[0][i][red] = 128;
+	for ( int i = 0 ; i < 4 ; i++ ) {
+		data[0][i][0] = 128;
 		data[0][i][1] = 128;
 		data[0][i][2] = 255;
-		data[0][i][alpha] = 255;
+		data[0][i][3] = 255;
 	}
 	image->GenerateImage( (byte *)data, 2, 2,
 		TF_DEFAULT, true, TR_REPEAT, TD_HIGH_QUALITY );
@@ -534,60 +535,6 @@ void CreatealphaSquareImage( void ) {
 	R_WriteTGA( "shapes/alphaSquare.tga", data[0][0], 16, 16 );
 }
 
-#define	NORMAL_MAP_SIZE		32
-
-/*** NORMALIZATION CUBE MAP CONSTRUCTION ***/
-
-/* Given a cube map face index, cube map size, and integer 2D face position,
- * return the cooresponding normalized vector.
- */
-static void getCubeVector(int i, int cubesize, int x, int y, float *vector) {
-  float s, t, sc, tc, mag;
-
-  s = ((float)x + 0.5) / (float)cubesize;
-  t = ((float)y + 0.5) / (float)cubesize;
-  sc = s*2.0 - 1.0;
-  tc = t*2.0 - 1.0;
-
-  switch (i) {
-  case 0:
-    vector[0] = 1.0;
-    vector[1] = -tc;
-    vector[2] = -sc;
-    break;
-  case 1:
-    vector[0] = -1.0;
-    vector[1] = -tc;
-    vector[2] = sc;
-    break;
-  case 2:
-    vector[0] = sc;
-    vector[1] = 1.0;
-    vector[2] = tc;
-    break;
-  case 3:
-    vector[0] = sc;
-    vector[1] = -1.0;
-    vector[2] = -tc;
-    break;
-  case 4:
-    vector[0] = sc;
-    vector[1] = -tc;
-    vector[2] = 1.0;
-    break;
-  case 5:
-    vector[0] = -sc;
-    vector[1] = -tc;
-    vector[2] = -1.0;
-    break;
-  }
-
-  mag = idMath::InvSqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
-  vector[0] *= mag;
-  vector[1] *= mag;
-  vector[2] *= mag;
-}
-
 /*
 ================
 R_CreateNoFalloffImage
@@ -612,7 +559,6 @@ static void R_CreateNoFalloffImage( idImage *image ) {
 		TF_DEFAULT, false, TR_CLAMP_TO_ZERO, TD_HIGH_QUALITY );
 }
 
-
 /*
 ================
 R_FogImage
@@ -621,20 +567,21 @@ We calculate distance correctly in two planes, but the
 third will still be projection based
 ================
 */
-const int	FOG_SIZE = 128;
 
-void R_FogImage( idImage *image ) {
+static void R_FogImage( idImage *image ) {
+	static const int FOG_SIZE = 128;
+
 	int		x,y;
 	byte	data[FOG_SIZE][FOG_SIZE][4];
 	int		b;
 
-float	step[256];
-int		i;
-float	remaining = 1.0;
-for ( i = 0 ; i < 256 ; i++ ) {
-	step[i] = remaining;
-	remaining *= 0.982f;
-}
+	float	step[256];
+	int		i;
+	float	remaining = 1.0;
+	for ( i = 0 ; i < 256 ; i++ ) {
+		step[i] = remaining;
+		remaining *= 0.982f;
+	}
 
 	for (x=0 ; x<FOG_SIZE ; x++) {
 		for (y=0 ; y<FOG_SIZE ; y++) {
@@ -650,7 +597,7 @@ for ( i = 0 ; i < 256 ; i++ ) {
 			} else if ( b > 255 ) {
 				b = 255;
 			}
-b = (byte)(255 * ( 1.0 - step[b] ));
+			b = (byte)(255 * ( 1.0 - step[b] ));
 			if ( x == 0 || x == FOG_SIZE-1 || y == 0 || y == FOG_SIZE-1 ) {
 				b = 255;		// avoid clamping issues
 			}
@@ -673,9 +620,10 @@ FogFraction
 Height values below zero are inside the fog volume
 ================
 */
-static const float	RAMP_RANGE =	8;
-static const float	DEEP_RANGE =	-30;
-static float	FogFraction( float viewHeight, float targetHeight ) {
+static float FogFraction( float viewHeight, float targetHeight ) {
+	static const float	RAMP_RANGE = 8;
+	static const float	DEEP_RANGE = -30;
+
 	float	total = idMath::Fabs( targetHeight - viewHeight );
 
 //	return targetHeight >= 0 ? 0 : 1.0;
@@ -744,7 +692,7 @@ Modulate the fog alpha density based on the distance of the
 start and end points to the terminator plane
 ================
 */
-void R_FogEnterImage( idImage *image ) {
+static void R_FogEnterImage( idImage *image ) {
 	int		x,y;
 	byte	data[FOG_ENTER_SIZE][FOG_ENTER_SIZE][4];
 	int		b;
@@ -780,10 +728,10 @@ R_QuadraticImage
 
 ================
 */
-static const int	QUADRATIC_WIDTH = 32;
-static const int	QUADRATIC_HEIGHT = 4;
+static void R_QuadraticImage( idImage *image ) {
+	static const int	QUADRATIC_WIDTH = 32;
+	static const int	QUADRATIC_HEIGHT = 4;
 
-void R_QuadraticImage( idImage *image ) {
 	int		x,y;
 	byte	data[QUADRATIC_HEIGHT][QUADRATIC_WIDTH][4];
 	int		b;
@@ -820,14 +768,6 @@ void R_QuadraticImage( idImage *image ) {
 
 //=====================================================================
 
-
-typedef struct {
-	const char *name;
-	int	minimize, maximize;
-} filterName_t;
-
-
-
 /*
 ===============
 ChangeTextureFilter
@@ -838,23 +778,27 @@ New images will automatically pick up the current values.
 */
 void idImageManager::ChangeTextureFilter( void ) {
 	int		i;
-	idImage	*glt;
-	const char	*string;
-static filterName_t textureFilters[] = {
-	{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR},
-	{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR},
-	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
-	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
-	{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST}
-};
+
+	typedef struct {
+		const char *name;
+		int	minimize, maximize;
+	} filterName_t;
+
+	static filterName_t textureFilters[] = {
+		{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR},
+		{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR},
+		{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
+		{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
+		{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
+		{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST}
+	};
 
 	// if these are changed dynamically, it will force another ChangeTextureFilter
 	image_filter.ClearModified();
 	image_anisotropy.ClearModified();
 	image_lodbias.ClearModified();
 
-	string = image_filter.GetString();
+	const char* string = image_filter.GetString();
 	for ( i = 0; i < 6; i++ ) {
 		if ( !idStr::Icmp( textureFilters[i].name, string ) ) {
 			break;
@@ -883,7 +827,7 @@ static filterName_t textureFilters[] = {
 	for ( i = 0 ; i < images.Num() ; i++ ) {
 		unsigned int	texEnum = GL_TEXTURE_2D;
 
-		glt = images[ i ];
+		idImage* glt = images[i];
 
 		switch( glt->type ) {
 		case TT_2D:
@@ -958,7 +902,7 @@ New r_texturesize/r_texturedepth variables will take effect on reload
 reloadImages <all>
 ===============
 */
-void R_ReloadImages_f( const idCmdArgs &args ) {
+static void R_ReloadImages_f( const idCmdArgs &args ) {
 	int		i;
 	idImage	*image;
 	bool	all;
@@ -988,11 +932,6 @@ void R_ReloadImages_f( const idCmdArgs &args ) {
 	}
 }
 
-typedef struct {
-	idImage	*image;
-	int		size;
-} sortedImage_t;
-
 /*
 =======================
 R_QsortImageSizes
@@ -1019,7 +958,7 @@ static int R_QsortImageSizes( const void *a, const void *b ) {
 R_ListImages_f
 ===============
 */
-void R_ListImages_f( const idCmdArgs &args ) {
+static void R_ListImages_f( const idCmdArgs &args ) {
 	int		i, j, partialSize;
 	idImage	*image;
 	int		totalSize;
@@ -1588,7 +1527,7 @@ Used to combine animations of six separate tga files into
 a serials of 6x taller tga files, for preparation to roq compress
 ===============
 */
-void R_CombineCubeImages_f( const idCmdArgs &args ) {
+static void R_CombineCubeImages_f( const idCmdArgs &args ) {
 	if ( args.Argc() != 2 ) {
 		common->Printf( "usage: combineCubeImages <baseName>\n" );
 		common->Printf( " combines basename[1-6][0001-9999].tga to basenameCM[0001-9999].tga\n" );
