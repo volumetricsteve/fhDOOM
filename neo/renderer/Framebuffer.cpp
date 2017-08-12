@@ -159,6 +159,10 @@ void fhFramebuffer::PurgeAll() {
 }
 
 void fhFramebuffer::BlitColor( fhFramebuffer* source, fhFramebuffer* dest ) {
+	BlitColor(source, dest, source->GetWidth(), source->GetHeight());
+}
+
+void fhFramebuffer::BlitColor(fhFramebuffer* source, fhFramebuffer* dest, int src_width, int src_height) {
 	if (source == dest) {
 		return;
 	}
@@ -169,12 +173,12 @@ void fhFramebuffer::BlitColor( fhFramebuffer* source, fhFramebuffer* dest ) {
 		dest->Allocate();
 	}
 
-	glBlitNamedFramebuffer( source->name,
+	glBlitNamedFramebuffer(source->name,
 		dest->name,
-		0, 0, source->GetWidth(), source->GetHeight(),
+		0, 0, src_width, src_height,
 		0, 0, dest->GetWidth(), dest->GetHeight(),
 		GL_COLOR_BUFFER_BIT,
-		GL_LINEAR );
+		GL_LINEAR);
 
 	currentDrawBuffer->Bind();
 }

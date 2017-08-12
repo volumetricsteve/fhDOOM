@@ -55,6 +55,7 @@ public:
 	static void Init();
 	static void PurgeAll();
 	static void BlitColor( fhFramebuffer* source, fhFramebuffer* dest );
+	static void BlitColor(fhFramebuffer* source, fhFramebuffer* dest, int src_width, int src_height);
 	static void BlitDepth( fhFramebuffer* source, fhFramebuffer* dest );
 
 private:

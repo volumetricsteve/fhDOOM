@@ -48,8 +48,6 @@ glconfig_t	glConfig;
 
 void GfxInfo_f( const idCmdArgs& args );
 
-const char *r_rendererArgs[] = { "best", "arb", "arb2", "Cg", "exp", "nv10", "nv20", "r200", NULL };
-
 idCVar r_glDebugOutput( "r_glDebugOutput", "0", CVAR_RENDERER | CVAR_INTEGER | CVAR_ARCHIVE, "print OpenGL debug output: 0 = Off, 1 = Asynchronous, 2 = Synchronous" );
 idCVar r_useLightPortalFlow( "r_useLightPortalFlow", "1", CVAR_RENDERER | CVAR_BOOL, "use a more precise area reference determination" );
 idCVar r_multiSamples( "r_multiSamples", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "number of antialiasing samples" );
@@ -258,19 +256,6 @@ static bool R_DoubleCheckExtension( const char* name ) {
 	}
 
 	return ret;
-
-#if 0
-	bool glewCheck = glewIsSupported(name) == GL_TRUE;
-
-	static const char* status[] = {
-		"[ FAILED ]",
-		"[   OK   ]"
-	};
-
-	common->Printf("%s %s\n", status[glewCheck ? 1 : 0], name);
-
-	return glewCheck;
-#endif
 }
 
 static void R_CheckPortableExtensions( void ) {
