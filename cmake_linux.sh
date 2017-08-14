@@ -7,7 +7,7 @@ CMAKE_BUILD_TYPE="Debug"
 CMAKE_GENERATOR="Sublime Text 2 - Unix Makefiles"
 
 if [ "$#" -ne "2" ]; then
-  echo "Usage run_cmake.sh <gcc|clang|clang-libc++> <debug|release|reldeb>"
+  echo "Usage cmake_linux.sh <gcc|clang|clang-libc++> <debug|release|reldeb>"
   exit 1
 fi  
 
