@@ -1,4 +1,13 @@
-SET(MAYA_HOME "$ENV{ProgramFiles}/Autodesk/Maya2011/")
+
+if (NOT "${MAYA_HOME}" STREQUAL "")
+  message("MAYA_HOME from options: ${MAYA_HOME}")
+elseif(DEFINED ENV{MAYA_HOME})
+  set(MAYA_HOME $ENV{MAYA_HOME})
+  message("MAYA_HOME from environment: $ENV{MAYA_HOME}")
+else()
+  set(MAYA_HOME "$ENV{ProgramFiles(x86)}/Autodesk/Maya2011/")  
+  message("MAYA_HOME assumed: ${MAYA_HOME}")
+endif()
 
 IF(IS_DIRECTORY ${MAYA_HOME})
 
