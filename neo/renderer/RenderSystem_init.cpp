@@ -545,8 +545,6 @@ void R_InitOpenGL( void ) {
 	glConfig.renderer_string = (const char *)glGetString( GL_RENDERER );
 	glConfig.version_string = (const char *)glGetString( GL_VERSION );
 
-	glConfig.vendorisAMD = (strstr(glConfig.vendor_string, "AMD") != nullptr) || (strstr(glConfig.renderer_string, "AMD") != nullptr);
-
 	// OpenGL driver constants
 	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 
