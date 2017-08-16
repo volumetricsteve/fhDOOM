@@ -423,10 +423,6 @@ public:
 	idImage *			currentDepthImage;
 	idImage *			borderClampImage;			// white inside, black outside
 	idImage *           jitterImage;
-
-	idImage *			renderDepthImage;
-	idImage *			renderColorImage;
-
 	idImage *			shadowmapImage;
 
 	//--------------------------------------------------------

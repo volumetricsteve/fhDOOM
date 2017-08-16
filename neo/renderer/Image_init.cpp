@@ -1498,8 +1498,6 @@ void idImageManager::PurgeAllImages() {
 	}
 
 	shadowmapImage->PurgeImage();
-	renderColorImage->PurgeImage();
-	renderDepthImage->PurgeImage();
 	currentDepthImage->PurgeImage();
 	currentRenderImage->PurgeImage();
 }
@@ -1837,9 +1835,6 @@ void idImageManager::Init() {
 	jitterImage = ImageFromFunction("_jitter", R_JitterImage );
 
 	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
-
-	renderColorImage = ImageFromFunction( "_renderColorImage", R_RGBA8Image );
-	renderDepthImage = ImageFromFunction( "_renderDepthImage", R_Depth );
 
 	// should forceLoadImages be here?
 }

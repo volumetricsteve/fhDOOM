@@ -33,7 +33,6 @@ If you have questions concerning this license or the applicable additional terms
 fhFramebuffer* fhFramebuffer::currentDrawBuffer = nullptr;
 fhFramebuffer* fhFramebuffer::shadowmapFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::defaultFramebuffer = nullptr;
-fhFramebuffer* fhFramebuffer::renderFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentDepthFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentRenderFramebuffer = nullptr;
 
@@ -143,7 +142,6 @@ void fhFramebuffer::Allocate() {
 void fhFramebuffer::Init() {
 	shadowmapFramebuffer = new fhFramebuffer( 1024 * 4, 1024 * 4, nullptr, globalImages->shadowmapImage );
 	defaultFramebuffer = new fhFramebuffer( 0, 0, nullptr, nullptr );
-	renderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->renderColorImage, globalImages->renderDepthImage );
 	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, globalImages->currentDepthImage );
 	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->currentRenderImage, nullptr );
 }
@@ -153,7 +151,6 @@ void fhFramebuffer::PurgeAll() {
 
 	shadowmapFramebuffer->Purge();
 	defaultFramebuffer->Purge();
-	renderFramebuffer->Purge();
 	currentDepthFramebuffer->Purge();
 	currentRenderFramebuffer->Purge();
 }

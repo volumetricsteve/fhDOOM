@@ -517,20 +517,6 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 			float t = idMath::Abs( maximum.y - minimum.y ) * 0.5f;
 			float b = -t;
 
-			if (r_ignore.GetBool()) {
-				idVec2 vWorldUnitsPerTexel = idVec2( 2 * r, 2 * t ) / 1024.0f;
-
-				minimum /= vWorldUnitsPerTexel;
-				minimum.x = idMath::Floor( minimum.x ) - 10;
-				minimum.y = idMath::Floor( minimum.y ) - 10;
-				minimum *= vWorldUnitsPerTexel;
-
-				maximum /= vWorldUnitsPerTexel;
-				maximum.x = idMath::Ceil( maximum.x ) + 10;
-				maximum.y = idMath::Ceil( maximum.y ) + 10;
-				maximum *= vWorldUnitsPerTexel;
-			}
-
 			vLight->viewMatrices[c] = frustum.viewMatrix;
 			vLight->viewMatrices[c][12] = -(maximum.x + minimum.x) * 0.5f;
 			vLight->viewMatrices[c][13] = -(maximum.y + minimum.y) * 0.5f;

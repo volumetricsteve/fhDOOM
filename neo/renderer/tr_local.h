@@ -1086,8 +1086,6 @@ extern idCVar r_shading;
 extern idCVar r_specularExp;
 extern idCVar r_specularScale;
 
-extern idCVar r_useFramebuffer;
-
 /*
 ====================================================================
 

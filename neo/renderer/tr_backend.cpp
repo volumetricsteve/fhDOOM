@@ -629,16 +629,7 @@ static void	RB_SetBuffer( const void *data ) {
 
 	backEnd.frameCount = cmd->frameCount;
 
-	if (r_useFramebuffer.GetBool()) {
-		int width = glConfig.vidWidth;
-		int height = glConfig.vidHeight;
-
-		fhFramebuffer::renderFramebuffer->Resize( width, height );
-		fhFramebuffer::renderFramebuffer->Bind();
-	}
-	else {
-		fhFramebuffer::defaultFramebuffer->Bind();
-	}
+	fhFramebuffer::defaultFramebuffer->Bind();
 
 	// clear screen for debugging
 	// automatically enable this with several other debug tools
@@ -739,12 +730,6 @@ static void	RB_SwapBuffers( const void *data ) {
 	}
 
     RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
-
-	if (r_useFramebuffer.GetBool()) {
-		fhFramebuffer::defaultFramebuffer->Bind();
-		//FIXME(johl): reimplement blit
-		//fhFramebuffer::renderFramebuffer->BlitToCurrentFramebuffer();
-	}
 
     GLimp_SwapBuffers();
 }
