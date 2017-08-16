@@ -317,7 +317,6 @@ int GLX_Init(glimpParms_t a) {
 	int tcolorbits, tdepthbits, tstencilbits;
 	int actualWidth, actualHeight;
 	int i;
-	const char *glstring;
 
 	if ( !GLimp_OpenDisplay() ) {
 		return false;
@@ -593,11 +592,8 @@ int GLX_Init(glimpParms_t a) {
 	// Free the visinfo after we're done with it
 	XFree(visinfo);
 
-	glstring = (const char *) glGetString(GL_RENDERER);
+	auto glstring = (const char *) glGetString(GL_RENDERER);
 	common->Printf("GL_RENDERER: %s\n", glstring);
-
-	glstring = (const char *) glGetString(GL_EXTENSIONS);
-	common->Printf("GL_EXTENSIONS: %s\n", glstring);
 
 	// FIXME: here, software GL test
 
