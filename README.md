@@ -120,7 +120,7 @@ All Screenshots were taken with HD textures installed (Wulfen, Monoxead, xio).
 
 ## Installation
 
- * Download Binaries here: http://www.facinghell.com/fhdoom/fhDOOM-1.5.1-1413.zip
+ * Download Binaries here: http://www.facinghell.com/fhdoom/fhDOOM-1.5.2-1414.zip
  * Extract zip to a location of your choice (e.g. c:\games)
  * Copy 5 files from the original DOOM3 (CD or Steam) to base directory of fhDOOM (e.g. c:\games\fhDOOM\base):
     * pak000.pk4
