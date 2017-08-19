@@ -114,14 +114,14 @@ void fhFramebuffer::Resize( int width, int height, int samples ) {
 
 int fhFramebuffer::GetWidth() const {
 	if (!colorAttachment && !depthAttachment) {
-		return glConfig.vidWidth;
+		return glConfig.windowWidth;
 	}
 	return width;
 }
 
 int fhFramebuffer::GetHeight() const {
 	if (!colorAttachment && !depthAttachment) {
-		return glConfig.vidHeight;
+		return glConfig.windowHeight;
 	}
 	return height;
 }

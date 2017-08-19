@@ -391,6 +391,7 @@ void			Sys_SetFatalError( const char *error );
 
 // display perference dialog
 void			Sys_DoPreferences( void );
+bool            Sys_GetDisplayResolution(int* width, int* height);
 
 /*
 ==============================================================

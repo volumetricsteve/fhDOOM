@@ -637,16 +637,27 @@ static void	RB_SetBuffer( const void *data ) {
 	backEnd.frameCount = cmd->frameCount;
 
 	if (r_useFramebuffer.GetBool()) {
-		float scale = r_framebufferScale.GetFloat();
-		int samples = Min( r_multiSamples.GetInteger(), glConfig.maxSamples );
-		fhFramebuffer::renderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, samples );
-		fhFramebuffer::currentRenderFramebuffer->Resize( glConfig.vidWidth * scale, glConfig.vidHeight * scale, 1 );
+		if (r_mode.IsModified()) {
+			int w, h, a;
+			if (R_GetModeInfo(w, h, a, r_mode.GetInteger())) {
+				glConfig.vidWidth = w;
+				glConfig.vidHeight = h;
+			}
+
+			r_mode.ClearModified();
+		}
+
+		const float scale = r_framebufferScale.GetFloat();
+		const int samples = Min( r_multiSamples.GetInteger(), glConfig.maxSamples );
+		const int renderWidth = glConfig.vidWidth * scale;
+		const int renderHeight = glConfig.vidHeight * scale;
+
+		fhFramebuffer::renderFramebuffer->Resize(renderWidth, renderHeight,	samples);
+		fhFramebuffer::currentRenderFramebuffer->Resize(renderWidth, renderHeight, 1);
 		fhFramebuffer::renderFramebuffer->Bind();
 
-		const auto width = fhFramebuffer::GetCurrentDrawBuffer()->GetWidth();
-		const auto height = fhFramebuffer::GetCurrentDrawBuffer()->GetHeight();
-		glViewport( 0, 0, width, height );
-		glScissor( 0, 0, width, height );
+		glViewport(0, 0, renderWidth, renderHeight);
+		glScissor(0, 0, renderWidth, renderHeight);
 	}
 
 	// clear screen for debugging
@@ -745,9 +756,6 @@ RB_SwapBuffers
 */
 static void	RB_SwapBuffers( const void *data ) {
 	// texture swapping test
-	if ( r_showImages.GetInteger() != 0 ) {
-		RB_ShowImages();
-	}
 
 	if (r_useFramebuffer.GetBool()) {
 		auto src = fhFramebuffer::renderFramebuffer;
@@ -774,6 +782,10 @@ static void	RB_SwapBuffers( const void *data ) {
 	// force a gl sync if requested
 	if ( r_finish.GetBool() ) {
 		glFinish();
+	}
+
+	if (r_showImages.GetInteger() != 0) {
+		RB_ShowImages();
 	}
 
     RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );

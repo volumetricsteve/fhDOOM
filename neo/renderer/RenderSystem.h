@@ -67,6 +67,8 @@ typedef struct glconfig_s {
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
 	int					vidAspectRatio;
 
+	int                 windowWidth, windowHeight;
+
 	bool				isFullscreen;
 
 	bool				isInitialized;
@@ -277,8 +279,7 @@ public:
 
 	// a frame cam consist of 2D drawing and potentially multiple 3D scenes
 	// window sizes are needed to convert SCREEN_WIDTH / SCREEN_HEIGHT values
-	virtual void			BeginFrame( int windowWidth, int windowHeight ) = 0;
-	virtual void			BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) = 0;
+	virtual void			BeginFrame( int renderWidth, int renderHeight ) = 0;
 
 	// if the pointers are not NULL, timing info will be returned
 	virtual renderSystemTime EndFrame() = 0;

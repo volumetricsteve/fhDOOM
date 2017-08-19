@@ -810,8 +810,7 @@ public:
 	virtual void			DrawBigStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) override;
 	virtual void			WriteDemoPics() override;
 	virtual void			DrawDemoPics() override;
-	virtual void			BeginFrame( int windowWidth, int windowHeight ) override;
-	virtual void			BeginFrame( int windowWidth, int windowHeight, int renderWidth, int renderHeight ) override;
+	virtual void			BeginFrame( int renderWidth, int renderHeight ) override;
 	virtual renderSystemTime EndFrame() override;
 	virtual void			TakeScreenshot( int width, int height, const char *fileName, int downSample, renderView_t *ref ) override;
 	virtual void			CropRenderSize( int width, int height, bool makePowerOfTwo = false, bool forceDimensions = false ) override;
@@ -1282,6 +1281,7 @@ void R_TransformClipToDevice( const idPlane &clip, const viewDef_t *view, idVec3
 void R_TransposeGLMatrix( const float in[16], float out[16] );
 
 void R_SetViewMatrix( viewDef_t *viewDef );
+bool R_GetModeInfo(int &width, int &height, int &aspectRatio, int mode);
 
 void myGlMultMatrix( const float *a, const float *b, float *out );
 

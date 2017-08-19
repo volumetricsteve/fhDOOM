@@ -276,16 +276,6 @@ main window procedure
 LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam ) {
 	int key;
 	switch( uMsg ) {
-		case WM_WINDOWPOSCHANGED:
-			if (glConfig.isInitialized) {
-				RECT rect;
-				if (::GetClientRect(win32.hWnd, &rect)) {
-					glConfig.vidWidth = rect.right - rect.left;
-					glConfig.vidHeight = rect.bottom - rect.top;
-				}
-			}
-			break;
-
 		case WM_CREATE:
 
 			win32.hWnd = hWnd;

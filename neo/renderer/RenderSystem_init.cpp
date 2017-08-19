@@ -221,6 +221,7 @@ idCVar r_debugRenderToTexture( "r_debugRenderToTexture", "0", CVAR_RENDERER | CV
 idCVar r_softParticles( "r_softParticles", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enabled soft particles");
 idCVar r_defaultParticleSoftness( "r_defaultParticleSoftness", "0.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "");
 
+idCVar r_windowMode("r_windowMode", "-1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
 idCVar r_useFramebuffer( "r_useFramebuffer", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
 idCVar r_framebufferScale( "r_framebufferScale", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "" );
 
@@ -336,29 +337,29 @@ namespace {
 		{ "Mode 15: 1920x1200", 1920, 1200, AR_16_10 },
 	};
 	const int s_numVidModes = (sizeof( r_vidModes ) / sizeof( r_vidModes[0] ));
+}
 
-	bool R_GetModeInfo( int &width, int &height, int &aspectRatio, int mode ) {
+bool R_GetModeInfo(int &width, int &height, int &aspectRatio, int mode) {
 
-		if (mode < -1 || mode >= s_numVidModes) {
-			return false;
-		}
-
-		if (mode == -1) {
-			width = r_customWidth.GetInteger();
-			height = r_customHeight.GetInteger();
-			aspectRatio = -1;
-		}
-		else {
-			const vidmode_t&	vm = r_vidModes[mode];
-			width = vm.width;
-			height = vm.height;
-			aspectRatio = vm.aspectRatio;
-		}
-
-		return true;
+	if (mode < -1 || mode >= s_numVidModes) {
+		return false;
 	}
 
+	if (mode == -1) {
+		width = r_customWidth.GetInteger();
+		height = r_customHeight.GetInteger();
+		aspectRatio = -1;
+	}
+	else {
+		const vidmode_t&	vm = r_vidModes[mode];
+		width = vm.width;
+		height = vm.height;
+		aspectRatio = vm.aspectRatio;
+	}
+
+	return true;
 }
+
 /*
 ====================
 R_GLDebugOutput
@@ -494,9 +495,34 @@ void R_InitOpenGL( void ) {
 		// set the parameters we are trying
 		R_GetModeInfo( glConfig.vidWidth, glConfig.vidHeight, glConfig.vidAspectRatio, r_mode.GetInteger() );
 
+		if (r_useFramebuffer.GetBool()) {
+			if (r_fullscreen.GetBool()) {
+				if (Sys_GetDisplayResolution(&glConfig.windowWidth, &glConfig.windowHeight)) {
+					common->Printf("native display resolution: %d x %d\n", glConfig.windowWidth, glConfig.windowHeight);
+				}
+				else {
+					common->Error("failed to detect display resolution\n");
+				}
+			}
+			else {
+				if (r_windowMode.GetInteger() < 0) {
+					glConfig.windowWidth = glConfig.vidWidth;
+					glConfig.windowHeight = glConfig.vidHeight;
+				}
+				else {
+					int ignored;
+					R_GetModeInfo(glConfig.windowWidth, glConfig.windowHeight, ignored, r_windowMode.GetInteger());
+				}
+			}
+		}
+		else {
+			glConfig.windowWidth = glConfig.vidWidth;
+			glConfig.windowHeight = glConfig.vidHeight;
+		}
+
 		glimpParms_t	parms;
-		parms.width = glConfig.vidWidth;
-		parms.height = glConfig.vidHeight;
+		parms.width = glConfig.windowWidth;
+		parms.height = glConfig.windowHeight;
 		parms.fullScreen = r_fullscreen.GetBool();
 		parms.displayHz = r_displayRefresh.GetInteger();
 		parms.multiSamples = 1;// r_multiSamples.GetInteger();

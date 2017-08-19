@@ -597,16 +597,7 @@ void idRenderSystemLocal::DrawBigStringExt( int x, int y, const char *string, co
 BeginFrame
 ====================
 */
-void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
-	BeginFrame( windowWidth, windowHeight, windowWidth, windowHeight );
-}
-
-/*
-====================
-BeginFrame
-====================
-*/
-void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int /*renderWidth*/, int /*renderHeight*/ ) {
+void idRenderSystemLocal::BeginFrame( int renderWidth, int renderHeight ) {
 	setBufferCommand_t	*cmd;
 
 	if ( !glConfig.isInitialized ) {
@@ -623,13 +614,13 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight, int /*r
 	}
 	*/
 
-	glConfig.vidWidth = windowWidth;
-	glConfig.vidHeight = windowHeight;
+	glConfig.vidWidth = renderWidth;
+	glConfig.vidHeight = renderHeight;
 
 	renderCrops[0].x = 0;
 	renderCrops[0].y = 0;
-	renderCrops[0].width = windowWidth * r_framebufferScale.GetFloat();
-	renderCrops[0].height = windowHeight * r_framebufferScale.GetFloat();
+	renderCrops[0].width = renderWidth * r_framebufferScale.GetFloat();
+	renderCrops[0].height = renderHeight * r_framebufferScale.GetFloat();
 	currentRenderCrop = 0;
 
 	// screenFraction is just for quickly testing fill rate limitations

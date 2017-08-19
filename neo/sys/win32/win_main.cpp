@@ -1562,3 +1562,27 @@ Sys_DoPreferences
 */
 void Sys_DoPreferences( void ) {
 }
+
+/*
+==================
+Sys_GetDisplayResolution
+==================
+*/
+bool Sys_GetDisplayResolution(int* width, int* height) {
+	const POINT ptZero = { 0, 0 };
+	const auto hMonitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
+
+	MONITORINFO mi;
+	mi.cbSize = sizeof(mi);
+	GetMonitorInfo(hMonitor, &mi);
+
+	if (width) {
+		*width = mi.rcMonitor.right - mi.rcMonitor.left;
+	}
+
+	if (height) {
+		*height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+	}
+
+	return true;
+}

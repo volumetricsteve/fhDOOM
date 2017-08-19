@@ -168,6 +168,10 @@ void fhImmediateMode::End()
 		GL_UseProgram(nullptr);
 	}
 
+	if (!geometryOnly) {
+		globalImages->BindNull(1);
+	}
+
 	drawVertsUsed = 0;
 	currentMode = GL_INVALID_ENUM;
 }
