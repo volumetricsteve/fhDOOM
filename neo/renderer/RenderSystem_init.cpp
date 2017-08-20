@@ -224,6 +224,7 @@ idCVar r_defaultParticleSoftness( "r_defaultParticleSoftness", "0.35", CVAR_REND
 idCVar r_windowMode("r_windowMode", "-1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
 idCVar r_useFramebuffer( "r_useFramebuffer", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
 idCVar r_framebufferScale( "r_framebufferScale", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "" );
+idCVar r_fxaa("r_fxaa", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "");
 
 namespace {
 
@@ -1692,6 +1693,7 @@ R_SetColorMappings
 ===============
 */
 void R_SetColorMappings( void ) {
+#if 0
 	int		i, j;
 	float	g, b;
 	int		inf;
@@ -1721,6 +1723,7 @@ void R_SetColorMappings( void ) {
 	}
 
 	GLimp_SetGamma( tr.gammaTable, tr.gammaTable, tr.gammaTable );
+#endif
 }
 
 

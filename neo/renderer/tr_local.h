@@ -1086,6 +1086,7 @@ extern idCVar r_specularScale;
 
 extern idCVar r_useFramebuffer;
 extern idCVar r_framebufferScale;
+extern idCVar r_fxaa;
 
 /*
 ====================================================================

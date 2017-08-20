@@ -45,6 +45,14 @@ public:
 
 	GLuint GetName() const { return name; }
 
+	idImage* GetColorAttachment() {
+		return colorAttachment;
+	}
+
+	idImage* GetDepthAttachment() {
+		return depthAttachment;
+	}
+
 	static fhFramebuffer* GetCurrentDrawBuffer() {
 		if (currentDrawBuffer == nullptr) {
 			currentDrawBuffer = defaultFramebuffer;

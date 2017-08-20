@@ -772,9 +772,58 @@ static void	RB_SwapBuffers( const void *data ) {
 			src = resolve;
 		}
 
+		def->Bind();
 		glViewport( 0, 0, def->GetWidth(), def->GetHeight() );
 		glScissor( 0, 0, def->GetWidth(), def->GetHeight() );
-		fhFramebuffer::BlitColor( src, def );
+		if (!r_ignore.GetBool()) {
+			fhFramebuffer::BlitColor(src, def);
+		}
+		else {
+			GL_ModelViewMatrix.LoadIdentity();
+			GL_State(GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);
+			GL_ProjectionMatrix.Push();
+			GL_ProjectionMatrix.LoadIdentity();
+
+			GL_ProjectionMatrix.Ortho(0, 1, 0, 1, -1, 1);
+
+
+			const float w = 0.4f, h = 0.4f;
+
+			GL_UseProgram(postprocessProgram);
+			src->GetColorAttachment()->Bind(1);
+			fhRenderProgram::SetModelViewMatrix(GL_ModelViewMatrix.Top());
+			fhRenderProgram::SetProjectionMatrix(GL_ProjectionMatrix.Top());
+			fhRenderProgram::SetDiffuseColor(idVec4::one);
+			fhRenderProgram::SetColorAdd(idVec4::zero);
+			fhRenderProgram::SetColorModulate(idVec4::one);
+			fhRenderProgram::SetBumpMatrix(idVec4(1, 0, 0, 0), idVec4(0, 1, 0, 0));
+			if (r_fxaa.GetBool()) {
+				fhRenderProgram::SetShaderParm(0, idVec4(r_brightness.GetFloat(), r_gamma.GetFloat(), src->GetWidth(), src->GetHeight()));
+			}
+			else {
+				fhRenderProgram::SetShaderParm(0, idVec4(r_brightness.GetFloat(), r_gamma.GetFloat(), 0, 0));
+			}
+
+			fhImmediateMode im(true);
+			im.Begin(GL_QUADS);
+			im.Color4f(1, 1, 1, 1);
+
+			im.TexCoord2f(0, 0);
+			im.Vertex2f(0, 0);
+
+			im.TexCoord2f(0, 1);
+			im.Vertex2f(0, 1);
+
+			im.TexCoord2f(1, 1);
+			im.Vertex2f(1, 1);
+
+			im.TexCoord2f(1, 0);
+			im.Vertex2f(1, 0);
+			im.End();
+
+			GL_ProjectionMatrix.Pop();
+		}
+
 
 		def->Bind();
 	}
