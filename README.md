@@ -86,6 +86,8 @@ fhDOOM is one of my little side projects. I am working on this because its fun a
   * Fixed tons of warnings
   * image_usePrecompressedTextures is 0 by default, so HD texture packs (like Wulfen) can be used more easily.
 
+see also [changes.md](changes.md) for complete history of all changes.
+
 ## Screenshots
 
 Shadow Mapping
