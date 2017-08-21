@@ -1,6 +1,5 @@
 ## 1.5.2 - 2017-08-16
-
-* fixed ambient lights (thx raynerpat!)
+* fixed ambient lights (thx raynorpat for contributing some code!)
 * fixed black objects: some objects (mostly rag dolls) appeared completely black until beeing moved the first time.
 * unified texture loading
     * all texture loading (uncompressed textures, compressed textures, cube maps, image programs) goes through the same code path
