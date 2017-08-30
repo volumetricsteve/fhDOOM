@@ -35,6 +35,8 @@ fhFramebuffer* fhFramebuffer::shadowmapFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::defaultFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentDepthFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::currentRenderFramebuffer = nullptr;
+fhFramebuffer* fhFramebuffer::bloomFramebuffer = nullptr;
+fhFramebuffer* fhFramebuffer::bloomTmpFramebuffer = nullptr;
 fhFramebuffer* fhFramebuffer::renderFramebuffer = nullptr;
 
 fhFramebuffer::fhFramebuffer( int w, int h, idImage* color, idImage* depth ) {
@@ -205,6 +207,8 @@ void fhFramebuffer::Init() {
 	currentDepthFramebuffer = new fhFramebuffer( 1024, 1024, nullptr, globalImages->currentDepthImage );
 	currentRenderFramebuffer = new fhFramebuffer( 1024, 1024, globalImages->currentRenderImage, nullptr );
 	renderFramebuffer = new fhFramebuffer(1024, 1024, globalImages->renderColorImage, globalImages->renderDepthImage);
+	bloomFramebuffer = new fhFramebuffer(128, 128, globalImages->bloomImage, nullptr);
+	bloomTmpFramebuffer = new fhFramebuffer(128, 128, globalImages->bloomImageTmp, nullptr);
 	currentDrawBuffer = defaultFramebuffer;
 }
 
@@ -215,6 +219,8 @@ void fhFramebuffer::PurgeAll() {
 	defaultFramebuffer->Purge();
 	currentDepthFramebuffer->Purge();
 	currentRenderFramebuffer->Purge();
+	bloomFramebuffer->Purge();
+	bloomTmpFramebuffer->Purge();
 }
 
 void fhFramebuffer::BlitColor( fhFramebuffer* source, fhFramebuffer* dest ) {

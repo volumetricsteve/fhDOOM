@@ -340,7 +340,7 @@ static bool R_LoadCubeMap( const char* filename, cubeFiles_t cubeFiles, fhImageD
 
 		ID_TIME_T time = 0;
 
-		if (!fhImageData::LoadFile( fullName, (!data ? nullptr : &images[i]), &time )) {
+		if (!fhImageData::LoadFile( fullName, (!data ? nullptr : &images[i]), false, &time )) {
 			common->Warning( "failed to load cube map file: %s", fullName );
 			return false;
 		}
@@ -688,7 +688,7 @@ bool fhImageProgram::ParseImageProgram_r( idLexer &src, bool toRgba, fhImageData
 		return true;
 	}
 
-	return fhImageData::LoadFile( token.c_str(), imageData, timestamp );
+	return fhImageData::LoadFile( token.c_str(), imageData, toRgba, timestamp );
 }
 
 bool fhImageProgram::LoadImageProgram( const char* program, fhImageData* imageData, ID_TIME_T* timestamp ) {

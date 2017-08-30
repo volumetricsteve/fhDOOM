@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "global.inc"
 
 layout(binding = 1) uniform sampler2D texture1;
+layout(binding = 2) uniform sampler2D texture2;
 
 in vs_output
 {
@@ -135,6 +136,17 @@ void main(void)
   {
   	color = texture2D(texture1, frag.texcoord) *  frag.color * clamp(rpDiffuseColor, vec4(0,0,0,0), vec4(1,1,1,1));  
   }
+/*
+  float t = 0.6;
+  vec3 threshold = vec3(t, t, t);
+  if (color.x > threshold.x || color.y > threshold.y || color.z > threshold.z) {
+  	color = vec4(1,0,0,1);
+  }
+*/
+  vec4 bloom = texture2D(texture2, frag.texcoord);
+  color += bloom * shaderParm1.x;
+
+  //color = color / (color + vec4(1,1,1,1)) * 1.3;
 
   result = vec4(pow(color.rgb, vec3(1.0/gamma)), 1) * brightness;
 }

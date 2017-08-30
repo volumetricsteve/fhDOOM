@@ -107,9 +107,11 @@ bool fhImageData::TryLoadFile( const char* filename, const char* ext, fhImageDat
 }
 
 
-bool fhImageData::LoadFile( const char* filename, fhImageData* imageData, ID_TIME_T* timestamp ) {
-	if (TryLoadFile( filename, "dds", imageData, timestamp, &fhImageData::LoadDDS )){
-		return true;
+bool fhImageData::LoadFile(const char* filename, fhImageData* imageData, bool forceRgba, ID_TIME_T* timestamp) {
+	if (!forceRgba) {
+		if (TryLoadFile(filename, "dds", imageData, timestamp, &fhImageData::LoadDDS)){
+			return true;
+		}
 	}
 
 	if (TryLoadFile( filename, "tga", imageData, timestamp, &fhImageData::LoadTGA )){

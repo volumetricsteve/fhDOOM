@@ -121,6 +121,7 @@ typedef struct
 enum class pixelFormat_t {
 	None,
 	RGBA,
+	RGBA_32F,
 	BGRA,
 	RGB,
 	BGR,
@@ -429,6 +430,8 @@ public:
 	idImage *			renderColorImage;
 	idImage *			renderDepthImage;
 	idImage *			shadowmapImage;
+	idImage *           bloomImage;
+	idImage *           bloomImageTmp;
 
 	//--------------------------------------------------------
 

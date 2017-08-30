@@ -1086,7 +1086,6 @@ extern idCVar r_specularScale;
 
 extern idCVar r_useFramebuffer;
 extern idCVar r_framebufferScale;
-extern idCVar r_fxaa;
 
 /*
 ====================================================================
@@ -1393,6 +1392,7 @@ void RB_DrawView( const void *data );
 void RB_DetermineLightScale( void );
 void RB_STD_LightScale( void );
 void RB_BeginDrawingView (void);
+void RB_PrintDebugOutput();
 
 /*
 ============================================================

@@ -128,7 +128,7 @@ public:
 	bool        IsValid() const;
 	void        Clear();
 
-	static bool LoadFile( const char* filename, fhImageData* imageData, ID_TIME_T* timestamp );
+	static bool LoadFile( const char* filename, fhImageData* imageData, bool forceRgba, ID_TIME_T* timestamp );
 
 private:
 	//TODO(johl): hard coded maximum level num limits the maximum texture size, but that's ok for now

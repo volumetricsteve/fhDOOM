@@ -378,20 +378,9 @@ static void R_BorderClampImage( idImage *image ) {
 	//glSamplerParameterfv(image->samplernum, GL_TEXTURE_BORDER_COLOR, color );
 }
 
-static void R_RGB8Image( idImage *image ) {
-	image->AllocateStorage( pixelFormat_t::RGB, DEFAULT_SIZE, DEFAULT_SIZE, 1, 1 );
-}
-
-static void R_RGBA8Image( idImage *image ) {
-	image->AllocateStorage( pixelFormat_t::RGBA, DEFAULT_SIZE, DEFAULT_SIZE, 1, 1 );
-}
-
-static void R_Depth( idImage *image ) {
-	image->AllocateStorage( pixelFormat_t::DEPTH_24, DEFAULT_SIZE, DEFAULT_SIZE, 1, 1 );
-}
-
-static void R_DepthStencil( idImage *image ) {
-	image->AllocateStorage( pixelFormat_t::DEPTH_24_STENCIL_8, DEFAULT_SIZE, DEFAULT_SIZE, 1, 1 );
+template<pixelFormat_t Format, int InitialWidth = DEFAULT_SIZE, int InitialHeight = DEFAULT_SIZE>
+static void R_DefaultImage(idImage* image) {
+	image->AllocateStorage(Format, InitialWidth, InitialHeight, 1, 1);
 }
 
 static void R_AlphaNotchImage( idImage *image ) {
@@ -1849,15 +1838,15 @@ void idImageManager::Init() {
 
 	// cinematicImage is used for cinematic drawing
 	// scratchImage is used for screen wipes/doublevision etc..
-	cinematicImage = ImageFromFunction("_cinematic", R_RGBA8Image );
-	scratchImage = ImageFromFunction("_scratch", R_RGBA8Image );
-	scratchImage2 = ImageFromFunction("_scratch2", R_RGBA8Image );
-	accumImage = ImageFromFunction("_accum", R_RGBA8Image );
-	currentRenderImage = ImageFromFunction("_currentRender", R_RGB8Image );
+	cinematicImage = ImageFromFunction("_cinematic", R_DefaultImage<pixelFormat_t::RGBA>);
+	scratchImage = ImageFromFunction("_scratch", R_DefaultImage<pixelFormat_t::RGBA>);
+	scratchImage2 = ImageFromFunction("_scratch2", R_DefaultImage<pixelFormat_t::RGBA>);
+	accumImage = ImageFromFunction("_accum", R_DefaultImage<pixelFormat_t::RGBA>);
+	currentRenderImage = ImageFromFunction("_currentRender", R_DefaultImage<pixelFormat_t::RGBA_32F>);
 
-	//TODO(johl): using Depth only (instead of DepthStencil) would be fine for this. Unfortunately due to an AMD driver bug,
+	//TODO(johl): using Depth only (instead of DepthStencil) would be fine for this. Unfortunately due to an AMD driver bug(?),
 	//            we can't blit from DepthStencil to Depth, so this needs to be DepthStencil as well ;(
-	currentDepthImage = ImageFromFunction( "_currentDepth", R_DepthStencil );
+	currentDepthImage = ImageFromFunction("_currentDepth", R_DefaultImage<pixelFormat_t::DEPTH_24_STENCIL_8>);
 
 	cmdSystem->AddCommand( "reloadImages", R_ReloadImages_f, CMD_FL_RENDERER, "reloads images" );
 	cmdSystem->AddCommand( "listImages", R_ListImages_f, CMD_FL_RENDERER, "lists images" );
@@ -1865,9 +1854,12 @@ void idImageManager::Init() {
 
 	jitterImage = ImageFromFunction( "_jitter", R_JitterImage );
 	testGammaBiasImage = ImageFromFunction( "_testGammaBias", R_TestGammaBiasImage );
-	shadowmapImage = ImageFromFunction( "_shadowmapImage", R_Depth );
-	renderColorImage = ImageFromFunction( "_renderColorImage", R_RGBA8Image );
-	renderDepthImage = ImageFromFunction( "_renderDepthImage", R_DepthStencil );
+	shadowmapImage = ImageFromFunction("_shadowmapImage", R_DefaultImage<pixelFormat_t::DEPTH_24>);
+	renderColorImage = ImageFromFunction( "_renderColorImage", R_DefaultImage<pixelFormat_t::RGBA_32F>);
+	renderDepthImage = ImageFromFunction("_renderDepthImage", R_DefaultImage<pixelFormat_t::DEPTH_24_STENCIL_8>);
+
+	bloomImageTmp = ImageFromFunction("_bloomTmp", R_DefaultImage<pixelFormat_t::RGBA, 512, 512>);
+	bloomImage = ImageFromFunction("_bloom", R_DefaultImage<pixelFormat_t::RGBA, 512, 512>);
 }
 
 /*

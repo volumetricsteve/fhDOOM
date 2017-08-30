@@ -222,6 +222,8 @@ static GLenum SelectInteralFormat( pixelFormat_t pf ) {
 		return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 	case pixelFormat_t::RGBA:
 		return GL_RGBA8;
+	case pixelFormat_t::RGBA_32F:
+		return GL_RGBA32F;
 	case pixelFormat_t::RGB:
 		return GL_RGB8;
 	case pixelFormat_t::RGTC:
@@ -839,7 +841,7 @@ bool idImage::CheckPrecompressedImage( bool fullLoad ) {
 	timestamp = precompTimestamp;
 
 	fhImageData data;
-	if (!fhImageData::LoadFile(filename, &data, nullptr)) {
+	if (!fhImageData::LoadFile(filename, &data, false, nullptr)) {
 		return false;
 	}
 

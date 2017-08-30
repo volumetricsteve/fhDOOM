@@ -65,6 +65,8 @@ public:
 	static fhFramebuffer* shadowmapFramebuffer;
 	static fhFramebuffer* currentDepthFramebuffer;
 	static fhFramebuffer* currentRenderFramebuffer;
+	static fhFramebuffer* bloomFramebuffer;
+	static fhFramebuffer* bloomTmpFramebuffer;
 
 	static void Init();
 	static void PurgeAll();

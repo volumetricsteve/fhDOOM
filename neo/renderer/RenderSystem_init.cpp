@@ -36,6 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "ImageData.h"
 #include "ImageProgram.h"
 #include "Sampler.h"
+#include <mutex>
 
 // Vista OpenGL wrapper check
 #ifdef _WIN32
@@ -224,7 +225,6 @@ idCVar r_defaultParticleSoftness( "r_defaultParticleSoftness", "0.35", CVAR_REND
 idCVar r_windowMode("r_windowMode", "-1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "");
 idCVar r_useFramebuffer( "r_useFramebuffer", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "render everything to an offscreen buffer before blitting the final image to the screen" );
 idCVar r_framebufferScale( "r_framebufferScale", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "" );
-idCVar r_fxaa("r_fxaa", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "");
 
 namespace {
 
@@ -338,6 +338,9 @@ namespace {
 		{ "Mode 15: 1920x1200", 1920, 1200, AR_16_10 },
 	};
 	const int s_numVidModes = (sizeof( r_vidModes ) / sizeof( r_vidModes[0] ));
+
+	std::mutex debugOutputMutex;
+	idList<idStr> debugOutputBuffer;
 }
 
 bool R_GetModeInfo(int &width, int &height, int &aspectRatio, int mode) {
@@ -456,9 +459,23 @@ const GLvoid* userParam
 		break;
 	}
 
-	common->Printf("(GL %u) %s, %s, %s: %s\n", id, debSource, debType, debSev, message);
+
+	idStr temp;
+	sprintf(temp, "(GL %u) %s, %s, %s: %s", id, debSource, debType, debSev, message);
+
+	std::lock_guard<std::mutex> lock(debugOutputMutex);
+	debugOutputBuffer.Append(temp);
 
 #pragma warning( pop )
+}
+
+void RB_PrintDebugOutput()
+{
+	std::lock_guard<std::mutex> lock(debugOutputMutex);
+	for (int i = 0; i < debugOutputBuffer.Num(); ++i) {
+		common->Printf("%s\n", debugOutputBuffer[i].c_str());
+	}
+	debugOutputBuffer.Clear();
 }
 
 
