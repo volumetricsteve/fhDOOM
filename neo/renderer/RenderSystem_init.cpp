@@ -1139,7 +1139,14 @@ static void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t
 			}
 
 			if (r_useFramebuffer.GetBool()) {
-				glGetTextureImageEXT( globalImages->renderColorImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp );
+				auto src = fhFramebuffer::renderFramebuffer;
+				auto dst = fhFramebuffer::currentRenderFramebuffer;
+
+				glViewport(0, 0, dst->GetWidth(), dst->GetHeight());
+				glScissor(0, 0, dst->GetWidth(), dst->GetHeight());
+				fhFramebuffer::BlitColor(src, dst);
+
+				glGetTextureImageEXT(globalImages->currentRenderImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
 			}
 			else {
 				glReadBuffer( GL_FRONT );
