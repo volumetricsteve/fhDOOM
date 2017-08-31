@@ -220,6 +220,7 @@ void fhFramebuffer::PurgeAll() {
 	currentDepthFramebuffer->Purge();
 	currentRenderFramebuffer->Purge();
 	bloomFramebuffer->Purge();
+	renderFramebuffer->Purge();
 	bloomTmpFramebuffer->Purge();
 }
 
