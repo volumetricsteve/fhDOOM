@@ -158,15 +158,14 @@ drawSurfsCommand_t, etc) and links it to the end of the
 current command chain.
 ============
 */
-static void *R_GetCommandBuffer( int bytes ) {
-	emptyCommand_t	*cmd;
-
-	cmd = (emptyCommand_t *)R_FrameAlloc( bytes );
+template<typename T>
+static T* R_GetCommandBuffer() {
+	auto cmd = (emptyCommand_t *)R_FrameAlloc( sizeof(T) );
 	cmd->next = NULL;
 	frameData->cmdTail->next = &cmd->commandId;
 	frameData->cmdTail = cmd;
 
-	return (void *)cmd;
+	return (T*)cmd;
 }
 
 
@@ -207,9 +206,7 @@ have multiple views if a mirror, portal, or dynamic texture is present.
 =============
 */
 void	R_AddDrawViewCmd( viewDef_t *parms ) {
-	drawSurfsCommand_t	*cmd;
-
-	cmd = (drawSurfsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	auto cmd = R_GetCommandBuffer<drawSurfsCommand_t>();
 	cmd->commandId = RC_DRAW_VIEW;
 
 	cmd->viewDef = parms;
@@ -245,23 +242,20 @@ evaluated interactively.
 ======================
 */
 void R_LockSurfaceScene( viewDef_t *parms ) {
-	drawSurfsCommand_t	*cmd;
-	viewEntity_t			*vModel;
-
 	// set the matrix for world space to eye space
 	R_SetViewMatrix( parms );
 	tr.lockSurfacesCmd.viewDef->worldSpace = parms->worldSpace;
 
 	// update the view origin and axis, and all
 	// the entity matricies
-	for( vModel = tr.lockSurfacesCmd.viewDef->viewEntitys ; vModel ; vModel = vModel->next ) {
+	for (viewEntity_t* vModel = tr.lockSurfacesCmd.viewDef->viewEntitys; vModel; vModel = vModel->next) {
 		myGlMultMatrix( vModel->modelMatrix,
 			tr.lockSurfacesCmd.viewDef->worldSpace.modelViewMatrix,
 			vModel->modelViewMatrix );
 	}
 
 	// add the stored off surface commands again
-	cmd = (drawSurfsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	auto cmd = R_GetCommandBuffer<drawSurfsCommand_t>();
 	*cmd = tr.lockSurfacesCmd;
 }
 
@@ -598,21 +592,11 @@ BeginFrame
 ====================
 */
 void idRenderSystemLocal::BeginFrame( int renderWidth, int renderHeight ) {
-	setBufferCommand_t	*cmd;
-
 	if ( !glConfig.isInitialized ) {
 		return;
 	}
 
 	guiModel->Clear();
-
-	// for the larger-than-window tiled rendering screenshots
-	/*
-	if ( tiledViewport[0] ) {
-		windowWidth = tiledViewport[0];
-		windowHeight = tiledViewport[1];
-	}
-	*/
 
 	glConfig.vidWidth = renderWidth;
 	glConfig.vidHeight = renderHeight;
@@ -650,7 +634,7 @@ void idRenderSystemLocal::BeginFrame( int renderWidth, int renderHeight ) {
 	//
 	// draw buffer stuff
 	//
-	cmd = (setBufferCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	auto cmd = R_GetCommandBuffer<setBufferCommand_t>();
 	cmd->commandId = RC_SET_BUFFER;
 	cmd->frameCount = frameCount;
 }
@@ -673,8 +657,6 @@ Returns the number of msec spent in the back end
 =============
 */
 renderSystemTime idRenderSystemLocal::EndFrame() {
-	emptyCommand_t *cmd;
-
 	if ( !glConfig.isInitialized ) {
 		return renderSystemTime{ 0, 0 };
 	}
@@ -698,7 +680,7 @@ renderSystemTime idRenderSystemLocal::EndFrame() {
 	GL_CheckErrors();
 
 	// add the swapbuffers command
-	cmd = (emptyCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	auto cmd = R_GetCommandBuffer<emptyCommand_t>();
 	cmd->commandId = RC_SWAP_BUFFERS;
 
 	// start the back end up again with the new command list
@@ -903,7 +885,7 @@ void idRenderSystemLocal::CaptureRenderToImage( const char *imageName ) {
 
 	renderCrop_t *rc = &renderCrops[currentRenderCrop];
 
-	copyRenderCommand_t *cmd = (copyRenderCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	auto cmd = R_GetCommandBuffer<copyRenderCommand_t>();
 	cmd->commandId = RC_COPY_RENDER;
 	cmd->x = rc->x;
 	cmd->y = rc->y;

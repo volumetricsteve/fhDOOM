@@ -454,16 +454,17 @@ void RB_BeginDrawingView (void) {
 	GL_ProjectionMatrix.Load( backEnd.viewDef->projectionMatrix );
 
 	// set the window clipping
-	glViewport( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1,
-		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1,
+	glViewport( backEnd.viewDef->viewport.x1,
+		backEnd.viewDef->viewport.y1,
 		backEnd.viewDef->viewport.x2 + 1 - backEnd.viewDef->viewport.x1,
 		backEnd.viewDef->viewport.y2 + 1 - backEnd.viewDef->viewport.y1 );
 
 	// the scissor may be smaller than the viewport for subviews
-	glScissor( tr.viewportOffset[0] + backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1,
-		tr.viewportOffset[1] + backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1,
+	glScissor( backEnd.viewDef->viewport.x1 + backEnd.viewDef->scissor.x1,
+		backEnd.viewDef->viewport.y1 + backEnd.viewDef->scissor.y1,
 		backEnd.viewDef->scissor.x2 + 1 - backEnd.viewDef->scissor.x1,
 		backEnd.viewDef->scissor.y2 + 1 - backEnd.viewDef->scissor.y1 );
+
 	backEnd.currentScissor = backEnd.viewDef->scissor;
 
 	// ensures that depth writes are enabled for the depth clear

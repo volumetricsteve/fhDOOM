@@ -502,10 +502,6 @@ void R_InitOpenGL( void ) {
 		common->FatalError( "R_InitOpenGL called while active" );
 	}
 
-	// in case we had an error while doing a tiled rendering
-	tr.viewportOffset[0] = 0;
-	tr.viewportOffset[1] = 0;
-
 	//
 	// initialize OS specific portions of the renderSystem
 	//
@@ -1110,97 +1106,40 @@ static void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t
 	int	oldWidth = glConfig.vidWidth;
 	int oldHeight = glConfig.vidHeight;
 
-	tr.tiledViewport[0] = width;
-	tr.tiledViewport[1] = height;
-
-	// disable scissor, so we don't need to adjust all those rects
-	r_useScissor.SetBool( false );
-
-	for ( int xo = 0 ; xo < width ; xo += oldWidth ) {
-		for ( int yo = 0 ; yo < height ; yo += oldHeight ) {
-			tr.viewportOffset[0] = -xo;
-			tr.viewportOffset[1] = -yo;
-
-			if ( ref ) {
-				tr.BeginFrame( oldWidth, oldHeight );
-				tr.primaryWorld->RenderScene( ref );
-				tr.EndFrame();
-			} else {
-				session->UpdateScreen();
-			}
-
-			int w = oldWidth;
-			if ( xo + w > width ) {
-				w = width - xo;
-			}
-			int h = oldHeight;
-			if ( yo + h > height ) {
-				h = height - yo;
-			}
-
-			if (r_useFramebuffer.GetBool()) {
-				auto src = fhFramebuffer::renderFramebuffer;
-				auto dst = fhFramebuffer::currentRenderFramebuffer;
-
-				glViewport(0, 0, dst->GetWidth(), dst->GetHeight());
-				glScissor(0, 0, dst->GetWidth(), dst->GetHeight());
-				fhFramebuffer::BlitColor(src, dst);
-
-				glGetTextureImageEXT(globalImages->currentRenderImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
-			}
-			else {
-				glReadBuffer( GL_FRONT );
-				glReadPixels( 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, temp );
-			}
-
-			int	row = (width * 3 + 3) & ~3;		// OpenGL pads to dword boundaries
-
-			for (int y = 0; y < h; y++) {
-				memcpy( buffer + ((yo + y)* width + xo) * 3, temp + y * row, w * 3 );
-			}
-		}
+	if ( ref ) {
+		tr.BeginFrame( width, height );
+		tr.primaryWorld->RenderScene( ref );
+		tr.EndFrame();
+	} else {
+		session->UpdateScreen();
 	}
 
-	r_useScissor.SetBool( true );
+	if (r_useFramebuffer.GetBool()) {
+		auto src = fhFramebuffer::renderFramebuffer;
+		auto dst = fhFramebuffer::currentRenderFramebuffer;
 
-	tr.viewportOffset[0] = 0;
-	tr.viewportOffset[1] = 0;
-	tr.tiledViewport[0] = 0;
-	tr.tiledViewport[1] = 0;
+		glViewport(0, 0, dst->GetWidth(), dst->GetHeight());
+		glScissor(0, 0, dst->GetWidth(), dst->GetHeight());
+		fhFramebuffer::BlitColor(src, dst);
+
+		glGetTextureImageEXT(globalImages->currentRenderImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
+	}
+	else {
+		glReadBuffer( GL_FRONT );
+		glReadPixels( 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, temp );
+	}
+
+	int	row = (width * 3 + 3) & ~3;		// OpenGL pads to dword boundaries
+
+	for (int y = 0; y < height; y++) {
+		memcpy( buffer + (y* width) * 3, temp + y * row, width * 3 );
+	}
 
 	R_StaticFree( temp );
 
 	glConfig.vidWidth = oldWidth;
 	glConfig.vidHeight = oldHeight;
 }
-
-static void R_ReadPixels( int width, int height, byte *buffer, renderView_t *ref = NULL ) {
-	// disable scissor, so we don't need to adjust all those rects
-	r_useScissor.SetBool( false );
-
-	if (ref) {
-		tr.BeginFrame( width, height );
-		tr.primaryWorld->RenderScene( ref );
-		tr.EndFrame();
-	}
-	else {
-		session->UpdateScreen();
-	}
-
-	if (r_useFramebuffer.GetBool()) {
-		assert( glConfig.arbDirectStateAccessAvailable );
-		glGetTextureImageEXT( globalImages->renderColorImage->texnum, GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer );
-	}
-
-	r_useScissor.SetBool( true );
-
-	tr.viewportOffset[0] = 0;
-	tr.viewportOffset[1] = 0;
-	tr.tiledViewport[0] = 0;
-	tr.tiledViewport[1] = 0;
-}
-
-
 
 /*
 ==================
@@ -2016,10 +1955,6 @@ void idRenderSystemLocal::Clear( void ) {
 	viewCount = 0;
 	staticAllocCount = 0;
 	frameShaderTime = 0.0f;
-	viewportOffset[0] = 0;
-	viewportOffset[1] = 0;
-	tiledViewport[0] = 0;
-	tiledViewport[1] = 0;
 
 	ambientLightVector.Zero();
 	sortOffset = 0;

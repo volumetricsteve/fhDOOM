@@ -633,11 +633,9 @@ RB_SetBuffer
 =============
 */
 static void	RB_SetBuffer( const void *data ) {
-	const setBufferCommand_t	*cmd;
-
 	// see which draw buffer we want to render the frame to
 
-	cmd = (const setBufferCommand_t *)data;
+	auto cmd = (const setBufferCommand_t *)data;
 
 	backEnd.frameCount = cmd->frameCount;
 

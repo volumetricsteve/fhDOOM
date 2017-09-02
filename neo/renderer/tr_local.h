@@ -842,9 +842,6 @@ public:
 
 	float					frameShaderTime;	// shader time for all non-world 2D rendering
 
-	int						viewportOffset[2];	// for doing larger-than-window tiled renderings
-	int						tiledViewport[2];
-
 	// determines which back end to use, and if vertex programs are in use
 
 	const float			backEndRendererMaxLight;	// 1.0 for standard, unlimited for floats
