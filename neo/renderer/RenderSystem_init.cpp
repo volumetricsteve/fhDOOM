@@ -1111,6 +1111,8 @@ static void R_ReadTiledPixels( int width, int height, byte *buffer, renderView_t
 		tr.primaryWorld->RenderScene( ref );
 		tr.EndFrame();
 	} else {
+		glConfig.vidWidth = width;
+		glConfig.vidHeight = height;
 		session->UpdateScreen();
 	}
 
@@ -1375,42 +1377,25 @@ Saves out env/<basename>_ft.tga, etc
 ==================
 */
 void R_EnvShot_f( const idCmdArgs &args ) {
-	idStr		fullname;
-	const char	*baseName;
-	int			i;
-	idMat3		axis[6];
-	renderView_t	ref;
-	viewDef_t	primary;
-	int			blends;
 	const char	*extensions[6] =  { "_px.tga", "_nx.tga", "_py.tga", "_ny.tga",
 		"_pz.tga", "_nz.tga" };
-	int			size;
 
 	if ( args.Argc() != 2 && args.Argc() != 3 && args.Argc() != 4 ) {
 		common->Printf( "USAGE: envshot <basename> [size] [blends]\n" );
 		return;
 	}
-	baseName = args.Argv( 1 );
 
-	blends = 1;
+	int blends = 1;
+	int size = 256;
 	if ( args.Argc() == 4 ) {
 		size = atoi( args.Argv( 2 ) );
 		blends = atoi( args.Argv( 3 ) );
 	} else if ( args.Argc() == 3 ) {
 		size = atoi( args.Argv( 2 ) );
 		blends = 1;
-	} else {
-		size = 256;
-		blends = 1;
 	}
 
-	if ( !tr.primaryView ) {
-		common->Printf( "No primary view.\n" );
-		return;
-	}
-
-	primary = *tr.primaryView;
-
+	idMat3 axis[6];
 	memset( &axis, 0, sizeof( axis ) );
 	axis[0][0][0] = 1;
 	axis[0][1][2] = 1;
@@ -1436,18 +1421,25 @@ void R_EnvShot_f( const idCmdArgs &args ) {
 	axis[5][1][0] = 1;
 	axis[5][2][1] = 1;
 
-	for ( i = 0 ; i < 6 ; i++ ) {
-		ref = primary.renderView;
-		ref.x = ref.y = 0;
-		ref.fov_x = ref.fov_y = 90;
-		ref.width = glConfig.vidWidth;
-		ref.height = glConfig.vidHeight;
-		ref.viewaxis = axis[i];
-		sprintf( fullname, "env/%s%s", baseName, extensions[i] );
-		tr.TakeScreenshot( size, size, fullname, blends, &ref );
+	if (!tr.primaryView) {
+		common->Printf("No primary view.\n");
+		return;
 	}
 
-	common->Printf( "Wrote %s, etc\n", fullname.c_str() );
+	const char* baseName = args.Argv(1);
+
+	for ( int i = 0 ; i < 6 ; i++ ) {
+		renderView_t ref = tr.primaryView->renderView;
+		ref.x = ref.y = 0;
+		ref.fov_x = ref.fov_y = 90;
+		//ref.width = size;
+		//ref.height = size;
+		ref.viewaxis = axis[i];
+		idStr		fullname;
+		sprintf( fullname, "env/%s%s", baseName, extensions[i] );
+		tr.TakeScreenshot( size, size, fullname, blends, &ref );
+		common->Printf("Wrote %s, etc\n", fullname.c_str());
+	}
 }
 
 //============================================================================
