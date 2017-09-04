@@ -39,7 +39,8 @@ fhSampler::fhSampler()
 	, filter(TF_DEFAULT)
 	, repeat(TR_REPEAT)
 	, useAf(true)
-	, useLodBias(true) {
+	, useLodBias(true)
+	, depthComparison(false) {
 }
 
 fhSampler::~fhSampler() {
@@ -56,7 +57,7 @@ void fhSampler::Bind( int textureUnit ) {
 	}
 }
 
-fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat, bool useAf, bool useLodBias ) {
+fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat, bool useAf, bool useLodBias, bool depthComparison ) {
 
 	int i = 0;
 	for (; i < numSamplers; ++i) {
@@ -74,6 +75,9 @@ fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat
 		if (s.useLodBias != useLodBias)
 			continue;
 
+		if (s.depthComparison != depthComparison)
+			continue;
+
 		return &samplers[i];
 	}
 
@@ -87,6 +91,7 @@ fhSampler* fhSampler::GetSampler( textureFilter_t filter, textureRepeat_t repeat
 	sampler.repeat = repeat;
 	sampler.useAf = useAf;
 	sampler.useLodBias = useLodBias;
+	sampler.depthComparison = depthComparison;
 
 	sampler.Init();
 
@@ -151,10 +156,18 @@ void fhSampler::Init() {
 		}
 	}
 
-	if(useLodBias) {
+	if (useLodBias) {
 		glSamplerParameterf( num, GL_TEXTURE_LOD_BIAS, globalImages->textureLODBias );
 	} else {
 		glSamplerParameterf( num, GL_TEXTURE_LOD_BIAS, 0 );
+	}
+
+	if (depthComparison) {
+		glSamplerParameteri(num, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glSamplerParameteri(num, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	}
+	else {
+		glSamplerParameteri(num, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	}
 }
 

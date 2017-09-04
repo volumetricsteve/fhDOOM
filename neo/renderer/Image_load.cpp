@@ -96,7 +96,7 @@ SetImageFilterAndRepeat
 ==================
 */
 void idImage::SetImageFilterAndRepeat() {
-	sampler = fhSampler::GetSampler( filter, repeat, true, true );
+	sampler = fhSampler::GetSampler( filter, repeat, true, true, depthComparison );
 }
 
 /*
@@ -363,7 +363,6 @@ void idImage::AllocateStorage( pixelFormat_t format, uint32 width, uint32 height
 	this->internalFormat = internalformat2;
 
 	hasAlpha = false;
-	isMonochrome = false;
 
 	if (!glConfig.isInitialized) {
 		return;
@@ -407,7 +406,6 @@ void idImage::AllocateMultiSampleStorage( pixelFormat_t format, uint32 width, ui
 	this->internalFormat = internalformat2;
 
 	hasAlpha = false;
-	isMonochrome = false;
 
 	glGenTextures( 1, &texnum );
 	glTextureStorage2DMultisampleEXT( texnum, GL_TEXTURE_2D_MULTISAMPLE, samples, internalformat2, width, height, GL_FALSE );
@@ -941,11 +939,6 @@ void idImage::UploadPrecompressedImage( byte *data, int len ) {
 	} else {
 		common->Warning( "Invalid uncompressed internal format\n" );
 		return;
-	}
-
-	// we need the monochrome flag for the NV20 optimized path
-	if ( header->dwFlags & DDSF_ID_MONOCHROME ) {
-		isMonochrome = true;
 	}
 
 	type = TT_2D;			// FIXME: we may want to support pre-compressed cube maps in the future

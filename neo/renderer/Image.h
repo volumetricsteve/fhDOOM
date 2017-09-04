@@ -243,12 +243,12 @@ public:
 	textureRepeat_t		repeat;
 	textureDepth_t		depth;
 	cubeFiles_t			cubeFiles;				// determines the naming and flipping conventions for the six images
+	bool                depthComparison;
 
 	bool				referencedOutsideLevelLoad;
 	bool				levelLoadReferenced;	// for determining if it needs to be purged
 	bool				precompressedFile;		// true when it was loaded from a .d3t file
 	bool				defaulted;				// true if the default image was generated because a file couldn't be loaded
-	bool				isMonochrome;			// so the NV20 path can use a reduced pass count
 	bool                hasAlpha;               // true, if alpha channel contains actual data (not all alpha values are the same)
 	ID_TIME_T			timestamp;				// the most recent of all images used in creation, for reloadImages command
 
@@ -304,8 +304,8 @@ ID_INLINE idImage::idImage() {
 	mipmaps = 0;
 	cacheUsagePrev = cacheUsageNext = NULL;
 	hashNext = NULL;
-	isMonochrome = false;
 	refCount = 0;
+	depthComparison = false;
 }
 
 
@@ -471,7 +471,6 @@ extern idImageManager	*globalImages;		// pointer to global list for the rest of 
 
 IMAGEPROCESS
 
-FIXME: make an "imageBlock" type to hold byte*,width,height?
 ====================================================================
 */
 

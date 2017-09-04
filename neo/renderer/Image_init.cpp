@@ -383,6 +383,11 @@ static void R_DefaultImage(idImage* image) {
 	image->AllocateStorage(Format, InitialWidth, InitialHeight, 1, 1);
 }
 
+static void R_ShadowMapImage(idImage* image) {
+	image->depthComparison = true;
+	R_DefaultImage<pixelFormat_t::DEPTH_24>(image);
+}
+
 static void R_AlphaNotchImage( idImage *image ) {
 	byte	data[2][4];
 
@@ -1854,7 +1859,7 @@ void idImageManager::Init() {
 
 	jitterImage = ImageFromFunction( "_jitter", R_JitterImage );
 	testGammaBiasImage = ImageFromFunction( "_testGammaBias", R_TestGammaBiasImage );
-	shadowmapImage = ImageFromFunction("_shadowmapImage", R_DefaultImage<pixelFormat_t::DEPTH_24>);
+	shadowmapImage = ImageFromFunction("_shadowmapImage", R_ShadowMapImage);
 	renderColorImage = ImageFromFunction( "_renderColorImage", R_DefaultImage<pixelFormat_t::RGBA_32F>);
 	renderDepthImage = ImageFromFunction("_renderDepthImage", R_DefaultImage<pixelFormat_t::DEPTH_24_STENCIL_8>);
 

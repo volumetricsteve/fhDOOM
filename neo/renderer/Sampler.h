@@ -37,7 +37,7 @@ public:
 	void Bind(int textureUnit);
 	void Purge();
 
-	static fhSampler* GetSampler( textureFilter_t filter, textureRepeat_t repeat, bool useAf = true, bool useLodBias = true );
+	static fhSampler* GetSampler( textureFilter_t filter, textureRepeat_t repeat, bool useAf = true, bool useLodBias = true, bool depthComparison = false );
 	static void PurgeAll();
 
 private:
@@ -48,4 +48,5 @@ private:
 	textureRepeat_t		repeat;
 	bool				useAf;
 	bool				useLodBias;
+	bool				depthComparison;
 };

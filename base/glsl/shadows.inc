@@ -26,32 +26,18 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-layout(binding = 6) uniform sampler2D texture6;
-layout(binding = 7) uniform sampler2D texture7;
+layout(binding = 6) uniform sampler2DShadow shadowMap;
+layout(binding = 7) uniform sampler2D jitterMap;
 
-vec4 offset_lookup(sampler2D map, vec2 coord, vec2 offset)
+float isOccluded(sampler2DShadow map, vec2 coord, vec2 offset, float ref)
 {
-  return texture(map, coord + offset);
-}
-
-float isOccluded(sampler2D map, vec2 coord, vec2 offset, float ref)
-{
-  float f = offset_lookup(map, coord, offset).x;
-  if( f < ref )
-    return 1.0;
-  else
-    return 0.0;
-}
-
-float linearDepth(float expDepth, float n, float f) {
-  float z = (2 * n) / (f + n - expDepth * (f - n));
-
-  return z;
+  float f = texture(map, vec3(coord + offset, ref));
+  return 1 - f;
 }
 
 mat2 getJitter()
 {
-    vec2 jitter = texture(texture7, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
+    vec2 jitter = texture(jitterMap, frag.worldspacePosition.xy + frag.worldspacePosition.zz ).xy;
     float cosinus = (jitter.x * 2) - 1;
     float sinus = (jitter.y * 2) - 1;
 
@@ -64,9 +50,8 @@ mat2 getJitter()
     float bias = 0.000; \
     float ret = 0; \
     for(int i=0;i<KernelSize; ++i) { \
-       float f = texture(texture6, pos.st + (rot * kernel[i]) * texsize).x; \
-       if( f < (pos.z - bias) ) \
-          ret += 1.0; \
+       vec2 offset = (rot * kernel[i]) * texsize; \
+       ret += isOccluded(shadowMap, pos.st, offset, pos.z - bias); \
     } \
     return ret/KernelSize; \
 }
@@ -75,23 +60,6 @@ DECLARE_POISSON_SAMPLE(6)
 DECLARE_POISSON_SAMPLE(9)
 DECLARE_POISSON_SAMPLE(12)
 DECLARE_POISSON_SAMPLE(15)
-
-
-#define DECLARE_PCF_SAMPLE(KernelSize) float pcfSample(vec2 kernel[KernelSize], vec3 pos, vec2 texsize) { \
-    float bias = 0.00; \
-    float ret = 0; \
-    for(int i=0;i<KernelSize; ++i) { \
-       float f = texture(texture6, pos.st + kernel[i] * texsize).x; \
-       if( f < (pos.z - bias) ) \
-          ret += 1.0; \
-    } \
-    return ret/KernelSize; \
-}
-
-DECLARE_PCF_SAMPLE(4)
-DECLARE_PCF_SAMPLE(9)
-DECLARE_PCF_SAMPLE(13)
-DECLARE_PCF_SAMPLE(21)
 
 float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, vec2 softness)
 {   
@@ -107,10 +75,6 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, vec2 softness)
     pos.x += coordOffset.x;
     pos.y += coordOffset.y;
 
-//#define FILTER_PCF4
-//#define FILTER_PCF9
-//#define FILTER_PCF13
-//#define FILTER_PCF21
 //#define FILTER_POISSON6
 #define FILTER_POISSON9
 //#define FILTER_POISSON12    
@@ -118,79 +82,7 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, vec2 softness)
  
   vec2 texsize = coordScale * softness;
 
-#if defined(FILTER_PCF4)
-    const vec2 kernel[4] = vec2[](
-      vec2(1,0),
-      vec2(-1,0),
-      vec2(0,1),
-      vec2(0,-1)
-    );
-
-    return pcfSample(kernel, pos.xyz, texsize);
-
-#elif defined(FILTER_PCF9)
-    const vec2 kernel[9] = vec2[](
-      vec2(-1,1),
-      vec2(0,1),
-      vec2(1,1),
-      vec2(-1,0),
-      vec2(0,0),
-      vec2(1,0),
-      vec2(-1,-1),
-      vec2(0,-1),
-      vec2(1,-1)
-    );
-
-    return pcfSample(kernel, pos.xyz, texsize);
-
-#elif defined(FILTER_PCF13)
-    const vec2 kernel[13] = vec2[](
-      vec2(0, 1),
-      vec2(0, -1),
-      vec2(-1, 0),
-      vec2(1, 0),      
-      vec2(-0.5,0.5),
-      vec2(0,0.5),
-      vec2(0.5,0.5),
-      vec2(-0.5,0),
-      vec2(0,0),
-      vec2(0.5,0),
-      vec2(-0.5,-0.5),
-      vec2(0,-0.5),
-      vec2(0.5,-0.5)
-    );
-
-    return pcfSample(kernel, pos.xyz, texsize);
-
-#elif defined(FILTER_PCF21)
-    const vec2 kernel[21] = vec2[](
-      vec2(0.5, 1),
-      vec2(0.5, -1),
-      vec2(-0.5, 1),
-      vec2(-0.5, -1),
-      vec2(1, 0.5),
-      vec2(-1, 0.5),
-      vec2(1, -0.5),
-      vec2(-1, -0.5),
-
-      vec2(0, 1),
-      vec2(0, -1),
-      vec2(-1, 0),
-      vec2(1, 0),
-
-      vec2(-0.5,0.5),
-      vec2(0,0.5),
-      vec2(0.5,0.5),
-      vec2(-0.5,0),
-      vec2(0,0),
-      vec2(0.5,0),
-      vec2(-0.5,-0.5),
-      vec2(0,-0.5),
-      vec2(0.5,-0.5)
-    );
-
-    return pcfSample(kernel, pos.xyz, texsize);
-#elif defined(FILTER_POISSON6)
+#if defined(FILTER_POISSON6)
     const vec2 kernel[6] = vec2[](
       vec2(-0.4397209, -0.3645),
       vec2(-0.6508484, 0.4861422),
@@ -255,9 +147,8 @@ float getShadow(vec4 pos, vec2 coordScale, vec2 coordOffset, vec2 softness)
 
     return poissonSample(kernel, pos.xyz, texsize);
 #else    
-    return isOccluded(texture6, pos.st, vec2(0,0), pos.z);
+    return isOccluded(shadowMap, pos.st, vec2(0,0), pos.z);
 #endif  
-
 }
 
 vec4 projectedShadow(vec4 pos, vec2 softness)
