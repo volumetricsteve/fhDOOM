@@ -111,7 +111,13 @@ public:
 		if (!m_context->makeCurrent( this ))
 			return;
 
+		const auto oldWindowWidth = glConfig.windowWidth;
+		const auto oldWindowHeight = glConfig.windowHeight;
+
 		QSize rect = size();
+
+		glConfig.windowWidth = rect.width();
+		glConfig.windowHeight = rect.height();
 
 		glViewport( 0, 0, rect.width(), rect.height() );
 		glScissor( 0, 0, rect.width(), rect.height() );
@@ -131,6 +137,10 @@ public:
 
 		m_context->swapBuffers( this );
 		wglMakeCurrent(win32.hDC, win32.hGLRC);
+
+		glConfig.windowWidth = oldWindowWidth;
+		glConfig.windowHeight = oldWindowHeight;
+
 		glViewport( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 		glScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	}

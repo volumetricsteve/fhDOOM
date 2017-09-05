@@ -89,7 +89,6 @@ BOOL idGLWidget::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwS
 	ReleaseDC(dc);
 
 	return TRUE;
-
 }
 
 void idGLWidget::OnPaint()
@@ -109,6 +108,14 @@ void idGLWidget::OnPaint()
 	if (!wglMakeCurrent(dc.m_hDC, win32.hGLRC)) {
 	}
 
+	const int oldWindowHeight = glConfig.windowHeight;
+	const int oldWindowWidth = glConfig.windowWidth;
+	const int oldVidHeight = glConfig.vidHeight;
+	const int oldVidWidth = glConfig.vidWidth;
+
+	glConfig.windowHeight = rect.Height();
+	glConfig.windowWidth = rect.Width();
+
 	glViewport(0, 0, rect.Width(), rect.Height());
 	glScissor(0, 0, rect.Width(), rect.Height());
 
@@ -127,7 +134,7 @@ void idGLWidget::OnPaint()
 		glViewport(0, 0, rect.Width(), rect.Height());
 		glScissor(0, 0, rect.Width(), rect.Height());
 
-    GL_ProjectionMatrix.LoadIdentity();
+		GL_ProjectionMatrix.LoadIdentity();
 		glClearColor (0.4f, 0.4f, 0.4f, 0.7f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
@@ -136,6 +143,10 @@ void idGLWidget::OnPaint()
 	glFlush();
 	wglMakeCurrent(win32.hDC, win32.hGLRC);
 
+	glConfig.windowHeight = oldWindowHeight;
+	glConfig.windowWidth = oldWindowWidth;
+	glConfig.vidHeight = oldVidHeight;
+	glConfig.vidWidth = oldVidWidth;
 }
 
 void idGLWidget::OnLButtonDown(UINT nFlags, CPoint point)

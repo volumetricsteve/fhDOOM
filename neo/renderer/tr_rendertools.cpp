@@ -1521,6 +1521,10 @@ void RB_ShowLights2( void ) {
 	for (const viewLight_t* vLight = backEnd.viewDef->viewLights; vLight; vLight = vLight->next) {
 		const idRenderLightLocal* light = vLight->lightDef;
 
+		if (light->parms.noShadows) {
+			continue;
+		}
+
 		idVec3 color;
 		switch (vLight->shadowMapLod)
 		{
@@ -1533,18 +1537,7 @@ void RB_ShowLights2( void ) {
 		case 2:
 			color = idVec3( 0, 1, 0 );
 			break;
-		case 3:
-			color = idVec3( 0, 1, 1 );
-			break;
-		case 4:
-			color = idVec3( 0, 0, 1 );
-			break;
-		default:
-			color = idVec3( 1, 1, 1 );
 		}
-
-		if (light->parms.noShadows)
-			color = idVec3(0.2f, 0.2f, 0.2f);
 
 		if(r_showLights2.GetInteger() == 1) {
 			idBounds bounds( light->parms.origin );
@@ -1557,9 +1550,7 @@ void RB_ShowLights2( void ) {
 			GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK );
 			glDisable( GL_DEPTH_TEST );
 
-			fhRenderProgram::SetColorAdd(idVec4(color, 1));
-
-			RB_RenderTriangleSurface( light->frustumTris );
+			RB_DrawBounds(light->frustumTris->bounds, color);
 		}
 	}
 

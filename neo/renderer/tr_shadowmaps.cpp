@@ -552,18 +552,18 @@ bool RB_RenderShadowMaps( viewLight_t* vLight ) {
 		backEnd.viewDef->viewFrustum.ToPoints( viewCorners );
 
 		for (int i = 0; i < 6; ++i) {
-			if(r_smLightSideCulling.GetBool()) {
+			if (r_smLightSideCulling.GetBool()) {
 				vLight->culled[i] = vLight->lightDef->shadowMapFrustums[i].Cull(viewCorners);
 			}
 			else {
 				vLight->culled[i] = false;
 			}
 
-			if(vLight->culled[i]) {
+			if (vLight->culled[i]) {
 				continue;
 			}
 
-			if (!shadowMapAllocator.Allocate( lod, 1, &vLight->shadowCoords[i] )) {
+			if (!shadowMapAllocator.Allocate(lod, 1, &vLight->shadowCoords[i])) {
 				return false;
 			}
 

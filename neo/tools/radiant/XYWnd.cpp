@@ -39,8 +39,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/RenderList.h"
 #include "../../renderer/model_local.h"	// for idRenderModelLiquid
 
-
-
 void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color)
 {
   static const idMat3 rotation = idAngles(90, 90, 0).ToMat3();
@@ -99,7 +97,7 @@ void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec3&
 static char		THIS_FILE[] = __FILE__;
 #endif
 
-CString			g_strStatus;
+static CString	g_strStatus;
 
 bool			g_bCrossHairs = false;
 bool			g_bScaleMode;
@@ -115,26 +113,26 @@ CClipPoint		*g_pMovingClip;
 brush_t			g_brFrontSplits;
 brush_t			g_brBackSplits;
 
-brush_t			g_brClipboard;
-brush_t			g_brUndo;
-entity_t		g_enClipboard;
+static brush_t	g_brClipboard;
+static brush_t	g_brUndo;
+static entity_t	g_enClipboard;
 
-idVec3			g_vRotateOrigin;
-idVec3			g_vRotation;
+static idVec3	g_vRotateOrigin;
+static idVec3   g_vRotation;
 
 bool			g_bPathMode;
 
-bool			g_bPointMode;
-CClipPoint		g_PointPoints[512];
-CClipPoint		*g_pMovingPoint;
-int				g_nPointCount;
+static bool		g_bPointMode;
+static CClipPoint  g_PointPoints[512];
+static CClipPoint *g_pMovingPoint;
+static int		g_nPointCount;
 
 void	Select_Ungroup();
 
-CPtrArray	g_ptrMenus;
+static CPtrArray	g_ptrMenus;
 
-CMemFile	g_Clipboard(4096);
-CMemFile	g_PatchClipboard(4096);
+static CMemFile	g_Clipboard(4096);
+static CMemFile	g_PatchClipboard(4096);
 
 extern int	pressx;
 extern int	pressy;
@@ -143,16 +141,8 @@ extern int	pressy;
  =======================================================================================================================
  =======================================================================================================================
  */
-float fDiff(float f1, float f2) {
-	if (f1 > f2) {
-		return f1 - f2;
-	}
-	else {
-		return f2 - f1;
-	}
-}
 
-CPtrArray			dragPoints;
+static CPtrArray			dragPoints;
 static CDragPoint	*activeDrag = NULL;
 static bool			activeDragging = false;
 
@@ -182,14 +172,14 @@ static bool CullBrush(const brush_t* brush, const idBounds& viewBounds) {
  */
 bool CDragPoint::PointWithin(idVec3 p, int nView) {
 	if (nView == -1) {
-		if (fDiff(p[0], vec[0]) <= 3 && fDiff(p[1], vec[1]) <= 3 && fDiff(p[2], vec[2]) <= 3) {
+		if (idMath::Diff(p[0], vec[0]) <= 3 && idMath::Diff(p[1], vec[1]) <= 3 && idMath::Diff(p[2], vec[2]) <= 3) {
 			return true;
 		}
 	}
 	else {
 		int nDim1 = (nView == YZ) ? 1 : 0;
 		int nDim2 = (nView == XY) ? 1 : 2;
-		if (fDiff(p[nDim1], vec[nDim1]) <= 3 && fDiff(p[nDim2], vec[nDim2]) <= 3) {
+		if (idMath::Diff(p[nDim1], vec[nDim1]) <= 3 && idMath::Diff(p[nDim2], vec[nDim2]) <= 3) {
 			return true;
 		}
 	}
@@ -1188,8 +1178,8 @@ void CXYWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				for (int n = 0; n < g_nPointCount; n++) {
 					if
 					(
-						fDiff(g_PointPoints[n].m_ptClip[nDim1], tdp[nDim1]) < 3 &&
-						fDiff(g_PointPoints[n].m_ptClip[nDim2], tdp[nDim2]) < 3
+						idMath::Diff(g_PointPoints[n].m_ptClip[nDim1], tdp[nDim1]) < 3 &&
+						idMath::Diff(g_PointPoints[n].m_ptClip[nDim2], tdp[nDim2]) < 3
 					) {
 						bCrossHair = true;
 						g_pMovingPoint = &g_PointPoints[n];
@@ -1211,8 +1201,8 @@ void CXYWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				if (g_Clip1.Set()) {
 					if
 					(
-						fDiff(g_Clip1.m_ptClip[nDim1], tdp[nDim1]) < 3 &&
-						fDiff(g_Clip1.m_ptClip[nDim2], tdp[nDim2]) < 3
+						idMath::Diff(g_Clip1.m_ptClip[nDim1], tdp[nDim1]) < 3 &&
+						idMath::Diff(g_Clip1.m_ptClip[nDim2], tdp[nDim2]) < 3
 					) {
 						bCrossHair = true;
 						g_pMovingClip = &g_Clip1;
@@ -1222,8 +1212,8 @@ void CXYWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				if (g_Clip2.Set()) {
 					if
 					(
-						fDiff(g_Clip2.m_ptClip[nDim1], tdp[nDim1]) < 3 &&
-						fDiff(g_Clip2.m_ptClip[nDim2], tdp[nDim2]) < 3
+						idMath::Diff(g_Clip2.m_ptClip[nDim1], tdp[nDim1]) < 3 &&
+						idMath::Diff(g_Clip2.m_ptClip[nDim2], tdp[nDim2]) < 3
 					) {
 						bCrossHair = true;
 						g_pMovingClip = &g_Clip2;
@@ -1233,8 +1223,8 @@ void CXYWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				if (g_Clip3.Set()) {
 					if
 					(
-						fDiff(g_Clip3.m_ptClip[nDim1], tdp[nDim1]) < 3 &&
-						fDiff(g_Clip3.m_ptClip[nDim2], tdp[nDim2]) < 3
+						idMath::Diff(g_Clip3.m_ptClip[nDim1], tdp[nDim1]) < 3 &&
+						idMath::Diff(g_Clip3.m_ptClip[nDim2], tdp[nDim2]) < 3
 					) {
 						bCrossHair = true;
 						g_pMovingClip = &g_Clip3;
@@ -1467,9 +1457,7 @@ void CXYWnd::OnPaint() {
 		if (m_nViewType != XY) {
 			GL_ModelViewMatrix.Pop();
 		}
-#ifdef _DEBUG
-		common->Printf("XYWnd: count=%d, data=%d\n", fhImmediateMode::DrawCallCount(), fhImmediateMode::DrawCallVertexSize());
-#endif
+
 		wglSwapBuffers(dc.m_hDC);
 		vertexCache.EndFrame();
 		fhBaseRenderList::EndFrame();
@@ -2399,7 +2387,7 @@ bool CXYWnd::XY_MouseMoved(int x, int y, int buttons) {
 				int		*px = &x;
 				long	*px2 = &m_ptCursor.x;
 
-				if (fDiff(y, m_ptCursor.y) > fDiff(x, m_ptCursor.x)) {
+				if (idMath::Diff<long>(y, m_ptCursor.y) > idMath::Diff<long>(x, m_ptCursor.x)) {
 					px = &y;
 					px2 = &m_ptCursor.y;
 				}

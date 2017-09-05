@@ -1981,6 +1981,11 @@ void CCamWnd::Cam_Render() {
 		BuildRendererState();
 	}
 
+	const auto oldWindowWidth = glConfig.windowWidth;
+	const auto oldWindowHeight = glConfig.windowHeight;
+	glConfig.windowWidth = m_Camera.width;
+	glConfig.windowHeight = m_Camera.height;
+
 	// render it
 	renderSystem->BeginFrame( m_Camera.width, m_Camera.height );
 
@@ -2007,6 +2012,9 @@ void CCamWnd::Cam_Render() {
 	//wglSwapBuffers(dc.m_hDC);
 	// get back to the editor state
 	GL_ModelViewMatrix.LoadIdentity();
+
+	glConfig.windowWidth = oldWindowWidth;
+	glConfig.windowHeight = oldWindowHeight;
 	Cam_BuildMatrix();
 }
 

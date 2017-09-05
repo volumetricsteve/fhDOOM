@@ -548,8 +548,6 @@ void CNewTexWnd::OnRButtonUp(UINT nFlags, CPoint point) {
 	CWnd::OnRButtonUp(nFlags, point);
 }
 
-extern float	fDiff(float f1, float f2);
-
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -568,7 +566,7 @@ void CNewTexWnd::OnMouseMove(UINT nFlags, CPoint point) {
 				long	*px = &point.x;
 				long	*px2 = &cursor.x;
 
-				if (fDiff(point.y, cursor.y) > fDiff(point.x, cursor.x)) {
+				if (idMath::Diff(point.y, cursor.y) > idMath::Diff(point.x, cursor.x)) {
 					px = &point.y;
 					px2 = &cursor.y;
 				}

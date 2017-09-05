@@ -37,7 +37,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/RenderProgram.h"
 #include "../../renderer/ImmediateMode.h"
 
-void	Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset);
 void Brush_DrawCurve( const brush_t *b, bool bSelected, bool cam );
 void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color, int viewType);
 
@@ -228,6 +227,31 @@ void TextureAxisFromPlane( const idPlane &pln, idVec3 &xv, idVec3 &yv) {
 
 	VectorCopy(baseaxis[bestaxis * 3 + 1], xv);
 	VectorCopy(baseaxis[bestaxis * 3 + 2], yv);
+}
+
+/*
+================
+Brush_RemoveEmptyFaces
+
+Frees any overconstraining faces
+================
+*/
+static void Brush_RemoveEmptyFaces(brush_t *b) {
+	face_t	*f, *next;
+
+	f = b->brush_faces;
+	b->brush_faces = NULL;
+
+	for (; f; f = next) {
+		next = f->next;
+		if (!f->face_winding) {
+			Face_Free(f);
+		}
+		else {
+			f->next = b->brush_faces;
+			b->brush_faces = f;
+		}
+	}
 }
 
 /*
@@ -3125,15 +3149,12 @@ void Brush_SideSelect(brush_t *b, idVec3 origin, idVec3 dir, bool shear) {
 }
 
 extern void UpdateSelectablePoint(brush_t *b, idVec3 v, int type);
-extern void	AddSelectablePoint(brush_t *b, idVec3 v, int type, bool priority);
-extern void	ClearSelectablePoints(brush_t *b);
 
 /*
 ================
 Brush_TransformedPoint
 ================
 */
-extern void VectorSnapGrid(idVec3 &v);
 
 idMat3 Brush_RotationMatrix(brush_t *b) {
 	idMat3 mat;
@@ -3156,7 +3177,7 @@ idVec3 Brush_TransformedPoint(brush_t *b, const idVec3 &in) {
 Brush_UpdateLightPoints
 ================
 */
-void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
+static void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 
 	if (!(b->owner->eclass->nShowFlags & ECLASS_LIGHT)) {
 		if (b->modelHandle) {
@@ -3355,31 +3376,6 @@ void Brush_BuildWindings(brush_t *b, bool bSnap, bool keepOnPlaneWinding, bool u
 
 /*
 ================
-Brush_RemoveEmptyFaces
-
-  Frees any overconstraining faces
-================
-*/
-void Brush_RemoveEmptyFaces(brush_t *b) {
-	face_t	*f, *next;
-
-	f = b->brush_faces;
-	b->brush_faces = NULL;
-
-	for (; f; f = next) {
-		next = f->next;
-		if (!f->face_winding) {
-			Face_Free(f);
-		}
-		else {
-			f->next = b->brush_faces;
-			b->brush_faces = f;
-		}
-	}
-}
-
-/*
-================
 Brush_SnapToGrid
 ================
 */
@@ -3496,24 +3492,6 @@ void Brush_Rotate(brush_t *b, idVec3 vAngle, idVec3 vOrigin, bool bBuild) {
 
 /*
 ================
-Brush_Center
-================
-*/
-void Brush_Center(brush_t *b, idVec3 vNewCenter) {
-	idVec3	vMid;
-
-	// get center of the brush
-	for (int j = 0; j < 3; j++) {
-		vMid[j] = b->mins[j] + abs((b->maxs[j] - b->mins[j]) * 0.5f);
-	}
-
-	// calc distance between centers
-	VectorSubtract(vNewCenter, vMid, vMid);
-	Brush_Move(b, vMid, true);
-}
-
-/*
-================
 Brush_Resize
 
   the brush must be a true axial box
@@ -3553,7 +3531,7 @@ void Brush_Resize( brush_t *b, idVec3 vMin, idVec3 vMax ) {
 Entity_GetRotationMatrixAngles
 ================
 */
-bool Entity_GetRotationMatrixAngles( entity_t *e, idMat3 &mat, idAngles &angles ) {
+static bool Entity_GetRotationMatrixAngles( entity_t *e, idMat3 &mat, idAngles &angles ) {
 	assert(e);
 
 	int angle;
@@ -3601,7 +3579,7 @@ static void FacingVectors(entity_t *e, idVec3 &forward, idVec3 &right, idVec3 &u
 Brush_DrawFacingAngle
 ================
 */
-void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle, const idVec4& color ) {
+static void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle, const idVec4& color ) {
 	idVec3	forward, right, up;
 	idVec3	endpoint, tip1, tip2;
 	idVec3	start = (e->brushes.onext->mins + e->brushes.onext->maxs) * 0.5f;
@@ -3635,7 +3613,7 @@ void Brush_DrawFacingAngle( const brush_t *b, entity_t *e, bool particle, const 
 DrawProjectedLight
 ================
 */
-void DrawProjectedLight(const brush_t *b, bool bSelected, bool texture) {
+static void DrawProjectedLight(const brush_t *b, bool bSelected, bool texture) {
 	idVec3	v1, v2, cross, vieworg, edge[8][2], v[4];
 	idVec3	target, start;
 
@@ -3785,7 +3763,7 @@ static void GLCircle(float x, float y, float z, float r, const idVec4& color)
 DrawSpeaker
 ================
 */
-void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
+static void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 
 	if (!(g_qeglobals.d_savedinfo.showSoundAlways || (g_qeglobals.d_savedinfo.showSoundWhenSelected && bSelected))) {
 		return;
@@ -3869,7 +3847,7 @@ void DrawSpeaker(const brush_t *b, bool bSelected, bool twoD) {
 DrawLight
 ================
 */
-void DrawLight(const brush_t *b, bool bSelected) {
+static void DrawLight(const brush_t *b, bool bSelected) {
 	idVec3	vTriColor;
 	bool	bTriPaint = false;
 
@@ -4000,7 +3978,7 @@ editorModel_t Brush_GetEditorModel(const brush_t* b) {
 Brush_DrawModel
 ================
 */
-void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
+static void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 	int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
 
 	if ( camera && g_PrefsDlg.m_nEntityShowState != ENTITY_WIREFRAME && nDrawMode != cd_wire ) {
@@ -4076,7 +4054,7 @@ void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
 GLTransformedVertex
 ================
 */
-void GLTransformedVertex(float x, float y, float z, idMat3 mat, idVec3 origin, idVec3 color, float maxDist) {
+static void GLTransformedVertex(float x, float y, float z, idMat3 mat, idVec3 origin, idVec3 color, float maxDist) {
 	idVec3 v(x,y,z);
 	v -= origin;
 	v *= mat;
@@ -4101,7 +4079,7 @@ void GLTransformedVertex(float x, float y, float z, idMat3 mat, idVec3 origin, i
 GLTransformedCircle
 ================
 */
-void GLTransformedCircle(int type, idVec3 origin, float r, idMat3 mat, float pointSize, idVec3 color, float maxDist) {
+static void GLTransformedCircle(int type, idVec3 origin, float r, idMat3 mat, float pointSize, idVec3 color, float maxDist) {
 	glPointSize(pointSize);
 	glBegin(GL_POINTS);
 	for (int i = 0; i < 360; i++) {
@@ -4134,7 +4112,7 @@ void GLTransformedCircle(int type, idVec3 origin, float r, idMat3 mat, float poi
 Brush_DrawAxis
 ================
 */
-void Brush_DrawAxis(const brush_t *b) {
+static void Brush_DrawAxis(const brush_t *b) {
 	if ( g_pParentWnd->ActiveXY()->RotateMode() && b->modelHandle ) {
 		bool matrix = false;
 		idMat3 mat;
@@ -4213,7 +4191,7 @@ void Brush_DrawAxis(const brush_t *b) {
 Brush_DrawModelInfo
 ================
 */
-void Brush_DrawModelInfo(const brush_t *b, bool selected) {
+static void Brush_DrawModelInfo(const brush_t *b, bool selected) {
 	if (b->modelHandle > 0) {
 		Brush_DrawModel(b, true, selected);
 
@@ -4229,7 +4207,7 @@ void Brush_DrawModelInfo(const brush_t *b, bool selected) {
 Brush_DrawEmitter
 ================
 */
-void Brush_DrawEmitter(const brush_t *b, bool bSelected, bool cam) {
+static void Brush_DrawEmitter(const brush_t *b, bool bSelected, bool cam) {
 	if ( !( b->owner->eclass->nShowFlags & ECLASS_PARTICLE ) ) {
 		return;
 	}
@@ -4249,7 +4227,7 @@ void Brush_DrawEmitter(const brush_t *b, bool bSelected, bool cam) {
 Brush_DrawEnv
 ================
 */
-void Brush_DrawEnv( const brush_t *b, bool cameraView, bool bSelected ) {
+static void Brush_DrawEnv( const brush_t *b, bool cameraView, bool bSelected ) {
 	idVec3 origin, newOrigin;
 	idMat3 axis, newAxis;
 	idAngles newAngles;
@@ -4287,7 +4265,7 @@ void Brush_DrawEnv( const brush_t *b, bool cameraView, bool bSelected ) {
 Brush_DrawCombatNode
 ================
 */
-void Brush_DrawCombatNode( const brush_t *b, bool cameraView, bool bSelected ) {
+static void Brush_DrawCombatNode( const brush_t *b, bool cameraView, bool bSelected ) {
 	float min_dist = b->owner->epairs.GetFloat( "min" );
 	float max_dist = b->owner->epairs.GetFloat( "max" );
 	float fov = b->owner->epairs.GetFloat( "fov", "60" );
@@ -4554,39 +4532,6 @@ void Face_DrawOutline( const face_t *f, const idVec3& color) {
   g_qeglobals.lineBuffer.Add(points[0].ToVec3(), points[numPoints-1].ToVec3(), color);
 }
 
-
-idSurface_SweptSpline *SplineToSweptSpline( idCurve<idVec3> *curve ) {
-	// expects a vec3 curve and creates a vec4 based swept spline
-	// must be either nurbs or catmull
-	idCurve_Spline<idVec4> *newCurve = NULL;
-	if ( dynamic_cast<idCurve_NURBS<idVec3>*>( curve ) ) {
-		newCurve = new idCurve_NURBS<idVec4>;
-	} else if ( dynamic_cast<idCurve_CatmullRomSpline<idVec3>*>( curve ) ) {
-		newCurve = new idCurve_CatmullRomSpline<idVec4>;
-	}
-
-	if ( curve == NULL || newCurve == NULL ) {
-		return NULL;
-	}
-
-	int c = curve->GetNumValues();
-	float len = 0.0f;
-	for ( int i = 0; i < c; i++ ) {
-		idVec3 v = curve->GetValue( i );
-		newCurve->AddValue( curve->GetTime( i ), idVec4( v.x, v.y, v.z, len ) );
-		if ( i < c - 1 ) {
-			len += curve->GetLengthBetweenKnots( i, i + 1 ) * 0.1f;
-		}
-	}
-
-	idSurface_SweptSpline *ss = new idSurface_SweptSpline;
-	ss->SetSpline( newCurve );
-	ss->SetSweptCircle( 10.0f );
-	ss->Tessellate( newCurve->GetNumValues() * 6, 6 );
-
-	return ss;
-}
-
 /*
 ================
 Brush_DrawCurve
@@ -4782,21 +4727,6 @@ void Brush_DrawXY(brush_t *b, int nViewType, bool bSelected, const idVec3& color
 	DrawBrushEntityName(b, color);
 }
 
-/*
-==================
-PointValueInPointList
-==================
-*/
-static int PointValueInPointList( idVec3 v ) {
-	for ( int i = 0; i < g_qeglobals.d_numpoints; i++ ) {
-		if ( v == g_qeglobals.d_points[i] ) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-
 extern bool Sys_KeyDown(int key);
 /*
 ================
@@ -4887,37 +4817,6 @@ void Brush_Move(brush_t *b, const idVec3 move, bool bSnap, bool updateOrigin) {
 				arg = b->owner->epairs.MatchPrefix( "body ", arg );
 			}
 		}
-	}
-}
-
-/*
-================
-Select_AddProjectedLight
-================
-*/
-void Select_AddProjectedLight() {
-	idVec3	vTemp;
-	CString str;
-
-	// if (!QE_SingleBrush ()) return;
-	brush_t *b = selected_brushes.next;
-
-	if (b->owner->eclass->nShowFlags & ECLASS_LIGHT) {
-		vTemp[0] = vTemp[1] = 0;
-		vTemp[2] = -256;
-		str.Format("%f %f %f", vTemp[0], vTemp[1], vTemp[2]);
-		b->owner->SetKeyValue("light_target", str);
-
-		vTemp[2] = 0;
-		vTemp[1] = -128;
-		str.Format("%f %f %f", vTemp[0], vTemp[1], vTemp[2]);
-		b->owner->SetKeyValue("light_up", str);
-
-		vTemp[1] = 0;
-		vTemp[0] = -128;
-		str.Format("%f %f %f", vTemp[0], vTemp[1], vTemp[2]);
-		b->owner->SetKeyValue("light_right", str);
-		Brush_Build(b);
 	}
 }
 

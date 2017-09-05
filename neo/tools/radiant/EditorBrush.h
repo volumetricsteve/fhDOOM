@@ -112,7 +112,6 @@ void		Brush_Rotate(brush_t *b, idVec3 vAngle, idVec3 vOrigin, bool bBuild = true
 void		Brush_MakeSidedSphere(int sides);
 void		Brush_Write (brush_t *b, FILE *f, const idVec3 &origin, bool newFormat);
 void		Brush_Write (brush_t *b, CMemFile* pMemFile, const idVec3 &origin, bool NewFormat);
-void		Brush_RemoveEmptyFaces ( brush_t *b );
 idWinding *	Brush_MakeFaceWinding (brush_t *b, face_t *face, bool keepOnPlaneWinding = false);
 void		Brush_SetTextureName(brush_t *b, const char *name);
 void		Brush_Print(brush_t* b);

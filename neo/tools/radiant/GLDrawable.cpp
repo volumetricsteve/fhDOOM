@@ -31,7 +31,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/ImmediateMode.h"
 
 extern bool Sys_KeyDown( int key );
-extern float fDiff( float f1, float f2 );
 
 static int viewAngle = -98;
 
@@ -42,10 +41,6 @@ static int viewAngle = -98;
 
 bool Sys_KeyDown( int ) {
 	return false;
-}
-
-float fDiff( float a, float b ) {
-	return fabs(a-b);
 }
 #endif
 
@@ -79,7 +74,7 @@ void idGLDrawable::mouseMove( float x, float y ) {
 			float *px = &x;
 			float *px2 = &pressX;
 
-			if (fDiff( y, pressY ) > fDiff( x, pressX )) {
+			if (idMath::Diff(y, pressY) > idMath::Diff(x, pressX)) {
 				px = &y;
 				px2 = &pressY;
 			}
@@ -226,7 +221,7 @@ void idGLDrawableWorld::mouseMove( float x, float y ) {
 				float *px = &x;
 				float *px2 = &pressX;
 
-				if (fDiff( y, pressY ) > fDiff( x, pressX )) {
+				if (idMath::Diff(y, pressY) > idMath::Diff(x, pressX)) {
 					px = &y;
 					px2 = &pressY;
 				}
