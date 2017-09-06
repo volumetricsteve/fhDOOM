@@ -140,7 +140,6 @@ const int MAX_EXPRESSION_OPS = 4096;
 const int MAX_EXPRESSION_REGISTERS = 4096;
 
 // renderer
-#include "../renderer/qgl.h"
 #include "../renderer/Cinematic.h"
 #include "../renderer/Material.h"
 #include "../renderer/Model.h"
@@ -168,6 +167,7 @@ const int MAX_EXPRESSION_REGISTERS = 4096;
 //-----------------------------------------------------
 
 #ifndef GAME_DLL
+#include "../renderer/qgl.h"
 #include "../game/Game.h"
 #include "../framework/DemoChecksum.h"
 

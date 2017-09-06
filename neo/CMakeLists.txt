@@ -1137,4 +1137,72 @@ IF(WIN32)
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/base"
   )
 
+
+  SET(SDK_DIR ${CMAKE_BINARY_DIR}/dist/fhDOOM-SDK)
+
+  add_custom_target(sdk
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "fhDOOM-SDK-$<CONFIG>.zip" --format=zip "fhDOOM-SDK"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/dist"
+  )
+
+  add_custom_command(TARGET sdk
+    PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/dist"
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${SDK_DIR}"    
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/game"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/d3xp"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/cm"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/framework/async"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/MayaImport"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/renderer"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/sound"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/sys"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/tools/compilers/aas"
+    COMMAND ${CMAKE_COMMAND} -E make_directory   "${SDK_DIR}/src/ui"    
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "game" "${SDK_DIR}/src/game"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "d3xp" "${SDK_DIR}/src/d3xp"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "idlib" "${SDK_DIR}/src/idlib"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/cm/CollisionModel.h" "${SDK_DIR}/src/cm"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/BuildDefines.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/BuildVersion.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/BuildVersion.cpp" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/CmdSystem.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/Common.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/CVarSystem.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclAF.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclEntityDef.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclFX.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclManager.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclParticle.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclPDA.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclSkin.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/DeclTable.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/File.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/FileSystem.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/Licensee.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/UsercmdGen.h" "${SDK_DIR}/src/framework"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/framework/async/NetworkSystem.h" "${SDK_DIR}/src/framework/async"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/MayaImport/maya_main.h" "${SDK_DIR}/src/MayaImport"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/renderer/Cinematic.h" "${SDK_DIR}/src/renderer"    
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/renderer/Material.h" "${SDK_DIR}/src/renderer"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/renderer/Model.h" "${SDK_DIR}/src/renderer"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/renderer/ModelManager.h" "${SDK_DIR}/src/renderer"    
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/renderer/RenderSystem.h" "${SDK_DIR}/src/renderer"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/renderer/RenderWorld.h" "${SDK_DIR}/src/renderer"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/sound/sound.h" "${SDK_DIR}/src/sound"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/sys/sys_public.h" "${SDK_DIR}/src/sys"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/tools/compilers/aas/AASFile.h" "${SDK_DIR}/src/tools/compilers/aas"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/tools/compilers/aas/AASFileManager.h" "${SDK_DIR}/src/tools/compilers/aas"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/ui/ListGUI.h" "${SDK_DIR}/src/ui"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/neo/ui/UserInterface.h" "${SDK_DIR}/src/ui"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/setup.cmake" "${SDK_DIR}/src"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/cmake_msvc2013.cmd" "${SDK_DIR}/src"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/cmake_msvc2015.cmd" "${SDK_DIR}/src"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/cmake_msvc2017.cmd" "${SDK_DIR}/src"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/CMakeLists.sdk.txt" "${SDK_DIR}/src/CMakeLists.txt"
+
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/neo"
+  )  
+
 ENDIF()
