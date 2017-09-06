@@ -77,10 +77,6 @@ const float	HUGE_DISTANCE = 100000;
 
 #include "rendertools.h"
 
-// the dec offsetof macro doesn't work very well...
-#define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
-
-
 void	Error (char *error, ...);
 void	Warning (char *error, ...);
 
@@ -265,7 +261,6 @@ extern bool LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
 
 void DoGamma(void);
 void DoFind(void);
-void DoRotate(void);
 void DoSides(bool bCone = false, bool bSphere = false, bool bTorus = false);
 void DoAbout(void);
 void DoSurface();
@@ -276,9 +271,7 @@ void DoSurface();
 void	QE_CheckAutoSave( void );
 void	QE_CountBrushesAndUpdateStatusBar( void );
 void	WINAPI QE_CheckOpenGLForErrors(void);
-void	QE_ExpandBspString (char *bspaction, char *out, char *mapname, bool useTemps);
 void	QE_Init (void);
-bool	QE_KeyDown (int key, int nFlags = 0);
 bool	QE_LoadProject (char *projectfile);
 bool	QE_SingleBrush (bool bQuiet = false, bool entityOK = false);
 
@@ -324,24 +317,12 @@ void ConvertTexMatWithQTexture( brushprimit_texdef_t *texMat1, const idMaterial 
 void Face_MoveTexture_BrushPrimit(face_t *f, idVec3 delta);
 void Select_ShiftTexture_BrushPrimit( face_t *f, float x, float y, bool autoAdjust );
 void RotateFaceTexture_BrushPrimit(face_t *f, int nAxis, float fDeg, idVec3 vOrigin );
-// used in CCamWnd::ShiftTexture_BrushPrimit
-void ComputeBest2DVector( idVec3 v, idVec3 X, idVec3 Y, int &x, int &y );
-
 void ApplyMatrix_BrushPrimit(face_t *f, idMat3 matrix, idVec3 origin);
 // low level functions .. put in mathlib?
-#define BPMatCopy(a,b) {b[0][0] = a[0][0]; b[0][1] = a[0][1]; b[0][2] = a[0][2]; b[1][0] = a[1][0]; b[1][1] = a[1][1]; b[1][2] = a[1][2];}
 // apply a scale transformation to the BP matrix
 #define BPMatScale(m,sS,sT) {m[0][0]*=sS; m[1][0]*=sS; m[0][1]*=sT; m[1][1]*=sT;}
-// apply a translation transformation to a BP matrix
-#define BPMatTranslate(m,s,t) {m[0][2] += m[0][0]*s + m[0][1]*t; m[1][2] += m[1][0]*s+m[1][1]*t;}
 // 2D homogeneous matrix product C = A*B
 void BPMatMul(float A[2][3], float B[2][3], float C[2][3]);
-// apply a rotation (degrees)
-void BPMatRotate(float A[2][3], float theta);
-#ifdef _DEBUG
-void BPMatDump(float A[2][3]);
-#endif
-
 
 extern bool g_bShowLightVolumes;
 extern bool g_bShowLightTextures;

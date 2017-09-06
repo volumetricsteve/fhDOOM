@@ -525,35 +525,6 @@ void Select_ShiftTexture_BrushPrimit(face_t *f, float x, float y, bool autoAdjus
 
 //
 // =======================================================================================================================
-//    best fitted 2D vector is x.X+y.Y
-// =======================================================================================================================
-//
-void ComputeBest2DVector(idVec3 v, idVec3 X, idVec3 Y, int &x, int &y) {
-	double	sx, sy;
-	sx = DotProduct(v, X);
-	sy = DotProduct(v, Y);
-	if (idMath::Fabs(sy) > idMath::Fabs(sx)) {
-		x = 0;
-		if (sy > 0.0) {
-			y = 1;
-		}
-		else {
-			y = -1;
-		}
-	}
-	else {
-		y = 0;
-		if (sx > 0.0) {
-			x = 1;
-		}
-		else {
-			x = -1;
-		}
-	}
-}
-
-//
-// =======================================================================================================================
 //    in many case we know three points A,B,C in two axis base B1 and B2 and we want the matrix M so that A(B1) = T *
 //    A(B2) NOTE: 2D homogeneous space stuff NOTE: we don't do any check to see if there's a solution or we have a
 //    particular case .. need to make sure before calling NOTE: the third coord of the A,B,C point is ignored NOTE: see
@@ -951,25 +922,6 @@ void BPMatMul(float A[2][3], float B[2][3], float C[2][3]) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void BPMatDump(float A[2][3]) {
-	common->Printf("%g %g %g\n%g %g %g\n0 0 1\n", A[0][0], A[0][1], A[0][2], A[1][0], A[1][1], A[1][2]);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void BPMatRotate(float A[2][3], float theta) {
-	float	m[2][3];
-	float	aux[2][3];
-	memset(&m, 0, sizeof (float) *6);
-	m[0][0] = cos( DEG2RAD( theta ) );
-	m[0][1] = -sin( DEG2RAD( theta ) );
-	m[1][0] = -m[0][1];
-	m[1][1] = m[0][0];
-	BPMatMul(A, m, aux);
-	BPMatCopy(aux, A);
-}
 
 void Face_GetScale_BrushPrimit(face_t *face, float *s, float *t, float *rot) {
 	idVec3D	texS, texT;
